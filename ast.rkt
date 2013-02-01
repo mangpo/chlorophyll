@@ -62,6 +62,20 @@
     
     ))
 
+(define UnaExp%
+  (class Exp%
+    (super-new)
+    (inherit-field known-type place)
+    (init-field op e1)
+    
+    (define/public (pretty-print [indent ""])
+      (pretty-display (format "~a(UnaOp:" indent))
+      (send op pretty-print (inc indent))
+      (send e1 pretty-print (inc indent))
+      (pretty-display (format "~a)" indent)))
+    
+    ))
+
 (define Op%
   (class object%
     (super-new)
