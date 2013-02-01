@@ -45,6 +45,17 @@
    (whitespace (position-token-token (simple-math-lexer input-port)))
    ((eof) (token-EOF))))
 
+;; (define-syntax-rule (BinExp exp1 operation exp2)
+;;   (new BinExp% [op (new Op% [op operation])] [e1 exp1] [e2 exp2]))
+
+(define-syntax (BinExp stx)
+  (syntax-case stx ()
+    [(BinExp exp1 operation exp2) 
+     #'(new BinExp% [op (new Op% [op operation])] [e1 exp1] [e2 exp2])]
+    [(BinExp exp1 operation exp2 p) 
+     #'(new BinExp% [op (new Op% [op operation] [place p])] [e1 exp1] [e2 exp2])]
+    ))
+
 (define simple-math-parser
   (parser
    (start exp)
@@ -59,30 +70,35 @@
     (place-exp
          ((NUM) $1)
          ((VAR) $1))
-    (bin-exp-base
-         ((ARITHOP1) (new Op% [op $1]))
-         ((ARITHOP2) (new Op% [op $1]))
-         ((RELOP) (new Op% [op $1]))
-         ((EQOP) (new Op% [op $1]))
-         )
-    (bin-exp
-         ((bin-exp-base) $1)
-         ((bin-exp-base @ place-exp) (send $1 add-place $3)))
          
     (exp ((NUM)             (new Num% [n $1] [pos $1-start-pos]))
          ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos]))
          ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
          ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos]))
          
-         ((exp bin-exp exp)   
-            (new BinExp% [op $2] [e1 $1] [e2 $3]))
+         ((exp ARITHOP1 exp)   
+            (BinExp $1 $2 $3))
+         ((exp ARITHOP2 exp)   
+            (BinExp $1 $2 $3))
+         ((exp RELOP exp)   
+            (BinExp $1 $2 $3))
+         ((exp EQOP exp)   
+            (BinExp $1 $2 $3))
+
+         ((exp ARITHOP1 @ place-exp exp)   
+            (BinExp $1 $2 $5 $4))
+         ((exp ARITHOP2 @ place-exp exp)    
+            (BinExp $1 $2 $5 $4))
+         ((exp RELOP @ place-exp exp)    
+            (BinExp $1 $2 $5 $4))
+         ((exp EQOP @ place-exp exp)    
+            (BinExp $1 $2 $5 $4))
          
          ))))
 
 (define (lex-this lexer input) (lambda () (lexer input)))
 
-;(define test "-1@-2 <@a 2@a /@a -1@a +@a 10@a")
-(define test "-1 * 2 / -1 + 10")
+(define test "-1@-2 <@a 2@a /@a -1@a +@a 10@a")
  
 (define ast
   (let ((input (open-input-string test)))
