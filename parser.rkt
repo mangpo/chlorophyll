@@ -82,7 +82,7 @@
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
-      (pretty-display "error")))
+      (pretty-display "Error")))
    (tokens a b)
    (precs 
     (left OR)
@@ -92,10 +92,9 @@
     (left BAND)
     (left EQOP) 
     (left RELOP) 
-    (left ARITHOP2) 
-    (left ARITHOP1) 
-    (left BNOT)
-    (left @))
+    (left ARITHOP2)
+    (left ARITHOP1)
+    (left BNOT))
    (src-pos)
    (grammar
     (place-exp
@@ -106,7 +105,7 @@
          ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos]))
          ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
          ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos]))
-         
+
          ((BNOT exp)         (UnaExp "!" $2))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3))
          ((exp ARITHOP2 exp) (BinExp $1 $2 $3))
@@ -117,18 +116,17 @@
          ((exp BOR exp)      (BinExp $1 "|" $3))
          ((exp AND exp)      (BinExp $1 "&&" $3))
          ((exp OR exp)       (BinExp $1 "||" $3))
-
-         ((BNOT @ place-exp exp)         (UnaExp "!" $4 $3))
-         ((exp BNOT @ place-exp exp)     (BinExp $1 "!" $5 $4))
-         ((exp ARITHOP1 @ place-exp exp) (BinExp $1 $2 $5 $4))
-         ((exp ARITHOP2 @ place-exp exp) (BinExp $1 $2 $5 $4))
-         ((exp RELOP @ place-exp exp)    (BinExp $1 $2 $5 $4))
-         ((exp EQOP @ place-exp exp)     (BinExp $1 $2 $5 $4))
-         ((exp BAND @ place-exp exp)     (BinExp $1 "&" $5 $4))
-         ((exp BXOR @ place-exp exp)     (BinExp $1 "^" $5 $4))
-         ((exp BOR @ place-exp exp)      (BinExp $1 "|" $5 $4))
-         ((exp AND @ place-exp exp)      (BinExp $1 "&&" $5 $4))
-         ((exp OR @ place-exp exp)       (BinExp $1 "||" $5 $4))
+         
+         ((BNOT @ place-exp exp)         (prec BNOT) (UnaExp "!" $4 $3))
+         ((exp ARITHOP1 @ place-exp exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4))
+         ((exp ARITHOP2 @ place-exp exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4))
+         ((exp RELOP @ place-exp exp)    (prec RELOP) (BinExp $1 $2 $5 $4))
+         ((exp EQOP @ place-exp exp)     (prec EQOP) (BinExp $1 $2 $5 $4))
+         ((exp BAND @ place-exp exp)     (prec BAND) (BinExp $1 "&" $5 $4))
+         ((exp BXOR @ place-exp exp)     (prec BXOR) (BinExp $1 "^" $5 $4))
+         ((exp BOR @ place-exp exp)      (prec BOR) (BinExp $1 "|" $5 $4))
+         ((exp AND @ place-exp exp)      (prec AND) (BinExp $1 "&&" $5 $4))
+         ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4))
 
 	 ((LPAREN exp RPAREN) $2)
          
@@ -136,8 +134,8 @@
 
 (define (lex-this lexer input) (lambda () (lexer input)))
 
-;(define test "(-1@-2 & 100) <@a (!2@a || 20) /@a -1@a +@a 10@a")
-(define test "(-1@-2 & 100) < (!2 || 20) / -1 + 10")
+;(define test "20 +@a -1 *@a 10")
+(define test "(-1@-2 & 100) <@a (!2 || 20) +@a -1 * 2")
 
 (define ast
   (let ((input (open-input-string test)))
