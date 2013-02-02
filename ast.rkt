@@ -6,12 +6,18 @@
 (define (inc space)
   (string-append space "  "))
 
-(define Exp%
+(define Base%
   (class object%
     (super-new)
+    (init-field [pos #f])   
+  ))
+
+
+(define Exp%
+  (class Base%
+    (super-new)
     (init-field [known-type #f]
-                [place "?"]
-                [pos #f])
+                [place "?"])
     (define/public (get-known-type)
       known-type)
     (define/public (get-place)
@@ -89,6 +95,20 @@
       (pretty-display (format "~a(Op:~a @~a)" indent op place)))
     
     ))
+
+
+(define Stmt%
+  (class Base%
+    (super-new)
+    (init-field lhs rhs)
+
+    (define/public (pretty-print [indent ""])
+      (pretty-display (format "~a(ASSIGN" indent))
+      (send lhs pretty-print (inc indent))
+      (pretty-display (format "~a=" (inc indent)))
+      (send rhs pretty-print (inc indent))
+      )
+  ))
 
 ;(define a (new BinExp% [op 1] [e1 2] [e2 3] [known-type #t]))
 ;(send a to-string)

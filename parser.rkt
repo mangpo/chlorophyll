@@ -8,7 +8,7 @@
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK
-			       SEMICOL))
+			       = SEMICOL))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -51,6 +51,7 @@
    ("{" (token-LBRACK))
    ("}" (token-RBRACK))
    (";" (token-SEMICOL))
+   ("=" (token-=))
    ((re-+ number10) (token-NUM (string->number lexeme)))
    (identifier      (token-VAR lexeme))
    ;; recursively calls the lexer which effectively skips whitespace
@@ -78,7 +79,7 @@
 
 (define simple-math-parser
   (parser
-   (start exp)
+   (start stmt)
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
@@ -100,11 +101,15 @@
     (place-exp
          ((NUM) $1)
          ((VAR) $1))
-         
-    (exp ((NUM)             (new Num% [n $1] [pos $1-start-pos]))
-         ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos]))
-         ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
-         ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos]))
+
+    (lit ((NUM)             (new Num% [n $1] [pos $1-start-pos]))
+         ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos])))
+
+    (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
+         ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos])))
+
+    (exp ((lit) $1)
+         ((id)  $1)
 
          ((BNOT exp)         (UnaExp "!" $2))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3))
@@ -128,14 +133,16 @@
          ((exp AND @ place-exp exp)      (prec AND) (BinExp $1 "&&" $5 $4))
          ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4))
 
-	 ((LPAREN exp RPAREN) $2)
-         
-         ))))
+	 ((LPAREN exp RPAREN) $2))
+
+    (stmt ((id = exp SEMICOL) (new Stmt% [lhs $1] [rhs $3])))
+
+)))
 
 (define (lex-this lexer input) (lambda () (lexer input)))
 
 ;(define test "20 +@a -1 *@a 10")
-(define test "(-1@-2 & 100) <@a (!2 || 20) +@a -1 * 2")
+(define test "x = (-1@-2 & 100) <@a (!2 || 20) +@a -1 * 2;")
 
 (define ast
   (let ((input (open-input-string test)))
