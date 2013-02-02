@@ -142,7 +142,7 @@
 (define (lex-this lexer input) (lambda () (lexer input)))
 
 ;(define test "20 +@a -1 *@a 10")
-(define test "x = (-1@-2 & 100) <@a (!2 || 20) +@a -1 * 2;")
+(define test "x = (-1@1 &@2 100@3) <@4 (!2@5 ||@6 20@7) +@8 -1@9 *@10 2@11;")
 
 (define ast
   (let ((input (open-input-string test)))
