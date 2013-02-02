@@ -63,18 +63,18 @@
 
 (define-syntax (BinExp stx)
   (syntax-case stx ()
-    [(BinExp exp1 operation exp2) 
-     #'(new BinExp% [op (new Op% [op operation])] [e1 exp1] [e2 exp2])]
-    [(BinExp exp1 operation exp2 p) 
-     #'(new BinExp% [op (new Op% [op operation] [place p])] [e1 exp1] [e2 exp2])]
+    [(BinExp exp1 operation exp2 position) 
+     #'(new BinExp% [op (new Op% [op operation] [pos position])] [e1 exp1] [e2 exp2])]
+    [(BinExp exp1 operation exp2 pl position) 
+     #'(new BinExp% [op (new Op% [op operation] [place pl] [pos position])] [e1 exp1] [e2 exp2])]
     ))
 
 (define-syntax (UnaExp stx)
   (syntax-case stx ()
-    [(UnaExp operation exp1) 
-     #'(new UnaExp% [op (new Op% [op operation])] [e1 exp1])]
-    [(UnaExp operation exp1 p) 
-     #'(new UnaExp% [op (new Op% [op operation] [place p])] [e1 exp1])]
+    [(UnaExp operation exp1 position) 
+     #'(new UnaExp% [op (new Op% [op operation] [pos position])] [e1 exp1])]
+    [(UnaExp operation exp1 pl position) 
+     #'(new UnaExp% [op (new Op% [op operation] [place pl] [pos position])] [e1 exp1])]
     ))
 
 (define simple-math-parser
@@ -111,27 +111,27 @@
     (exp ((lit) $1)
          ((id)  $1)
 
-         ((BNOT exp)         (UnaExp "!" $2))
-         ((exp ARITHOP1 exp) (BinExp $1 $2 $3))
-         ((exp ARITHOP2 exp) (BinExp $1 $2 $3))
-         ((exp RELOP exp)    (BinExp $1 $2 $3))
-         ((exp EQOP exp)     (BinExp $1 $2 $3))
-         ((exp BAND exp)     (BinExp $1 "&" $3))
-         ((exp BXOR exp)     (BinExp $1 "^" $3))
-         ((exp BOR exp)      (BinExp $1 "|" $3))
-         ((exp AND exp)      (BinExp $1 "&&" $3))
-         ((exp OR exp)       (BinExp $1 "||" $3))
+         ((BNOT exp)         (UnaExp "!" $2 $1-start-pos))
+         ((exp ARITHOP1 exp) (BinExp $1 $2 $3 $2-start-pos))
+         ((exp ARITHOP2 exp) (BinExp $1 $2 $3 $2-start-pos))
+         ((exp RELOP exp)    (BinExp $1 $2 $3 $2-start-pos))
+         ((exp EQOP exp)     (BinExp $1 $2 $3 $2-start-pos))
+         ((exp BAND exp)     (BinExp $1 "&" $3 $2-start-pos))
+         ((exp BXOR exp)     (BinExp $1 "^" $3 $2-start-pos))
+         ((exp BOR exp)      (BinExp $1 "|" $3 $2-start-pos))
+         ((exp AND exp)      (BinExp $1 "&&" $3 $2-start-pos))
+         ((exp OR exp)       (BinExp $1 "||" $3 $2-start-pos))
          
-         ((BNOT @ place-exp exp)         (prec BNOT) (UnaExp "!" $4 $3))
-         ((exp ARITHOP1 @ place-exp exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4))
-         ((exp ARITHOP2 @ place-exp exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4))
-         ((exp RELOP @ place-exp exp)    (prec RELOP) (BinExp $1 $2 $5 $4))
-         ((exp EQOP @ place-exp exp)     (prec EQOP) (BinExp $1 $2 $5 $4))
-         ((exp BAND @ place-exp exp)     (prec BAND) (BinExp $1 "&" $5 $4))
-         ((exp BXOR @ place-exp exp)     (prec BXOR) (BinExp $1 "^" $5 $4))
-         ((exp BOR @ place-exp exp)      (prec BOR) (BinExp $1 "|" $5 $4))
-         ((exp AND @ place-exp exp)      (prec AND) (BinExp $1 "&&" $5 $4))
-         ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4))
+         ((BNOT @ place-exp exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
+         ((exp ARITHOP1 @ place-exp exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp ARITHOP2 @ place-exp exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp RELOP @ place-exp exp)    (prec RELOP) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp EQOP @ place-exp exp)     (prec EQOP) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp BAND @ place-exp exp)     (prec BAND) (BinExp $1 "&" $5 $4 $2-start-pos))
+         ((exp BXOR @ place-exp exp)     (prec BXOR) (BinExp $1 "^" $5 $4 $2-start-pos))
+         ((exp BOR @ place-exp exp)      (prec BOR) (BinExp $1 "|" $5 $4 $2-start-pos))
+         ((exp AND @ place-exp exp)      (prec AND) (BinExp $1 "&&" $5 $4 $2-start-pos))
+         ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2))
 
@@ -151,13 +151,3 @@
 
 (send ast pretty-print)
 
-;(define (loop input)
-;  (define out (simple-math-lexer input))
-;  (pretty-display (position-token-token out))
-;  (simple-math-parser out)
-;  (when (not (equal? (position-token-token out) 'EOF))
-;    (loop input)))
-
-;(let ([input (open-input-string "3 - 3.3 +@5 hi123")])
-;  (port-count-lines! input)
-;  (loop input))

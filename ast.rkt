@@ -83,7 +83,7 @@
     ))
 
 (define Op%
-  (class object%
+  (class Base%
     (super-new)
     (init-field op [place "?"])
     
