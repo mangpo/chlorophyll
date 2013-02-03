@@ -83,7 +83,7 @@
 
 (define simple-math-parser
   (parser
-   (start stmts)
+   (start block)
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
@@ -155,6 +155,8 @@
     (stmts
          ((stmt)       (list $1))
          ((stmt stmts) (cons $1 $2)))
+
+    (block ((stmts) (new Block% [stmts $1])))
 
 )))
 

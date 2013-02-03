@@ -1,6 +1,8 @@
 #lang racket
 
 (require racket/class)
+(require "visitor-interface.rkt")
+
 (provide (all-defined-out))
 
 (define (inc space)
@@ -26,7 +28,15 @@
 (define Exp%
   (class Livable%
     (super-new)
+    (inherit-field place)
     (init-field [known-type #f])
+
+    (define/public (get-place-known)
+      (cons place known-type))
+
+    (define/public (set-place-known x)
+      (set! place (car x))
+      (set! known-type (cdr x)))
 
     (define/public (get-known-type)
       known-type)
@@ -44,6 +54,9 @@
     
     (define/public (get-data)
       n)
+
+    (define/public (accept v)
+      (send v visit this))
     ))
 
 (define Var%
@@ -57,6 +70,9 @@
     
     (define/public (get-data)
       name)
+
+    (define/public (accept v)
+      (send v visit this))
     ))
 
 (define BinExp%
@@ -72,6 +88,8 @@
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
     
+    (define/public (accept v)
+      (send v visit this))
     ))
 
 (define UnaExp%
@@ -86,6 +104,8 @@
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
     
+    (define/public (accept v)
+      (send v visit this))
     ))
 
 (define Op%
@@ -101,6 +121,8 @@
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(Op:~a @~a)" indent op place)))
     
+    (define/public (accept v)
+      (send v visit this))
     ))
 
 (define Assign%
@@ -112,6 +134,9 @@
       (pretty-display (format "~a(ASSIGN ~a =" indent lhs))
       (send rhs pretty-print (inc indent))
       )
+
+    (define/public (accept v)
+      (send v visit this))
   ))
 
 (define VarDecl%
@@ -123,4 +148,19 @@
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a[DECL ~a ~a @~a (known=~a)]" indent type var place known-type))
       )
+
+    (define/public (accept v)
+      (send v visit this))
   ))
+
+(define Block%
+  (class object%
+     (super-new)
+     (init-field stmts)
+
+     (define/public (pretty-print [indent ""])
+       (andmap (lambda (i) (send i pretty-print indent)) stmts))
+
+    (define/public (accept v)
+      (send v visit this))
+))
