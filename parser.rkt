@@ -3,12 +3,14 @@
          (prefix-in re- parser-tools/lex-sre)
          parser-tools/yacc)
 (require "ast.rkt")
-(provide (all-defined-out))
+
+(provide ast-from-string)
  
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK
-			       = SEMICOL))
+			       = SEMICOL
+                               INT KNOWN))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -52,6 +54,8 @@
    ("}" (token-RBRACK))
    (";" (token-SEMICOL))
    ("=" (token-=))
+   ("int" (token-INT))
+   ("known" (token-KNOWN))
    ((re-+ number10) (token-NUM (string->number lexeme)))
    (identifier      (token-VAR lexeme))
    ;; recursively calls the lexer which effectively skips whitespace
@@ -79,7 +83,7 @@
 
 (define simple-math-parser
   (parser
-   (start stmt)
+   (start stmts)
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
@@ -135,19 +139,28 @@
 
 	 ((LPAREN exp RPAREN) $2))
 
-    (stmt ((id = exp SEMICOL) (new Stmt% [lhs $1] [rhs $3])))
+    (known-type
+         (() "")
+         ((KNOWN) "known"))
+
+    (data-type
+         ((INT) "int"))
+
+    (stmt 
+         ((VAR = exp SEMICOL) (new Assign% [lhs $1] [rhs $3]))
+         ((known-type data-type VAR SEMICOL) 
+          (new VarDecl% [var $3] [type $2] [known-type (equal? $1 "known")] [pos $3-start-pos]))
+         )
+
+    (stmts
+         ((stmt)       (list $1))
+         ((stmt stmts) (cons $1 $2)))
 
 )))
 
 (define (lex-this lexer input) (lambda () (lexer input)))
 
-;(define test "20 +@a -1 *@a 10")
-(define test "x = (-1@1 &@2 100@3) <@4 (!2@5 ||@6 20@7) +@8 -1@9 *@10 2@11;")
-
-(define ast
-  (let ((input (open-input-string test)))
+(define (ast-from-string s)
+  (let ((input (open-input-string s)))
     (simple-math-parser (lex-this simple-math-lexer input))))
-
-
-(send ast pretty-print)
 

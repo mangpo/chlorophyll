@@ -13,17 +13,23 @@
   ))
 
 
-(define Exp%
+(define Livable%
   (class Base%
     (super-new)
-    (init-field [known-type #f]
-                [place "?"])
-    (define/public (get-known-type)
-      known-type)
+    (init-field [place "?"])
     (define/public (get-place)
       place)
     (define/public (set-place new-place)
       (set! place new-place))
+  ))
+
+(define Exp%
+  (class Livable%
+    (super-new)
+    (init-field [known-type #f])
+
+    (define/public (get-known-type)
+      known-type)
   ))
 
 (define Num%
@@ -83,9 +89,10 @@
     ))
 
 (define Op%
-  (class Base%
+  (class Livable%
     (super-new)
-    (init-field op [place "?"])
+    (inherit-field place)
+    (init-field op)
     
     (define/public (add-place new-place)
       (set! place new-place)
@@ -96,21 +103,24 @@
     
     ))
 
-
-(define Stmt%
+(define Assign%
   (class Base%
     (super-new)
     (init-field lhs rhs)
 
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(ASSIGN" indent))
-      (send lhs pretty-print (inc indent))
-      (pretty-display (format "~a=" (inc indent)))
+      (pretty-display (format "~a(ASSIGN ~a =" indent lhs))
       (send rhs pretty-print (inc indent))
       )
   ))
 
-;(define a (new BinExp% [op 1] [e1 2] [e2 3] [known-type #t]))
-;(send a to-string)
-;(send a set-place 1)
-;(send a to-string)
+(define VarDecl%
+  (class Exp%
+    (super-new)
+    (inherit-field place known-type)
+    (init-field var type)
+
+    (define/public (pretty-print [indent ""])
+      (pretty-display (format "~a[DECL ~a ~a @~a (known=~a)]" indent type var place known-type))
+      )
+  ))
