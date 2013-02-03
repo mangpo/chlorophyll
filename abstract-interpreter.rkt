@@ -3,8 +3,7 @@
 (require "ast.rkt" "parser.rkt" "visitor-interface.rkt")
 
 ;(define test "known int x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
-;(define test "known int x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@18 -1@10 *@10 2@10;")
-(define test "known int x; x = 1@1 +@10 -1@10;")
+(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
 
 (define my-ast (ast-from-string test))
 
@@ -16,53 +15,51 @@
     (init-field [env #hash()])
 
     (define (count-msg x y)
-      (if (equal? x y) 0 1))
-
-    (define (get-count l)
-      (car l))
-
-    (define (get-place l)
-      (car (cdr l)))
-    
-    (define (get-known l)
-      (car (cdr (cdr l))))
+      (cond 
+        [(equal? x y) 0]
+        [(equal? x "any") 0]
+        [(equal? y "any") 0]
+        [else 1]))
+        
     
     (define/public (visit ast)
       (cond
        [(is-a? ast Num%)
-          (list 0 (get-field place ast) #t)]
+          0]
 
        [(is-a? ast Var%) ; multiple places?
-          (cons 0 (dict-ref env (get-field name ast)))]
+          0]
 
        [(is-a? ast UnaExp%)
-          (define e1-ret (send (get-field e1 ast) accept this))
-          (define op-place (get-field place (get-field op ast)))
+          (define e1 (get-field e1 ast))
+          (define e1-count (send e1 accept this))
+          (define op-place (get-field place ast))
+          (set-field! known-type ast (get-field known-type e1))
           
-          (list (+ (get-count e1-ret) (count-msg op-place (get-place e1-ret)))
-                op-place
-                (get-known e1-ret))]
+          (+ e1-count (count-msg op-place (get-field place e1)))]
 
        [(is-a? ast BinExp%)
-          (define e1-ret (send (get-field e1 ast) accept this))
-          (define e2-ret (send (get-field e2 ast) accept this))
-          (define op-place (get-field place (get-field op ast)))
-
-          (list (+ (+ (+ (get-count e1-ret) (get-count e2-ret))
-                      (count-msg op-place (get-place e1-ret)))
-                   (count-msg op-place (get-place e2-ret)))
-                op-place
-                (and (get-known e1-ret) (get-known e2-ret)))]
+          (define e1 (get-field e1 ast))
+          (define e2 (get-field e2 ast))
+          (define e1-count (send e1 accept this))
+          (define e2-count (send e2 accept this))
+          (define op-place (get-field place ast))
+          (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
+          
+          (+ (+ (+ e1-count e2-count)
+                      (count-msg op-place (get-field place e1)))
+                   (count-msg op-place (get-field place e2)))]
                 
        [(is-a? ast VarDecl%) 
           (set! env (dict-set env (get-field var ast) (send ast get-place-known)))
           0]
 
        [(is-a? ast Assign%) 
-          (define lhs-place (cdr (dict-ref env (get-field lhs ast))))
-          (define rhs-ret (send (get-field rhs ast) accept this))
+          (define rhs (get-field rhs ast))
+          (define lhs-place (car (dict-ref env (get-field lhs ast))))
+          (define rhs-count (send rhs accept this))
        
-          (+ (get-count rhs-ret) (count-msg lhs-place (get-place rhs-ret)))
+          (+ rhs-count (count-msg lhs-place (get-field place rhs)))
         ]
 
        [(is-a? ast Block%) 

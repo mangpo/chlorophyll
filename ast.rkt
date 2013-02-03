@@ -44,9 +44,9 @@
 
 (define Num%
   (class Exp%
-    (super-new)
     (inherit-field known-type place)
-    (set! known-type #t)
+    (super-new [known-type #t])
+    (when (equal? place "?") (set! place "any"))
     (init-field n)
     
     (define/public (pretty-print [indent ""])
@@ -80,6 +80,7 @@
     (super-new)
     (inherit-field known-type place)
     (init-field op e1 e2)
+    (set! place (get-field place op))
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(BinOp:" indent))
@@ -97,6 +98,7 @@
     (super-new)
     (inherit-field known-type place)
     (init-field op e1)
+    (set! place (get-field place op))
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp:" indent))
