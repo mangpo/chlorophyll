@@ -66,7 +66,7 @@
           (foldl (lambda (stmt sum) (+ sum (send stmt accept this))) 
                  0 
                  (get-field stmts ast))]
-       [else 100]))
+       [else (raise "count-msg-interpreter: unimplemented!")]))
 ))
 
 (define interpreter (new count-msg-interpreter%))
