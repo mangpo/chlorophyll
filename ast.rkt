@@ -81,6 +81,10 @@
     (inherit-field known-type place)
     (init-field op e1 e2)
     (set! place (get-field place op))
+
+    ;;; Infer place for numbers.
+    (when (is-a? e1 Num%) (set-field! place e1 place))
+    (when (is-a? e2 Num%) (set-field! place e2 place))
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(BinOp:" indent))
@@ -99,6 +103,9 @@
     (inherit-field known-type place)
     (init-field op e1)
     (set! place (get-field place op))
+
+    ;;; Infer place for numbers.
+    (when (is-a? e1 Num%) (set-field! place e1 place))
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp:" indent))
@@ -131,6 +138,8 @@
   (class Base%
     (super-new)
     (init-field lhs rhs)
+
+    ;;; Infer place for numbers. TODO
 
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN ~a =" indent lhs))

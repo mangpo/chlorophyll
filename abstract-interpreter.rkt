@@ -1,33 +1,46 @@
 #lang racket
 
-(require "ast.rkt" "parser.rkt" "visitor-interface.rkt")
-
-;(define test "known int x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
-(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
-
-(define my-ast (ast-from-string test))
-
-(send my-ast pretty-print)
+(require "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt")
 
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [env #hash()])
+    (init-field [env (make-hash)] [places (make-hash)] [capacity 256])
 
+    ;;; Increase the used space of "place" by "add-space".
+    (define (inc-space place [add-space 1])
+      (define space (if (dict-has-key? places place)
+                        (dict-ref places place)
+                        0))
+      (set! space (+ space add-space))
+      (dict-set! places place space)
+      (when (> space capacity)
+            (raise (format "Error: exceed capacity of core ~a" place))))
+
+    ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x y)
       (cond 
         [(equal? x y) 0]
         [(equal? x "any") 0]
         [(equal? y "any") 0]
-        [else 1]))
+        [else 
+         (inc-space x est-comm)
+         (inc-space y est-comm)
+         1]))
+
+    (define/public (display-used-space)
+      (pretty-display places))
         
-    
     (define/public (visit ast)
       (cond
        [(is-a? ast Num%)
+          (inc-space (get-field place ast) est-num)
           0]
 
        [(is-a? ast Var%) ; multiple places?
+          (define place-known (dict-ref env (get-field name ast)))
+          (send ast set-place-known place-known)
+          (inc-space (get-field place ast) est-var)
           0]
 
        [(is-a? ast UnaExp%)
@@ -35,7 +48,8 @@
           (define e1-count (send e1 accept this))
           (define op-place (get-field place ast))
           (set-field! known-type ast (get-field known-type e1))
-          
+          (inc-space op-place (est-space (get-field op (get-field op ast)))) ; increase space
+
           (+ e1-count (count-msg op-place (get-field place e1)))]
 
        [(is-a? ast BinExp%)
@@ -45,19 +59,22 @@
           (define e2-count (send e2 accept this))
           (define op-place (get-field place ast))
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
+          (inc-space op-place (est-space (get-field op (get-field op ast)))) ; increase space
           
           (+ (+ (+ e1-count e2-count)
                       (count-msg op-place (get-field place e1)))
                    (count-msg op-place (get-field place e2)))]
                 
        [(is-a? ast VarDecl%) 
-          (set! env (dict-set env (get-field var ast) (send ast get-place-known)))
+          (dict-set! env (get-field var ast) (send ast get-place-known))
+          (inc-space (get-field place ast) est-data) ; include space
           0]
 
        [(is-a? ast Assign%) 
           (define rhs (get-field rhs ast))
-          (define lhs-place (car (dict-ref env (get-field lhs ast))))
           (define rhs-count (send rhs accept this))
+          (define lhs-place (car (dict-ref env (get-field lhs ast))))
+          (inc-space lhs-place est-var)
        
           (+ rhs-count (count-msg lhs-place (get-field place rhs)))
         ]
@@ -66,8 +83,18 @@
           (foldl (lambda (stmt sum) (+ sum (send stmt accept this))) 
                  0 
                  (get-field stmts ast))]
-       [else (raise "count-msg-interpreter: unimplemented!")]))
+       [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))
+
+;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
+(define test "known int@4 x; x = (x &@1 100);")
+(define my-ast (ast-from-string test))
+
+(send my-ast pretty-print)
 
 (define interpreter (new count-msg-interpreter%))
 (pretty-display (send my-ast accept interpreter))
+
+(send my-ast pretty-print)
+
+(send interpreter display-used-space)
