@@ -75,10 +75,9 @@
       name)
 
     (define/public (not-found-error)
-      (pretty-display (format "line:~a col:~a offset:~a: error '~a' undefined." 
+      (pretty-display (format "l:~a c:~a error '~a' is undefined." 
                               (position-line pos) 
                               (position-col pos) 
-                              (position-offset pos) 
                               name))
       (exit)
       )

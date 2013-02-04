@@ -105,7 +105,8 @@
 
 ;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
 (define test "int@4 x; x = (-1 &@1 x) <@4 (!@5 2 ||@5 20) +@10 -1 *@10 2; x = 1;")
-(define my-ast (ast-from-string test))
+;(define my-ast (ast-from-string test))
+(define my-ast (ast-from-file "program.mylang"))
 
 (send my-ast pretty-print)
 

@@ -4,7 +4,7 @@
          parser-tools/yacc)
 (require "ast.rkt")
 
-(provide ast-from-string)
+(provide ast-from-string ast-from-file)
  
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
@@ -170,5 +170,13 @@
 
 (define (ast-from-string s)
   (let ((input (open-input-string s)))
-    (simple-math-parser (lex-this simple-math-lexer input))))
+    (ast input)))
+
+(define (ast-from-file file)
+  (let ((input (open-input-file file)))
+    (port-count-lines! input)
+    (ast input)))
+
+(define (ast input)
+  (simple-math-parser (lex-this simple-math-lexer input)))
 
