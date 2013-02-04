@@ -2,18 +2,41 @@
 
 (require "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt")
 
+(struct core (space costly-op) #:mutable)
+
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
     (init-field [env (make-hash)] [places (make-hash)] [capacity 256])
 
     ;;; Increase the used space of "place" by "add-space".
-    (define (inc-space place [add-space 1])
-      (define space (if (dict-has-key? places place)
+    (define (inc-space place add-space)
+      (when (not (dict-has-key? places place))
+            (dict-set! places place (core 0 (set))))
+      (define core-info (dict-ref places place))
+      (define space (+ (core-space core-info) add-space))
+      (set-core-space! core-info space)
+      
+      (when (> space capacity)
+            (raise (format "Error: exceed capacity of core ~a" place))))
+ 
+      
+    (define (inc-space-with-op place op)
+      (define core-info (if (dict-has-key? places place)
                         (dict-ref places place)
-                        0))
-      (set! space (+ space add-space))
-      (dict-set! places place space)
+                        (core 0 (set))))
+      (define space (core-space core-info))
+      (define costly-op (core-costly-op core-info))
+      (define add-space (est-space op))
+
+      (if (> add-space 4)
+          (if (set-member? costly-op op)
+              (set! space (+ space 4))
+              (begin (set! space (+ space add-space))
+                     (set! costly-op (set-add costly-op op))))
+          (set! space (+ space add-space)))
+
+      (dict-set! places place (core space costly-op))
       (when (> space capacity)
             (raise (format "Error: exceed capacity of core ~a" place))))
 
@@ -49,7 +72,7 @@
           (define e1-count (send e1 accept this))
           (define op-place (get-field place ast))
           (set-field! known-type ast (get-field known-type e1))
-          (inc-space op-place (est-space (get-field op (get-field op ast)))) ; increase space
+          (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
 
           (+ e1-count (count-msg op-place (get-field place e1)))]
 
@@ -60,15 +83,20 @@
           (define e2-count (send e2 accept this))
           (define op-place (get-field place ast))
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
-          (inc-space op-place (est-space (get-field op (get-field op ast)))) ; increase space
+          (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
           
           (+ (+ (+ e1-count e2-count)
                       (count-msg op-place (get-field place e1)))
                    (count-msg op-place (get-field place e2)))]
                 
        [(is-a? ast VarDecl%) 
-          (dict-set! env (get-field var ast) (send ast get-place-known))
-          (inc-space (get-field place ast) est-data) ; include space
+          (define place-known (send ast get-place-known))
+          (define place (get-field place ast))
+          (define var-list (get-field var-list ast))
+          (for ([var var-list])
+               (dict-set! env var place-known))
+          (inc-space place (* (length var-list) est-data)) ; include space
+
           0]
 
        [(is-a? ast Assign%) 
@@ -106,13 +134,12 @@
 ;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
 (define test "int@4 x; x = (-1 &@1 x) <@4 (!@5 2 ||@5 20) +@10 -1 *@10 2; x = 1;")
 ;(define my-ast (ast-from-string test))
-(define my-ast (ast-from-file "program.mylang"))
+(define my-ast (ast-from-file "1.mylang"))
 
 (send my-ast pretty-print)
-
 (define interpreter (new count-msg-interpreter%))
-(pretty-display (send my-ast accept interpreter))
-
+(pretty-display (format "# messages = ~a" (send my-ast accept interpreter)))
+(newline)
 (send my-ast pretty-print)
 
 (send interpreter display-used-space)

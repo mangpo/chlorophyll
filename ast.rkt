@@ -166,10 +166,11 @@
   (class Exp%
     (super-new)
     (inherit-field place known-type)
-    (init-field var type)
+    (init-field var-list type)
 
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" indent type var place known-type))
+      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" indent type var-list place known-type))
+      
       )
 
     (define/public (accept v)

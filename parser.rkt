@@ -9,7 +9,7 @@
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK
-			       = SEMICOL
+			       = SEMICOL COMMA
                                INT KNOWN))
 
 (define-lex-trans number
@@ -25,14 +25,13 @@
 (define-lex-abbrevs
   (digit10 (char-range "0" "9"))
   (number10 (number digit10))
-  (arith-op1 (re-or "*" "/"))
+  (arith-op1 (re-or "*" "/" "%"))
   (arith-op2 (re-or "+" "-"))
   (rel-op (re-or "<" "<=" ">=" ">"))
   (eq-op (re-or "==" "!="))
-  (identifier-characters (re-or (char-range "A" "z")
-                                "?" ":" "$" "%" "^" "&"))
+  (identifier-characters (char-range "A" "z"))
   (identifier-characters-ext (re-or digit10 identifier-characters))
-  (identifier (re-seq (re-+ identifier-characters) 
+  (identifier (re-seq identifier-characters
                       (re-* identifier-characters-ext))))
   
 (define simple-math-lexer
@@ -53,6 +52,7 @@
    ("{" (token-LBRACK))
    ("}" (token-RBRACK))
    (";" (token-SEMICOL))
+   ("," (token-COMMA))
    ("=" (token-=))
    ("int" (token-INT))
    ("known" (token-KNOWN))
@@ -146,15 +146,19 @@
     (data-type
          ((INT) "int"))
 
+    (var-list
+         ((VAR) (list $1))
+         ((VAR COMMA var-list) (cons $1 $3))) 
+
     (stmt 
          ((VAR = exp SEMICOL) 
             (new Assign% [lhs (new Var% [name $1] [pos $1-start-pos])] [rhs $3]))
 
-         ((known-type data-type VAR SEMICOL) 
-            (new VarDecl% [var $3] [type $2] [known-type (equal? $1 "known")] [pos $3-start-pos]))
+         ((known-type data-type var-list SEMICOL) 
+            (new VarDecl% [var-list $3] [type $2] [known-type (equal? $1 "known")] [pos $3-start-pos]))
 
-         ((known-type data-type @ place-exp VAR SEMICOL) 
-            (new VarDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
+         ((known-type data-type @ place-exp var-list SEMICOL) 
+            (new VarDecl% [var-list $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
                  [pos $3-start-pos]))
          )
 

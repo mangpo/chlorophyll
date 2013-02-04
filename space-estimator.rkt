@@ -9,8 +9,9 @@
 
 (define space-map 
   #hash(("!" . 1)
-        ("*" . 12) ; @p . . . 17 for +* unext
-        ("/" . 24) ; TODO: better estimation
+        ("*" . 7) ; @p 17 for +* unext
+        ("/" . 52) ; estimate from chuck's blog
+        ("%" . 52) ; estimate from chuck's blog
         ("+" . 2)  ; . +
         ("-" . 10) ; - @p . + num . +
         ("<" . 11) ; a < b --> a - b < 0       - @p . + num . + -if
