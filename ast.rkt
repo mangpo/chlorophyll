@@ -1,6 +1,9 @@
 #lang racket
 
 (require racket/class)
+(require parser-tools/lex
+         (prefix-in re- parser-tools/lex-sre)
+         parser-tools/yacc)
 (require "visitor-interface.rkt")
 
 (provide (all-defined-out))
@@ -62,7 +65,7 @@
 (define Var%
   (class Exp%
     (super-new)
-    (inherit-field known-type place)
+    (inherit-field known-type place pos)
     (init-field name)
     
     (define/public (pretty-print [indent ""])
@@ -70,6 +73,15 @@
     
     (define/public (get-data)
       name)
+
+    (define/public (not-found-error)
+      (pretty-display (format "line:~a col:~a offset:~a: error '~a' undefined." 
+                              (position-line pos) 
+                              (position-col pos) 
+                              (position-offset pos) 
+                              name))
+      (exit)
+      )
 
     (define/public (accept v)
       (send v visit this))

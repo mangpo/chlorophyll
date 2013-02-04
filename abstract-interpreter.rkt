@@ -38,7 +38,8 @@
           0]
 
        [(is-a? ast Var%) ; multiple places?
-          (define place-known (dict-ref env (get-field name ast)))
+          (define place-known (dict-ref env (get-field name ast) 
+                                        (lambda () (send ast not-found-error))))
           (send ast set-place-known place-known)
           (inc-space (get-field place ast) est-var)
           0]
