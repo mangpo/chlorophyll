@@ -147,9 +147,12 @@
          ((INT) "int"))
 
     (stmt 
-         ((VAR = exp SEMICOL) (new Assign% [lhs $1] [rhs $3]))
+         ((VAR = exp SEMICOL) 
+            (new Assign% [lhs (new Var% [name $1] [pos $1-start-pos])] [rhs $3]))
+
          ((known-type data-type VAR SEMICOL) 
             (new VarDecl% [var $3] [type $2] [known-type (equal? $1 "known")] [pos $3-start-pos]))
+
          ((known-type data-type @ place-exp VAR SEMICOL) 
             (new VarDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
                  [pos $3-start-pos]))

@@ -87,7 +87,7 @@
     (when (is-a? e2 Num%) (set-field! place e2 place))
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(BinOp:" indent))
+      (pretty-display (format "~a(BinExp: @~a (known=~a)" indent place known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
@@ -108,7 +108,7 @@
     (when (is-a? e1 Num%) (set-field! place e1 place))
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(UnaOp:" indent))
+      (pretty-display (format "~a(UnaOp: @~a (known=~a)" indent place known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
@@ -142,7 +142,8 @@
     ;;; Infer place for numbers. TODO
 
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(ASSIGN ~a =" indent lhs))
+      (pretty-display (format "~a(ASSIGN" indent))
+      (send lhs pretty-print (inc indent))
       (send rhs pretty-print (inc indent))
       )
 
@@ -157,7 +158,7 @@
     (init-field var type)
 
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a[DECL ~a ~a @~a (known=~a)]" indent type var place known-type))
+      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" indent type var place known-type))
       )
 
     (define/public (accept v)

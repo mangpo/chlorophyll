@@ -71,10 +71,26 @@
           0]
 
        [(is-a? ast Assign%) 
+          (define lhs (get-field lhs ast))
           (define rhs (get-field rhs ast))
+
+          ;;; Visit lhs
+          (send lhs accept this)
+
+          (define lhs-place (get-field place lhs))
+          (define lhs-known (get-field known-type lhs))
+
+          ;;; If rhs is a number, set place to be equal to lhs
+          (when (is-a? rhs Num%) (set-field! place rhs lhs-place))
+
+          ;;; Visit rhs
           (define rhs-count (send rhs accept this))
-          (define lhs-place (car (dict-ref env (get-field lhs ast))))
-          (inc-space lhs-place est-var)
+
+          ;;; Update dynamic known type
+          (define rhs-known (get-field place rhs))
+          (when (and (not rhs-known) lhs-known)
+                (set-field! known-type lhs #f)
+                (dict-set! env (get-field name lhs) (send lhs get-place-known)))
        
           (+ rhs-count (count-msg lhs-place (get-field place rhs)))
         ]
@@ -87,7 +103,7 @@
 ))
 
 ;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
-(define test "known int@4 x; x = (x &@1 100);")
+(define test "int@4 x; x = (-1 &@1 x) <@4 (!@5 2 ||@5 20) +@10 -1 *@10 2; x = 1;")
 (define my-ast (ast-from-string test))
 
 (send my-ast pretty-print)
