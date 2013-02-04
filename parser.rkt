@@ -6,7 +6,7 @@
 
 (provide ast-from-string ast-from-file)
  
-(define-tokens a (NUM VAR ARITHOP1 ARITHOP2 RELOP EQOP))
+(define-tokens a (NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK
 			       = SEMICOL COMMA
@@ -27,6 +27,7 @@
   (number10 (number digit10))
   (arith-op1 (re-or "*" "/" "%"))
   (arith-op2 (re-or "+" "-"))
+  (arith-op3 (re-or "<<" ">>"))
   (rel-op (re-or "<" "<=" ">=" ">"))
   (eq-op (re-or "==" "!="))
   (identifier-characters (char-range "A" "z"))
@@ -40,6 +41,7 @@
    ("!" (token-BNOT))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
+   (arith-op3 (token-ARITHOP3 lexeme))
    (rel-op (token-RELOP lexeme))
    (eq-op (token-EQOP lexeme))
    ("&" (token-BAND))
@@ -97,6 +99,7 @@
     (left BAND)
     (left EQOP) 
     (left RELOP) 
+    (left ARITHOP3)
     (left ARITHOP2)
     (left ARITHOP1)
     (left BNOT))
@@ -118,6 +121,7 @@
          ((BNOT exp)         (UnaExp "!" $2 $1-start-pos))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP2 exp) (BinExp $1 $2 $3 $2-start-pos))
+         ((exp ARITHOP3 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp RELOP exp)    (BinExp $1 $2 $3 $2-start-pos))
          ((exp EQOP exp)     (BinExp $1 $2 $3 $2-start-pos))
          ((exp BAND exp)     (BinExp $1 "&" $3 $2-start-pos))
@@ -129,6 +133,7 @@
          ((BNOT @ place-exp exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
          ((exp ARITHOP1 @ place-exp exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp ARITHOP2 @ place-exp exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp ARITHOP3 @ place-exp exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp RELOP @ place-exp exp)    (prec RELOP) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp EQOP @ place-exp exp)     (prec EQOP) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp BAND @ place-exp exp)     (prec BAND) (BinExp $1 "&" $5 $4 $2-start-pos))

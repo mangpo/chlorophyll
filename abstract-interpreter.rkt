@@ -61,7 +61,8 @@
          1]))
 
     (define/public (display-used-space)
-      (pretty-display places))
+      (dict-for-each places (lambda (k v) 
+         (pretty-display (format "core = ~a, space = ~a, ops = ~a" k (core-space v) (core-costly-op v))))))
         
     (define/public (visit ast)
       (cond
@@ -143,7 +144,7 @@
 ;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
 (define test "int@4 x; x = (-1 &@1 x) <@4 (!@5 2 ||@5 20) +@10 -1 *@10 2; x = 1;")
 ;(define my-ast (ast-from-string test))
-(define my-ast (ast-from-file "1.mylang"))
+(define my-ast (ast-from-file "2.mylang"))
 
 (send my-ast pretty-print)
 (define interpreter (new count-msg-interpreter%))

@@ -1,0 +1,11 @@
+int@4 x_low;
+int@104 x_high;
+int@5 y_low;
+int@105 y_high;
+
+
+int@5 sum_l;
+int@105 sum_h;
+sum_l = x_low +@5 y_low;
+sum_h = x_high +@105 y_high +@105 (sum_l >>@5 16);
+sum_l = sum_l &@5 65535;
