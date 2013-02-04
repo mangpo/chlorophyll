@@ -2,6 +2,8 @@
 
 (require "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt")
 
+(define debug #t)
+
 (struct core (space costly-op) #:mutable)
 
 (define count-msg-interpreter%
@@ -17,6 +19,9 @@
       (define space (+ (core-space core-info) add-space))
       (set-core-space! core-info space)
       
+      (when debug
+            (pretty-display (format "ADD-SPACE: place = ~a, add = ~a, current =~a" 
+                                    place add-space space)))
       (when (> space capacity)
             (raise (format "Error: exceed capacity of core ~a" place))))
  
@@ -29,14 +34,18 @@
       (define costly-op (core-costly-op core-info))
       (define add-space (est-space op))
 
-      (if (> add-space 4)
+      (when (> add-space 4)
           (if (set-member? costly-op op)
-              (set! space (+ space 4))
-              (begin (set! space (+ space add-space))
-                     (set! costly-op (set-add costly-op op))))
-          (set! space (+ space add-space)))
+              (set! add-space 4)
+              (set! costly-op (set-add costly-op op))))
 
+      (set! space (+ space add-space))
       (dict-set! places place (core space costly-op))
+
+      (when debug
+            (pretty-display (format "ADD-SPACE: op = ~a, place = ~a, add = ~a, current =~a" 
+                                    op place add-space space)))
+
       (when (> space capacity)
             (raise (format "Error: exceed capacity of core ~a" place))))
 
