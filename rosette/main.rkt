@@ -29,5 +29,10 @@
   )|#
 
 ;(solve (validity-of num-msg 100))
+
+;; failed
 (solve (assert (= num-msg 5)))
+
+;; sym-place = 2 when fully-specify?
+;(solve (assert (= num-msg 3)))
 (current-solution)
