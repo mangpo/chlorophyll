@@ -7,7 +7,7 @@
 ;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
 ;(define my-ast (ast-from-string test))
 
-(define my-ast (ast-from-file "examples/2.mylang"))
+(define my-ast (ast-from-file "examples/program.mylang"))
 
 ;(send my-ast pretty-print)
 (define interpreter (new count-msg-interpreter%))
@@ -28,11 +28,14 @@
   (pretty-print (map (current-solution) neg?))
   )|#
 
+(let ([collector (new var-collector%)])
+  (pretty-print (send my-ast accept collector)))
+
 ;(solve (validity-of num-msg 100))
 
 ;; failed
-(solve (assert (= num-msg 5)))
+;(solve (assert (= num-msg 5)))
 
 ;; sym-place = 2 when fully-specify?
 ;(solve (assert (= num-msg 3)))
-(current-solution)
+;(current-solution)
