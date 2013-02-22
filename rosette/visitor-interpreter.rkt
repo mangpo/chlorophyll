@@ -3,13 +3,14 @@
 (require "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
          "symbolic-dict.rkt")
 
-(define debug #t)
+(provide (all-defined-out))
 
+(define debug #f)
 
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [env (make-hash)] [places (make-cores #:capacity 256 #:max-cores 144)])
+    (init-field [env (make-hash)] [places (make-cores #:capacity 256 #:max-cores 16)])
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
@@ -17,42 +18,6 @@
     
     (define (inc-space-with-op place op)
       (cores-add-op places place op))
-    ;; (define (inc-space place add-space)
-    ;;   (when (not (dict-has-key? places place))
-    ;;         (dict-set! places place (core 0 (set))))
-    ;;   (define core-info (dict-ref places place))
-    ;;   (define space (+ (core-space core-info) add-space))
-    ;;   (set-core-space! core-info space)
-      
-    ;;   (when debug
-    ;;         (pretty-display (format "ADD-SPACE: place = ~a, add = ~a, current =~a" 
-    ;;                                 place add-space space)))
-    ;;   (when (> space capacity)
-    ;;         (raise (format "Error: exceed capacity of core ~a" place))))
- 
-      
-    ;; (define (inc-space-with-op place op)
-    ;;   (define core-info (if (dict-has-key? places place)
-    ;;                     (dict-ref places place)
-    ;;                     (core 0 (set))))
-    ;;   (define space (core-space core-info))
-    ;;   (define costly-op (core-costly-op core-info))
-    ;;   (define add-space (est-space op))
-
-    ;;   (when (> add-space 4)
-    ;;       (if (set-member? costly-op op)
-    ;;           (set! add-space 4)
-    ;;           (set! costly-op (set-add costly-op op))))
-
-    ;;   (set! space (+ space add-space))
-    ;;   (dict-set! places place (core space costly-op))
-
-    ;;   (when debug
-    ;;         (pretty-display (format ">> ADD-SPACE: op = ~a, place = ~a, add = ~a, current =~a" 
-    ;;                                 op place add-space space)))
-
-    ;;   (when (> space capacity)
-    ;;         (raise (format "Error: exceed capacity of core ~a" place))))
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x y)
@@ -67,10 +32,6 @@
          (inc-space y est-comm)
          1]))
 
-    ;(define/public (display-used-space)
-    ;  (dict-for-each places (lambda (k v) 
-    ;     (pretty-display (format "core = ~a, space = ~a, ops = ~a" k (core-space v) (core-costly-op v))))))
-        
     (define/public (display-used-space)
       (display-cores places))
       
@@ -170,15 +131,3 @@
        [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))
 
-;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
-(define test "int@4 x; x = (-1 &@1 x) <@4 (!@5 2 ||@5 20) +@10 -1 *@10 2; x = 1;")
-;(define my-ast (ast-from-string test))
-(define my-ast (ast-from-file "examples/2.mylang"))
-
-(send my-ast pretty-print)
-(define interpreter (new count-msg-interpreter%))
-(pretty-display (format "# messages = ~a" (send my-ast accept interpreter)))
-(newline)
-(send my-ast pretty-print)
-
-(send interpreter display-used-space)
