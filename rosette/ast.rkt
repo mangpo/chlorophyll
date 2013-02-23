@@ -21,7 +21,7 @@
 (define Livable%
   (class Base%
     (super-new)
-    (define-symbolic sym-place number?) ; place = ??
+    (define-symbolic* sym-place number?) ; place = ??
     (assert (not (= sym-place 0)))      ; assert that place != any
     (init-field [place sym-place])
     (define/public (get-place)
