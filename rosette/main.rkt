@@ -17,9 +17,9 @@
 ;(concrete)
 
 ;; current-solution doesn't like me :(
-(define (synthesize)
+(define (simple-syn)
   (define my-ast (ast-from-file "examples/symbolic.mylang"))
-  (define interpreter (new count-msg-interpreter%))
+  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 3]))
   (define num-msg (send my-ast accept interpreter))
   (send my-ast pretty-print)
   (pretty-display (format "# messages = ~a" num-msg))
@@ -28,12 +28,12 @@
   (current-solution)
   )
 
-(synthesize)
+;(simple-syn)
 
 ;; this part verify that solve should be able to find a solution.
 (define (foo)
   (define my-ast (ast-from-file "examples/symbolic.mylang"))
-  (define interpreter (new count-msg-interpreter%))
+  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 3]))
   (define num-msg (send my-ast accept interpreter))
   (send my-ast pretty-print)
   ;(send interpreter display-used-space)
@@ -53,12 +53,34 @@
 
 ;(unsat-core)
 
-;(define (validity-of num-msg limit)
-;  (assert (<= num-msg limit)))
+(define (simple-syn2)
+  (define my-ast (ast-from-file "examples/symbolic.mylang"))
+  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 3]))
+  (define num-msg (send my-ast accept interpreter))
+  (send my-ast pretty-print)
+  (pretty-display (format "# messages = ~a" num-msg))
+  
+  (let ([collector (new var-collector%)])
+    (pretty-display (send my-ast accept collector))
+    (synthesize #:forall (set->list (send my-ast accept collector))
+                #:assume #t
+                #:guarantee (assert #t))
+    )
+  
+  ;(send interpreter display-used-space)
+  ;(solve (assert (= num-msg 3)))
+  (current-solution)
+  )
 
-#|(let ([collector (new var-collector%)])
-  (synthesize #:forall (set->list (send my-ast accept collector))
-              #:assume #t
-              #:guarantee (validity-of num-msg 100))
-  (pretty-print (map (current-solution) neg?))
-  )|#
+(define (test)
+  (define my-ast (ast-from-file "examples/2.mylang"))
+  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 16]))
+  (define num-msg (send my-ast accept interpreter))
+  (send my-ast pretty-print)
+  (pretty-display (format "# messages = ~a" num-msg))
+  ;(send interpreter display-used-space)
+  (solve (assert (= num-msg 5)))
+  (current-solution)
+  )
+
+(test)
