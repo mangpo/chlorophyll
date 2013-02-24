@@ -31,6 +31,9 @@
          (inc-space x est-comm)
          (inc-space y est-comm)
          1]))
+    
+    (define/public (assert-capacity)
+      (cores-assert places))
 
     (define/public (display-used-space)
       (display-cores places))

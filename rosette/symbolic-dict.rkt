@@ -28,6 +28,13 @@
            (for/list ([i (in-range 0 max-cores)])
              (if (= (vector-ref v i) 0) 0 1)))))
 
+(define (cores-assert cores)
+  (assert (<= (cores-count cores) max-cores))
+  (let ([space (core-space cores)])
+    (for ([i (in-range 0 max-cores)])
+      (assert (<= (vector-ref space i) capacity))
+      )))
+
 (define (cores-inc-space cores i add-space)
   (let ([space (core-space cores)])
        (if (symbolic? i)                     ; <-- optimization
@@ -38,15 +45,14 @@
                (let ([val-space (vector-ref space j)])
                  (vector-set! space j (if (= i j) 
                                           (let ([new-space (+ val-space add-space)])
-                                            ;uncomment this => unsat core
-                                            ;(assert (<= new-space capacity))
+                                            (assert (<= new-space capacity))
                                             new-space)
                                           val-space)))))
            (let* ([val-space (vector-ref space i)] 
                   [new-space (+ val-space add-space)]) ; <-- optimization
-             ;(assert (<= new-space capacity))
+             (assert (<= new-space capacity))
              (vector-set! space i new-space))))
-  ;(assert (<= (cores-count cores) max-cores))
+  (assert (<= (cores-count cores) max-cores))
   )
 
 (define (cores-add-op cores i op)
@@ -64,7 +70,7 @@
                      (vector-set! space j (if (= i j) 
                                               (let* ([more-space (if (set-member? op val-ops) 4 add-space)]
                                                      [new-space (+ val-space more-space)])
-                                                ;(assert (<= new-space capacity))
+                                                (assert (<= new-space capacity))
                                                 new-space)
                                               val-space))
                      (vector-set! costly-op j (if (= i j) 
@@ -74,10 +80,10 @@
                       [val-ops (vector-ref costly-op i)]
                       [more-space (if (set-member? op val-ops) 4 add-space)]
                       [new-space (+ val-space more-space)])  ; <-- optimization
-                 ;(assert (<= new-space capacity))
+                 (assert (<= new-space capacity))
                  (vector-set! space i new-space)
                  (vector-set! costly-op i (set-add val-ops op))
                  ))
-           ;(assert (<= (cores-count cores) max-cores))
+           (assert (<= (cores-count cores) max-cores))
         )
       (cores-inc-space cores i add-space)))

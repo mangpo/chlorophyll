@@ -2,7 +2,7 @@
 
 (require "ast.rkt" "parser.rkt" "visitor-interpreter.rkt" "visitor-variables.rkt")
 
-(configure [bitwidth 8])
+(configure [bitwidth 10])
 
 ;; Concrete version
 (define (concrete)
@@ -28,7 +28,7 @@
   (current-solution)
   )
 
-;(synthesize)
+(synthesize)
 
 ;; this part verify that solve should be able to find a solution.
 (define (foo)
@@ -38,6 +38,7 @@
   (send my-ast pretty-print)
   ;(send interpreter display-used-space)
   (pretty-display (format "# messages = ~a" num-msg))
+  ;(send interpreter assert-capacity)
   (assert (= num-msg 3))
 )
 
