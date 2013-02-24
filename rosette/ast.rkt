@@ -17,13 +17,16 @@
     (init-field [pos #f])   
   ))
 
+(define (get-sym)
+  (define-symbolic* sym-place number?) ; place = ??
+  (assert (not (= sym-place 0)))       ; assert that place != any
+  sym-place)
 
 (define Livable%
   (class Base%
     (super-new)
-    (define-symbolic* sym-place number?) ; place = ??
-    (assert (not (= sym-place 0)))      ; assert that place != any
-    (init-field [place sym-place])
+    (init-field [place (get-sym)])
+
     (define/public (get-place)
       place)
     (define/public (set-place new-place)

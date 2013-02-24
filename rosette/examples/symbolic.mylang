@@ -1,4 +1,4 @@
 int@1 x;
 int@1 y; 
 int@1 z;
-x = y +@2 z;
+x = y + z;

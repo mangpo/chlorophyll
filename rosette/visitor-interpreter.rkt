@@ -10,7 +10,7 @@
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [env (make-hash)] [places (make-cores #:capacity 256 #:max-cores 16)])
+    (init-field [env (make-hash)] [places (make-cores #:capacity 256 #:max-cores 3)])
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)

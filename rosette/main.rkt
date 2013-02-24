@@ -4,31 +4,53 @@
 
 (configure [bitwidth 8])
 
-;(define test "known int@4 x; x = (-1@1 &@1 100@1) <@4 (!@5 2@5 ||@5 20@5) +@10 -1@10 *@10 2@10;")
-;(define my-ast (ast-from-string test))
-
-(define (foo)
-  (define my-ast (ast-from-file "examples/program.mylang"))
-  (define num-msg (send my-ast accept (new count-msg-interpreter%)))
+;; Concrete version
+(define (concrete)
+  (define my-ast (ast-from-file "examples/concrete.mylang"))
+  (define interpreter (new count-msg-interpreter%))
+  (define num-msg (send my-ast accept interpreter))
+  (send my-ast pretty-print)
   (pretty-display (format "# messages = ~a" num-msg))
-  (assert (= num-msg 5)))
+  (send interpreter display-used-space)
+  )
 
-(define-values (out asserts) (with-asserts (foo)))
+;(concrete)
 
-asserts
+;; current-solution doesn't like me :(
+(define (synthesize)
+  (define my-ast (ast-from-file "examples/symbolic.mylang"))
+  (define interpreter (new count-msg-interpreter%))
+  (define num-msg (send my-ast accept interpreter))
+  (send my-ast pretty-print)
+  (pretty-display (format "# messages = ~a" num-msg))
+  ;(send interpreter display-used-space)
+  (solve (assert (= num-msg 3)))
+  (current-solution)
+  )
 
-(send (current-solver) clear)
-(send/apply (current-solver) assert asserts)
-(send (current-solver) debug)
+;(synthesize)
 
-;(send my-ast pretty-print)
-;(define interpreter (new count-msg-interpreter%))
-;(define num-msg (send my-ast accept interpreter))
-;(pretty-display (format "# messages = ~a" num-msg))
-;(newline)
-;(send my-ast pretty-print)
+;; this part verify that solve should be able to find a solution.
+(define (foo)
+  (define my-ast (ast-from-file "examples/symbolic.mylang"))
+  (define interpreter (new count-msg-interpreter%))
+  (define num-msg (send my-ast accept interpreter))
+  (send my-ast pretty-print)
+  ;(send interpreter display-used-space)
+  (pretty-display (format "# messages = ~a" num-msg))
+  (assert (= num-msg 3))
+)
 
-;(send interpreter display-used-space)
+(define (unsat-core)
+  (define-values (out asserts) (with-asserts (foo)))
+  asserts
+
+  (send (current-solver) clear)
+  (send/apply (current-solver) assert asserts)
+  (send (current-solver) debug)
+  )
+
+;(unsat-core)
 
 ;(define (validity-of num-msg limit)
 ;  (assert (<= num-msg limit)))
@@ -39,15 +61,3 @@ asserts
               #:guarantee (validity-of num-msg 100))
   (pretty-print (map (current-solution) neg?))
   )|#
-
-;(let ([collector (new var-collector%)])
-;  (pretty-print (send my-ast accept collector)))
-
-;(solve (validity-of num-msg 100))
-
-;; failed
-;(solve (assert (= num-msg 5)))
-
-;; sym-place = 2 when fully-specify?
-;(solve (assert (= num-msg 3)))
-;(current-solution)
