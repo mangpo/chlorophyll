@@ -15,6 +15,14 @@
         (for ([i (in-range 0 max-cores)])
           (pretty-display (format "core = ~a, space = ~a, ops = ~a" 
                                   i (vector-ref space i) (vector-ref costly-op i))))))
+
+;;; fake dictionary
+(define (display-cores-eval cores)
+  (let* ([space (core-space cores)]
+         [costly-op (core-costly-op cores)])
+        (for ([i (in-range 0 max-cores)])
+          (pretty-display (format "core = ~a, space = ~a, ops = ~a" 
+                                  i (evaluate (vector-ref space i)) (evaluate (vector-ref costly-op i)))))))
   
 (define (make-cores #:capacity [c 256] #:max-cores [len 144])
   (set! capacity c)

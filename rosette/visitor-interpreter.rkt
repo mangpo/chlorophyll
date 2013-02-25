@@ -35,8 +35,14 @@
     (define/public (assert-capacity)
       (cores-assert places))
 
-    (define/public (display-used-space)
-      (display-cores places))
+    (define/public (display-used-space [eval #f])
+      (if eval
+          (display-cores-eval places)
+          (display-cores places)
+          ))
+
+    (define/public (num-cores)
+      (cores-count places))
       
     (define/public (visit ast)
       (cond
@@ -47,6 +53,7 @@
           0]
 
        [(is-a? ast Var%) ; multiple places?
+          ;; lookup place from env
           (define place-known (dict-ref env (get-field name ast) 
                                         (lambda () (send ast not-found-error))))
           (send ast set-place-known place-known)
@@ -61,6 +68,8 @@
           (define e1 (get-field e1 ast))
           (define e1-count (send e1 accept this))
           (define op-place (get-field place ast))
+          
+          ;; set known type
           (set-field! known-type ast (get-field known-type e1))
 
           (when debug
@@ -76,6 +85,8 @@
           (define e1-count (send e1 accept this))
           (define e2-count (send e2 accept this))
           (define op-place (get-field place ast))
+          
+          ;; set known type
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
 
           (when debug
@@ -90,6 +101,8 @@
           (define place-known (send ast get-place-known))
           (define place (get-field place ast))
           (define var-list (get-field var-list ast))
+          
+          ;; put vars into env
           (for ([var var-list])
                (dict-set! env var place-known))
 
