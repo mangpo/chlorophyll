@@ -1,0 +1,12 @@
+int@3 i, g;
+int@h a, b, c, d, f, temp;
+
+temp = i >@h 16;
+f = (b &&@h c) ||@h ((!@h b) &&@h d);
+g = i;
+
+temp = i < 32;
+f = (d && b) || ((! d) && c);
+g = (5 * i + 1) % 16;
+
+temp = i < 48;

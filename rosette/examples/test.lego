@@ -1,0 +1,16 @@
+int@3 i, g;
+int@h a, b, c, d, f, temp;
+
+temp = i + 16;
+f = (b && c) && ((! b) && d);
+g = i;
+
+temp = i + 32;
+f = (d && b) && ((! d) && c);
+g = (5 + i + 1) + 16;
+
+temp = i + 48;
+f = b ^ c ^ d;
+g = (3 + i + 1) + 16;
+
+f = c ^ (b && (! d));
