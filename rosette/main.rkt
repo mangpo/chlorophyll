@@ -1,15 +1,23 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "parser.rkt" "visitor-interpreter.rkt" "visitor-variables.rkt")
+(require "ast.rkt" "parser.rkt" "visitor-interpreter.rkt" "visitor-collector.rkt" "visitor-rename.rkt")
 
 (configure [bitwidth 10])
 
 ;; Concrete version
 (define (concrete)
-  (define my-ast (ast-from-file "examples/concrete.mylang"))
-  (define interpreter (new count-msg-interpreter%))
-  (define num-msg (send my-ast accept interpreter))
+  (define my-ast (ast-from-file "examples/test.lego"))
+  (define collector (new place-collector% 
+                         [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
+  (define place-set (send my-ast accept collector))
+  (pretty-print place-set)
+  (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
+  (send my-ast accept converter)
   (send my-ast pretty-print)
+  
+  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 4]))
+  (define num-msg (send my-ast accept interpreter))
+  ;(send my-ast pretty-print)
   (pretty-display (format "# messages = ~a" num-msg))
   (send interpreter display-used-space)
   )
@@ -54,13 +62,13 @@
 ;(unsat-core)
 
 (define (simple-syn2)
-  (define my-ast (ast-from-file "examples/symbolic.mylang"))
+  (define my-ast (ast-from-file "examples/simple-hole.lego"))
   (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 3]))
   (define num-msg (send my-ast accept interpreter))
   (send my-ast pretty-print)
   (pretty-display (format "# messages = ~a" num-msg))
   
-  (let ([collector (new var-collector%)])
+  (let ([collector (new place-collector% [collect? symbolic?])])
     (pretty-display (send my-ast accept collector))
     (synthesize #:forall (set->list (send my-ast accept collector))
                 #:assume #t
@@ -72,32 +80,27 @@
   (current-solution)
   )
 
-(define (test)
-  (define my-ast (ast-from-file "examples/3.lego"))
-  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 16]))
-  (define num-msg (send my-ast accept interpreter))
-  (send my-ast pretty-print)
-  (pretty-display (format "# messages = ~a" num-msg))
-  
-  ;; solve 1
-  (solve (assert (< num-msg 10)))
-  (pretty-print (current-solution))
-  (send interpreter display-used-space #t)
-  (pretty-print (format "# messages = ~a" (evaluate num-msg)))
-  (pretty-print (format "# cores = ~a" (evaluate (send interpreter num-cores))))
-  
-  ;; solve 2
-  (solve (assert (< num-msg 5)))
-  (pretty-print (current-solution))
-  (send interpreter display-used-space #t)
-  (pretty-print (format "# messages = ~a" (evaluate num-msg)))
-  (pretty-print (format "# cores = ~a" (evaluate (send interpreter num-cores))))
-  )
-
-;(test)
-
 (define (optimize-space)
-  (define my-ast (ast-from-file "examples/3.lego"))
+  (define my-ast (ast-from-file "examples/simple-hole.lego"))
+  (send my-ast pretty-print)
+  
+  ;; collect real pysical places
+  (define collector (new place-collector% 
+                         [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
+  (define place-set (send my-ast accept collector))
+  (pretty-print place-set)
+  
+  ;; convert abstract partition (string except ??) into number
+  (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
+  (send my-ast accept converter)
+  (send my-ast pretty-print)
+  
+  #|(let* ([collector (new place-collector% [collect? number?])]
+         [place-set (send my-ast accept collector)]
+         [converter (new partition-to-number% [num-core 16] [real-place-set place-set])])
+    (send my-ast accept convertor))|#
+    
+  
   (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 16]))
   (define best-num-msg 256)
   (define best-num-cores 144)
@@ -105,6 +108,7 @@
   
   (define num-msg (send my-ast accept interpreter))
   (define num-cores (send interpreter num-cores))
+  (send my-ast pretty-print)
   
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))

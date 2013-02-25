@@ -76,7 +76,7 @@
                    (let* ([val-space (vector-ref space j)]
                           [val-ops (vector-ref costly-op j)])
                      (vector-set! space j (if (= i j) 
-                                              (let* ([more-space (if (set-member? op val-ops) 4 add-space)]
+                                              (let* ([more-space (if (set-member? val-ops op) 4 add-space)]
                                                      [new-space (+ val-space more-space)])
                                                 (assert (<= new-space capacity))
                                                 new-space)
@@ -86,7 +86,7 @@
                                                   val-ops)))))
                (let* ([val-space (vector-ref space i)]
                       [val-ops (vector-ref costly-op i)]
-                      [more-space (if (set-member? op val-ops) 4 add-space)]
+                      [more-space (if (set-member? val-ops op) 4 add-space)]
                       [new-space (+ val-space more-space)])  ; <-- optimization
                  (assert (<= new-space capacity))
                  (vector-set! space i new-space)
