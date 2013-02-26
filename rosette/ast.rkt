@@ -58,7 +58,7 @@
     (init-field n)
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(Num:~a @~a (known=~a))" indent n place known-type)))
+      (pretty-display (format "~a(Num:~a @~a (known=~a))" indent n (evaluate place) known-type)))
     
     (define/public (get-data)
       n)
@@ -74,7 +74,7 @@
     (init-field name)
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(Var:~a @~a (known=~a))" indent name place known-type)))
+      (pretty-display (format "~a(Var:~a @~a (known=~a))" indent name (evaluate place) known-type)))
     
     (define/public (get-data)
       name)
@@ -103,7 +103,7 @@
     (when (is-a? e2 Num%) (set-field! place e2 place))
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(BinExp: @~a (known=~a)" indent place known-type))
+      (pretty-display (format "~a(BinExp: @~a (known=~a)" indent (evaluate place) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
@@ -124,7 +124,7 @@
     (when (is-a? e1 Num%) (set-field! place e1 place))
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(UnaOp: @~a (known=~a)" indent place known-type))
+      (pretty-display (format "~a(UnaOp: @~a (known=~a)" indent (evaluate place) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
@@ -144,7 +144,7 @@
       this)
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(Op:~a @~a)" indent op place)))
+      (pretty-display (format "~a(Op:~a @~a)" indent op (evaluate place))))
     
     (define/public (accept v)
       (send v visit this))
@@ -174,7 +174,7 @@
     (init-field var-list type)
 
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" indent type var-list place known-type))
+      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" indent type var-list (evaluate place) known-type))
       
       )
 

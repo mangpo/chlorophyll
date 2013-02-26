@@ -1,0 +1,457 @@
+int@4 a0, b0, c0, d0;
+int@14 a1, b1, c1, d1;
+int@12 r;
+int@3 m0;
+int@13 m1;
+int@1 k0;
+int@11 k1;
+
+int f0;
+int f1;
+int temp0;
+int temp1;
+int shuf0;
+int shuf1;
+int buff0;
+int buff1;
+
+f0 = (b0 & c0) | ((! b0) & d0);
+f1 = (b1 & c1) | ((! b1) & d1);
+
+temp0 = a0 + f0 + k0 + m0;
+temp1 = a1 + f1 + k1 + m1;
+
+buff0 = temp0 >> (16 - r);
+buff1 = temp1 >> (16 - r);
+temp0 = (temp0 << r) + buff1;
+temp1 = (temp1 << r) + buff0;
+
+a0 = d0;
+a1 = d1;
+d0 = c0;
+d1 = c1;
+c0 = b0;
+c1 = b1;
+b0 = b0 + temp0;
+b1 = b1 + temp1 + (b0 >> 16);
+b0 = b0 & 65535;
+
+(DECL int (a0 b0 c0 d0) @4 (known=#f))
+(DECL int (a1 b1 c1 d1) @14 (known=#f))
+(DECL int (r) @12 (known=#f))
+(DECL int (m0) @3 (known=#f))
+(DECL int (m1) @13 (known=#f))
+(DECL int (k0) @1 (known=#f))
+(DECL int (k1) @11 (known=#f))
+(DECL int (f0) @4 (known=#f))
+(DECL int (f1) @14 (known=#f))
+(DECL int (temp0) @12 (known=#f))
+(DECL int (temp1) @12 (known=#f))
+(DECL int (shuf0) @10 (known=#f))
+(DECL int (shuf1) @8 (known=#f))
+(DECL int (buff0) @12 (known=#f))
+(DECL int (buff1) @12 (known=#f))
+(ASSIGN
+  (Var:f0 @4 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:| @4)
+    (BinExp: @4 (known=#f)
+      (Op:& @4)
+      (Var:b0 @4 (known=#f))
+      (Var:c0 @4 (known=#f))
+    )
+    (BinExp: @4 (known=#f)
+      (Op:& @4)
+      (UnaOp: @4 (known=#f)
+        (Op:! @4)
+        (Var:b0 @4 (known=#f))
+      )
+      (Var:d0 @4 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:f1 @14 (known=#f))
+  (BinExp: @14 (known=#f)
+    (Op:| @14)
+    (BinExp: @14 (known=#f)
+      (Op:& @14)
+      (Var:b1 @14 (known=#f))
+      (Var:c1 @14 (known=#f))
+    )
+    (BinExp: @14 (known=#f)
+      (Op:& @14)
+      (UnaOp: @14 (known=#f)
+        (Op:! @14)
+        (Var:b1 @14 (known=#f))
+      )
+      (Var:d1 @14 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:temp0 @12 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:+ @4)
+    (BinExp: @4 (known=#f)
+      (Op:+ @4)
+      (BinExp: @4 (known=#f)
+        (Op:+ @4)
+        (Var:a0 @4 (known=#f))
+        (Var:f0 @4 (known=#f))
+      )
+      (Var:k0 @1 (known=#f))
+    )
+    (Var:m0 @3 (known=#f))
+  )
+(ASSIGN
+  (Var:temp1 @12 (known=#f))
+  (BinExp: @12 (known=#f)
+    (Op:+ @12)
+    (BinExp: @14 (known=#f)
+      (Op:+ @14)
+      (BinExp: @14 (known=#f)
+        (Op:+ @14)
+        (Var:a1 @14 (known=#f))
+        (Var:f1 @14 (known=#f))
+      )
+      (Var:k1 @11 (known=#f))
+    )
+    (Var:m1 @13 (known=#f))
+  )
+(ASSIGN
+  (Var:buff0 @12 (known=#f))
+  (BinExp: @12 (known=#f)
+    (Op:>> @12)
+    (Var:temp0 @12 (known=#f))
+    (BinExp: @12 (known=#f)
+      (Op:- @12)
+      (Num:16 @12 (known=#t))
+      (Var:r @12 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:buff1 @12 (known=#f))
+  (BinExp: @12 (known=#f)
+    (Op:>> @12)
+    (Var:temp1 @12 (known=#f))
+    (BinExp: @12 (known=#f)
+      (Op:- @12)
+      (Num:16 @12 (known=#t))
+      (Var:r @12 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:temp0 @12 (known=#f))
+  (BinExp: @12 (known=#f)
+    (Op:+ @12)
+    (BinExp: @12 (known=#f)
+      (Op:<< @12)
+      (Var:temp0 @12 (known=#f))
+      (Var:r @12 (known=#f))
+    )
+    (Var:buff1 @12 (known=#f))
+  )
+(ASSIGN
+  (Var:temp1 @12 (known=#f))
+  (BinExp: @12 (known=#f)
+    (Op:+ @12)
+    (BinExp: @12 (known=#f)
+      (Op:<< @12)
+      (Var:temp1 @12 (known=#f))
+      (Var:r @12 (known=#f))
+    )
+    (Var:buff0 @12 (known=#f))
+  )
+(ASSIGN
+  (Var:a0 @4 (known=#f))
+  (Var:d0 @4 (known=#f))
+(ASSIGN
+  (Var:a1 @14 (known=#f))
+  (Var:d1 @14 (known=#f))
+(ASSIGN
+  (Var:d0 @4 (known=#f))
+  (Var:c0 @4 (known=#f))
+(ASSIGN
+  (Var:d1 @14 (known=#f))
+  (Var:c1 @14 (known=#f))
+(ASSIGN
+  (Var:c0 @4 (known=#f))
+  (Var:b0 @4 (known=#f))
+(ASSIGN
+  (Var:c1 @14 (known=#f))
+  (Var:b1 @14 (known=#f))
+(ASSIGN
+  (Var:b0 @4 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:+ @4)
+    (Var:b0 @4 (known=#f))
+    (Var:temp0 @12 (known=#f))
+  )
+(ASSIGN
+  (Var:b1 @14 (known=#f))
+  (BinExp: @14 (known=#f)
+    (Op:+ @14)
+    (BinExp: @14 (known=#f)
+      (Op:+ @14)
+      (Var:b1 @14 (known=#f))
+      (Var:temp1 @12 (known=#f))
+    )
+    (BinExp: @4 (known=#f)
+      (Op:>> @4)
+      (Var:b0 @4 (known=#f))
+      (Num:16 @4 (known=#t))
+    )
+  )
+(ASSIGN
+  (Var:b0 @4 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:& @4)
+    (Var:b0 @4 (known=#f))
+    (Num:65535 @4 (known=#t))
+  )
+core = 0, space = 0, ops = #<set:>
+core = 1, space = 20, ops = #<set:>
+core = 2, space = 0, ops = #<set:>
+core = 3, space = 20, ops = #<set:>
+core = 4, space = 232, ops = #<set:>
+core = 5, space = 0, ops = #<set:>
+core = 6, space = 0, ops = #<set:>
+core = 7, space = 0, ops = #<set:>
+core = 8, space = 4, ops = #<set:>
+core = 9, space = 0, ops = #<set:>
+core = 10, space = 4, ops = #<set:>
+core = 11, space = 20, ops = #<set:>
+core = 12, space = 244, ops = #<set:>
+core = 13, space = 20, ops = #<set:>
+core = 14, space = 188, ops = #<set:>
+core = 15, space = 0, ops = #<set:>
+"# messages = 9"
+"# cores = 9"
+
+int@4 a0, b0, c0, d0;
+int@14 a1, b1, c1, d1;
+int@12 r, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30, r31, r32, r33, r34, r35, r36, r37, r38, r39, r40;
+int@3 m0;
+int@13 m1;
+int@1 k0;
+int@11 k1;
+
+int f0;
+int f1;
+int temp0;
+int temp1;
+int shuf0;
+int shuf1;
+int buff0;
+int buff1;
+
+f0 = (b0 & c0) | ((! b0) & d0);
+f1 = (b1 & c1) | ((! b1) & d1);
+
+temp0 = a0 + f0 + k0 + m0;
+temp1 = a1 + f1 + k1 + m1;
+
+buff0 = temp0 >> (16 - r);
+buff1 = temp1 >> (16 - r);
+temp0 = (temp0 << r) + buff1;
+temp1 = (temp1 << r) + buff0;
+
+a0 = d0;
+a1 = d1;
+d0 = c0;
+d1 = c1;
+c0 = b0;
+c1 = b1;
+b0 = b0 + temp0;
+b1 = b1 + temp1 + (b0 >> 16);
+b0 = b0 & 65535;
+
+(DECL int (a0 b0 c0 d0) @4 (known=#f))
+(DECL int (a1 b1 c1 d1) @14 (known=#f))
+(DECL int (r r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31 r32 r33 r34 r35 r36 r37 r38 r39 r40) @12 (known=#f))
+(DECL int (m0) @3 (known=#f))
+(DECL int (m1) @13 (known=#f))
+(DECL int (k0) @1 (known=#f))
+(DECL int (k1) @11 (known=#f))
+(DECL int (f0) @4 (known=#f))
+(DECL int (f1) @14 (known=#f))
+(DECL int (temp0) @1 (known=#f))
+(DECL int (temp1) @14 (known=#f))
+(DECL int (shuf0) @4 (known=#f))
+(DECL int (shuf1) @9 (known=#f))
+(DECL int (buff0) @1 (known=#f))
+(DECL int (buff1) @1 (known=#f))
+(ASSIGN
+  (Var:f0 @4 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:| @4)
+    (BinExp: @4 (known=#f)
+      (Op:& @4)
+      (Var:b0 @4 (known=#f))
+      (Var:c0 @4 (known=#f))
+    )
+    (BinExp: @4 (known=#f)
+      (Op:& @4)
+      (UnaOp: @4 (known=#f)
+        (Op:! @4)
+        (Var:b0 @4 (known=#f))
+      )
+      (Var:d0 @4 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:f1 @14 (known=#f))
+  (BinExp: @14 (known=#f)
+    (Op:| @14)
+    (BinExp: @14 (known=#f)
+      (Op:& @14)
+      (Var:b1 @14 (known=#f))
+      (Var:c1 @14 (known=#f))
+    )
+    (BinExp: @14 (known=#f)
+      (Op:& @14)
+      (UnaOp: @14 (known=#f)
+        (Op:! @14)
+        (Var:b1 @14 (known=#f))
+      )
+      (Var:d1 @14 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:temp0 @1 (known=#f))
+  (BinExp: @1 (known=#f)
+    (Op:+ @1)
+    (BinExp: @1 (known=#f)
+      (Op:+ @1)
+      (BinExp: @4 (known=#f)
+        (Op:+ @4)
+        (Var:a0 @4 (known=#f))
+        (Var:f0 @4 (known=#f))
+      )
+      (Var:k0 @1 (known=#f))
+    )
+    (Var:m0 @3 (known=#f))
+  )
+(ASSIGN
+  (Var:temp1 @14 (known=#f))
+  (BinExp: @14 (known=#f)
+    (Op:+ @14)
+    (BinExp: @14 (known=#f)
+      (Op:+ @14)
+      (BinExp: @14 (known=#f)
+        (Op:+ @14)
+        (Var:a1 @14 (known=#f))
+        (Var:f1 @14 (known=#f))
+      )
+      (Var:k1 @11 (known=#f))
+    )
+    (Var:m1 @13 (known=#f))
+  )
+(ASSIGN
+  (Var:buff0 @1 (known=#f))
+  (BinExp: @1 (known=#f)
+    (Op:>> @1)
+    (Var:temp0 @1 (known=#f))
+    (BinExp: @1 (known=#f)
+      (Op:- @1)
+      (Num:16 @1 (known=#t))
+      (Var:r @12 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:buff1 @1 (known=#f))
+  (BinExp: @1 (known=#f)
+    (Op:>> @1)
+    (Var:temp1 @14 (known=#f))
+    (BinExp: @1 (known=#f)
+      (Op:- @1)
+      (Num:16 @1 (known=#t))
+      (Var:r @12 (known=#f))
+    )
+  )
+(ASSIGN
+  (Var:temp0 @1 (known=#f))
+  (BinExp: @1 (known=#f)
+    (Op:+ @1)
+    (BinExp: @1 (known=#f)
+      (Op:<< @1)
+      (Var:temp0 @1 (known=#f))
+      (Var:r @12 (known=#f))
+    )
+    (Var:buff1 @1 (known=#f))
+  )
+(ASSIGN
+  (Var:temp1 @14 (known=#f))
+  (BinExp: @14 (known=#f)
+    (Op:+ @14)
+    (BinExp: @14 (known=#f)
+      (Op:<< @14)
+      (Var:temp1 @14 (known=#f))
+      (Var:r @12 (known=#f))
+    )
+    (Var:buff0 @1 (known=#f))
+  )
+(ASSIGN
+  (Var:a0 @4 (known=#f))
+  (Var:d0 @4 (known=#f))
+(ASSIGN
+  (Var:a1 @14 (known=#f))
+  (Var:d1 @14 (known=#f))
+(ASSIGN
+  (Var:d0 @4 (known=#f))
+  (Var:c0 @4 (known=#f))
+(ASSIGN
+  (Var:d1 @14 (known=#f))
+  (Var:c1 @14 (known=#f))
+(ASSIGN
+  (Var:c0 @4 (known=#f))
+  (Var:b0 @4 (known=#f))
+(ASSIGN
+  (Var:c1 @14 (known=#f))
+  (Var:b1 @14 (known=#f))
+(ASSIGN
+  (Var:b0 @4 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:+ @4)
+    (Var:b0 @4 (known=#f))
+    (Var:temp0 @1 (known=#f))
+  )
+(ASSIGN
+  (Var:b1 @14 (known=#f))
+  (BinExp: @14 (known=#f)
+    (Op:+ @14)
+    (BinExp: @14 (known=#f)
+      (Op:+ @14)
+      (Var:b1 @14 (known=#f))
+      (Var:temp1 @14 (known=#f))
+    )
+    (BinExp: @4 (known=#f)
+      (Op:>> @4)
+      (Var:b0 @4 (known=#f))
+      (Num:16 @4 (known=#t))
+    )
+  )
+(ASSIGN
+  (Var:b0 @4 (known=#f))
+  (BinExp: @4 (known=#f)
+    (Op:& @4)
+    (Var:b0 @4 (known=#f))
+    (Num:65535 @4 (known=#t))
+  )
+core = 0, space = 0, ops = #<set:>
+core = 1, space = 199, ops = #<set:>
+core = 2, space = 0, ops = #<set:>
+core = 3, space = 20, ops = #<set:>
+core = 4, space = 216, ops = #<set:>
+core = 5, space = 0, ops = #<set:>
+core = 6, space = 0, ops = #<set:>
+core = 7, space = 0, ops = #<set:>
+core = 8, space = 0, ops = #<set:>
+core = 9, space = 4, ops = #<set:>
+core = 10, space = 0, ops = #<set:>
+core = 11, space = 20, ops = #<set:>
+core = 12, space = 228, ops = #<set:>
+core = 13, space = 20, ops = #<set:>
+core = 14, space = 253, ops = #<set:>
+core = 15, space = 0, ops = #<set:>
+"# messages = 12"
+"# cores = 8"

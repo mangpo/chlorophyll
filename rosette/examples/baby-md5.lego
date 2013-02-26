@@ -1,0 +1,37 @@
+int@4 a0, b0, c0, d0;
+int@14 a1, b1, c1, d1;
+int@12 r, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30, r31, r32, r33, r34, r35, r36, r37, r38, r39, r40;
+int@3 m0;
+int@13 m1;
+int@1 k0;
+int@11 k1;
+
+int f0;
+int f1;
+int temp0;
+int temp1;
+int shuf0;
+int shuf1;
+int buff0;
+int buff1;
+
+f0 = (b0 & c0) | ((! b0) & d0);
+f1 = (b1 & c1) | ((! b1) & d1);
+
+temp0 = a0 + f0 + k0 + m0;
+temp1 = a1 + f1 + k1 + m1;
+
+buff0 = temp0 >> (16 - r);
+buff1 = temp1 >> (16 - r);
+temp0 = (temp0 << r) + buff1;
+temp1 = (temp1 << r) + buff0;
+
+a0 = d0;
+a1 = d1;
+d0 = c0;
+d1 = c1;
+c0 = b0;
+c1 = b1;
+b0 = b0 + temp0;
+b1 = b1 + temp1 + (b0 >> 16);
+b0 = b0 & 65535;

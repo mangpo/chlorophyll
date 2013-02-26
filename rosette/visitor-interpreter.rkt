@@ -17,7 +17,9 @@
       (cores-inc-space places place add-space))
     
     (define (inc-space-with-op place op)
-      (cores-add-op places place op))
+      ;(cores-add-op places place op)
+      (cores-inc-space places place (est-space op))
+      )
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x y)
@@ -35,11 +37,8 @@
     (define/public (assert-capacity)
       (cores-assert places))
 
-    (define/public (display-used-space [eval #f])
-      (if eval
-          (display-cores-eval places)
-          (display-cores places)
-          ))
+    (define/public (display-used-space)
+      (display-cores places))
 
     (define/public (num-cores)
       (cores-count places))

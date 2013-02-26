@@ -1,0 +1,3 @@
+- symbolic set or lower space to 4
+- unnecessary symbolic-var
+- same VarDecl => same sym-place!!!

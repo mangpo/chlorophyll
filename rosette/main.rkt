@@ -81,7 +81,7 @@
   )
 
 (define (optimize-space)
-  (define my-ast (ast-from-file "examples/simple-hole.lego"))
+  (define my-ast (ast-from-file "examples/baby-md5.lego"))
   (send my-ast pretty-print)
   
   ;; collect real pysical places
@@ -119,8 +119,9 @@
     (set! best-sol (current-solution))
     
     ;; display
-    (pretty-print best-sol)
-    (send interpreter display-used-space #t)
+    ;(pretty-print best-sol)
+    (send my-ast pretty-print)
+    (send interpreter display-used-space)
     (pretty-print (format "# messages = ~a" (evaluate num-msg)))
     (pretty-print (format "# cores = ~a" (evaluate num-cores)))
     (loop)
