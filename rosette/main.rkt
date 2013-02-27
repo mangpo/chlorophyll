@@ -101,7 +101,7 @@
     (send my-ast accept convertor))|#
     
   
-  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 16]))
+  (define interpreter (new count-msg-interpreter% [core-space 500] [num-core 16]))
   (define best-num-msg 256)
   (define best-num-cores 144)
   (define best-sol #f)
