@@ -80,9 +80,13 @@
   (current-solution)
   )
 
-(define (optimize-space file #:cores [best-num-cores 144] #:capacity [capacity 256] #:max-msgs [best-num-msg 256])
+(define (optimize-space file 
+                        #:cores [best-num-cores 144] 
+                        #:capacity [capacity 256] 
+                        #:max-msgs [best-num-msg 256])
+  ;; easy inference happens here
   (define my-ast (ast-from-file file))
-  ;(send my-ast pretty-print)
+  (send my-ast pretty-print)
   
   ;; collect real pysical places
   (define collector (new place-collector% 
@@ -90,7 +94,8 @@
   (define place-set (send my-ast accept collector))
   (pretty-print place-set)
   
-  ;; convert abstract partition (string except ??) into number
+  ;; convert distinct abstract partitions into distinct numbers
+  ;; and different symbolic vars for different holes
   (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
   (send my-ast accept converter)
   (send my-ast pretty-print)
@@ -101,7 +106,7 @@
   
   (define num-msg (send my-ast accept interpreter))
   (define num-cores (send interpreter num-cores))
-  ;(send my-ast pretty-print)
+  (send my-ast pretty-print)
   
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))
@@ -112,8 +117,8 @@
     (set! best-sol (current-solution))
     
     ;; display
-    ;(send my-ast pretty-print)
-    ;(send interpreter display-used-space)
+    (send my-ast pretty-print)
+    (send interpreter display-used-space)
     (pretty-print (format "# messages = ~a" (evaluate num-msg)))
     (pretty-print (format "# cores = ~a" (evaluate num-cores)))
     (loop)
@@ -123,4 +128,4 @@
                   (loop))
   )
 
-(optimize-space "examples/baby-md5-mini.cll" #:cores 16 #:capacity 256 #:max-msgs 16)
+(optimize-space "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 100)

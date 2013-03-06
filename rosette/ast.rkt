@@ -8,6 +8,10 @@
 
 (provide (all-defined-out))
 
+(define (get-sym)
+  (define-symbolic* sym-place number?)
+  sym-place)
+
 (define (inc space)
   (string-append space "  "))
 
@@ -16,11 +20,6 @@
     (super-new)
     (init-field [pos #f])   
   ))
-
-(define (get-sym)
-  (define-symbolic* sym-place number?) ; place = ??
-  (assert (not (= sym-place 0)))       ; assert that place != any
-  sym-place)
 
 (define Livable%
   (class Base%
@@ -31,7 +30,7 @@
       place)
     (define/public (set-place new-place)
       (set! place new-place))
-  ))
+    ))
 
 (define Exp%
   (class Livable%
@@ -91,6 +90,8 @@
       (send v visit this))
     ))
 
+;; AST for Binary opteration. Easy inferences happen here.
+;; If left or right operand is a constant, infer its placement equal to the operator's.
 (define BinExp%
   (class Exp%
     (super-new)
@@ -113,6 +114,8 @@
       (send v visit this))
     ))
 
+;; AST for Binary opteration. Easy inferences happen here.
+;; If the operand is a constant, infer its placement equal to the operator's.
 (define UnaExp%
   (class Exp%
     (super-new)

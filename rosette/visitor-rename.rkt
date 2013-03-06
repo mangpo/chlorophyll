@@ -18,6 +18,7 @@
                     (when (number? p)
                           (vector-set! num-to-part p p)
                           (hash-set! part-to-num p p))))
+    
 
     (define (get-next-core)
       (set! next-core (add1 next-core))
@@ -26,22 +27,31 @@
           next-core))
     
     (define (convert-to-num p)
-      (if (hash-has-key? part-to-num p)
-          (hash-ref part-to-num p)
-          (let ([num (get-next-core)])
-            (hash-set! part-to-num p num)
-            (vector-set! num-to-part num p)
-            num)))
+      (cond
+        #|[(equal? p "??")
+         (let ([num (send ast (get-sym))])
+           (hash-set! part-to-num p num)
+           num)]|#
+        [(hash-has-key? part-to-num p)
+         (hash-ref part-to-num p)]
+        [else
+         (let ([num (get-next-core)])
+           (hash-set! part-to-num p num)
+           (vector-set! num-to-part num p)
+           num)]))
 
     (define/public (visit ast)
       (define (check-place)
         (let ([p (get-field place ast)])
           (when (string? p)
-                (set-field! place ast (convert-to-num p)))))
+            (set-field! place ast (convert-to-num p)))))
 
       (cond
-       [(or (or (or (is-a? ast Num%) (is-a? ast Var%)) (is-a? ast Op%)) (is-a? ast VarDecl%))
+       [(or (or (is-a? ast Num%) (is-a? ast Op%)) (is-a? ast VarDecl%))
         (check-place)]
+       
+       [(is-a? ast Var%)
+        (void)]
 
        [(is-a? ast BinExp%)
         (define e1 (get-field e1 ast))

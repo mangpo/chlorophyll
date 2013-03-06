@@ -25,8 +25,8 @@
     (define (count-msg x y)
       (cond 
         [(equal? x y) 0]
-        [(equal? x 0) 0] ;any
-        [(equal? y 0) 0] ;any
+        ;[(equal? x 0) 0] ;any
+        ;[(equal? y 0) 0] ;any
         [else 
          (when debug
                (pretty-display "2-COMM"))
