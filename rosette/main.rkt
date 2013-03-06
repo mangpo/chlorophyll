@@ -80,9 +80,9 @@
   (current-solution)
   )
 
-(define (optimize-space)
-  (define my-ast (ast-from-file "examples/baby-md5.lego"))
-  (send my-ast pretty-print)
+(define (optimize-space file #:cores [best-num-cores 144] #:capacity [capacity 256] #:max-msgs [best-num-msg 256])
+  (define my-ast (ast-from-file file))
+  ;(send my-ast pretty-print)
   
   ;; collect real pysical places
   (define collector (new place-collector% 
@@ -95,20 +95,13 @@
   (send my-ast accept converter)
   (send my-ast pretty-print)
   
-  #|(let* ([collector (new place-collector% [collect? number?])]
-         [place-set (send my-ast accept collector)]
-         [converter (new partition-to-number% [num-core 16] [real-place-set place-set])])
-    (send my-ast accept convertor))|#
-    
-  
-  (define interpreter (new count-msg-interpreter% [core-space 500] [num-core 16]))
-  (define best-num-msg 256)
-  (define best-num-cores 144)
+  ;; count number of messages
+  (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
   (define num-msg (send my-ast accept interpreter))
   (define num-cores (send interpreter num-cores))
-  (send my-ast pretty-print)
+  ;(send my-ast pretty-print)
   
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))
@@ -119,15 +112,15 @@
     (set! best-sol (current-solution))
     
     ;; display
-    ;(pretty-print best-sol)
-    (send my-ast pretty-print)
-    (send interpreter display-used-space)
+    ;(send my-ast pretty-print)
+    ;(send interpreter display-used-space)
     (pretty-print (format "# messages = ~a" (evaluate num-msg)))
     (pretty-print (format "# cores = ~a" (evaluate num-cores)))
     (loop)
   )
   
-  (loop)
+  (with-handlers* ([exn:fail? (lambda (e) (pretty-display best-sol))])
+                  (loop))
   )
 
-(optimize-space)
+(optimize-space "examples/baby-md5-mini.lego" #:cores 16 #:capacity 256 #:max-msgs 16)
