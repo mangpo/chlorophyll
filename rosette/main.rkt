@@ -6,7 +6,7 @@
 
 ;; Concrete version
 (define (concrete)
-  (define my-ast (ast-from-file "examples/test.lego"))
+  (define my-ast (ast-from-file "examples/test.cll"))
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
   (define place-set (send my-ast accept collector))
@@ -62,7 +62,7 @@
 ;(unsat-core)
 
 (define (simple-syn2)
-  (define my-ast (ast-from-file "examples/simple-hole.lego"))
+  (define my-ast (ast-from-file "examples/simple-hole.cll"))
   (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 3]))
   (define num-msg (send my-ast accept interpreter))
   (send my-ast pretty-print)
@@ -123,4 +123,4 @@
                   (loop))
   )
 
-(optimize-space "examples/baby-md5-mini.lego" #:cores 16 #:capacity 256 #:max-msgs 16)
+(optimize-space "examples/baby-md5-mini.cll" #:cores 16 #:capacity 256 #:max-msgs 16)
