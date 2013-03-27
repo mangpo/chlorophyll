@@ -47,8 +47,12 @@
             (set-field! place ast (convert-to-num p)))))
 
       (cond
-       [(or (or (is-a? ast Num%) (is-a? ast Op%)) (is-a? ast VarDecl%))
+       [(or (or (or (is-a? ast Num%) (is-a? ast Op%)) (is-a? ast VarDecl%)) (is-a? ast RangePlace%))
         (check-place)]
+
+       [(is-a? ast ArrayDecl%)
+        (for ([p (get-field place ast)])
+             (send p accept this))]
        
        [(is-a? ast Var%)
         (void)]

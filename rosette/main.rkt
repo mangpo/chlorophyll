@@ -1,8 +1,12 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "ast.rkt" "parser.rkt" 
-         "visitor-interpreter.rkt" "visitor-collector.rkt" "visitor-rename.rkt")
+         "ast.rkt" 
+         "parser.rkt" 
+         "visitor-interpreter.rkt" 
+         "visitor-collector.rkt" 
+         "visitor-rename.rkt"
+         "visitor-printer.rkt")
 
 (configure [bitwidth 10])
 
@@ -25,20 +29,6 @@
   )
 
 ;(concrete)
-
-;; current-solution doesn't like me :(
-(define (simple-syn)
-  (define my-ast (ast-from-file "examples/symbolic.mylang"))
-  (define interpreter (new count-msg-interpreter% [core-space 256] [num-core 3]))
-  (define num-msg (send my-ast accept interpreter))
-  (send my-ast pretty-print)
-  (pretty-display (format "# messages = ~a" num-msg))
-  ;(send interpreter display-used-space)
-  (solve (assert (= num-msg 3)))
-  (current-solution)
-  )
-
-;(simple-syn)
 
 ;; this part verify that solve should be able to find a solution.
 (define (foo)
@@ -82,33 +72,46 @@
   (current-solution)
   )
 
+;;; AST printer
+;;; (send my-ast pretty-print)
+
+;;; Concise printer
+;;; (define concise-printer (new printer%))
+;;; (send my-ast accept concise-printer)
+
 (define (optimize-space file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
                         #:max-msgs [best-num-msg 256])
-  ;; easy inference happens here
+  
+  ;; Define printer
+  (define concise-printer (new printer%))
+  
+  ;; Easy inference happens here
   (define my-ast (ast-from-file file))
+  (pretty-display "=== Original AST ===")
   (send my-ast pretty-print)
   
-  ;; collect real pysical places
+  ;; Collect real pysical places
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
   (define place-set (send my-ast accept collector))
+  (pretty-display "\n=== Places ===")
   (pretty-print place-set)
   
-  ;; convert distinct abstract partitions into distinct numbers
+  ;; Convert distinct abstract partitions into distinct numbers
   ;; and different symbolic vars for different holes
   (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
   (send my-ast accept converter)
+  (pretty-display "\n=== After string -> number ===")
   (send my-ast pretty-print)
   
-  ;; count number of messages
+  ;; Count number of messages
   (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
   (define num-msg (send my-ast accept interpreter))
   (define num-cores (send interpreter num-cores))
-  (send my-ast pretty-print)
   
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))
@@ -119,15 +122,19 @@
     (set! best-sol (current-solution))
     
     ;; display
-    (send my-ast pretty-print)
-    (send interpreter display-used-space)
-    (pretty-print (format "# messages = ~a" (evaluate num-msg)))
-    (pretty-print (format "# cores = ~a" (evaluate num-cores)))
+    ;(send my-ast accept concise-printer)
+    ;(send interpreter display-used-space)
+    (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+    (pretty-display (format "# cores = ~a" (evaluate num-cores)))
     (loop)
   )
   
-  (with-handlers* ([exn:fail? (lambda (e) (pretty-display best-sol))])
+  ;void
+  (with-handlers* ([exn:fail? (lambda (e) 
+                                (pretty-display "\n=== Solution ===")
+                                (send my-ast accept concise-printer) 
+                                (pretty-display best-sol))])
                   (loop))
   )
 
-(optimize-space "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 100)
+(optimize-space "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 15)

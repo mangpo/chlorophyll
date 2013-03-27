@@ -8,8 +8,8 @@
  
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
-			       LPAREN RPAREN LBRACK RBRACK
-			       = SEMICOL COMMA
+			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
+			       = SEMICOL COMMA COL
                                INT KNOWN))
 
 (define-lex-trans number
@@ -30,13 +30,15 @@
   (arith-op3 (re-or "<<" ">>"))
   (rel-op (re-or "<" "<=" ">=" ">"))
   (eq-op (re-or "==" "!="))
-  (identifier-characters (char-range "A" "z"))
-  (identifier-characters-ext (re-or digit10 identifier-characters))
+  (identifier-characters (re-or (char-range "A" "Z") (char-range "a" "z")))
+  (identifier-characters-ext (re-or "_" digit10 identifier-characters))
   (identifier (re-seq identifier-characters
                       (re-* identifier-characters-ext))))
   
 (define simple-math-lexer
   (lexer-src-pos
+   ("int" (token-INT))
+   ("known" (token-KNOWN))
    ("@" (token-@))
    ("!" (token-BNOT))
    (arith-op1 (token-ARITHOP1 lexeme))
@@ -53,11 +55,12 @@
    (")" (token-RPAREN))
    ("{" (token-LBRACK))
    ("}" (token-RBRACK))
+   ("[" (token-LSQBR))
+   ("]" (token-RSQBR))
    (";" (token-SEMICOL))
+   (":" (token-COL))
    ("," (token-COMMA))
    ("=" (token-=))
-   ("int" (token-INT))
-   ("known" (token-KNOWN))
    ((re-+ number10) (token-NUM (string->number lexeme)))
    (identifier      (token-VAR lexeme))
    ;; recursively calls the lexer which effectively skips whitespace
@@ -82,6 +85,14 @@
     [(UnaExp operation exp1 pl position) 
      #'(new UnaExp% [op (new Op% [op operation] [place pl] [pos position])] [e1 exp1])]
     ))
+
+(define chunk 32)
+
+(define (default-array-place begin end)
+  (let ([to (+ begin chunk)])
+    (if (<= end to)
+        (list (new RangePlace% [from begin] [to end]))
+        (cons (new RangePlace% [from begin] [to to]) (default-array-place to end)))))
 
 (define simple-math-parser
   (parser
@@ -108,6 +119,14 @@
     (place-exp
          ((NUM) $1)
          ((VAR) $1))
+    
+    (array-place
+         ((LSQBR NUM COL NUM RSQBR = place-exp) (new RangePlace% [from $2] [to $4] [place $7])))
+    
+    (array-place-exp
+         ((array-place) (list $1))
+         ((array-place-exp COMMA array-place) (append $1 (list $3)))
+         )
 
     (lit ((NUM)             (new Num% [n $1] [pos $1-start-pos]))
          ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos])))
@@ -142,7 +161,9 @@
          ((exp AND @ place-exp exp)      (prec AND) (BinExp $1 "&&" $5 $4 $2-start-pos))
          ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
-	 ((LPAREN exp RPAREN) $2))
+	 ((LPAREN exp RPAREN) $2)
+	 ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3]))
+         )
 
     (known-type
          (() "")
@@ -160,11 +181,26 @@
             (new Assign% [lhs (new Var% [name $1] [pos $1-start-pos])] [rhs $3]))
 
          ((known-type data-type var-list SEMICOL) 
-            (new VarDecl% [var-list $3] [type $2] [known-type (equal? $1 "known")] [pos $3-start-pos]))
+            (new VarDecl% [var-list $3] [type $2] [known-type (equal? $1 "known")] 
+                 [pos $3-start-pos]))
 
          ((known-type data-type @ place-exp var-list SEMICOL) 
             (new VarDecl% [var-list $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
                  [pos $3-start-pos]))
+         
+         
+         ;((known-type data-type LBRACK RBRACK VAR LBRACK NUM RBRACK SEMICOL) ":)")
+         
+         ((known-type data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
+            (new ArrayDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [bound $7]
+                 [place (default-array-place 0 $7)]
+                 [pos $5-start-pos]))
+         
+         ((known-type data-type LSQBR RSQBR @ LBRACK array-place-exp RBRACK 
+                      VAR LSQBR NUM RSQBR SEMICOL)
+            (new ArrayDecl% [var $9] [type $2] [known-type (equal? $1 "known")] [bound $11] 
+                 [place $7]
+                 [pos $9-start-pos]))
          )
 
     (stmts
