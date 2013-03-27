@@ -1,10 +1,10 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
+(require "header.rkt"
+         "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
          "symbolic-dict.rkt")
 
 (provide (all-defined-out))
-(require (only-in racket foldl))
 
 (define debug #f)
 
