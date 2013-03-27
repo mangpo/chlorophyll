@@ -106,7 +106,7 @@
   (send my-ast pretty-print)
   
   ;; Count number of messages
-  #|(define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
+  (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
   (define num-msg (send my-ast accept interpreter))
@@ -133,8 +133,7 @@
                                 (pretty-display "\n=== Solution ===")
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol))])
-                  (loop))|#
-  void
+                  (loop))
   )
 
 (optimize-space "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 15)

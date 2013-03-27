@@ -27,8 +27,8 @@
       (define (add-comm x)
         (if (number? x)
              (inc-space x est-comm)
-             (for ([p (cdr x)])
-                  (inc-space p est-comm))))
+             (for ([p (car x)])
+                  (inc-space (get-field place p) est-comm))))
       ;; Hash value of (list of RangePlace% object) and index
       ;; (define (hash-val pair)
       ;;   (let* ([places (car pair)]
@@ -63,7 +63,7 @@
              [to      (get-field to current)])
         (if (and (>= index from) (< index to))
             (get-field place current)
-            (place-at (cdr places index)))))
+            (place-at (cdr places) index))))
         
     
     (define/public (assert-capacity)
@@ -82,17 +82,7 @@
                 (pretty-display (format "Num ~a" (get-field n ast))))
           (inc-space (get-field place ast) est-num)
           0]
-
-       [(is-a? ast Var%) ; multiple places?
-          ;; lookup place from env
-          (define place-known (lookup ast))
-          (send ast set-place-known place-known)
-
-          (when debug
-                (pretty-display (format "Var ~a" (get-field name ast))))
-          (inc-space (get-field place ast) est-var)
-          0]
-
+       
        [(is-a? ast Array%)
           ;; lookup place from env
           (define place-known (lookup ast))
@@ -104,11 +94,24 @@
               ;; Array lives in only one place
               (set-field! place ast (get-field place (car places)))
               (let ([index (get-field index ast)])
-                (if ((is-a? (get-field index ast) Num%))
+                (if (is-a? index Num%)
                     ;; Know exact index
                     (set-field! place ast (place-at places (get-field n index)))
                     ;; Extract list of possible places
-                    (set-field! place ast (cons places index)))))]
+                    (set-field! place ast (cons places index)))))
+          
+          0]
+
+       [(is-a? ast Var%) ; multiple places?
+          ;; lookup place from env
+          (define place-known (lookup ast))
+          (send ast set-place-known place-known)
+
+          (when debug
+                (pretty-display (format "Var ~a" (get-field name ast))))
+          (inc-space (get-field place ast) est-var)
+          0]
+
 
        [(is-a? ast UnaExp%)
           (when debug (newline))
@@ -170,7 +173,7 @@
                      (send ast bound-error))
                (set! last (get-field to p)))
 
-          (when (not (= (get-field bound ast)))
+          (when (not (= (get-field bound ast) last))
                 (send ast bound-error))
 
           ;; put array into env

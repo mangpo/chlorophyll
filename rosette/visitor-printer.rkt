@@ -22,7 +22,7 @@
          (display (format "~a@{~a} ~a;"
                                (get-field type ast)
                                (send ast place-to-string)
-                               (get-field var-list ast)))
+                               (get-field var ast)))
          ]
         
         [(is-a? ast Num%)

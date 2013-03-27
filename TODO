@@ -5,13 +5,13 @@ vector v of set s
 
 2) unnecessary symbolic-var (DONE?)
 3) same VarDecl => same sym-place!!!
+4) @place(x[i])
 
 --------------------
 QUICK FIXES
-1)
-visitor-interpreter::count-msg TODO
-
-2) raise instead of exit
+1) raise instead of exit
+2) visitor-interpreter::count-msg TODO
+3) check hash-code
 
 ---------------------
 HELP
