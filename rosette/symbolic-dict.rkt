@@ -1,6 +1,8 @@
 #lang s-exp rosette
 
-(require "space-estimator.rkt")
+(require "header.rkt"
+         "space-estimator.rkt")
+
 (provide (all-defined-out))
 
 (struct core (space costly-op))

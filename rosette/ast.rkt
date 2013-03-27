@@ -4,7 +4,9 @@
 (require parser-tools/lex
          (prefix-in re- parser-tools/lex-sre)
          parser-tools/yacc)
-(require "visitor-interface.rkt")
+
+(require "header.rkt"
+         "visitor-interface.rkt")
 
 (provide (all-defined-out))
 

@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "visitor-interface.rkt")
+(require "ast.rkt" "visitor-interface.rkt" "header.rkt")
 
 (provide (all-defined-out))
 

@@ -1,6 +1,8 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "parser.rkt" "visitor-interpreter.rkt" "visitor-collector.rkt" "visitor-rename.rkt")
+(require "header.rkt"
+         "ast.rkt" "parser.rkt" 
+         "visitor-interpreter.rkt" "visitor-collector.rkt" "visitor-rename.rkt")
 
 (configure [bitwidth 10])
 

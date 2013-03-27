@@ -4,6 +4,7 @@
          "symbolic-dict.rkt")
 
 (provide (all-defined-out))
+(require (only-in racket foldl))
 
 (define debug #f)
 
