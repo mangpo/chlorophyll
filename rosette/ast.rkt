@@ -65,14 +65,6 @@
     (define/public (get-data)
       n)
 
-
-    (define/public (index-out-of-bound)
-      (pretty-display (format "l:~a c:~a error index out of bound." 
-                              (position-line pos) 
-                              (position-col pos)))
-      (exit)
-      )
-
     (define/public (accept v)
       (send v visit this))
 
@@ -92,12 +84,11 @@
       name)
 
     (define/public (not-found-error)
-      (pretty-display (format "l:~a c:~a error '~a' is undefined." 
-                              (position-line pos) 
-                              (position-col pos) 
-                              name))
-      (exit)
-      )
+      (raise-syntax-error 'undefined
+			  (format "'~a' error at src: l:~a c:~a" 
+				  name
+				  (position-line pos) 
+				  (position-col pos))))
 
     (define/public (accept v)
       (send v visit this))
@@ -112,6 +103,13 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" indent name (evaluate place) known-type))
       (send index pretty-print (inc indent)))
+
+    (define/public (index-out-of-bound index)
+      (raise-range-error 'array "error at src" "" index 
+			 (format "l:~a c:~a" (position-line pos) (position-col pos))
+			 0 3))
+
+
     ))
 
 ;; AST for Binary opteration. Easy inferences happen here.
@@ -228,13 +226,10 @@
                               known-type)))
 
     (define/public (bound-error)
-      (pretty-display (format "l:~a c:~a error '~a' has bad boundaries." 
-                              (position-line pos) 
-                              (position-col pos) 
-                              var))
-      (exit)
-      )
-    
+      (raise-mismatch-error 'mismatch 
+        (format "array boundaries at place annotation of '~a' " var)
+	(format "error at src:  l:~a c:~a" (position-line pos) (position-col pos))))
+
     (define/public (accept v)
       (send v visit this))
     ))

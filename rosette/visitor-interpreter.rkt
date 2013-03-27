@@ -56,15 +56,15 @@
     (define (lookup ast)
       (dict-ref env (get-field name ast) (lambda () (send ast not-found-error))))
     
-    (define (place-at places index)
+    (define (place-at places index ast)
       (when (empty? places)
-            (send index index-out-of-bound))
+            (send ast index-out-of-bound index))
       (let* ([current (car places)]
              [from    (get-field from current)]
              [to      (get-field to current)])
         (if (and (>= index from) (< index to))
             (get-field place current)
-            (place-at (cdr places) index))))
+            (place-at (cdr places) index ast))))
         
     
     (define/public (assert-capacity)
@@ -97,7 +97,7 @@
               (let ([index (get-field index ast)])
                 (if (is-a? index Num%)
                     ;; Know exact index
-                    (set-field! place ast (place-at places (get-field n index)))
+                    (set-field! place ast (place-at places (get-field n index) ast))
                     ;; Extract list of possible places
                     (set-field! place ast (cons places index)))))
           

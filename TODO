@@ -9,7 +9,7 @@ vector v of set s
 
 --------------------
 QUICK FIXES
-1) raise instead of exit
+1) parser error
 2) visitor-interpreter::count-msg TODO
 3) check hash-code
 4) annotation that says split array into x chunks without specify the partitions.

@@ -100,7 +100,11 @@
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
-      (pretty-display "Error")))
+      (raise-syntax-error 'parser
+			  (format "syntax error at '~a' in src l:~a c:~a" 
+			      tok-name
+			      (position-line start-pos)
+			      (position-col start-pos)))))
    (tokens a b)
    (precs 
     (left OR)
