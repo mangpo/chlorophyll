@@ -27,10 +27,11 @@
     (init-field [place (get-sym)])
 
     (define/public (get-place)
-      place)
+      (evaluate place))
     (define/public (set-place new-place)
       (set! place new-place))
     ))
+
 
 (define Exp%
   (class Livable%
@@ -177,13 +178,47 @@
     (init-field var-list type)
 
     (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" indent type var-list (evaluate place) known-type))
+      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
+                              indent type var-list (evaluate place) known-type))
       
       )
 
     (define/public (accept v)
       (send v visit this))
   ))
+
+(define ArrayDecl%
+  (class Exp%
+    (super-new)
+    (inherit-field place known-type)
+    (init-field var-list type bound)
+    
+    (define/public (place-to-string)
+      (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
+             (send (car place) to-string) (cdr place)))
+    
+    (define/public (pretty-print [indent ""])
+      (pretty-display (length place))
+      (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
+                              indent type var-list ;(send (car place) to-string)
+                              (place-to-string) 
+                              known-type)))
+    
+    
+    ))
+
+(define RangePlace%
+  (class Livable%
+    (super-new)
+    (inherit-field place)
+    (init-field from to)
+    
+    (define/public (to-string)
+      (format "[~a:~a]=~a" from to (evaluate place)))
+    
+    (define/public (accept v)
+      (send v visit this))
+    ))
 
 (define Block%
   (class object%

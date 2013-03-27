@@ -18,6 +18,13 @@
                                (get-field var-list ast)))
          ]
         
+        [(is-a? ast ArrayDecl%)
+         (display (format "~a@{~a} ~a;"
+                               (get-field type ast)
+                               (send ast place-to-string)
+                               (get-field var-list ast)))
+         ]
+        
         [(is-a? ast Num%)
          (display (format "~a@~a "
                         (get-field n ast)
