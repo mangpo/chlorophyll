@@ -11,14 +11,16 @@
     
     (define/public (visit ast)
       (cond
-        [(or (or (is-a? ast Num%) 
-                 (is-a? ast Op%))
-             (is-a? ast VarDecl%))
+        [(or (or (or (is-a? ast Num%) (is-a? ast Op%)) (is-a? ast VarDecl%)) (is-a? ast RangePlace%))
          (let ([place (get-field place ast)])
            (if (collect? place)
                (set place)
                (set)))
          ]
+
+        [(is-a? ast ArrayDecl%)
+         (foldl (lambda (p var-set) (set-union var-set (send p accept this)))
+                (set) (get-field place ast))]
       
         [(is-a? ast Var%)
          (set) ; we handle vat at declaration.

@@ -4,5 +4,16 @@ vector v of set s
 (set-add (vector-ref v i) %) => ERROR
 
 2) unnecessary symbolic-var (DONE?)
-
 3) same VarDecl => same sym-place!!!
+
+--------------------
+QUICK FIXES
+1)
+visitor-interpreter::count-msg TODO
+
+2) raise instead of exit
+
+---------------------
+HELP
+1) new rosette foldl
+2) parser: [ ]

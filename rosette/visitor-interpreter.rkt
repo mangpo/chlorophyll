@@ -23,16 +23,48 @@
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x y)
+      ;; Add comm space to cores
+      (define (add-comm x)
+        (if (number? x)
+             (inc-space x est-comm)
+             (for ([p (cdr x)])
+                  (inc-space p est-comm))))
+      ;; Hash value of (list of RangePlace% object) and index
+      ;; (define (hash-val pair)
+      ;;   (let* ([places (car pair)]
+      ;;          [index  (cdr index)])
+      ;;     (+ (* (foldl (lambda (p res) (+ (* res 37) (send p hash-code))) 17 places) 37)
+      ;;        (send index hash-code))))
+
+      (define (hash-val pair)
+        (equal-hash-code pair))
+
       (cond 
         [(equal? x y) 0]
         ;[(equal? x 0) 0] ;any
         ;[(equal? y 0) 0] ;any
+        [(and (and (not (number? x)) (not (number? y)))
+              (equal? (hash-val x) (hash-val y))) 0]
         [else 
          (when debug
                (pretty-display "2-COMM"))
-         (inc-space x est-comm)
-         (inc-space y est-comm)
-         1]))
+         (add-comm x)
+         (add-comm y)
+         1])) ;; TODO: not 1 if it's not an array of statically known
+
+    (define (lookup ast)
+      (dict-ref env (get-field name ast) (lambda () (send ast not-found-error))))
+    
+    (define (place-at places index)
+      (when (empty? places)
+            (send index index-out-of-bound))
+      (let* ([current (car places)]
+             [from    (get-field from current)]
+             [to      (get-field to current)])
+        (if (and (>= index from) (< index to))
+            (get-field place current)
+            (place-at (cdr places index)))))
+        
     
     (define/public (assert-capacity)
       (cores-assert places))
@@ -53,14 +85,30 @@
 
        [(is-a? ast Var%) ; multiple places?
           ;; lookup place from env
-          (define place-known (dict-ref env (get-field name ast) 
-                                        (lambda () (send ast not-found-error))))
+          (define place-known (lookup ast))
           (send ast set-place-known place-known)
 
           (when debug
                 (pretty-display (format "Var ~a" (get-field name ast))))
           (inc-space (get-field place ast) est-var)
           0]
+
+       [(is-a? ast Array%)
+          ;; lookup place from env
+          (define place-known (lookup ast))
+          (define places (car place-known))
+          (define known (cdr place-known))
+          (set-field! known-type ast known)
+
+          (if (= (length places) 1)
+              ;; Array lives in only one place
+              (set-field! place ast (get-field place (car places)))
+              (let ([index (get-field index ast)])
+                (if ((is-a? (get-field index ast) Num%))
+                    ;; Know exact index
+                    (set-field! place ast (place-at places (get-field n index)))
+                    ;; Extract list of possible places
+                    (set-field! place ast (cons places index)))))]
 
        [(is-a? ast UnaExp%)
           (when debug (newline))
@@ -108,6 +156,25 @@
           (when debug
                 (pretty-display (format "VarDecl ~a" var-list)))
           (inc-space place (* (length var-list) est-data)) ; include space
+
+          0]
+
+       [(is-a? ast ArrayDecl%)
+          (define place-known (send ast get-place-known))
+
+          ;; check boundaries
+          (define last 0)
+
+          (for ([p (car place-known)])
+               (when (not (= (get-field from p) last))
+                     (send ast bound-error))
+               (set! last (get-field to p)))
+
+          (when (not (= (get-field bound ast)))
+                (send ast bound-error))
+
+          ;; put array into env
+          (dict-set! env (get-field var ast) place-known)
 
           0]
 

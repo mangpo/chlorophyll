@@ -89,8 +89,8 @@
   ;; Easy inference happens here
   (define my-ast (ast-from-file file))
   (pretty-display "=== Original AST ===")
-  ;(send my-ast pretty-print)
-  #|
+  (send my-ast pretty-print)
+  
   ;; Collect real pysical places
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
@@ -106,7 +106,7 @@
   (send my-ast pretty-print)
   
   ;; Count number of messages
-  (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
+  #|(define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
   (define num-msg (send my-ast accept interpreter))

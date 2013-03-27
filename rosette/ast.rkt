@@ -52,7 +52,7 @@
 
 (define Num%
   (class Exp%
-    (inherit-field known-type place)
+    (inherit-field known-type place pos)
     (super-new [known-type #t])
     (when (symbolic? place) (set! place 0)) ; place = any
     (init-field n)
@@ -63,8 +63,18 @@
     (define/public (get-data)
       n)
 
+
+    (define/public (index-out-of-bound)
+      (pretty-display (format "l:~a c:~a error index out of bound." 
+                              (position-line pos) 
+                              (position-col pos)))
+      (exit)
+      )
+
     (define/public (accept v)
       (send v visit this))
+
+    (define/public (hash-code) n)
     ))
 
 (define Var%
@@ -89,6 +99,17 @@
 
     (define/public (accept v)
       (send v visit this))
+    ))
+
+(define Array%
+  (class Var%
+    (super-new)
+    (inherit-field known-type place pos name)
+    (init-field index)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Array:~a @~a (known=~a))" indent name (evaluate place) known-type))
+      (send index pretty-print (inc indent)))
     ))
 
 ;; AST for Binary opteration. Easy inferences happen here.
@@ -190,8 +211,8 @@
 (define ArrayDecl%
   (class Exp%
     (super-new)
-    (inherit-field place known-type)
-    (init-field var-list type bound)
+    (inherit-field place known-type pos)
+    (init-field var type bound)
     
     (define/public (place-to-string)
       (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
@@ -200,11 +221,20 @@
     (define/public (pretty-print [indent ""])
       (pretty-display (length place))
       (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
-                              indent type var-list ;(send (car place) to-string)
+                              indent type var
                               (place-to-string) 
                               known-type)))
+
+    (define/public (bound-error)
+      (pretty-display (format "l:~a c:~a error '~a' has bad boundaries." 
+                              (position-line pos) 
+                              (position-col pos) 
+                              var))
+      (exit)
+      )
     
-    
+    (define/public (accept v)
+      (send v visit this))
     ))
 
 (define RangePlace%
