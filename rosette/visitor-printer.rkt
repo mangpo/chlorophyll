@@ -37,6 +37,13 @@
                         (send ast get-place)))
          ]
       
+        [(is-a? ast Array%)
+         (display (format "~a["
+                        (get-field name ast)))
+	 (send (get-field index ast) accept this)
+	 (display (format "] "))
+         ]
+      
         [(is-a? ast Var%)
          (display (format "~a "
                         (get-field name ast)))

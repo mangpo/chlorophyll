@@ -1,23 +1,23 @@
-1) symbolic set or lower space to 4
-vector v of set s
-(vector-ref v i) -> (ite cond (set *) (set * /))
-(set-add (vector-ref v i) %) => ERROR
-
-2) unnecessary symbolic-var (DONE?)
-3) same VarDecl => same sym-place!!!
-4) @place(x[i])
-
---------------------
-QUICK FIXES
-1) parser error
-2) visitor-interpreter::count-msg TODO
-3) check hash-code
-4) annotation that says split array into x chunks without specify the partitions.
+TODO
+- for loop with array
+- visitor-interpreter::count-msg TODO for statically unknown array
+- space estimator: if local var inside a loop -> no space required
+- annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 
-5) should we allow a == b? Right now, no.
+- should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
 
----------------------
-HELP
-1) new rosette foldl
-2) parser: [ ]
+Wait for rosette
+- symbolic set or lower space to 4
+  vector v of set s
+  (vector-ref v i) -> (ite cond (set *) (set * /))
+  (set-add (vector-ref v i) %) => ERROR
+
+
+
+CHECK
+- unnecessary symbolic-var (DONE?)
+- check hash-code
+
+MEMO
+- same VarDecl => same sym-place!!!

@@ -137,4 +137,4 @@
                   (loop))
   )
 
-(optimize-space "examples/baby-md5.cll" #:cores 16 #:capacity 256 #:max-msgs 20)
+(optimize-space "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 15)

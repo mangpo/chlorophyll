@@ -91,17 +91,19 @@
           (define known (cdr place-known))
           (set-field! known-type ast known)
 
+	  (define index (get-field index ast))
+	  (define index-count (send index accept this))
+
           (if (= (length places) 1)
               ;; Array lives in only one place
               (set-field! place ast (get-field place (car places)))
-              (let ([index (get-field index ast)])
-                (if (is-a? index Num%)
-                    ;; Know exact index
-                    (set-field! place ast (place-at places (get-field n index) ast))
-                    ;; Extract list of possible places
-                    (set-field! place ast (cons places index)))))
+	      (if (is-a? index Num%)
+		  ;; Know exact index
+		  (set-field! place ast (place-at places (get-field n index) ast))
+		  ;; Extract list of possible places
+		  (set-field! place ast (cons places index))))
           
-          0]
+          (+ index-count (count-msg (get-field place index) (get-field place ast)))]
 
        [(is-a? ast Var%) ; multiple places?
           ;; lookup place from env
@@ -159,6 +161,8 @@
 
           (when debug
                 (pretty-display (format "VarDecl ~a" var-list)))
+
+	  ;; increase space for variable
           (inc-space place (* (length var-list) est-data)) ; include space
 
           0]
@@ -170,9 +174,13 @@
           (define last 0)
 
           (for ([p (car place-known)])
-               (when (not (= (get-field from p) last))
-                     (send ast bound-error))
-               (set! last (get-field to p)))
+	       (let* ([from (get-field from p)]
+		      [to   (get-field to p)])
+		 (when (not (= from last))
+		       (send ast bound-error))
+		 (set! last to)
+		 (inc-space (get-field place p) (* (- to from) est-data))
+	       ))
 
           (when (not (= (get-field bound ast) last))
                 (send ast bound-error))
