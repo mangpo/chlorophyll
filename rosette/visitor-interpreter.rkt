@@ -23,13 +23,15 @@
       )
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
-    (define (count-msg x y)
+    (define (count-msg x-ast y-ast)
+      
       ;; Add comm space to cores
       (define (add-comm x)
         (if (number? x)
              (inc-space x est-comm)
              (for ([p (car x)])
                   (inc-space (get-field place p) est-comm))))
+
       ;; Hash value of (list of RangePlace% object) and index
       ;; (define (hash-val pair)
       ;;   (let* ([places (car pair)]
@@ -40,18 +42,50 @@
       (define (hash-val pair)
         (equal-hash-code pair))
 
+      ;; Return the place that a resides if a only lives in one place. 
+      ;; Otherwise, return hash of a.
+      (define (get-place a)
+	(if (number? a)
+	    a
+	    (if (= (length (car a)) 1)
+		(get-field place (car a))
+		(hash-val a))))
+
+      (define (same-place? a b)
+	(equal? (get-place a) (get-place b)))
+
+      (define (count-comm p)
+	(if (number? p)
+	    1
+	    (if (get-field known-type (cdr p))
+		1
+		(length (car p)))))
+	    
+      (define x (get-field place x-ast))
+      (define y (get-field place y-ast))
+      (define x-comm (count-comm x))
+      (define y-comm (count-comm y))
+
       (cond 
-        [(equal? x y) 0]
         ;[(equal? x 0) 0] ;any
         ;[(equal? y 0) 0] ;any
-        [(and (and (not (number? x)) (not (number? y)))
-              (equal? (hash-val x) (hash-val y))) 0]
-        [else 
-         (when debug
-               (pretty-display "2-COMM"))
+
+        ;; if x and y are the same place.
+        [(same-place? x y) 0]
+
+	;; if x and y are in a single core.
+	[(and (= x-comm 1) (= y-comm 1))
          (add-comm x)
          (add-comm y)
-         1])) ;; TODO: not 1 if it's not an array of statically known
+         (when debug (pretty-display "COMM + 1"))
+	 1]
+
+        ;; if x or y is in multiple cores.
+        [else 
+         (add-comm x)
+         (add-comm y)
+         (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
+         (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
 
     (define (lookup ast)
       (dict-ref env (get-field name ast) (lambda () (send ast not-found-error))))
@@ -79,8 +113,7 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast Num%)
-          (when debug
-                (pretty-display (format "Num ~a" (get-field n ast))))
+          (when debug (pretty-display (format "Num ~a" (get-field n ast))))
           (inc-space (get-field place ast) est-num)
           0]
        
@@ -94,6 +127,8 @@
 	  (define index (get-field index ast))
 	  (define index-count (send index accept this))
 
+          (when debug (pretty-display (format "Array ~a" (get-field name ast))))
+
           (if (= (length places) 1)
               ;; Array lives in only one place
               (set-field! place ast (get-field place (car places)))
@@ -103,15 +138,14 @@
 		  ;; Extract list of possible places
 		  (set-field! place ast (cons places index))))
           
-          (+ index-count (count-msg (get-field place index) (get-field place ast)))]
+          (+ index-count (count-msg index ast))]
 
        [(is-a? ast Var%) ; multiple places?
           ;; lookup place from env
           (define place-known (lookup ast))
           (send ast set-place-known place-known)
 
-          (when debug
-                (pretty-display (format "Var ~a" (get-field name ast))))
+          (when debug (pretty-display (format "Var ~a" (get-field name ast))))
           (inc-space (get-field place ast) est-var)
           0]
 
@@ -129,7 +163,7 @@
                 (pretty-display (format "UnaOp ~a" (get-field op (get-field op ast)))))
           (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
           
-          (+ e1-count (count-msg op-place (get-field place e1)))]
+          (+ e1-count (count-msg ast e1))]
 
        [(is-a? ast BinExp%)
           (when debug (newline))
@@ -147,8 +181,8 @@
           (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
 
           (+ (+ (+ e1-count e2-count)
-                      (count-msg op-place (get-field place e1)))
-                   (count-msg op-place (get-field place e2)))]
+                      (count-msg ast e1))
+                   (count-msg ast e2))]
                 
        [(is-a? ast VarDecl%) 
           (define place-known (send ast get-place-known))
@@ -215,7 +249,7 @@
                 (set-field! known-type lhs #f)
                 (dict-set! env (get-field name lhs) (send lhs get-place-known)))
        
-          (+ rhs-count (count-msg lhs-place (get-field place rhs)))
+          (+ rhs-count (count-msg lhs rhs))
         ]
 
        [(is-a? ast Block%) 

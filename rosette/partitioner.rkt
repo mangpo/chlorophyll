@@ -10,6 +10,8 @@
 
 (configure [bitwidth 10])
 
+(provide optimize-comm)
+
 ;; Concrete version
 (define (concrete)
   (define my-ast (ast-from-file "examples/test.cll"))
@@ -79,7 +81,7 @@
 ;;; (define concise-printer (new printer%))
 ;;; (send my-ast accept concise-printer)
 
-(define (optimize-space file 
+(define (optimize-comm file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
                         #:max-msgs [best-num-msg 256])
@@ -133,8 +135,9 @@
   (with-handlers* ([exn:fail? (lambda (e) 
                                 (pretty-display "\n=== Solution ===")
                                 (send my-ast accept concise-printer) 
-                                (pretty-display best-sol))])
+                                (pretty-display best-sol)
+				(evaluate num-msg))])
                   (loop))
   )
 
-(optimize-space "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
+(optimize-comm "tests/array-dynamic.cll" #:cores 16 #:capacity 256 #:max-msgs 15)

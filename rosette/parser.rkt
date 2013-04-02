@@ -125,7 +125,9 @@
          ((VAR) $1))
     
     (array-place
-         ((LSQBR NUM COL NUM RSQBR = place-exp) (new RangePlace% [from $2] [to $4] [place $7])))
+         ((LSQBR NUM COL NUM RSQBR = place-exp) (new RangePlace% [from $2] [to $4] [place $7]))
+         ((LSQBR NUM COL NUM RSQBR) (new RangePlace% [from $2] [to $4]))
+	 )
     
     (array-place-exp
          ((array-place) (list $1))
@@ -191,9 +193,6 @@
          ((known-type data-type @ place-exp var-list SEMICOL) 
             (new VarDecl% [var-list $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
                  [pos $3-start-pos]))
-         
-         
-         ;((known-type data-type LBRACK RBRACK VAR LBRACK NUM RBRACK SEMICOL) ":)")
          
          ((known-type data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [bound $7]

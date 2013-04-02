@@ -56,7 +56,7 @@
   (class Exp%
     (inherit-field known-type place pos)
     (super-new [known-type #t])
-    (when (symbolic? place) (set! place 0)) ; place = any
+    ;(when (symbolic? place) (set! place 0)) ; place = any
     (init-field n)
     
     (define/public (pretty-print [indent ""])
