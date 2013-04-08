@@ -214,15 +214,11 @@
     (inherit-field place known-type pos)
     (init-field var type bound)
     
-    (define/public (place-to-string)
-      (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
-             (send (car place) to-string) (cdr place)))
-    
     (define/public (pretty-print [indent ""])
       (pretty-display (length place))
       (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
                               indent type var
-                              (place-to-string) 
+                              (send place to-string)
                               known-type)))
 
     (define/public (bound-error)
@@ -233,6 +229,16 @@
     (define/public (accept v)
       (send v visit this))
     ))
+
+(define RangePlaceList%
+  (class object%
+    (super-new)
+    (init-field place-list)
+    
+    (define/public (to-string)
+      (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
+             (send (car place-list) to-string) (cdr place-list)))
+))
 
 (define RangePlace%
   (class Livable%
@@ -257,4 +263,21 @@
 
     (define/public (accept v)
       (send v visit this))
+))
+
+(define For%
+  (class Livable%
+    (super-new)
+    (inherit-field place)
+    (init-field iter from to block)
+
+    (define/public (pretty-print [indent ""])
+      (display (format "~a(FOR ~a from ~a to ~a) @{" iter from to))
+      (display
+       (if (number? place)
+           place
+           (send place to-string)))
+      (pretty-display "}")
+      (send block pretty-print (inc indent)))
+
 ))

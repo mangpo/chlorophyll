@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT KNOWN))
+                               INT KNOWN IF ELSE))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -39,6 +39,9 @@
   (lexer-src-pos
    ("int" (token-INT))
    ("known" (token-KNOWN))
+   ("for" (token-FOR))
+   ("if" (token-IF))
+   ("else" (token-ELSE))
    ("@" (token-@))
    ("!" (token-BNOT))
    (arith-op1 (token-ARITHOP1 lexeme))
@@ -181,29 +184,45 @@
     (var-list
          ((VAR) (list $1))
          ((VAR COMMA var-list) (cons $1 $3))) 
-
+         
     (stmt 
+         ; assignment
          ((VAR = exp SEMICOL) 
             (new Assign% [lhs (new Var% [name $1] [pos $1-start-pos])] [rhs $3]))
 
+         ; var declaration
          ((known-type data-type var-list SEMICOL) 
             (new VarDecl% [var-list $3] [type $2] [known-type (equal? $1 "known")] 
                  [pos $3-start-pos]))
 
+         ; var declaration with placement
          ((known-type data-type @ place-exp var-list SEMICOL) 
             (new VarDecl% [var-list $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
                  [pos $3-start-pos]))
          
+         ; array declaration
          ((known-type data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [bound $7]
                  [place (default-array-place 0 $7)]
                  [pos $5-start-pos]))
          
+         ; array declaration with placement
          ((known-type data-type LSQBR RSQBR @ LBRACK array-place-exp RBRACK 
                       VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $9] [type $2] [known-type (equal? $1 "known")] [bound $11] 
                  [place $7]
                  [pos $9-start-pos]))
+
+         ; for loop
+         ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK stmts RBRACK)
+            (new For% [iter $3] [from $5] [to $$7] [stmts $10]))
+
+         ; for loop with placement
+         ((FOR LPAREN VAR FROM NUM TO NUM RPAREN 
+               @ LBRACK array-place-exp RBRACK 
+               LBRACK stmts RBRACK)
+            (new For% [iter $3] [from $5] [to $$7] [place $11] [stmts $14]))
+
          )
 
     (stmts

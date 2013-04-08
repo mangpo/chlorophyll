@@ -67,6 +67,10 @@
          (display "= ")
          (send (get-field rhs ast) accept this)
          ]
+
+        [(is-a? ast For%)
+         ;;TODO: finish this
+         ]
         
         [(is-a? ast Block%)
          (for/list ([stmt (get-field stmts ast)])
