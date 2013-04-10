@@ -20,11 +20,15 @@
          ]
 
         [(is-a? ast ArrayDecl%)
+         (send (get-field place ast) accept this)
+         ]
+
+        [(is-a? ast RangePlaceList%)
          (foldl (lambda (p var-set) (set-union var-set (send p accept this)))
-                (set) (get-field place ast))]
+                (set) (get-field place-list ast))]
       
         [(is-a? ast Var%)
-         (set) ; we handle vat at declaration.
+         (set) ; we handle var at declaration.
          ]
         
         [(is-a? ast UnaExp%)
@@ -40,6 +44,11 @@
         
         [(is-a? ast Assign%)
          (send (get-field rhs ast) accept this)
+         ]
+
+        [(is-a? ast For%)
+         (set-union (send (get-field place ast) accept this)
+                    (send (get-field body ast) accept this))
          ]
         
         [(is-a? ast Block%)

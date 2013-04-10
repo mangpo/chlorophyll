@@ -24,7 +24,7 @@
   (send my-ast pretty-print)
   
   ;; Collect real pysical places
-  #|(define collector (new place-collector% 
+  (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
   (define place-set (send my-ast accept collector))
   (pretty-display "\n=== Places ===")
@@ -43,6 +43,7 @@
   
   (define num-msg (send my-ast accept interpreter))
   (define num-cores (send interpreter num-cores))
+  (send my-ast accept concise-printer)
   
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))
@@ -61,7 +62,7 @@
   )
   
   ;void
-  (with-handlers* ([exn:fail? (lambda (e) 
+  #|(with-handlers* ([exn:fail? (lambda (e) 
                                 (pretty-display "\n=== Solution ===")
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol)

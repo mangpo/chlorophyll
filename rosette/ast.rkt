@@ -21,7 +21,10 @@
   (class object%
     (super-new)
     (init-field [pos #f])   
-  ))
+
+    (define/public (accept v)
+      (send v visit this))
+    ))
 
 (define Livable%
   (class Base%
@@ -65,9 +68,6 @@
     (define/public (get-data)
       n)
 
-    (define/public (accept v)
-      (send v visit this))
-
     (define/public (hash-code) n)
     ))
 
@@ -90,8 +90,6 @@
 				  (position-line pos) 
 				  (position-col pos))))
 
-    (define/public (accept v)
-      (send v visit this))
     ))
 
 (define Array%
@@ -132,8 +130,6 @@
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
     
-    (define/public (accept v)
-      (send v visit this))
     ))
 
 ;; AST for Binary opteration. Easy inferences happen here.
@@ -154,8 +150,6 @@
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
     
-    (define/public (accept v)
-      (send v visit this))
     ))
 
 (define Op%
@@ -171,8 +165,6 @@
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(Op:~a @~a)" indent op (evaluate place))))
     
-    (define/public (accept v)
-      (send v visit this))
     ))
 
 (define Assign%
@@ -188,8 +180,6 @@
       (send rhs pretty-print (inc indent))
       )
 
-    (define/public (accept v)
-      (send v visit this))
   ))
 
 (define VarDecl%
@@ -204,8 +194,6 @@
       
       )
 
-    (define/public (accept v)
-      (send v visit this))
   ))
 
 (define ArrayDecl%
@@ -225,12 +213,10 @@
         (format "array boundaries at place annotation of '~a' " var)
 	(format "error at src:  l:~a c:~a" (position-line pos) (position-col pos))))
 
-    (define/public (accept v)
-      (send v visit this))
     ))
 
 (define RangePlaceList%
-  (class object%
+  (class Base%
     (super-new)
     (init-field place-list)
     
@@ -248,35 +234,30 @@
     (define/public (to-string)
       (format "[~a:~a]=~a" from to (evaluate place)))
     
-    (define/public (accept v)
-      (send v visit this))
     ))
 
 (define Block%
-  (class object%
+  (class Base%
      (super-new)
      (init-field stmts)
 
      (define/public (pretty-print [indent ""])
        (andmap (lambda (i) (send i pretty-print indent)) stmts))
 
-    (define/public (accept v)
-      (send v visit this))
 ))
 
 (define For%
   (class Livable%
     (super-new)
     (inherit-field place)
-    (init-field iter from to block)
-
+    (init-field iter from to body)
     (define/public (pretty-print [indent ""])
-      (display (format "~a(FOR ~a from ~a to ~a) @{" iter from to))
+      (display (format "~a(FOR ~a from ~a to ~a) @{" indent (get-field name iter) from to))
       (display
        (if (number? place)
            place
            (send place to-string)))
       (pretty-display "}")
-      (send block pretty-print (inc indent)))
+      (send body pretty-print (inc indent)))
 
 ))

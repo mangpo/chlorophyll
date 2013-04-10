@@ -13,14 +13,24 @@
     (super-new)
     (init-field core-space num-core [env (make-hash)] [places (make-cores #:capacity core-space #:max-cores num-core)])
 
+    ;; env dictionary map variable to (place . known-type)
+    ;; place has 2 categories
+    ;; 1) single place => integer
+    ;; 2) place list   => (list_of_RangPlace% . index)
+
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
-      (cores-inc-space places place add-space))
+      (if (number? place)
+          (cores-inc-space places place add-space)
+          (for ([p place])
+               (cores-inc-space places (get-field place p) add-space))))
     
     (define (inc-space-with-op place op)
-      ;(cores-add-op places place op)
-      (cores-inc-space places place (est-space op))
-      )
+      ;TODO: change to (cores-add-op places place op)
+      (if (number? place)
+          (cores-inc-space places place (est-space op))
+          (for ([p place])
+               (cores-inc-space places (get-field place p) (est-space op)))))
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x-ast y-ast)
@@ -54,16 +64,27 @@
       (define (same-place? a b)
 	(equal? (get-place a) (get-place b)))
 
+      ;; x is in form (cons place-list known-type)
       (define (count-comm p)
+        (pretty-display "p=")
+        (pretty-display p)
 	(if (number? p)
 	    1
-	    (if (get-field known-type (cdr p))
+	    (if (get-field known-type (cdr p)) ;; get known type of the index
 		1
 		(length (car p)))))
-	    
+      
       (define x (get-field place x-ast))
+      ;(when (is-a? x RangePlaceList%)
+      ;      (set! x (get-field place-list x)))
+
       (define y (get-field place y-ast))
+      ;; (when (is-a? y RangePlaceList%)
+      ;;       (set! y (get-field place-list y)))
+
+      (pretty-display (format "x=~a" x))
       (define x-comm (count-comm x))
+      (pretty-display (format "y=~a" y))
       (define y-comm (count-comm y))
 
       (cond 
@@ -87,8 +108,12 @@
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
          (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
 
-    (define (lookup ast)
-      (dict-ref env (get-field name ast) (lambda () (send ast not-found-error))))
+    (define (lookup env ast)
+      (dict-ref env (get-field name ast)
+                (lambda ()
+                  (if (dict-has-key? env "__up__")
+                      (lookup (dict-ref env "__up__") ast)
+                      (send ast not-found-error)))))
     
     (define (place-at places index ast)
       (when (empty? places)
@@ -119,13 +144,16 @@
        
        [(is-a? ast Array%)
           ;; lookup place from env
-          (define place-known (lookup ast))
+          (define place-known (lookup env ast))
           (define places (car place-known))
           (define known (cdr place-known))
           (set-field! known-type ast known)
 
 	  (define index (get-field index ast))
+          (pretty-display "before index")
+          (pretty-display index)
 	  (define index-count (send index accept this))
+          (pretty-display (format "after index place = ~a" (get-field place index)))
 
           (when debug (pretty-display (format "Array ~a" (get-field name ast))))
 
@@ -137,16 +165,24 @@
 		  (set-field! place ast (place-at places (get-field n index) ast))
 		  ;; Extract list of possible places
 		  (set-field! place ast (cons places index))))
+
+          (pretty-display "before inc")
+          (inc-space places est-acc-arr)
+          (pretty-display "after inc")
           
           (+ index-count (count-msg index ast))]
 
-       [(is-a? ast Var%) ; multiple places?
+       [(is-a? ast Var%)
           ;; lookup place from env
-          (define place-known (lookup ast))
-          (send ast set-place-known place-known)
+          (define place-known (lookup env ast))
+          (set-field! place ast (car place-known))
+          (set-field! known-type ast (cdr place-known))
 
           (when debug (pretty-display (format "Var ~a" (get-field name ast))))
-          (inc-space (get-field place ast) est-var)
+
+          ;; no space taken for now
+          ;; x[i] in loop => take no space, i can be on stack
+          ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
           0]
 
 
@@ -202,12 +238,13 @@
           0]
 
        [(is-a? ast ArrayDecl%)
-          (define place-known (send ast get-place-known))
+          (define place-list (get-field place-list (get-field place ast)))
+          (define known (get-field known-type ast))
 
           ;; check boundaries
           (define last 0)
 
-          (for ([p (car place-known)])
+          (for ([p place-list])
 	       (let* ([from (get-field from p)]
 		      [to   (get-field to p)])
 		 (when (not (= from last))
@@ -220,9 +257,41 @@
                 (send ast bound-error))
 
           ;; put array into env
-          (dict-set! env (get-field var ast) place-known)
+          (dict-set! env (get-field var ast) (cons place-list known))
 
           0]
+
+       [(is-a? ast For%)
+          (define place-list (get-field place-list (get-field place ast)))
+
+          ;; check boundaries
+          (define last 0)
+        
+          (for ([p place-list])
+	       (let* ([from (get-field from p)]
+		      [to   (get-field to p)])
+		 (when (not (= from last))
+		       (send ast bound-error))
+		 (set! last to)
+		 (inc-space (get-field place p) est-data)))
+
+          ;; Add new scope for body.
+          (define new-env (make-hash))
+          (dict-set! new-env "__up__" env)
+          (set! env new-env)
+
+          ;; This "for" iterating pattern is satically known.
+          (dict-set! env 
+                     (get-field name (get-field iter ast))
+                     (cons (cons place-list (get-field iter ast)) #t))
+
+          (define num-msgs (send (get-field body ast) accept this))
+
+          ;; Remove scope.
+          (set! env (dict-ref env "__up__"))
+
+          (* num-msgs (- (get-field to ast) (get-field from ast)))
+          ]
 
        [(is-a? ast Assign%) 
           (when debug (newline))
@@ -232,7 +301,9 @@
           (when debug
                 (pretty-display "Assign"))
           ;;; Visit lhs
+          (pretty-display "LHS!!!!!")
           (send lhs accept this)
+          (pretty-display "after")
 
           (define lhs-place (get-field place lhs))
           (define lhs-known (get-field known-type lhs))
@@ -241,6 +312,7 @@
           (when (is-a? rhs Num%) (set-field! place rhs lhs-place))
 
           ;;; Visit rhs
+          (pretty-display "RHS!!!!!")
           (define rhs-count (send rhs accept this))
 
           ;;; Update dynamic known type
@@ -249,6 +321,7 @@
                 (set-field! known-type lhs #f)
                 (dict-set! env (get-field name lhs) (send lhs get-place-known)))
        
+          (pretty-display "BEFORE COUNTING")
           (+ rhs-count (count-msg lhs rhs))
         ]
 

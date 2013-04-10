@@ -217,21 +217,23 @@
                  [pos $5-start-pos]))
          
          ; array declaration with placement
-         ((known-type data-type LSQBR RSQBR @ LBRACK array-place-exp RBRACK 
+         ((known-type data-type LSQBR RSQBR @ LBRACK place-list RBRACK 
                       VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $9] [type $2] [known-type (equal? $1 "known")] [bound $11] 
                  [place $7]
                  [pos $9-start-pos]))
 
          ; for loop
-         #|((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK stmts RBRACK)
-            (new For% [iter $3] [from $5] [to $7] [place (default-place-list $7)] [block $10]))
+         ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK block RBRACK)
+            (new For% [iter (new Var% [name $3] [pos $3-start-pos] [known-type #t])] 
+                 [from $5] [to $7] [place (default-place-list $7)] [body $10]))
 
          ; for loop with placement
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN 
                @ LBRACK place-list RBRACK 
                LBRACK block RBRACK)
-            (new For% [iter $3] [from $5] [to $7] [place $11] [block $14]))|#
+            (new For% [iter (new Var% [name $3] [pos $3-start-pos] [known-type #t])] 
+                 [from $5] [to $7] [place $11] [body $14]))
 
          )
 

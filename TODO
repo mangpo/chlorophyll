@@ -1,5 +1,7 @@
 TODO
 - for loop with array
+  1) testing
+  2) does hashcode works?
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 

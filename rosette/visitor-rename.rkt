@@ -50,9 +50,12 @@
        [(or (or (or (is-a? ast Num%) (is-a? ast Op%)) (is-a? ast VarDecl%)) (is-a? ast RangePlace%))
         (check-place)]
 
-       [(is-a? ast ArrayDecl%)
-        (for ([p (get-field place ast)])
+       [(is-a? ast RangePlaceList%)
+        (for ([p (get-field place-list ast)])
              (send p accept this))]
+
+       [(is-a? ast ArrayDecl%)
+        (send (get-field place ast) accept this)]
        
        [(is-a? ast Var%)
         (void)]
@@ -76,6 +79,10 @@
        [(is-a? ast Assign%) 
         (define rhs (get-field rhs ast))
         (send rhs accept this)]
+
+       [(is-a? ast For%)
+        (send (get-field place ast) accept this)
+        (send (get-field body ast) accept this)]
 
        [(is-a? ast Block%) 
         (for ([stmt (get-field stmts ast)])

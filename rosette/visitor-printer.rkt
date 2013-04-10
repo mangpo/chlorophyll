@@ -77,12 +77,12 @@
 
         [(is-a? ast For%)
          (pretty-display (format "for(~a from ~a to ~a)@{~a} {"
-			  (get-field iter ast)
+			  (get-field name (get-field iter ast))
 			  (get-field from ast)
 			  (get-field to ast)
 			  (send (get-field place ast) to-string)))
 	 (inc-indent)
-	 (send (get-field block ast) accept this)
+	 (send (get-field body ast) accept this)
 	 (dec-indent)
 	 (pretty-display (format "~a}" indent))
          ]
