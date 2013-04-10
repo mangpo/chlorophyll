@@ -7,7 +7,14 @@
 (define printer%
   (class* object% (visitor<%>)
     (super-new)
-    (define indent 0)
+
+    (define indent "")
+
+    (define (inc-indent)
+      (set! indent (string-append indent "  ")))
+
+    (define (dec-indent)
+      (set! indent (substring indent 2)))
     
     (define/public (visit ast)
       (cond
@@ -21,7 +28,7 @@
         [(is-a? ast ArrayDecl%)
          (display (format "~a@{~a} ~a;"
                                (get-field type ast)
-                               (send ast place-to-string)
+                               (send (get-field place ast) to-string)
                                (get-field var ast)))
          ]
         
@@ -69,11 +76,20 @@
          ]
 
         [(is-a? ast For%)
-         ;;TODO: finish this
+         (pretty-display (format "for(~a from ~a to ~a)@{~a} {"
+			  (get-field iter ast)
+			  (get-field from ast)
+			  (get-field to ast)
+			  (send (get-field place ast) to-string)))
+	 (inc-indent)
+	 (send (get-field block ast) accept this)
+	 (dec-indent)
+	 (pretty-display (format "~a}" indent))
          ]
         
         [(is-a? ast Block%)
          (for/list ([stmt (get-field stmts ast)])
+	   (display indent)
            (send stmt accept this)
            (newline))]
         

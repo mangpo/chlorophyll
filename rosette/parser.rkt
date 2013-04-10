@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT KNOWN IF ELSE))
+                               INT KNOWN FOR IF ELSE FROM TO))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -37,11 +37,13 @@
   
 (define simple-math-lexer
   (lexer-src-pos
-   ("int" (token-INT))
+   ("int"   (token-INT))
    ("known" (token-KNOWN))
-   ("for" (token-FOR))
-   ("if" (token-IF))
-   ("else" (token-ELSE))
+   ("for"   (token-FOR))
+   ("if"    (token-IF))
+   ("else"  (token-ELSE))
+   ("from"  (token-FROM))
+   ("to"    (token-TO))
    ("@" (token-@))
    ("!" (token-BNOT))
    (arith-op1 (token-ARITHOP1 lexeme))
@@ -97,6 +99,9 @@
         (list (new RangePlace% [from begin] [to end]))
         (cons (new RangePlace% [from begin] [to to]) (default-array-place to end)))))
 
+(define (default-place-list end)
+  (new RangePlaceList% [place-list (default-array-place 0 end)]))
+
 (define simple-math-parser
   (parser
    (start block)
@@ -137,14 +142,20 @@
          ((array-place-exp COMMA array-place) (append $1 (list $3)))
          )
 
+    (place-list
+         ((array-place-exp) (new RangePlaceList% [place-list $1])))
+
     (lit ((NUM)             (new Num% [n $1] [pos $1-start-pos]))
          ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
          ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos])))
 
+    (ele ((id) $1)
+	 ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3])))
+
     (exp ((lit) $1)
-         ((id)  $1)
+	 ((ele) $1)
 
          ((BNOT exp)         (UnaExp "!" $2 $1-start-pos))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3 $2-start-pos))
@@ -171,7 +182,6 @@
          ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2)
-	 ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3]))
          )
 
     (known-type
@@ -187,8 +197,8 @@
          
     (stmt 
          ; assignment
-         ((VAR = exp SEMICOL) 
-            (new Assign% [lhs (new Var% [name $1] [pos $1-start-pos])] [rhs $3]))
+         ((ele = exp SEMICOL) 
+            (new Assign% [lhs $1] [rhs $3] [pos $1-start-pos]))
 
          ; var declaration
          ((known-type data-type var-list SEMICOL) 
@@ -203,7 +213,7 @@
          ; array declaration
          ((known-type data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [bound $7]
-                 [place (default-array-place 0 $7)]
+		 [place (default-place-list $7)]
                  [pos $5-start-pos]))
          
          ; array declaration with placement
@@ -214,14 +224,14 @@
                  [pos $9-start-pos]))
 
          ; for loop
-         ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK stmts RBRACK)
-            (new For% [iter $3] [from $5] [to $$7] [stmts $10]))
+         #|((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK stmts RBRACK)
+            (new For% [iter $3] [from $5] [to $7] [place (default-place-list $7)] [block $10]))
 
          ; for loop with placement
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN 
-               @ LBRACK array-place-exp RBRACK 
-               LBRACK stmts RBRACK)
-            (new For% [iter $3] [from $5] [to $$7] [place $11] [stmts $14]))
+               @ LBRACK place-list RBRACK 
+               LBRACK block RBRACK)
+            (new For% [iter $3] [from $5] [to $7] [place $11] [block $14]))|#
 
          )
 

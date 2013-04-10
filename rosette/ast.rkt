@@ -215,7 +215,6 @@
     (init-field var type bound)
     
     (define/public (pretty-print [indent ""])
-      (pretty-display (length place))
       (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
                               indent type var
                               (send place to-string)

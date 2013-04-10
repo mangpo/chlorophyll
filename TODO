@@ -1,5 +1,4 @@
 TODO
-- visitor-interpreter::count-msg TODO for statically unknown/known array => see note
 - for loop with array
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
