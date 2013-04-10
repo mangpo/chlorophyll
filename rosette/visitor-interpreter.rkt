@@ -42,32 +42,27 @@
              (for ([p (car x)])
                   (inc-space (get-field place p) est-comm))))
 
-      ;; Hash value of (list of RangePlace% object) and index
-      ;; (define (hash-val pair)
-      ;;   (let* ([places (car pair)]
-      ;;          [index  (cdr index)])
-      ;;     (+ (* (foldl (lambda (p res) (+ (* res 37) (send p hash-code))) 17 places) 37)
-      ;;        (send index hash-code))))
-
       (define (hash-val pair)
         (equal-hash-code pair))
 
       ;; Return the place that a resides if a only lives in one place. 
       ;; Otherwise, return hash of a.
-      (define (get-place a)
+      (define (get-rep a)
 	(if (number? a)
 	    a
 	    (if (= (length (car a)) 1)
 		(get-field place (car a))
-		(hash-val a))))
+		(format "~a . ~a" 
+			(place-list-to-string (car a)) 
+			(send (cdr a) to-string)))))
 
       (define (same-place? a b)
-	(equal? (get-place a) (get-place b)))
+	(pretty-display (format "a=~a" (get-rep a)))
+	(pretty-display (format "b=~a" (get-rep b)))
+	(equal? (get-rep a) (get-rep b)))
 
       ;; x is in form (cons place-list known-type)
       (define (count-comm p)
-        (pretty-display "p=")
-        (pretty-display p)
 	(if (number? p)
 	    1
 	    (if (get-field known-type (cdr p)) ;; get known type of the index
@@ -75,16 +70,8 @@
 		(length (car p)))))
       
       (define x (get-field place x-ast))
-      ;(when (is-a? x RangePlaceList%)
-      ;      (set! x (get-field place-list x)))
-
       (define y (get-field place y-ast))
-      ;; (when (is-a? y RangePlaceList%)
-      ;;       (set! y (get-field place-list y)))
-
-      (pretty-display (format "x=~a" x))
       (define x-comm (count-comm x))
-      (pretty-display (format "y=~a" y))
       (define y-comm (count-comm y))
 
       (cond 
@@ -138,7 +125,7 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast Num%)
-          (when debug (pretty-display (format "Num ~a" (get-field n ast))))
+          (when debug (pretty-display (format "Num ~a" (send ast to-string))))
           (inc-space (get-field place ast) est-num)
           0]
        
@@ -150,12 +137,9 @@
           (set-field! known-type ast known)
 
 	  (define index (get-field index ast))
-          (pretty-display "before index")
-          (pretty-display index)
 	  (define index-count (send index accept this))
-          (pretty-display (format "after index place = ~a" (get-field place index)))
 
-          (when debug (pretty-display (format "Array ~a" (get-field name ast))))
+          (when debug (pretty-display (format ">> Array ~a" (send ast to-string))))
 
           (if (= (length places) 1)
               ;; Array lives in only one place
@@ -166,9 +150,7 @@
 		  ;; Extract list of possible places
 		  (set-field! place ast (cons places index))))
 
-          (pretty-display "before inc")
           (inc-space places est-acc-arr)
-          (pretty-display "after inc")
           
           (+ index-count (count-msg index ast))]
 
@@ -178,7 +160,7 @@
           (set-field! place ast (car place-known))
           (set-field! known-type ast (cdr place-known))
 
-          (when debug (pretty-display (format "Var ~a" (get-field name ast))))
+          (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
 
           ;; no space taken for now
           ;; x[i] in loop => take no space, i can be on stack
@@ -196,7 +178,7 @@
           (set-field! known-type ast (get-field known-type e1))
 
           (when debug
-                (pretty-display (format "UnaOp ~a" (get-field op (get-field op ast)))))
+                (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
           (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
           
           (+ e1-count (count-msg ast e1))]
@@ -213,7 +195,7 @@
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
 
           (when debug
-                (pretty-display (format "BinOp ~a" (get-field op (get-field op ast)))))
+                (pretty-display (format ">> BinOp ~a" (send ast to-string))))
           (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
 
           (+ (+ (+ e1-count e2-count)
@@ -230,7 +212,7 @@
                (dict-set! env var place-known))
 
           (when debug
-                (pretty-display (format "VarDecl ~a" var-list)))
+                (pretty-display (format ">> VarDecl ~a" var-list)))
 
 	  ;; increase space for variable
           (inc-space place (* (length var-list) est-data)) ; include space
@@ -240,6 +222,9 @@
        [(is-a? ast ArrayDecl%)
           (define place-list (get-field place-list (get-field place ast)))
           (define known (get-field known-type ast))
+
+          (when debug
+                (pretty-display (format ">> ArrayDecl ~a" (get-field var ast))))
 
           ;; check boundaries
           (define last 0)
@@ -263,6 +248,9 @@
 
        [(is-a? ast For%)
           (define place-list (get-field place-list (get-field place ast)))
+
+          (when debug
+                (pretty-display (format ">> For ~a" (send (get-field iter ast) to-string))))
 
           ;; check boundaries
           (define last 0)
@@ -299,11 +287,9 @@
           (define rhs (get-field rhs ast))
 
           (when debug
-                (pretty-display "Assign"))
+                (pretty-display ">> Assign"))
           ;;; Visit lhs
-          (pretty-display "LHS!!!!!")
           (send lhs accept this)
-          (pretty-display "after")
 
           (define lhs-place (get-field place lhs))
           (define lhs-known (get-field known-type lhs))
@@ -312,7 +298,6 @@
           (when (is-a? rhs Num%) (set-field! place rhs lhs-place))
 
           ;;; Visit rhs
-          (pretty-display "RHS!!!!!")
           (define rhs-count (send rhs accept this))
 
           ;;; Update dynamic known type
@@ -321,7 +306,6 @@
                 (set-field! known-type lhs #f)
                 (dict-set! env (get-field name lhs) (send lhs get-place-known)))
        
-          (pretty-display "BEFORE COUNTING")
           (+ rhs-count (count-msg lhs rhs))
         ]
 

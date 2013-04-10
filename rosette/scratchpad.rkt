@@ -43,6 +43,7 @@
   
   (define num-msg (send my-ast accept interpreter))
   (define num-cores (send interpreter num-cores))
+  (pretty-display "\n=== After abstract interpreting ===")
   (send my-ast accept concise-printer)
   
   (define (loop)
@@ -62,13 +63,12 @@
   )
   
   ;void
-  #|(with-handlers* ([exn:fail? (lambda (e) 
+  (with-handlers* ([exn:fail? (lambda (e) 
                                 (pretty-display "\n=== Solution ===")
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol)
 				(evaluate num-msg))])
-                  (loop))|#
-  void
+                  (loop))
   )
 
-(optimize-comm "examples/for-test.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
+(optimize-comm "tests/for-array2.cll" #:cores 16 #:capacity 256 #:max-msgs 399)

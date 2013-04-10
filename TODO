@@ -1,7 +1,8 @@
 TODO
-- for loop with array
-  1) testing
-  2) does hashcode works?
+- assertion
+- redefine Exp%
+- @h inside for (x[i] +@h y[i])
+- precise abstract interpret for
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 

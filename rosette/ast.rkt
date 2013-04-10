@@ -64,11 +64,11 @@
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a (known=~a))" indent n (evaluate place) known-type)))
+
+    (define/public (to-string) n)
     
     (define/public (get-data)
       n)
-
-    (define/public (hash-code) n)
     ))
 
 (define Var%
@@ -79,6 +79,8 @@
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (known=~a))" indent name (evaluate place) known-type)))
+
+    (define/public (to-string) name)
     
     (define/public (get-data)
       name)
@@ -101,6 +103,9 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" indent name (evaluate place) known-type))
       (send index pretty-print (inc indent)))
+
+    (define/override (to-string)
+      (format "~a[~a]" name (send index to-string)))
 
     (define/public (index-out-of-bound index)
       (raise-range-error 'array "error at src" "" index 
@@ -129,6 +134,9 @@
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
+
+    (define/public (to-string)
+      (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
     
     ))
 
@@ -149,6 +157,9 @@
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
+
+    (define/public (to-string)
+      (format "(~a ~a)" (send op to-string) (send e1 to-string)))
     
     ))
 
@@ -164,6 +175,8 @@
     
     (define/public (pretty-print [indent ""])
       (pretty-display (format "~a(Op:~a @~a)" indent op (evaluate place))))
+
+    (define/public (to-string) op)
     
     ))
 
@@ -214,6 +227,10 @@
 	(format "error at src:  l:~a c:~a" (position-line pos) (position-col pos))))
 
     ))
+
+(define (place-list-to-string place-list)
+  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
+             (send (car place-list) to-string) (cdr place-list)))
 
 (define RangePlaceList%
   (class Base%

@@ -9,3 +9,11 @@
 (check-equal? 
  (optimize-comm "tests/array-dynamic.cll" #:cores 4 #:capacity 256 #:max-msgs 8)
  6)
+
+(check-equal? 
+ (optimize-comm "tests/for-array1.cll" #:cores 4 #:capacity 256 #:max-msgs 8)
+ 0)
+
+(check-equal? 
+ (optimize-comm "tests/for-array2.cll" #:cores 4 #:capacity 256 #:max-msgs 300)
+ 240)
