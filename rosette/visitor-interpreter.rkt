@@ -18,14 +18,18 @@
     ;; 1) single place => integer
     ;; 2) place list   => (list_of_RangPlace% . index)
 
+
+
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
+      (assert (or (number? place) (list? place)))
       (if (number? place)
           (cores-inc-space places place add-space)
           (for ([p place])
                (cores-inc-space places (get-field place p) add-space))))
     
     (define (inc-space-with-op place op)
+      (assert (or (number? place) (list? place)))
       ;TODO: change to (cores-add-op places place op)
       (if (number? place)
           (cores-inc-space places place (est-space op))
@@ -34,20 +38,15 @@
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x-ast y-ast)
+      (assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
+
+      (define (place-rep? p)
+	(or (number? p) 
+	    (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
       
-      ;; Add comm space to cores
-      (define (add-comm x)
-        (if (number? x)
-             (inc-space x est-comm)
-             (for ([p (car x)])
-                  (inc-space (get-field place p) est-comm))))
-
-      (define (hash-val pair)
-        (equal-hash-code pair))
-
       ;; Return the place that a resides if a only lives in one place. 
-      ;; Otherwise, return hash of a.
-      (define (get-rep a)
+      ;; Otherwise, return string representation of a.
+      (define (get-str-rep a)
 	(if (number? a)
 	    a
 	    (if (= (length (car a)) 1)
@@ -56,13 +55,23 @@
 			(place-list-to-string (car a)) 
 			(send (cdr a) to-string)))))
 
+      ;; Add comm space to cores
+      (define (add-comm x)
+	(assert (place-rep? x))
+        (if (number? x)
+             (inc-space x est-comm)
+             (for ([p (car x)])
+                  (inc-space (get-field place p) est-comm))))
+
       (define (same-place? a b)
-	(pretty-display (format "a=~a" (get-rep a)))
-	(pretty-display (format "b=~a" (get-rep b)))
-	(equal? (get-rep a) (get-rep b)))
+	(assert (and (place-rep? a) (place-rep? b)))
+	(pretty-display (format "a=~a" (get-str-rep a)))
+	(pretty-display (format "b=~a" (get-str-rep b)))
+	(equal? (get-str-rep a) (get-str-rep b)))
 
       ;; x is in form (cons place-list known-type)
       (define (count-comm p)
+	(assert (place-rep? p))
 	(if (number? p)
 	    1
 	    (if (get-field known-type (cdr p)) ;; get known type of the index
@@ -126,7 +135,7 @@
       (cond
        [(is-a? ast Num%)
           (when debug (pretty-display (format "Num ~a" (send ast to-string))))
-          (inc-space (get-field place ast) est-num)
+          (inc-space (get-field place ast) est-num) ; increase space
           0]
        
        [(is-a? ast Array%)
@@ -150,7 +159,7 @@
 		  ;; Extract list of possible places
 		  (set-field! place ast (cons places index))))
 
-          (inc-space places est-acc-arr)
+          (inc-space places est-acc-arr) ; not accurate
           
           (+ index-count (count-msg index ast))]
 
@@ -215,7 +224,7 @@
                 (pretty-display (format ">> VarDecl ~a" var-list)))
 
 	  ;; increase space for variable
-          (inc-space place (* (length var-list) est-data)) ; include space
+          (inc-space place (* (length var-list) est-data)) ; increase space
 
           0]
 
@@ -235,7 +244,7 @@
 		 (when (not (= from last))
 		       (send ast bound-error))
 		 (set! last to)
-		 (inc-space (get-field place p) (* (- to from) est-data))
+		 (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
 	       ))
 
           (when (not (= (get-field bound ast) last))
@@ -261,7 +270,7 @@
 		 (when (not (= from last))
 		       (send ast bound-error))
 		 (set! last to)
-		 (inc-space (get-field place p) est-data)))
+		 (inc-space (get-field place p) est-for))) ; increase space
 
           ;; Add new scope for body.
           (define new-env (make-hash))
@@ -288,23 +297,25 @@
 
           (when debug
                 (pretty-display ">> Assign"))
-          ;;; Visit lhs
+          ;; Visit lhs
           (send lhs accept this)
 
           (define lhs-place (get-field place lhs))
           (define lhs-known (get-field known-type lhs))
 
-          ;;; If rhs is a number, set place to be equal to lhs
+          ;; If rhs is a number, set place to be equal to lhs
           (when (is-a? rhs Num%) (set-field! place rhs lhs-place))
 
-          ;;; Visit rhs
+          ;; Visit rhs
           (define rhs-count (send rhs accept this))
 
-          ;;; Update dynamic known type
+          ;; Update dynamic known type
           (define rhs-known (get-field place rhs))
           (when (and (not rhs-known) lhs-known)
                 (set-field! known-type lhs #f)
                 (dict-set! env (get-field name lhs) (send lhs get-place-known)))
+
+	  ;; Don't increase space
        
           (+ rhs-count (count-msg lhs rhs))
         ]

@@ -6,7 +6,8 @@
 (define est-num 5)
 (define est-var 8) ; TODO: better estimation
 (define est-comm 8) ; @p a! ! . up
-(define est-acc-arr 2); a! @
+(define est-acc-arr 2) ; a! @
+(define est-for 16) ; 
 
 (define space-map 
   #hash(("!" . 1)

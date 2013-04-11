@@ -1,5 +1,4 @@
 TODO
-- assertion
 - redefine Exp%
 - @h inside for (x[i] +@h y[i])
 - precise abstract interpret for
