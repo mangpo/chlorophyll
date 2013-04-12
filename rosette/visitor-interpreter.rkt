@@ -45,13 +45,16 @@
       ;; Return the place that a resides if a only lives in one place. 
       ;; Otherwise, return string representation of a.
       (define (get-str-rep a)
+        (assert (place-type? a))
 	(if (number? a)
 	    a
-	    (if (= (length (car a)) 1)
-		(get-field place (car a))
-		(format "~a . ~a" 
-			(place-list-to-string (car a)) 
-			(send (cdr a) to-string)))))
+            (let ([place-list (car a)]
+                  [index (cdr a)])
+              (if (= (length place-list) 1)
+                  (get-field place (car place-list))
+                  (format "~a . ~a" 
+                          (place-list-to-string place-list)
+                          (send index to-string))))))
 
       ;; Add comm space to cores
       (define (add-comm x)
@@ -76,8 +79,8 @@
 		1
 		(length (car p)))))
       
-      (define x (get-field place x-ast))
-      (define y (get-field place y-ast))
+      (define x (get-field place-type x-ast))
+      (define y (get-field place-type y-ast))
       (define x-comm (count-comm x))
       (define y-comm (count-comm y))
 
@@ -136,11 +139,12 @@
 	  0]
 
        [(is-a? ast Num%)
-	  (define const (get-field n ast))
+	  ;(define const (get-field n ast))
           (when debug (pretty-display (format "Num ~a" (send ast to-string))))
 
-	  (send const accept this)
-	  (set-field! place-type ast (get-field place))
+          ;; already been infered
+	  ;(send const accept this)
+	  ;(set-field! place-type ast (get-field place const))
           0]
        
        [(is-a? ast Array%)
@@ -182,7 +186,7 @@
           0]
 
        [(is-a? ast Op%)
-	  (inc-space-with-op (get-field place ast) (get-field place op ast)) ; increase space
+	  (inc-space-with-op (get-field place ast) (get-field op ast)) ; increase space
 	  0]
 
 
@@ -190,7 +194,7 @@
           (when debug (newline))
           (define e1 (get-field e1 ast))
           (define e1-count (send e1 accept this))
-	  (send op accept this)
+	  (send (get-field op ast) accept this)
           
           ;; set known type
           (set-field! known-type ast (get-field known-type e1))
@@ -208,7 +212,7 @@
           (define e2 (get-field e2 ast))
           (define e1-count (send e1 accept this))
           (define e2-count (send e2 accept this))
-	  (send op accept this)
+	  (send (get-field op ast) accept this)
           
           ;; set known type
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
@@ -311,16 +315,16 @@
 
           (define lhs-place-type (get-field place-type lhs))
           (define lhs-known-type (get-field known-type lhs))
+	  (define lhs-name (get-field name lhs))
 
           ;; If rhs is a number, set place to be equal to lhs
-          (when (is-a? rhs Num%) (send rhs infer-place lhs-place))
+          (when (is-a? rhs Num%) (send rhs infer-place lhs-place-type))
 
           ;; Visit rhs
           (define rhs-count (send rhs accept this))
 
           ;; Update dynamic known type
           (define rhs-known-type (get-field known-type rhs))
-	  (define lhs-name (get-field name rhs))
           (when (and (not rhs-known-type) lhs-known-type)
                 (set-field! known-type lhs #f)
 		(let ([old (dict-ref env lhs-name)])

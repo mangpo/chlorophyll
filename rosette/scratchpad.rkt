@@ -3,7 +3,7 @@
 (require "header.rkt"
          "ast.rkt" 
          "parser.rkt" 
-         ;"visitor-interpreter.rkt" 
+         "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
          "visitor-rename.rkt"
          "visitor-printer.rkt")
@@ -24,7 +24,7 @@
   (send my-ast pretty-print)
   
   ;; Collect real pysical places
-  #|(define collector (new place-collector% 
+  (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
   (define place-set (send my-ast accept collector))
   (pretty-display "\n=== Places ===")
@@ -62,14 +62,12 @@
     (loop)
   )
   
-  ;void
   (with-handlers* ([exn:fail? (lambda (e) 
                                 (pretty-display "\n=== Solution ===")
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol)
 				(evaluate num-msg))])
-                  (loop))|#
-  void
+                  (loop))
   )
 
-(optimize-comm "tests/for-array2.cll" #:cores 16 #:capacity 256 #:max-msgs 399)
+(optimize-comm "examples/csum-hole.cll" #:cores 16 #:capacity 256 #:max-msgs 20)

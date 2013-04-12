@@ -245,7 +245,7 @@
     (inherit place-to-string)
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
-			      indent iter from to (place-to-string)))
+			      indent (send iter to-string) from to (place-to-string)))
       (send body pretty-print (inc indent)))
 
 ))

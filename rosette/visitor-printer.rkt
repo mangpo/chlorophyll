@@ -31,11 +31,15 @@
                                (send ast place-to-string)
                                (get-field var ast)))
          ]
-        
-        [(is-a? ast Num%)
+
+        [(is-a? ast Const%)
          (display (format "~a@~a"
                         (send ast to-string)
-                        (send ast get-place)))
+                        (send ast get-place)))]
+         
+        
+        [(is-a? ast Num%)
+         (send (get-field n ast) accept this)
          ]
         
         [(is-a? ast Op%)
@@ -81,7 +85,7 @@
 
         [(is-a? ast For%)
          (pretty-display (format "for(~a from ~a to ~a)@{~a} {"
-			  (get-field iter ast)
+			  (send (get-field iter ast) to-string)
 			  (get-field from ast)
 			  (get-field to ast)
 			  (send ast place-to-string)))

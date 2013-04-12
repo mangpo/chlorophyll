@@ -53,9 +53,9 @@
        [(is-a? ast LivableGroup%)
         (for ([p (get-field place-list ast)])
              (send p accept this))
-	(when (is-a? For%) (send (get-field body ast) accept this))]
+	(when (is-a? ast For%) (send (get-field body ast) accept this))]
        
-       [(is-a? ast Var%)
+       [(or (is-a? ast Var%) (is-a? ast Num%))
         (void)]
 
        [(is-a? ast BinExp%)
@@ -79,7 +79,7 @@
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))]
 
-       [else (raise "Error: partition-to-number visitor unimplemented!")]
+       [else (raise (format "Error: in partition-to-number, ~a unimplemented!" ast))]
        ))
     ))
             
