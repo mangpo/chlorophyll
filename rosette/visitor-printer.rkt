@@ -28,18 +28,18 @@
         [(is-a? ast ArrayDecl%)
          (display (format "~a@{~a} ~a;"
                                (get-field type ast)
-                               (send (get-field place ast) to-string)
+                               (send ast place-to-string)
                                (get-field var ast)))
          ]
         
         [(is-a? ast Num%)
-         (display (format "~a@~a "
-                        (get-field n ast)
+         (display (format "~a@~a"
+                        (send ast to-string)
                         (send ast get-place)))
          ]
         
         [(is-a? ast Op%)
-         (display (format "~a@~a "
+         (display (format "~a@~a"
                         (get-field op ast)
                         (send ast get-place)))
          ]
@@ -48,23 +48,27 @@
          (display (format "~a["
                         (get-field name ast)))
 	 (send (get-field index ast) accept this)
-	 (display (format "] "))
+	 (display (format "]"))
          ]
       
         [(is-a? ast Var%)
-         (display (format "~a "
-                        (get-field name ast)))
+         (display (format "~a" (get-field name ast)))
          ]
         
         [(is-a? ast UnaExp%)
+         (display "(")
          (send (get-field op ast) accept this)
+         (display " ")
          (send (get-field e1 ast) accept this)
+         (display ")")
          ]
         
         [(is-a? ast BinExp%)
          (display "(")
          (send (get-field e1 ast) accept this)
+         (display " ")
          (send (get-field op ast) accept this)
+         (display " ")
          (send (get-field e2 ast) accept this)
          (display ")")
          ]
@@ -77,10 +81,10 @@
 
         [(is-a? ast For%)
          (pretty-display (format "for(~a from ~a to ~a)@{~a} {"
-			  (get-field name (get-field iter ast))
+			  (get-field iter ast)
 			  (get-field from ast)
 			  (get-field to ast)
-			  (send (get-field place ast) to-string)))
+			  (send ast place-to-string)))
 	 (inc-indent)
 	 (send (get-field body ast) accept this)
 	 (dec-indent)
@@ -88,7 +92,7 @@
          ]
         
         [(is-a? ast Block%)
-         (for/list ([stmt (get-field stmts ast)])
+         (for ([stmt (get-field stmts ast)])
 	   (display indent)
            (send stmt accept this)
            (newline))]

@@ -47,15 +47,13 @@
             (set-field! place ast (convert-to-num p)))))
 
       (cond
-       [(or (or (or (is-a? ast Num%) (is-a? ast Op%)) (is-a? ast VarDecl%)) (is-a? ast RangePlace%))
+       [(is-a? ast Livable%)
         (check-place)]
 
-       [(is-a? ast RangePlaceList%)
+       [(is-a? ast LivableGroup%)
         (for ([p (get-field place-list ast)])
-             (send p accept this))]
-
-       [(is-a? ast ArrayDecl%)
-        (send (get-field place ast) accept this)]
+             (send p accept this))
+	(when (is-a? For%) (send (get-field body ast) accept this))]
        
        [(is-a? ast Var%)
         (void)]
@@ -66,23 +64,16 @@
         (define op (get-field op ast))
         (send e1 accept this)
         (send e2 accept this)
-        (send op accept this)
-        (check-place)]
+        (send op accept this)]
 
        [(is-a? ast UnaExp%)
         (define e1 (get-field e1 ast))
         (define op (get-field op ast))
         (send e1 accept this)
-        (send op accept this)
-        (check-place)]
+        (send op accept this)]
 
        [(is-a? ast Assign%) 
-        (define rhs (get-field rhs ast))
-        (send rhs accept this)]
-
-       [(is-a? ast For%)
-        (send (get-field place ast) accept this)
-        (send (get-field body ast) accept this)]
+        (send (get-field rhs ast) accept this)]
 
        [(is-a? ast Block%) 
         (for ([stmt (get-field stmts ast)])

@@ -99,9 +99,6 @@
         (list (new RangePlace% [from begin] [to end]))
         (cons (new RangePlace% [from begin] [to to]) (default-array-place to end)))))
 
-(define (default-place-list end)
-  (new RangePlaceList% [place-list (default-array-place 0 end)]))
-
 (define simple-math-parser
   (parser
    (start block)
@@ -142,11 +139,10 @@
          ((array-place-exp COMMA array-place) (append $1 (list $3)))
          )
 
-    (place-list
-         ((array-place-exp) (new RangePlaceList% [place-list $1])))
+    (const ((NUM)           (new Const% [n $1] [pos $1-start-pos])))
 
-    (lit ((NUM)             (new Num% [n $1] [pos $1-start-pos]))
-         ((NUM @ place-exp) (new Num% [n $1] [place $3] [pos $1-start-pos])))
+    (lit ((const)             (new Num% [n $1]))
+         ((const @ place-exp) (new Num% [n $1] [place $3])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
          ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos])))
@@ -202,38 +198,38 @@
 
          ; var declaration
          ((known-type data-type var-list SEMICOL) 
-            (new VarDecl% [var-list $3] [type $2] [known-type (equal? $1 "known")] 
+            (new VarDecl% [var-list $3] [type $2] [known (equal? $1 "known")] 
                  [pos $3-start-pos]))
 
          ; var declaration with placement
          ((known-type data-type @ place-exp var-list SEMICOL) 
-            (new VarDecl% [var-list $5] [type $2] [known-type (equal? $1 "known")] [place $4] 
+            (new VarDecl% [var-list $5] [type $2] [known (equal? $1 "known")] [place $4] 
                  [pos $3-start-pos]))
          
          ; array declaration
          ((known-type data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
-            (new ArrayDecl% [var $5] [type $2] [known-type (equal? $1 "known")] [bound $7]
-		 [place (default-place-list $7)]
+            (new ArrayDecl% [var $5] [type $2] [known (equal? $1 "known")] [bound $7]
+		 [place-list (default-array-place $7)]
                  [pos $5-start-pos]))
          
          ; array declaration with placement
-         ((known-type data-type LSQBR RSQBR @ LBRACK place-list RBRACK 
+         ((known-type data-type LSQBR RSQBR @ LBRACK array-place-exp RBRACK 
                       VAR LSQBR NUM RSQBR SEMICOL)
-            (new ArrayDecl% [var $9] [type $2] [known-type (equal? $1 "known")] [bound $11] 
-                 [place $7]
+            (new ArrayDecl% [var $9] [type $2] [known (equal? $1 "known")] [bound $11] 
+                 [place-list $7]
                  [pos $9-start-pos]))
 
          ; for loop
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK block RBRACK)
-            (new For% [iter (new Var% [name $3] [pos $3-start-pos] [known-type #t])] 
-                 [from $5] [to $7] [place (default-place-list $7)] [body $10]))
+            (new For% [iter $3] [known #t]
+                 [from $5] [to $7] [place-list (default-array-place $7)] [body $10]))
 
          ; for loop with placement
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN 
-               @ LBRACK place-list RBRACK 
+               @ LBRACK array-place-exp RBRACK 
                LBRACK block RBRACK)
-            (new For% [iter (new Var% [name $3] [pos $3-start-pos] [known-type #t])] 
-                 [from $5] [to $7] [place $11] [body $14]))
+            (new For% [iter $3] [known #t]
+                 [from $5] [to $7] [place-list $11] [body $14]))
 
          )
 

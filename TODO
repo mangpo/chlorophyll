@@ -1,5 +1,6 @@
 TODO
-- redefine Exp%
+- iter should be Var%
+- test
 - @h inside for (x[i] +@h y[i])
 - precise abstract interpret for
 - space estimator: if local var inside a loop -> no space required

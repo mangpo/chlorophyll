@@ -18,8 +18,6 @@
     ;; 1) single place => integer
     ;; 2) place list   => (list_of_RangPlace% . index)
 
-
-
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
       (assert (or (number? place) (list? place)))
@@ -40,7 +38,7 @@
     (define (count-msg x-ast y-ast)
       (assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
-      (define (place-rep? p)
+      (define (place-type? p)
 	(or (number? p) 
 	    (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
       
@@ -57,21 +55,21 @@
 
       ;; Add comm space to cores
       (define (add-comm x)
-	(assert (place-rep? x))
+	(assert (place-type? x))
         (if (number? x)
              (inc-space x est-comm)
              (for ([p (car x)])
                   (inc-space (get-field place p) est-comm))))
 
       (define (same-place? a b)
-	(assert (and (place-rep? a) (place-rep? b)))
+	(assert (and (place-type? a) (place-type? b)))
 	(pretty-display (format "a=~a" (get-str-rep a)))
 	(pretty-display (format "b=~a" (get-str-rep b)))
 	(equal? (get-str-rep a) (get-str-rep b)))
 
       ;; x is in form (cons place-list known-type)
       (define (count-comm p)
-	(assert (place-rep? p))
+	(assert (place-type? p))
 	(if (number? p)
 	    1
 	    (if (get-field known-type (cdr p)) ;; get known type of the index
@@ -133,17 +131,24 @@
       
     (define/public (visit ast)
       (cond
+       [(is-a? ast Const%)
+	  (inc-space (get-field place ast) est-num) ; increase space
+	  0]
+
        [(is-a? ast Num%)
+	  (define const (get-field n ast))
           (when debug (pretty-display (format "Num ~a" (send ast to-string))))
-          (inc-space (get-field place ast) est-num) ; increase space
+
+	  (send const accept this)
+	  (set-field! place-type ast (get-field place))
           0]
        
        [(is-a? ast Array%)
           ;; lookup place from env
           (define place-known (lookup env ast))
           (define places (car place-known))
-          (define known (cdr place-known))
-          (set-field! known-type ast known)
+          (define known-type (cdr place-known))
+          (set-field! known-type ast known-type)
 
 	  (define index (get-field index ast))
 	  (define index-count (send index accept this))
@@ -152,12 +157,12 @@
 
           (if (= (length places) 1)
               ;; Array lives in only one place
-              (set-field! place ast (get-field place (car places)))
+              (set-field! place-type ast (get-field place (car places)))
 	      (if (is-a? index Num%)
 		  ;; Know exact index
-		  (set-field! place ast (place-at places (get-field n index) ast))
-		  ;; Extract list of possible places
-		  (set-field! place ast (cons places index))))
+		  (set-field! place-type ast (place-at places (get-field n index) ast))
+		  ;; Pair of list of possible places and index
+		  (set-field! place-type ast (cons places index))))
 
           (inc-space places est-acc-arr) ; not accurate
           
@@ -166,7 +171,7 @@
        [(is-a? ast Var%)
           ;; lookup place from env
           (define place-known (lookup env ast))
-          (set-field! place ast (car place-known))
+          (set-field! place-type ast (car place-known))
           (set-field! known-type ast (cdr place-known))
 
           (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
@@ -176,19 +181,24 @@
           ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
           0]
 
+       [(is-a? ast Op%)
+	  (inc-space-with-op (get-field place ast) (get-field place op ast)) ; increase space
+	  0]
+
 
        [(is-a? ast UnaExp%)
           (when debug (newline))
           (define e1 (get-field e1 ast))
           (define e1-count (send e1 accept this))
-          (define op-place (get-field place ast))
+	  (send op accept this)
           
           ;; set known type
           (set-field! known-type ast (get-field known-type e1))
 
+	  ;; already set place type
+
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
-          (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
           
           (+ e1-count (count-msg ast e1))]
 
@@ -198,27 +208,26 @@
           (define e2 (get-field e2 ast))
           (define e1-count (send e1 accept this))
           (define e2-count (send e2 accept this))
-          (define op-place (get-field place ast))
+	  (send op accept this)
           
           ;; set known type
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
 
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
-          (inc-space-with-op op-place (get-field op (get-field op ast))) ; increase space
 
           (+ (+ (+ e1-count e2-count)
                       (count-msg ast e1))
                    (count-msg ast e2))]
                 
        [(is-a? ast VarDecl%) 
-          (define place-known (send ast get-place-known))
           (define place (get-field place ast))
+	  (define known (get-field known ast))
           (define var-list (get-field var-list ast))
           
           ;; put vars into env
           (for ([var var-list])
-               (dict-set! env var place-known))
+               (dict-set! env var (cons place known)))
 
           (when debug
                 (pretty-display (format ">> VarDecl ~a" var-list)))
@@ -229,8 +238,8 @@
           0]
 
        [(is-a? ast ArrayDecl%)
-          (define place-list (get-field place-list (get-field place ast)))
-          (define known (get-field known-type ast))
+          (define place-list (get-field place-list ast))
+          (define known (get-field known ast))
 
           (when debug
                 (pretty-display (format ">> ArrayDecl ~a" (get-field var ast))))
@@ -256,7 +265,7 @@
           0]
 
        [(is-a? ast For%)
-          (define place-list (get-field place-list (get-field place ast)))
+          (define place-list (get-field place-list ast))
 
           (when debug
                 (pretty-display (format ">> For ~a" (send (get-field iter ast) to-string))))
@@ -300,20 +309,22 @@
           ;; Visit lhs
           (send lhs accept this)
 
-          (define lhs-place (get-field place lhs))
-          (define lhs-known (get-field known-type lhs))
+          (define lhs-place-type (get-field place-type lhs))
+          (define lhs-known-type (get-field known-type lhs))
 
           ;; If rhs is a number, set place to be equal to lhs
-          (when (is-a? rhs Num%) (set-field! place rhs lhs-place))
+          (when (is-a? rhs Num%) (send rhs infer-place lhs-place))
 
           ;; Visit rhs
           (define rhs-count (send rhs accept this))
 
           ;; Update dynamic known type
-          (define rhs-known (get-field place rhs))
-          (when (and (not rhs-known) lhs-known)
+          (define rhs-known-type (get-field known-type rhs))
+	  (define lhs-name (get-field name rhs))
+          (when (and (not rhs-known-type) lhs-known-type)
                 (set-field! known-type lhs #f)
-                (dict-set! env (get-field name lhs) (send lhs get-place-known)))
+		(let ([old (dict-ref env lhs-name)])
+		  (dict-set! env lhs (cons (car old) #f))))
 
 	  ;; Don't increase space
        

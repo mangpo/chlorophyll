@@ -22,6 +22,8 @@
     (super-new)
     (init-field [pos #f])   
 
+    (abstract pretty-print)
+
     (define/public (accept v)
       (send v visit this))
     ))
@@ -38,52 +40,68 @@
     ))
 
 
-(define Exp%
-  (class Livable%
+(define (place-list-to-string place-list)
+  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
+             (send (car place-list) to-string) (cdr place-list)))
+
+(define LivableGroup%
+  (class Base%
     (super-new)
-    (inherit-field place)
-    (init-field [known-type #f])
+    (init-field place-list)
+    
+    (define/public (place-to-string)
+      (place-list-to-string place-list))
+))
+
+(define Exp%
+  (class Base%
+    (super-new)
+    (init-field [known-type #f] [place-type #f])
 
     (define/public (get-place-known)
-      (cons place known-type))
+      (cons place-type known-type))
 
     (define/public (set-place-known x)
-      (set! place (car x))
+      (set! place-type (car x))
       (set! known-type (cdr x)))
 
     (define/public (get-known-type)
       known-type)
+
+    ;; This is used to construct place-type representation.
+    (abstract to-string)
   ))
+
 
 (define Num%
   (class Exp%
-    (inherit-field known-type place pos)
+    (inherit-field known-type place-type pos)
     (super-new [known-type #t])
-    ;(when (symbolic? place) (set! place 0)) ; place = any
     (init-field n)
-    
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(Num:~a @~a (known=~a))" indent n (evaluate place) known-type)))
+    (set! place-type (get-field place n))
 
-    (define/public (to-string) n)
+    (define/public (infer-place p)
+      (set-field! place n p)
+      (set! place-type p))
     
-    (define/public (get-data)
-      n)
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Num:~a @~a (known=~a))" 
+			      indent (get-field n n) (evaluate place-type) known-type)))
+
+    (define/override (to-string) (send n to-string))
     ))
 
 (define Var%
   (class Exp%
     (super-new)
-    (inherit-field known-type place pos)
+    (inherit-field known-type place-type pos)
     (init-field name)
     
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(Var:~a @~a (known=~a))" indent name (evaluate place) known-type)))
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Var:~a @~a (known=~a))" 
+			      indent name (evaluate place-type) known-type)))
 
-    (define/public (to-string) name)
-    
-    (define/public (get-data)
-      name)
+    (define/override (to-string) name)
 
     (define/public (not-found-error)
       (raise-syntax-error 'undefined
@@ -91,17 +109,17 @@
 				  name
 				  (position-line pos) 
 				  (position-col pos))))
-
     ))
 
 (define Array%
   (class Var%
     (super-new)
-    (inherit-field known-type place pos name)
+    (inherit-field known-type place-type pos name)
     (init-field index)
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Array:~a @~a (known=~a))" indent name (evaluate place) known-type))
+      (pretty-display (format "~a(Array:~a @~a (known=~a))" 
+			      indent name (evaluate place-type) known-type))
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)
@@ -111,8 +129,6 @@
       (raise-range-error 'array "error at src" "" index 
 			 (format "l:~a c:~a" (position-line pos) (position-col pos))
 			 0 3))
-
-
     ))
 
 ;; AST for Binary opteration. Easy inferences happen here.
@@ -120,22 +136,23 @@
 (define BinExp%
   (class Exp%
     (super-new)
-    (inherit-field known-type place)
+    (inherit-field known-type place-type)
     (init-field op e1 e2)
-    (set! place (get-field place op))
+    (set! place-type (get-field place op))
 
     ;;; Infer place for numbers.
-    (when (is-a? e1 Num%) (set-field! place e1 place))
-    (when (is-a? e2 Num%) (set-field! place e2 place))
+    (when (is-a? e1 Num%) (send e1 infer-place place-type))
+    (when (is-a? e2 Num%) (send e2 infer-place place-type))
     
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(BinExp: @~a (known=~a)" indent (evaluate place) known-type))
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(BinExp: @~a (known=~a)" 
+			      indent (evaluate place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
-    (define/public (to-string)
+    (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
     
     ))
@@ -145,39 +162,112 @@
 (define UnaExp%
   (class Exp%
     (super-new)
-    (inherit-field known-type place)
+    (inherit-field known-type place-type)
     (init-field op e1)
-    (set! place (get-field place op))
+    (set! place-type (get-field place op))
 
     ;;; Infer place for numbers.
-    (when (is-a? e1 Num%) (set-field! place e1 place))
+    (when (is-a? e1 Num%) (send e1 infer-place place-type))
     
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(UnaOp: @~a (known=~a)" indent (evaluate place) known-type))
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
+			      indent (evaluate place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
-    (define/public (to-string)
+    (define/override (to-string)
       (format "(~a ~a)" (send op to-string) (send e1 to-string)))
     
     ))
 
-(define Op%
+
+(define Const%
   (class Livable%
     (super-new)
     (inherit-field place)
+    (init-field n)
+    (inherit get-place)
+
+    (define/public (inter-place p)
+      (set! place p))
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Const:~a @~a)" indent n (get-place))))
+
+    (define/public (to-string) n)
+))
+
+(define Op%
+  (class Livable%
+    (super-new)
     (init-field op)
+    (inherit get-place)
     
-    (define/public (add-place new-place)
-      (set! place new-place)
-      this)
-    
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(Op:~a @~a)" indent op (evaluate place))))
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Op:~a @~a)" indent op (get-place))))
 
     (define/public (to-string) op)
     
+    ))
+
+(define VarDecl%
+  (class Livable%
+    (super-new)
+    (inherit-field place)
+    (init-field var-list type known)
+    (inherit get-place)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
+                              indent type var-list (get-place) known)))
+  ))
+
+(define RangePlace%
+  (class Livable%
+    (super-new)
+    (inherit-field)
+    (init-field from to)
+    (inherit get-place)
+
+    (define/override (pretty-print)
+      (pretty-display (to-string)))
+    
+    (define/public (to-string)
+      (format "[~a:~a]=~a" from to (get-place)))
+    
+    ))
+
+(define For%
+  (class LivableGroup%
+    (super-new)
+    (init-field iter from to body known)
+    (inherit place-to-string)
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
+			      indent iter from to (place-to-string)))
+      (send body pretty-print (inc indent)))
+
+))
+
+(define ArrayDecl%
+  (class LivableGroup%
+    (super-new)
+    (inherit-field pos)
+    (init-field var type known bound)
+    (inherit place-to-string)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
+                              indent type var
+                              (place-to-string)
+                              known)))
+
+    (define/public (bound-error)
+      (raise-mismatch-error 'mismatch 
+        (format "array boundaries at place annotation of '~a' " var)
+	(format "error at src:  l:~a c:~a" (position-line pos) (position-col pos))))
+
     ))
 
 (define Assign%
@@ -187,7 +277,7 @@
 
     ;;; Infer place for numbers. TODO
 
-    (define/public (pretty-print [indent ""])
+    (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN" indent))
       (send lhs pretty-print (inc indent))
       (send rhs pretty-print (inc indent))
@@ -195,86 +285,14 @@
 
   ))
 
-(define VarDecl%
-  (class Exp%
-    (super-new)
-    (inherit-field place known-type)
-    (init-field var-list type)
-
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
-                              indent type var-list (evaluate place) known-type))
-      
-      )
-
-  ))
-
-(define ArrayDecl%
-  (class Exp%
-    (super-new)
-    (inherit-field place known-type pos)
-    (init-field var type bound)
-    
-    (define/public (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
-                              indent type var
-                              (send place to-string)
-                              known-type)))
-
-    (define/public (bound-error)
-      (raise-mismatch-error 'mismatch 
-        (format "array boundaries at place annotation of '~a' " var)
-	(format "error at src:  l:~a c:~a" (position-line pos) (position-col pos))))
-
-    ))
-
-(define (place-list-to-string place-list)
-  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
-             (send (car place-list) to-string) (cdr place-list)))
-
-(define RangePlaceList%
-  (class Base%
-    (super-new)
-    (init-field place-list)
-    
-    (define/public (to-string)
-      (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
-             (send (car place-list) to-string) (cdr place-list)))
-))
-
-(define RangePlace%
-  (class Livable%
-    (super-new)
-    (inherit-field place)
-    (init-field from to)
-    
-    (define/public (to-string)
-      (format "[~a:~a]=~a" from to (evaluate place)))
-    
-    ))
-
 (define Block%
   (class Base%
      (super-new)
      (init-field stmts)
 
-     (define/public (pretty-print [indent ""])
+     (define/override (pretty-print [indent ""])
        (andmap (lambda (i) (send i pretty-print indent)) stmts))
 
 ))
 
-(define For%
-  (class Livable%
-    (super-new)
-    (inherit-field place)
-    (init-field iter from to body)
-    (define/public (pretty-print [indent ""])
-      (display (format "~a(FOR ~a from ~a to ~a) @{" indent (get-field name iter) from to))
-      (display
-       (if (number? place)
-           place
-           (send place to-string)))
-      (pretty-display "}")
-      (send body pretty-print (inc indent)))
 
-))
