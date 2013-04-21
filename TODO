@@ -1,13 +1,13 @@
 TODO
-- iter should be Var%
-- test
+- count space for loop on related things
 - @h inside for (x[i] +@h y[i])
-- precise abstract interpret for
+- general for, while, if
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 
 - should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
+- precise abstract interpret for
 
 Wait for rosette
 - symbolic set or lower space to 4

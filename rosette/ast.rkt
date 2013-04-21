@@ -42,7 +42,22 @@
 
 (define (place-list-to-string place-list)
   (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
-             (send (car place-list) to-string) (cdr place-list)))
+         (send (car place-list) to-string) 
+         (cdr place-list)))
+
+(define (to-place-set place)
+  (if (number? place)
+      (set place)
+      (if (list? place)
+          (foldl (lambda (p place-set) (set-add place-set (get-field place p)))
+                 (set)
+                 place)
+          (to-place-set (car place)))))
+
+(define (to-place-type ast place)
+  (if (number? place)
+      place
+      (cons place ast)))
 
 (define LivableGroup%
   (class Base%

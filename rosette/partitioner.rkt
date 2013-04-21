@@ -112,7 +112,7 @@
   (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
-  (define num-msg (send my-ast accept interpreter))
+  (define num-msg (car (send my-ast accept interpreter)))
   (define num-cores (send interpreter num-cores))
   
   (define (loop)
@@ -140,4 +140,4 @@
                   (loop))
   )
 
-(optimize-comm "tests/array-dynamic.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
+(optimize-comm "tests/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15)

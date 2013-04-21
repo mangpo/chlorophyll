@@ -11,7 +11,10 @@
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field core-space num-core [env (make-hash)] [places (make-cores #:capacity core-space #:max-cores num-core)])
+    (init-field core-space 
+                num-core 
+                [env (make-hash)] 
+                [places (make-cores #:capacity core-space #:max-cores num-core)])
 
     ;; env dictionary map variable to (place . known-type)
     ;; place has 2 categories
@@ -36,7 +39,7 @@
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg x-ast y-ast)
-      (assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
+      ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
       (define (place-type? p)
 	(or (number? p) 
@@ -45,7 +48,7 @@
       ;; Return the place that a resides if a only lives in one place. 
       ;; Otherwise, return string representation of a.
       (define (get-str-rep a)
-        (assert (place-type? a))
+        ;(assert (place-type? a))
 	(if (number? a)
 	    a
             (let ([place-list (car a)]
@@ -58,27 +61,32 @@
 
       ;; Add comm space to cores
       (define (add-comm x)
-	(assert (place-type? x))
+	;(assert (place-type? x))
         (if (number? x)
              (inc-space x est-comm)
              (for ([p (car x)])
                   (inc-space (get-field place p) est-comm))))
 
       (define (same-place? a b)
-	(assert (and (place-type? a) (place-type? b)))
+	;(assert (and (place-type? a) (place-type? b)))
 	(pretty-display (format "a=~a" (get-str-rep a)))
 	(pretty-display (format "b=~a" (get-str-rep b)))
 	(equal? (get-str-rep a) (get-str-rep b)))
 
-      ;; x is in form (cons place-list known-type)
+      ;; Return 1 if it is absolutly in one place
+      ;;             or the index is known.
+      ;; Return number of cores p resides in otherwise.
       (define (count-comm p)
-	(assert (place-type? p))
+	;(assert (place-type? p))
+        (when (not (number? p))
+            (pretty-display (format "known = ~a" (get-field known-type (cdr p)))))
 	(if (number? p)
 	    1
 	    (if (get-field known-type (cdr p)) ;; get known type of the index
 		1
 		(length (car p)))))
       
+      ;; x and y in form (cons place-list known-type)
       (define x (get-field place-type x-ast))
       (define y (get-field place-type y-ast))
       (define x-comm (count-comm x))
@@ -135,17 +143,18 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast Const%)
-	  (inc-space (get-field place ast) est-num) ; increase space
-	  0]
+          (define place (get-field place ast))
+	  (inc-space place est-num) ; increase space
+	  (cons 0 (set place))]
 
        [(is-a? ast Num%)
 	  ;(define const (get-field n ast))
-          (when debug (pretty-display (format "Num ~a" (send ast to-string))))
+          (when debug (pretty-display (format ">> Num ~a" (send ast to-string))))
 
           ;; already been infered
 	  ;(send const accept this)
 	  ;(set-field! place-type ast (get-field place const))
-          0]
+          (cons 0 (to-place-set (get-field place-type ast)))]
        
        [(is-a? ast Array%)
           ;; lookup place from env
@@ -155,7 +164,7 @@
           (set-field! known-type ast known-type)
 
 	  (define index (get-field index ast))
-	  (define index-count (send index accept this))
+	  (define index-ret (send index accept this))
 
           (when debug (pretty-display (format ">> Array ~a" (send ast to-string))))
 
@@ -169,13 +178,21 @@
 		  (set-field! place-type ast (cons places index))))
 
           (inc-space places est-acc-arr) ; not accurate
-          
-          (+ index-count (count-msg index ast))]
+
+          (cons 
+           (+ (car index-ret) (count-msg index ast))
+           (set-union (cdr index-ret) (to-place-set places)))
+          ]
 
        [(is-a? ast Var%)
           ;; lookup place from env
           (define place-known (lookup env ast))
-          (set-field! place-type ast (car place-known))
+          (define place (car place-known))
+
+          ;; place can be list if var is iterator
+          ;; need to call to-place-type to turn place-list into (place-list . index)
+          (set-field! place-type ast (to-place-type ast place))
+
           (set-field! known-type ast (cdr place-known))
 
           (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
@@ -183,18 +200,22 @@
           ;; no space taken for now
           ;; x[i] in loop => take no space, i can be on stack
           ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
-          0]
+
+          (cons 0 (to-place-set place))
+          ]
 
        [(is-a? ast Op%)
+          (define place (get-field place ast))
 	  (inc-space-with-op (get-field place ast) (get-field op ast)) ; increase space
-	  0]
+	  (cons 0 (set place))
+          ]
 
 
        [(is-a? ast UnaExp%)
           (when debug (newline))
           (define e1 (get-field e1 ast))
-          (define e1-count (send e1 accept this))
-	  (send (get-field op ast) accept this)
+          (define e1-ret (send e1 accept this))
+	  (define op-ret (send (get-field op ast) accept this))
           
           ;; set known type
           (set-field! known-type ast (get-field known-type e1))
@@ -204,15 +225,18 @@
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
           
-          (+ e1-count (count-msg ast e1))]
+          (cons
+           (+ (car e1-ret) (count-msg ast e1))
+           (set-union (cdr e1-ret) (cdr op-ret)))
+          ]
 
        [(is-a? ast BinExp%)
           (when debug (newline))
           (define e1 (get-field e1 ast))
           (define e2 (get-field e2 ast))
-          (define e1-count (send e1 accept this))
-          (define e2-count (send e2 accept this))
-	  (send (get-field op ast) accept this)
+          (define e1-ret (send e1 accept this))
+          (define e2-ret (send e2 accept this))
+	  (define op-ret (send (get-field op ast) accept this))
           
           ;; set known type
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
@@ -220,9 +244,12 @@
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
 
-          (+ (+ (+ e1-count e2-count)
-                      (count-msg ast e1))
-                   (count-msg ast e2))]
+          (cons
+           (+ (+ (+ (car e1-ret) (car e2-ret))
+                 (count-msg ast e1))
+              (count-msg ast e2))
+           (set-union (set-union (cdr e1-ret) (cdr e2-ret)) (cdr op-ret)))
+          ]
                 
        [(is-a? ast VarDecl%) 
           (define place (get-field place ast))
@@ -239,7 +266,8 @@
 	  ;; increase space for variable
           (inc-space place (* (length var-list) est-data)) ; increase space
 
-          0]
+          (cons 0 (set place))
+          ]
 
        [(is-a? ast ArrayDecl%)
           (define place-list (get-field place-list ast))
@@ -266,7 +294,8 @@
           ;; put array into env
           (dict-set! env (get-field var ast) (cons place-list known))
 
-          0]
+          (cons 0 (to-place-set place-list))
+          ]
 
        [(is-a? ast For%)
           (define place-list (get-field place-list ast))
@@ -282,8 +311,8 @@
 		      [to   (get-field to p)])
 		 (when (not (= from last))
 		       (send ast bound-error))
-		 (set! last to)
-		 (inc-space (get-field place p) est-for))) ; increase space
+		 (set! last to)))
+		 ;(inc-space (get-field place p) est-for))) ; increase space
 
           ;; Add new scope for body.
           (define new-env (make-hash))
@@ -293,14 +322,19 @@
           ;; This "for" iterating pattern is satically known.
           (dict-set! env 
                      (get-field name (get-field iter ast))
-                     (cons (cons place-list (get-field iter ast)) #t))
+                     (cons place-list #t))
 
-          (define num-msgs (send (get-field body ast) accept this))
+          (define body-ret (send (get-field body ast) accept this))
+          (define body-place-set (cdr body-ret))
+          (for ([p body-place-set])
+               (inc-space p est-for)) ; increase space (already accounts for i here)
 
           ;; Remove scope.
           (set! env (dict-ref env "__up__"))
 
-          (* num-msgs (- (get-field to ast) (get-field from ast)))
+          (cons
+           (* (car body-ret) (- (get-field to ast) (get-field from ast)))
+           body-place-set)
           ]
 
        [(is-a? ast Assign%) 
@@ -311,7 +345,7 @@
           (when debug
                 (pretty-display ">> Assign"))
           ;; Visit lhs
-          (send lhs accept this)
+          (define lhs-ret (send lhs accept this))
 
           (define lhs-place-type (get-field place-type lhs))
           (define lhs-known-type (get-field known-type lhs))
@@ -321,7 +355,7 @@
           (when (is-a? rhs Num%) (send rhs infer-place lhs-place-type))
 
           ;; Visit rhs
-          (define rhs-count (send rhs accept this))
+          (define rhs-ret (send rhs accept this))
 
           ;; Update dynamic known type
           (define rhs-known-type (get-field known-type rhs))
@@ -332,13 +366,17 @@
 
 	  ;; Don't increase space
        
-          (+ rhs-count (count-msg lhs rhs))
-        ]
+          (cons
+           (+ (+ (car rhs-ret) (car lhs-ret)) (count-msg lhs rhs))
+           (set-union (cdr rhs-ret) (cdr lhs-ret)))
+         ]
 
        [(is-a? ast Block%) 
-          (foldl (lambda (stmt sum) (+ sum (send stmt accept this))) 
-                 0 
-                 (get-field stmts ast))]
+          (foldl (lambda (stmt all) 
+                   (let ([ret (send stmt accept this)])
+                     (cons (+ (car all) (car ret))
+                           (set-union (cdr all) (cdr ret)))))
+                   (cons 0 (set)) (get-field stmts ast))]
        [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))
 
