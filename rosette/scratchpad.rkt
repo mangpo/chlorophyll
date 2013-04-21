@@ -41,7 +41,7 @@
   (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
-  (define num-msg (send my-ast accept interpreter))
+  (define num-msg (car (send my-ast accept interpreter)))
   (define num-cores (send interpreter num-cores))
   (pretty-display "\n=== After abstract interpreting ===")
   (send my-ast accept concise-printer)
@@ -70,4 +70,4 @@
                   (loop))
   )
 
-(optimize-comm "examples/csum-hole.cll" #:cores 16 #:capacity 256 #:max-msgs 20)
+(optimize-comm "tests/for-array3.cll" #:cores 16 #:capacity 256 #:max-msgs 20)

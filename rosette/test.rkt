@@ -17,3 +17,7 @@
 (check-equal? 
  (optimize-comm "tests/for-array2.cll" #:cores 4 #:capacity 256 #:max-msgs 300)
  240)
+
+(check-equal? 
+ (optimize-comm "tests/for-array3.cll" #:cores 4 #:capacity 256 #:max-msgs 8)
+ 0)

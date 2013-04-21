@@ -10,7 +10,8 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT KNOWN FOR IF ELSE FROM TO))
+                               INT KNOWN FOR IF ELSE FROM TO
+                               PLACE HERE))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -44,6 +45,8 @@
    ("else"  (token-ELSE))
    ("from"  (token-FROM))
    ("to"    (token-TO))
+   ("place" (token-PLACE))
+   ("here"  (token-HERE))
    ("@" (token-@))
    ("!" (token-BNOT))
    (arith-op1 (token-ARITHOP1 lexeme))
@@ -127,7 +130,10 @@
    (grammar
     (place-exp
          ((NUM) $1)
-         ((VAR) $1))
+         ((VAR) $1)
+         ((HERE) (new Place% [at "here"] [pos $1-start-pos]))
+         ((PLACE LPAREN ele RPAREN) (new Place% [at $3] [pos $1-start-pos]))
+         )
     
     (array-place
          ((LSQBR NUM COL NUM RSQBR = place-exp) (new RangePlace% [from $2] [to $4] [place $7]))

@@ -16,7 +16,10 @@
 (define (concrete)
   (define my-ast (ast-from-file "examples/test.cll"))
   (define collector (new place-collector% 
-                         [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
+                         [collect? (lambda(x) 
+                                     (and (and (number? x) (not (symbolic? x)))
+                                          (not (is-a? x Place%))))
+                                   ]))
   (define place-set (send my-ast accept collector))
   (pretty-print place-set)
   (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
@@ -136,8 +139,9 @@
                                 (pretty-display "\n=== Solution ===")
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol)
+                                (send interpreter display-used-space)
 				(evaluate num-msg))])
                   (loop))
   )
 
-(optimize-comm "tests/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
+(optimize-comm "examples/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15)

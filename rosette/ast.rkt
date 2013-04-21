@@ -26,6 +26,21 @@
 
     (define/public (accept v)
       (send v visit this))
+
+    (define/public (get-line)
+      (position-line pos))
+
+    (define/public (get-col)
+      (position-col pos))
+    ))
+
+(define Place%
+  (class Base%
+    (super-new)
+    (init-field at)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Place:~a)" indent (send at to-string))))
     ))
 
 (define Livable%
@@ -39,12 +54,19 @@
       (set! place new-place))
     ))
 
-
+;; place-list -> string
 (define (place-list-to-string place-list)
   (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
          (send (car place-list) to-string) 
          (cdr place-list)))
 
+;; place-type -> number or string
+(define (place-type-to-string place-type)
+  (if (number? place-type)
+      place-type
+      (format "{~a}" (place-list-to-string (car place-type)))))
+      
+;; number, place-list, place-type -> set
 (define (to-place-set place)
   (if (number? place)
       (set place)
@@ -54,6 +76,7 @@
                  place)
           (to-place-set (car place)))))
 
+;; number, place-list -> place-type
 (define (to-place-type ast place)
   (if (number? place)
       place

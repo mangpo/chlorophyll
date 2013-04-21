@@ -35,7 +35,7 @@
         [(is-a? ast Const%)
          (display (format "~a@~a"
                         (send ast to-string)
-                        (send ast get-place)))]
+                        (place-type-to-string (send ast get-place))))]
          
         
         [(is-a? ast Num%)
