@@ -79,8 +79,10 @@
       ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
       (define (place-type? p)
-	(or (number? p) 
-	    (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
+	(or (number? p) (place-type-dist? p)))
+      
+      (define (place-type-dist? p)
+        (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
       
       ;; Return the place that a resides if a only lives in one place. 
       ;; Otherwise, return string representation of a.
@@ -106,10 +108,20 @@
 
       (define (same-place? a b)
 	;(assert (and (place-type? a) (place-type? b)))
-        (when debug
-              (pretty-display (format "a=~a" (get-str-rep a)))
-              (pretty-display (format "b=~a" (get-str-rep b))))
-	(equal? (get-str-rep a) (get-str-rep b)))
+       
+        (if (and (number? a) (number? b))
+            (equal? a b)
+            (if (and (place-type-dist? a) (place-type-dist? b))
+                (let ([a-list (car a)]
+                      [b-list (car b)]
+                      [a-index (cdr a)]
+                      [b-index (cdr b)])
+                  (and (and (equal? (length a-list) (length b-list))
+                            (equal? (send a-index to-string) (send b-index to-string)))
+                       (andmap (lambda (a-p b-p) (send a-p equal-rangeplace? b-p))
+                               a-list b-list)))
+                #f))
+        )
 
       ;; Return 1 if it is absolutly in one place
       ;;             or the index is known.

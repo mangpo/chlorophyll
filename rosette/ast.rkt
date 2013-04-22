@@ -264,12 +264,17 @@
 (define RangePlace%
   (class Livable%
     (super-new)
-    (inherit-field)
+    (inherit-field place)
     (init-field from to)
     (inherit get-place)
 
     (define/override (pretty-print)
       (pretty-display (to-string)))
+
+    (define/public (equal-rangeplace? other)
+      (and (and (equal? from (get-field from other))
+                (equal? to   (get-field to   other)))
+           (equal? place (get-field place other))))
     
     (define/public (to-string)
       (format "[~a:~a]=~a" from to (get-place)))
