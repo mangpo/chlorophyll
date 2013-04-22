@@ -24,8 +24,8 @@
     ((_ digit) (re-+ digit))))
 
 (define-lex-abbrevs
-  ;(comment (re-seq "//" (re-* any-string)))
   (comment (re-: "/*" (complement (re-: any-string "*/" any-string)) "*/"))
+  (line-comment (re-: "//" (re-* (char-complement #\newline)) #\newline))
   (digit10 (char-range "0" "9"))
   (number10 (number digit10))
   (arith-op1 (re-or "*" "/" "%"))
@@ -40,6 +40,7 @@
   
 (define simple-math-lexer
   (lexer-src-pos
+   ;(whitespace (return-without-pos (simple-math-lexer input-port)))
    ("int"   (token-INT))
    ("known" (token-KNOWN))
    ("for"   (token-FOR))
@@ -73,9 +74,13 @@
    ("=" (token-=))
    ((re-+ number10) (token-NUM (string->number lexeme)))
    (identifier      (token-VAR lexeme))
+
+
    ;; recursively calls the lexer which effectively skips whitespace
-   (whitespace (position-token-token (simple-math-lexer input-port)))
+   (whitespace   (position-token-token (simple-math-lexer input-port)))
+   (line-comment (position-token-token (simple-math-lexer input-port)))
    (comment (position-token-token (simple-math-lexer input-port)))
+
    ((eof) (token-EOF))))
 
 ;; (define-syntax-rule (BinExp exp1 operation exp2)
