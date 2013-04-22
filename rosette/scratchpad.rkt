@@ -70,4 +70,4 @@
                   (loop))
   )
 
-(optimize-comm "tests/for-array3.cll" #:cores 16 #:capacity 256 #:max-msgs 20)
+(optimize-comm "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 500)

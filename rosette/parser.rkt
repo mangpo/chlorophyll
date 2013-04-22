@@ -16,7 +16,7 @@
 (define-lex-trans number
   (syntax-rules ()
     ((_ digit)
-     (re-: (re-? (re-or "-" "+")) (uinteger digit)
+     (re-: (uinteger digit)
            (re-? (re-: "." (re-? (uinteger digit))))))))
 
 (define-lex-trans uinteger
@@ -24,6 +24,8 @@
     ((_ digit) (re-+ digit))))
 
 (define-lex-abbrevs
+  ;(comment (re-seq "//" (re-* any-string)))
+  (comment (re-: "/*" (complement (re-: any-string "*/" any-string)) "*/"))
   (digit10 (char-range "0" "9"))
   (number10 (number digit10))
   (arith-op1 (re-or "*" "/" "%"))
@@ -73,6 +75,7 @@
    (identifier      (token-VAR lexeme))
    ;; recursively calls the lexer which effectively skips whitespace
    (whitespace (position-token-token (simple-math-lexer input-port)))
+   (comment (position-token-token (simple-math-lexer input-port)))
    ((eof) (token-EOF))))
 
 ;; (define-syntax-rule (BinExp exp1 operation exp2)
@@ -249,7 +252,11 @@
 
 )))
 
-(define (lex-this lexer input) (lambda () (lexer input)))
+(define (lex-this lexer input) 
+  (lambda () 
+    (let ([token (lexer input)])
+      ;(pretty-display token)
+      token)))
 
 (define (ast-from-string s)
   (let ((input (open-input-string s)))

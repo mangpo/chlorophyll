@@ -1,9 +1,8 @@
 TODO
-- tests/for-array3.cll 
-  can't use string to represent place-type for comparision
-- test more!!!
-- @h inside for (x[i] +@h y[i])
 - same distribution of x, y, and i; x[i] + y[i]; should allow i@any
+- comment //
+- for-array-fancy.cll
+- @h inside for (x[i] +@h y[i])
 - general for, while, if
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
