@@ -26,9 +26,9 @@
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a@{~a} ~a;"
+         (display (format "~a@~a ~a;"
                                (get-field type ast)
-                               (send ast place-to-string)
+                               (place-to-string (get-field place-list ast))
                                (get-field var ast)))
          ]
 
@@ -84,11 +84,11 @@
          ]
 
         [(is-a? ast For%)
-         (pretty-display (format "for(~a from ~a to ~a)@{~a} {"
+         (pretty-display (format "for(~a from ~a to ~a)@~a {"
 			  (send (get-field iter ast) to-string)
 			  (get-field from ast)
 			  (get-field to ast)
-			  (send ast place-to-string)))
+			  (place-to-string (get-field place-list ast))))
 	 (inc-indent)
 	 (send (get-field body ast) accept this)
 	 (dec-indent)

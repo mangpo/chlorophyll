@@ -65,6 +65,12 @@
   (if (number? place-type)
       place-type
       (format "{~a}" (place-list-to-string (car place-type)))))
+
+;; number, place-list -> string
+(define (place-to-string place)
+  (if (number? place)
+      place
+      (format "{~a}" (place-list-to-string place))))
       
 ;; number, place-list, place-type -> set
 (define (to-place-set place)
@@ -85,10 +91,7 @@
 (define LivableGroup%
   (class Base%
     (super-new)
-    (init-field place-list)
-    
-    (define/public (place-to-string)
-      (place-list-to-string place-list))
+    (init-field place-list) ; doesn't have to be list
 ))
 
 (define Exp%
@@ -285,10 +288,11 @@
   (class LivableGroup%
     (super-new)
     (init-field iter from to body known)
-    (inherit place-to-string)
+    (inherit-field place-list)
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
-			      indent (send iter to-string) from to (place-to-string)))
+			      indent (send iter to-string) from to 
+                              (place-to-string place-list)))
       (send body pretty-print (inc indent)))
 
 ))
@@ -296,14 +300,13 @@
 (define ArrayDecl%
   (class LivableGroup%
     (super-new)
-    (inherit-field pos)
+    (inherit-field pos place-list)
     (init-field var type known bound)
-    (inherit place-to-string)
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
                               indent type var
-                              (place-to-string)
+                              (place-to-string place-list)
                               known)))
 
     (define/public (bound-error)
@@ -334,7 +337,8 @@
      (init-field stmts)
 
      (define/override (pretty-print [indent ""])
-       (andmap (lambda (i) (send i pretty-print indent)) stmts))
+       (for ([stmt stmts])
+            (send stmt pretty-print indent)))
 
 ))
 
