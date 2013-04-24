@@ -40,7 +40,13 @@
     (init-field at)
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Place:~a)" indent (send at to-string))))
+      (pretty-display (format "~a(Place:~a)" indent (if (is-a? at Base%)
+							(send at to-string)
+							at))))
+    
+    (define/public (to-string)
+      (format "place(~a)" (if (is-a? at Base%) (send at to-string) at)))
+
     ))
 
 (define Livable%
@@ -64,13 +70,17 @@
 (define (place-type-to-string place-type)
   (if (number? place-type)
       place-type
-      (format "{~a}" (place-list-to-string (car place-type)))))
+      (if (is-a? place-type Place%)
+	  (send place-type to-string)
+	  (format "{~a}" (place-list-to-string (car place-type))))))
 
 ;; number, place-list -> string
 (define (place-to-string place)
   (if (number? place)
       place
-      (format "{~a}" (place-list-to-string place))))
+      (if (is-a? place Place%)
+	  (send place to-string)
+	  (format "{~a}" (place-list-to-string place)))))
       
 ;; number, place-list, place-type -> set
 (define (to-place-set place)
@@ -108,6 +118,9 @@
 
     (define/public (get-known-type)
       known-type)
+
+    (define/public (get-place)
+      (evaluate (place-type-to-string place-type)))
 
     ;; This is used to construct place-type representation.
     (abstract to-string)

@@ -38,14 +38,16 @@
                         (place-type-to-string (send ast get-place))))]
          
         
-        [(is-a? ast Num%)
-         (send (get-field n ast) accept this)
-         ]
         
         [(is-a? ast Op%)
          (display (format "~a@~a"
                         (get-field op ast)
                         (send ast get-place)))
+         ]
+
+
+        [(is-a? ast Num%)
+         (send (get-field n ast) accept this)
          ]
       
         [(is-a? ast Array%)
@@ -61,8 +63,9 @@
         
         [(is-a? ast UnaExp%)
          (display "(")
-         (send (get-field op ast) accept this)
-         (display " ")
+         ;(send (get-field op ast) accept this)
+	 ;; don't call this because we can have @any @place(i)
+	 (display (format "~a@~a " (send (get-field op ast) to-string) (send ast get-place)))
          (send (get-field e1 ast) accept this)
          (display ")")
          ]
@@ -70,9 +73,9 @@
         [(is-a? ast BinExp%)
          (display "(")
          (send (get-field e1 ast) accept this)
-         (display " ")
-         (send (get-field op ast) accept this)
-         (display " ")
+         ;(send (get-field op ast) accept this)
+	 ;; don't call this because we can have @any @place(i)
+	 (display (format " ~a@~a " (send (get-field op ast) to-string) (send ast get-place)))
          (send (get-field e2 ast) accept this)
          (display ")")
          ]

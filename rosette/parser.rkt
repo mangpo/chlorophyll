@@ -141,7 +141,7 @@
          ((NUM) $1)
          ((VAR) $1)
          ;((HERE) (new Place% [at "here"] [pos $1-start-pos]))
-         ((ANY) (new Place% [at "any"] [pos $1-start-pos]))
+         ((ANY) (new Place% [at "any"]))
          ((PLACE LPAREN ele RPAREN) (new Place% [at $3] [pos $1-start-pos]))
          )
     
