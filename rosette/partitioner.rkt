@@ -97,7 +97,7 @@
   (pretty-display "=== Original AST ===")
   (send my-ast pretty-print)
   
-  ;; Collect real pysical places
+  ;; Collect real physical places
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
   (define place-set (send my-ast accept collector))
@@ -144,4 +144,4 @@
                   (loop))
   )
 
-(optimize-comm "examples/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
+(optimize-comm "examples/simple-hole.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
