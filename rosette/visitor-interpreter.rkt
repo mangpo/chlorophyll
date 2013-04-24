@@ -335,17 +335,18 @@
           ;; check boundaries
           (define last 0)
 
-          (for ([p place-list])
-	       (let* ([from (get-field from p)]
-		      [to   (get-field to p)])
-		 (when (not (= from last))
-		       (send ast bound-error))
-		 (set! last to)
-		 (inc-space (find-place p) (* (- to from) est-data)) ; increase space
-	       ))
+          (when (list? place-list)
+                (for ([p place-list])
+                     (let* ([from (get-field from p)]
+                            [to   (get-field to p)])
+                       (when (not (= from last))
+                             (send ast bound-error))
+                       (set! last to)
+                       (inc-space (find-place p) (* (- to from) est-data)) ; increase space
+                       ))
 
-          (when (not (= (get-field bound ast) last))
-                (send ast bound-error))
+                (when (not (= (get-field bound ast) last))
+                      (send ast bound-error)))
 
           ;; put array into env
           (dict-set! env (get-field var ast) (cons place-list known))
@@ -362,12 +363,13 @@
           ;; check boundaries
           (define last 0)
         
-          (for ([p place-list])
-	       (let* ([from (get-field from p)]
-		      [to   (get-field to p)])
-		 (when (not (= from last))
-		       (send ast bound-error))
-		 (set! last to)))
+          (when (list? place-list)
+              (for ([p place-list])
+                   (let* ([from (get-field from p)]
+                          [to   (get-field to p)])
+                     (when (not (= from last))
+                           (send ast bound-error))
+                     (set! last to))))
 		 ;(inc-space (get-field place p) est-for))) ; increase space
 
           ;; Add new scope for body.

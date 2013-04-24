@@ -1,6 +1,8 @@
 TODO
-- same distribution of x, y, and i; x[i] + y[i]; should allow i@any
-- comment //
+- (finish) same distribution of x, y, and i; x[i] + y[i]; should allow i@any
+  = examples/for-test.cll
+  = check if priniting for @any make sense
+- int[]@any is not legal. Type check for any
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])
 - general for, while, if

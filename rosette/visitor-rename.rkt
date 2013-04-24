@@ -51,8 +51,12 @@
         (check-place)]
 
        [(is-a? ast LivableGroup%)
-        (for ([p (get-field place-list ast)])
-             (send p accept this))
+        (let ([place (get-field place-list ast)])
+          (if (list? place)
+              (for ([p (get-field place-list ast)])
+                   (send p accept this))
+              (when (string? place)
+                    (set-field! place-list ast (convert-to-num place)))))
 	(when (is-a? ast For%) (send (get-field body ast) accept this))]
        
        [(or (is-a? ast Var%) (is-a? ast Num%))

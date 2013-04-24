@@ -26,9 +26,9 @@
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a@{~a} ~a;"
+         (display (format "~a@~a ~a;"
                                (get-field type ast)
-                               (send ast place-to-string)
+                               (place-to-string (get-field place-list ast))
                                (get-field var ast)))
          ]
 
@@ -38,14 +38,16 @@
                         (place-type-to-string (send ast get-place))))]
          
         
-        [(is-a? ast Num%)
-         (send (get-field n ast) accept this)
-         ]
         
         [(is-a? ast Op%)
          (display (format "~a@~a"
                         (get-field op ast)
                         (send ast get-place)))
+         ]
+
+
+        [(is-a? ast Num%)
+         (send (get-field n ast) accept this)
          ]
       
         [(is-a? ast Array%)
@@ -61,8 +63,9 @@
         
         [(is-a? ast UnaExp%)
          (display "(")
-         (send (get-field op ast) accept this)
-         (display " ")
+         ;(send (get-field op ast) accept this)
+	 ;; don't call this because we can have @any @place(i)
+	 (display (format "~a@~a " (send (get-field op ast) to-string) (send ast get-place)))
          (send (get-field e1 ast) accept this)
          (display ")")
          ]
@@ -70,9 +73,9 @@
         [(is-a? ast BinExp%)
          (display "(")
          (send (get-field e1 ast) accept this)
-         (display " ")
-         (send (get-field op ast) accept this)
-         (display " ")
+         ;(send (get-field op ast) accept this)
+	 ;; don't call this because we can have @any @place(i)
+	 (display (format " ~a@~a " (send (get-field op ast) to-string) (send ast get-place)))
          (send (get-field e2 ast) accept this)
          (display ")")
          ]
@@ -84,11 +87,11 @@
          ]
 
         [(is-a? ast For%)
-         (pretty-display (format "for(~a from ~a to ~a)@{~a} {"
+         (pretty-display (format "for(~a from ~a to ~a)@~a {"
 			  (send (get-field iter ast) to-string)
 			  (get-field from ast)
 			  (get-field to ast)
-			  (send ast place-to-string)))
+			  (place-to-string (get-field place-list ast))))
 	 (inc-indent)
 	 (send (get-field body ast) accept this)
 	 (dec-indent)
