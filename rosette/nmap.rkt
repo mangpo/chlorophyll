@@ -44,4 +44,5 @@
 ; If it does not exist, does nothing.
 (define (remove-by-nth-key! nmap index key)
   (when (has-nth-key? nmap index key)
-	(for-each hash-remove! nmap (get-by-nth-key nmap index key))))
+	(for-each hash-remove! nmap
+		  (take (get-by-nth-key nmap index key) (length nmap)))))
