@@ -55,7 +55,7 @@
        (= (physical-core-y a) (physical-core-y b))))
 
 (define (size-of-core layout-map core)
-  (apply + (map val->size (core->vals layout-map core))))
+  (foldr + 0 (map val->size (core->vals layout-map core))))
 #|
 (define (size-of-core layout-map core)
   (define (naive-size-of-core core)

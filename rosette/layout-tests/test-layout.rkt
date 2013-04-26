@@ -43,4 +43,4 @@
 (define (test-file file)
   (solve-layout (parse-input file) #:max-cost 100000))
 
-;(test-file "md5.in")
+(test-file "md5.in")
