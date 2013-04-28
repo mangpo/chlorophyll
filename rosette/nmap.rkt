@@ -1,4 +1,4 @@
-#lang racket
+#lang s-exp rosette
 
 ; An n-map provides a one-to-one-to-one-to... mapping.  Each nmap
 ; contains ntuples.  ntuples can be accessed by any of their
@@ -44,4 +44,5 @@
 ; If it does not exist, does nothing.
 (define (remove-by-nth-key! nmap index key)
   (when (has-nth-key? nmap index key)
-	(for-each hash-remove! nmap (get-by-nth-key nmap index key))))
+	(for-each hash-remove! nmap
+		  (take (get-by-nth-key nmap index key) (length nmap)))))
