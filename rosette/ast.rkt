@@ -141,6 +141,9 @@
     (define/public (infer-place p)
       (set-field! place n p)
       (set! place-type p))
+
+    (define/public (get-value)
+      (get-field n n))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
@@ -347,6 +350,18 @@
       )
 
   ))
+
+(define If%
+  (class Base%
+    (super-new)
+    (init-field condition true-block [false-block #f])
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF" indent))
+      (send condition pretty-print (inc indent))
+      (send true-block pretty-print (inc indent))
+      (when false-block (send false-block pretty-print (inc indent))))
+))
 
 (define Block%
   (class Base%

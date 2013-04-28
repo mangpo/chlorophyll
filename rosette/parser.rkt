@@ -244,7 +244,7 @@
          ; for loop
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK block RBRACK)
             (new For% [iter (new Var% [name $3] [known-type #t] [pos $3-start-pos])] 
-                 [known #t] [from $5] [to $7] [place-list (default-array-place 0 $7)] 
+                 [known #t] [from $5] [to $7] [place-list (new Place% [at "any"])] 
                  [body $10] [pos $1-start-pos]))
 
          ; for loop with placement
@@ -254,6 +254,14 @@
             (new For% [iter (new Var% [name $3] [known-type #t] [pos $3-start-pos])] 
                  [known #t] [from $5] [to $7] [place-list $10] 
                  [body $12] [pos $1-start-pos]))
+
+         ; if
+         ((IF LPAREN exp RPAREN LBRACK block RBRACK)
+            (new If% [condition $3] [true-block $6] [pos $1-start-pos]))
+
+         ; if-else
+         ((IF LPAREN exp RPAREN LBRACK block RBRACK ELSE LBRACK block RBRACK)
+            (new If% [condition $3] [true-block $6] [false-block $10] [pos $1-start-pos]))
 
          )
 

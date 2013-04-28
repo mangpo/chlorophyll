@@ -68,7 +68,8 @@
         (define op (get-field op ast))
         (send e1 accept this)
         (send e2 accept this)
-        (send op accept this)]
+        (send op accept this)
+        ]
 
        [(is-a? ast UnaExp%)
         (define e1 (get-field e1 ast))
@@ -78,6 +79,12 @@
 
        [(is-a? ast Assign%) 
         (send (get-field rhs ast) accept this)]
+
+       [(is-a? ast If%)
+        (send (get-field condition ast) accept this)
+        (send (get-field true-block ast) accept this)
+        (when (get-field false-block ast)
+              (send (get-field false-block ast) accept this))]
 
        [(is-a? ast Block%) 
         (for ([stmt (get-field stmts ast)])

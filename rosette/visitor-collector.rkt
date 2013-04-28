@@ -55,6 +55,15 @@
         [(is-a? ast Assign%)
          (send (get-field rhs ast) accept this)
          ]
+
+        [(is-a? ast If%)
+         (set-union (set-union (send (get-field condition ast) accept this)
+                               (send (get-field true-block ast) accept this))
+                    (let ([false-block (get-field false-block ast)])
+                      (if false-block
+                          (send false-block accept this)
+                          (set))))
+         ]
         
         [(is-a? ast Block%)
          (foldl (lambda (stmt var-set) (set-union var-set (send stmt accept this)))

@@ -1,11 +1,10 @@
 TODO
-- (finish) same distribution of x, y, and i; x[i] + y[i]; should allow i@any
-  = examples/for-test.cll
-  = check if priniting for @any make sense
-- int[]@any is not legal. Type check for any
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])
+- do we have to support int@any x?
+- check if printing for @any make sense
 - general for, while, if
+- really need to be careful about for/parfor (prefexsum.cll)
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 
@@ -14,17 +13,18 @@ TODO
 - precise abstract interpret for
 - might need one more pass to get inferred place (e.g. @any)
 
-Wait for rosette
+SYMBOLIC DICT
+- count-msg-against-set in visitor-interpreter (examples/test.cll)
+  (set-subtract (set sym0) (set sym 1))
+  (set-union)
+  => change to iterate through instead (need list of ASTs?)
 - symbolic set or lower space to 4
   vector v of set s
   (vector-ref v i) -> (ite cond (set *) (set * /))
   (set-add (vector-ref v i) %) => ERROR
 
-
-
 CHECK
 - unnecessary symbolic-var (DONE?)
-- check hash-code
 
 MEMO
 - same VarDecl => same sym-place!!!

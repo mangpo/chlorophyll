@@ -130,6 +130,8 @@
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p)
 	;(assert (place-type? p))
+        (when (pair? p)
+          (pretty-display (format "count-comm ~a" (get-field known-type (cdr p)))))
 	(if (or (or (number? p)
                     (and (is-a? p Place%) (equal? (get-field at p) "any")))
                     (get-field known-type (cdr p))) ;; get known type of the index
@@ -137,9 +139,12 @@
 		(length (car p))))
       
       ;; x and y in form (cons place-list known-type)
+      (pretty-display (send x-ast to-string))
       (define x (get-field place-type x-ast))
-      (define y (get-field place-type y-ast))
       (define x-comm (count-comm x))
+      
+      (pretty-display (send y-ast to-string))
+      (define y (get-field place-type y-ast))
       (define y-comm (count-comm y))
 
       (cond 
@@ -162,6 +167,10 @@
          (add-comm y)
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
          (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
+
+    (define (count-msg-against-set x-ast blocks-set)
+      (let ([place-set (to-place-set (get-field place-type x-ast))])
+        (set-count (set-subtract blocks-set place-set))))
 
     (define (lookup env ast)
       (dict-ref env (get-field name ast)
@@ -225,7 +234,7 @@
               (set-field! place-type ast (get-field place (car places)))
 	      (if (is-a? index Num%)
 		  ;; Know exact index
-		  (set-field! place-type ast (place-at places (get-field n index) ast))
+		  (set-field! place-type ast (place-at places (send index get-value) ast))
 		  ;; Pair of list of possible places and index
 		  (set-field! place-type ast (cons places index))))
 
@@ -299,7 +308,8 @@
           (define place-type (find-place-type op))
           (set-field! place-type ast place-type)
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
-
+          ;; ^ problematic here
+          
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
 
@@ -349,6 +359,13 @@
 
                 (when (not (= (get-field bound ast) last))
                       (send ast bound-error)))
+          
+          ;; We might not need this. This is a dead code right now.
+          (when (and (is-a? place-list Place%) 
+                     (equal? (get-field at place-list) "any"))
+            (raise-type-error (get-field var ast) "anything about @any" 
+                              0 "Cannot assign @any for array."))
+            
 
           ;; put array into env
           (dict-set! env (get-field var ast) (cons place-list known))
@@ -396,6 +413,23 @@
            (* (car body-ret) (- (get-field to ast) (get-field from ast)))
            body-place-set)
           ]
+
+       [(is-a? ast If%)
+        (define condition (get-field condition ast))
+        (define condition-ret (send condition accept this))
+        (define true-ret (send (get-field true-block ast) accept this))
+        (define false-ret (if (get-field false-block ast)
+                              (send (get-field false-block ast) accept this)
+                              (cons 0 (set))))
+
+        (define blocks-set (set-union (cdr true-ret) (cdr false-ret)))
+        
+        (pretty-display "here!!!!!!!")
+        (cons 
+         (+ (+ (+ (count-msg-against-set condition blocks-set)
+                  (car condition-ret)) (car true-ret)) (car false-ret))
+         (set-union (cdr condition-ret) blocks-set))]
+         
 
        [(is-a? ast Assign%) 
           (when debug (newline))

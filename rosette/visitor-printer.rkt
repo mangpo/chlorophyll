@@ -86,6 +86,22 @@
          (send (get-field rhs ast) accept this)
          ]
 
+        [(is-a? ast If%)
+         (display "if(")
+         (send (get-field condition ast) accept this)
+         (pretty-display ") {")
+         (inc-indent)
+         (send (get-field true-block ast) accept this)
+         (dec-indent)
+         (display (format "~a}" indent))
+         (when (get-field false-block ast)
+               (pretty-display " else {")
+               (inc-indent)
+               (send (get-field false-block ast) accept this)
+               (dec-indent)
+               (pretty-display (format "~a}" indent)))
+         ]
+
         [(is-a? ast For%)
          (pretty-display (format "for(~a from ~a to ~a)@~a {"
 			  (send (get-field iter ast) to-string)

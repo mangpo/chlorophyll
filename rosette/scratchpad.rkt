@@ -45,6 +45,7 @@
   (define num-cores (send interpreter num-cores))
   (pretty-display "\n=== After abstract interpreting ===")
   (send my-ast accept concise-printer)
+  (pretty-display num-msg)
   
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))
@@ -70,4 +71,4 @@
                   (loop))
   )
 
-(optimize-comm "examples/for-test.cll" #:cores 16 #:capacity 256 #:max-msgs 500)
+(optimize-comm "examples/test.cll" #:cores 16 #:capacity 256 #:max-msgs 20000)
