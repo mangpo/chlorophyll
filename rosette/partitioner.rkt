@@ -8,9 +8,13 @@
          "visitor-rename.rkt"
          "visitor-printer.rkt")
 
-(configure [bitwidth 10])
+(provide optimize-comm (struct-out result))
 
-(provide optimize-comm)
+;; Set bidwidth for rosette
+;(configure [bitwidth bitwidth])
+
+;; struct used to return result from optimize-comm
+(struct result (msgs cores ast))
 
 ;; Concrete version
 (define (concrete)
@@ -89,6 +93,13 @@
                         #:capacity [capacity 256] 
                         #:max-msgs [best-num-msg 256])
   
+  (let ([bitwidth (+ (inexact->exact (ceiling 
+                    (/ (log (max best-num-cores capacity best-num-msg)) (log 2)))) 2)])
+      
+    ;; Set bidwidth for rosette
+    (pretty-display (format "bidwidth = ~a" bitwidth))
+    (configure [bitwidth bitwidth]))
+  
   ;; Define printer
   (define concise-printer (new printer%))
   
@@ -115,7 +126,7 @@
   (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
-  (define num-msg (car (send my-ast accept interpreter)))
+  (define num-msg (comminfo-msgs (send my-ast accept interpreter)))
   (define num-cores (send interpreter num-cores))
   
   (define (loop)
@@ -140,8 +151,9 @@
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol)
                                 (send interpreter display-used-space)
-				(evaluate num-msg))])
+				(result (evaluate num-msg) (get-field places interpreter) my-ast))])
                   (loop))
   )
 
-(optimize-comm "tests/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15)
+(result-msgs 
+ (optimize-comm "tests/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15))

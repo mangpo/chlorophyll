@@ -1,7 +1,7 @@
-int@1 x;
-int@1 y;
-int@1 j;
+int x;
+int y;
+int j;
 
-if(j %@1 2 ==@1 0) {
+if(j % 2 == 0) {
   x = x + y;
 }

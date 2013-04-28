@@ -10,13 +10,17 @@
 (define capacity 256)
 (define max-cores 144)
 
-;;; fake dictionary
 (define (display-cores cores)
   (let* ([space (core-space cores)]
          [costly-op (core-costly-op cores)])
         (for ([i (in-range 0 max-cores)])
           (pretty-display (format "core = ~a, space = ~a, ops = ~a" 
                                   i (evaluate (vector-ref space i)) (evaluate (vector-ref costly-op i)))))))
+
+;; Check if two set of cores are the same in term of used space and costly operations.
+(define (cores-equal? c1 c2)
+  (and (equal? (core-space c1) (core-space c2))
+       (equal? (core-costly-op c1) (core-costly-op c2))))
   
 (define (make-cores #:capacity [c 256] #:max-cores [len 144])
   (set! capacity c)
