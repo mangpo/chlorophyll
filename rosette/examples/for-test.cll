@@ -2,5 +2,5 @@ int[]@{[0:10]} x[10];
 int[]@0 y[10];
 
 for(i from 0 to 10)@any {
-  x[i] = y[x[i]];
+  x[i] = y[x[i]] + i;
 }

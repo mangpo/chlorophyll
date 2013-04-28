@@ -120,7 +120,9 @@
                             (equal? (send a-index to-string) (send b-index to-string)))
                        (andmap (lambda (a-p b-p) (send a-p equal-rangeplace? b-p))
                                a-list b-list)))
-                #f))
+                ; if one of them is @any
+                (or (and (is-a? a Place%) (equal? (get-field at a) "any"))
+                    (and (is-a? b Place%) (equal? (get-field at b) "any")))))
         )
 
       ;; Return 1 if it is absolutly in one place
@@ -128,11 +130,11 @@
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p)
 	;(assert (place-type? p))
-	(if (number? p)
-	    1
-	    (if (get-field known-type (cdr p)) ;; get known type of the index
+	(if (or (or (number? p)
+                    (and (is-a? p Place%) (equal? (get-field at p) "any")))
+                    (get-field known-type (cdr p))) ;; get known type of the index
 		1
-		(length (car p)))))
+		(length (car p))))
       
       ;; x and y in form (cons place-list known-type)
       (define x (get-field place-type x-ast))

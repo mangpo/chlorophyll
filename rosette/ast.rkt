@@ -84,17 +84,21 @@
       
 ;; number, place-list, place-type -> set
 (define (to-place-set place)
-  (if (number? place)
-      (set place)
-      (if (list? place)
-          (foldl (lambda (p place-set) (set-add place-set (get-field place p)))
-                 (set)
-                 place)
-          (to-place-set (car place)))))
+  (cond
+   [(number? place)
+    (set place)]
+   [(list? place)
+    (foldl (lambda (p place-set) (set-add place-set (get-field place p)))
+           (set) place)]
+   [(pair? place)
+    (to-place-set (car place))]
+   [(and (is-a? place Place%) (equal? (get-field at place) "any"))
+    (set)]
+   [else (raise "Error: cannot handle this object type")]))
 
 ;; number, place-list -> place-type
 (define (to-place-type ast place)
-  (if (number? place)
+  (if (or (number? place) (is-a? place Place%))
       place
       (cons place ast)))
 

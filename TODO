@@ -12,6 +12,7 @@ TODO
 - should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
 - precise abstract interpret for
+- might need one more pass to get inferred place (e.g. @any)
 
 Wait for rosette
 - symbolic set or lower space to 4
