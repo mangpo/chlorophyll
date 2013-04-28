@@ -26,7 +26,7 @@
      (abs (- (physical-core-y core1) (physical-core-y core2)))))
 
 (define (flatmap fn lst)
-  (foldr append '() (map fn lst)))
+  (flatten (map fn lst)))
 
 (define (min-routing-cost layout-map)
   ; Sum of all of the routing costs
