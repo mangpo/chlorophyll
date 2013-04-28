@@ -156,4 +156,4 @@
   )
 
 (result-msgs 
- (optimize-comm "tests/for-array1.cll" #:cores 16 #:capacity 256 #:max-msgs 15))
+ (optimize-comm "examples/if2.cll" #:cores 16 #:capacity 256 #:max-msgs 500))
