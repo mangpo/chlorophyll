@@ -17,6 +17,16 @@
           (pretty-display (format "core = ~a, space = ~a, ops = ~a" 
                                   i (evaluate (vector-ref space i)) (evaluate (vector-ref costly-op i)))))))
 
+(define (cores-evaluate cores)
+  (let* ([space (core-space cores)]
+         [costly-op (core-costly-op cores)])
+    (for ([i (in-range 0 max-cores)])
+         (vector-set! space i (evaluate (vector-ref space i)))
+         (vector-set! costly-op i (evaluate (vector-ref costly-op i))))
+    cores))
+  
+  
+
 ;; Check if two set of cores are the same in term of used space and costly operations.
 (define (cores-equal? c1 c2)
   (and (equal? (core-space c1) (core-space c2))

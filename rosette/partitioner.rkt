@@ -14,7 +14,7 @@
 ;(configure [bitwidth bitwidth])
 
 ;; struct used to return result from optimize-comm
-(struct result (msgs cores ast))
+(struct result (msgs cores))
 
 ;; Concrete version
 (define (concrete)
@@ -151,7 +151,7 @@
                                 (send my-ast accept concise-printer) 
                                 (pretty-display best-sol)
                                 (send interpreter display-used-space)
-				(result (evaluate num-msg) (get-field places interpreter) my-ast))])
+				(result (evaluate num-msg) (send interpreter get-concrete-cores)))])
                   (loop))
   )
 

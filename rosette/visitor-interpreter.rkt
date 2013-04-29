@@ -68,6 +68,7 @@
           (for ([p place])
                (cores-inc-space places (get-field place p) add-space))))
     
+    ;;; Increase the used space of "place" with op.
     (define (inc-space-with-op place op)
       (assert (or (number? place) (list? place)))
       ;TODO: change to (cores-add-op places place op)
@@ -76,6 +77,8 @@
           (for ([p place])
                (cores-inc-space places (get-field place p) (est-space op)))))
     
+    ;; Increase the used space of places in the given set by "add-space".
+    ;; Used in body inside for and if.
     (define (inc-space-placeset placeset add-space)
       (define (loop placelist)
         (when (not (empty? placelist))
@@ -142,13 +145,11 @@
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p)
 	;(assert (place-type? p))
-        (when (pair? p)
-          (pretty-display (format "count-comm ~a" (get-field known-type (cdr p)))))
-	(if (or (or (number? p)
+        (if (or (or (number? p)
                     (and (is-a? p Place%) (equal? (get-field at p) "any")))
-                    (get-field known-type (cdr p))) ;; get known type of the index
-		1
-		(length (car p))))
+                (get-field known-type (cdr p))) ;; get known type of the index
+            1
+            (length (car p))))
       
       ;; x and y in form (cons place-list known-type)
       ;(pretty-display (send x-ast to-string))
@@ -207,6 +208,9 @@
 
     (define/public (display-used-space)
       (display-cores places))
+    
+    (define/public (get-concrete-cores)
+      (cores-evaluate places))
 
     (define/public (num-cores)
       (cores-count places))
@@ -438,8 +442,6 @@
         
         (define true-ret (send (get-field true-block ast) accept this))
         
-        ;;TODO: increase space for if
-        
         ; between condition and true-block
         (define ret
           (comminfo
@@ -450,16 +452,22 @@
         
         (define false-block (get-field false-block ast))
         
-        (if false-block
-            ; between condition and false-block
-            (let ([false-ret (send false-block accept this)])
-              (comminfo
-               (+ (comminfo-msgs ret)
-                  (+ (count-msg condition (comminfo-firstast false-ret))
-                     (* 2 (comminfo-msgs false-ret))))
-               (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))
-               (comminfo-firstast ret)))
-            ret)]
+        (set! ret 
+              (let ([false-block (get-field false-block ast)])
+                (if false-block
+                    ; between condition and false-block
+                    (let ([false-ret (send false-block accept this)])
+                      (comminfo
+                       (+ (comminfo-msgs ret)
+                          (+ (count-msg condition (comminfo-firstast false-ret))
+                             (* 2 (comminfo-msgs false-ret))))
+                       (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))
+                       (comminfo-firstast ret)))
+                    ret)))
+        
+        ; increase space
+        (inc-space-placeset (comminfo-placeset ret) est-if)
+        ret]
 
        [(is-a? ast Assign%) 
           (when debug (newline))
