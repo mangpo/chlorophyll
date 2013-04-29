@@ -1,0 +1,10 @@
+int@0 x;
+int y;
+int z;
+int j;
+
+if(j % 2 == 0) {
+  x = x + y;
+} else {
+  z = y + z;
+}

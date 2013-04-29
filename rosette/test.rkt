@@ -2,41 +2,27 @@
 
 (require "partitioner.rkt" "symbolic-dict.rkt" rackunit)
 
-(check-equal? 
- (result-msgs (optimize-comm "tests/array-known.cll" #:cores 4 #:capacity 256 #:max-msgs 8))
- 2)
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/array-dynamic.cll" #:cores 4 #:capacity 256 #:max-msgs 8))
- 6)
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/for-array1.cll" #:cores 4 #:capacity 256 #:max-msgs 8))
- 0)
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/for-array2.cll" #:cores 4 #:capacity 256 #:max-msgs 300))
- 240)
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/for-array3.cll" #:cores 4 #:capacity 256 #:max-msgs 8))
- 0)
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/for-array4.cll" #:cores 4 #:capacity 256 #:max-msgs 200))
- 120)
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/for-array5.cll" #:cores 4 #:capacity 256 #:max-msgs 800))
- 720)
-
-
-(check-equal? 
- (result-msgs (optimize-comm "tests/for-array6.cll" #:cores 4 #:capacity 256 #:max-msgs 8))
- 0)
+;; Check with expected number of messages
+(define (test-num-msgs file expected-msgs [cores 4] [capacity 256] #:max-msgs [max-msgs 8])
+  (check-equal? 
+   (result-msgs (optimize-comm file #:cores cores #:capacity capacity #:max-msgs max-msgs))
+   expected-msgs))
 
 ;; Consistency Test
-(let ([res1 (optimize-comm "tests/space_concrete.cll" #:cores 4 #:capacity 256 #:max-msgs 8)]
-      [res2 (optimize-comm "tests/space_symbolic.cll" #:cores 4 #:capacity 256 #:max-msgs 8)])
+(define (test-consistent file1 file2 [cores 4] [capacity 256] [max-msgs 8])
+  (let ([res1 (optimize-comm file1 #:cores 4 #:capacity 256 #:max-msgs 8)]
+        [res2 (optimize-comm file2 #:cores 4 #:capacity 256 #:max-msgs 8)])
   (check-equal? (result-msgs res1) (result-msgs res2))
-  (check-true (cores-equal? (result-cores res1) (result-cores res2))))
+  (check-true (cores-equal? (result-cores res1) (result-cores res2)))))
+
+(test-num-msgs "tests/array-known.cll"   2)
+(test-num-msgs "tests/array-dynamic.cll" 6)
+(test-num-msgs "tests/for-array1.cll"    0)
+(test-num-msgs "tests/for-array2.cll"    240 #:max-msgs 300)
+(test-num-msgs "tests/for-array3.cll"    0)
+(test-num-msgs "tests/for-array4.cll"    120 #:max-msgs 300)
+(test-num-msgs "tests/for-array5.cll"    720 #:max-msgs 800)
+(test-num-msgs "tests/for-array6.cll"    0)
+
+(test-consistent "tests/space_concrete.cll" "tests/space_symbolic.cll")
+(test-consistent "tests/if_concrete.cll" "tests/if_symbolic.cll")

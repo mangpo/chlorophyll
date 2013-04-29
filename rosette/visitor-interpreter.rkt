@@ -445,7 +445,10 @@
         ; between condition and true-block
         (define ret
           (comminfo
-           (+ (count-msg condition (comminfo-firstast true-ret))
+           (+ (+ (count-msg condition (comminfo-firstast true-ret))
+                 (comminfo-msgs condition-ret))
+              ; *2 for 1) sending condition result to body
+              ;        2) communication within body themselves
               (* 2 (comminfo-msgs true-ret)))
            (set-union (comminfo-placeset condition-ret) (comminfo-placeset true-ret))
            (comminfo-firstast condition-ret)))
