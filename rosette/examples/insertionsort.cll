@@ -1,0 +1,13 @@
+int[] x[100];
+int temp;
+int j;
+
+for(i from 0 to 100) {
+  temp = x[i];
+  j = i-1;
+  while(j >= 0 && x[j] > temp) {
+    x[j+1] = x[j];
+    j = j-1;
+  }
+  x[j+1] = temp;
+}

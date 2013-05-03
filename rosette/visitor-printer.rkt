@@ -102,6 +102,14 @@
                (pretty-display (format "~a}" indent)))
          ]
 
+	[(is-a? ast While%)
+	 (send (get-field condition ast) accept this)
+	 (pretty-display ") {")
+         (inc-indent)
+         (send (get-field body ast) accept this)
+         (dec-indent)
+         (display (format "~a}" indent))]
+
         [(is-a? ast For%)
          (pretty-display (format "for(~a from ~a to ~a)@~a {"
 			  (send (get-field iter ast) to-string)

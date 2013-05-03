@@ -363,6 +363,18 @@
       (when false-block (send false-block pretty-print (inc indent))))
 ))
 
+(define While%
+  (class Base%
+    (super-new)
+    (init-field condition body bound)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(WHILE" indent))
+      (send condition pretty-print (inc indent))
+      (send body pretty-print (inc indent)))
+
+))
+
 (define Block%
   (class Base%
      (super-new)

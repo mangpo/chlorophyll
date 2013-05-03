@@ -1,7 +1,0 @@
-int x;
-int y;
-int j;
-
-if(j % 2 == 0) {
-  x = x + y;
-}

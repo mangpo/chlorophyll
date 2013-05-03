@@ -9,6 +9,7 @@
 (define est-acc-arr 2) ; a! @
 (define est-for 16)
 (define est-if 8) ;; call => 4 ;; :def if _ ; ] then _ ; => 4
+(define est-while 12) ;; :while _ if _ while ; then ;
 
 (define space-map 
   #hash(("!" . 1)

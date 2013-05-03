@@ -91,14 +91,15 @@
 (define (optimize-comm file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
-                        #:max-msgs [best-num-msg 256])
+                        #:max-msgs [best-num-msg #f])
   
-  (let ([bitwidth (+ (inexact->exact (ceiling 
-                    (/ (log (max best-num-cores capacity best-num-msg)) (log 2)))) 2)])
+  #|(let ([bitwidth (+ (inexact->exact (ceiling 
+                    (/ (log (max best-num-cores capacity best-num-msg)) (log 2)))) 10)])
       
     ;; Set bidwidth for rosette
     (pretty-display (format "bidwidth = ~a" bitwidth))
-    (configure [bitwidth bitwidth]))
+    (configure [bitwidth bitwidth]))|#
+  (configure [bitwidth 32])
   
   ;; Define printer
   (define concise-printer (new printer%))
@@ -132,7 +133,9 @@
   (define (loop)
     ;(solve (assert (< num-cores best-num-cores)))
     ;(set! best-num-cores (evaluate num-cores))
-    (solve (assert (< num-msg best-num-msg)))
+    (if best-num-msg
+      (solve (assert (< num-msg best-num-msg)))
+      (solve (assert #t)))
     (set! best-num-msg (evaluate num-msg))
     
     (set! best-sol (current-solution))
@@ -156,4 +159,4 @@
   )
 
 (result-msgs 
- (optimize-comm "examples/if1.cll" #:cores 4 #:capacity 256 #:max-msgs 500))
+ (optimize-comm "examples/add.cll" #:cores 8 #:capacity 256))

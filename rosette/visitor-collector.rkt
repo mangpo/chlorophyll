@@ -64,6 +64,10 @@
                           (send false-block accept this)
                           (set))))
          ]
+
+	[(is-a? ast While%)
+	 (set-union (send (get-field condition ast) accept this)
+		    (send (get-field body ast) accept this))]
         
         [(is-a? ast Block%)
          (foldl (lambda (stmt var-set) (set-union var-set (send stmt accept this)))

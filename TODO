@@ -1,10 +1,12 @@
 TODO
+- investigate examples/add
+- ;; ^ problematic comment in visitor-interpreter
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])
 - do we have to support int@any x?
 - check if printing for @any make sense
 - general for, while, if
-- really need to be careful about for/parfor (prefexsum.cll)
+- really need to be careful about for/parfor (prefixsum.cll)
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 
@@ -18,9 +20,6 @@ TODO
   }
 
 SYMBOLIC DICT
-- increase space for 'for' and 'if'
-  (set 1 sym1)
-  if sym1 == 1: we shouldn't double count
 - symbolic set or lower space to 4
   vector v of set s
   (vector-ref v i) -> (ite cond (set *) (set * /))
@@ -31,3 +30,16 @@ CHECK
 
 MEMO
 - same VarDecl => same sym-place!!!
+
+BENCHMAKR
+- insertion sort
+
+future
+- 1D convolution (better analysis)
+- prefixsum (better analysis)
+- md5 (function)
+- ssd (multiple copies)
+- mergesort (function)
+- matrixmultiply (2D)
+- FFT
+- balckscholes (float)

@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT KNOWN FOR IF ELSE FROM TO
+                               INT KNOWN FOR WHILE IF ELSE FROM TO
                                PLACE HERE ANY))
 
 (define-lex-trans number
@@ -44,6 +44,7 @@
    ("int"   (token-INT))
    ("known" (token-KNOWN))
    ("for"   (token-FOR))
+   ("while" (token-WHILE))
    ("if"    (token-IF))
    ("else"  (token-ELSE))
    ("from"  (token-FROM))
@@ -104,6 +105,7 @@
     ))
 
 (define chunk 32)
+(define default-bound 100)
 
 (define (default-array-place begin end)
   (let ([to (+ begin chunk)])
@@ -254,6 +256,10 @@
             (new For% [iter (new Var% [name $3] [known-type #t] [pos $3-start-pos])] 
                  [known #t] [from $5] [to $7] [place-list $10] 
                  [body $12] [pos $1-start-pos]))
+
+	 ; while loop. default bound is 100, but we should so static analysis.
+	 ((WHILE LPAREN exp RPAREN LBRACK block RBRACK)
+	    (new While% [condition $3] [body $6] [bound default-bound] [pos $1-start-pos]))
 
          ; if
          ((IF LPAREN exp RPAREN LBRACK block RBRACK)

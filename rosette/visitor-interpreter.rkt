@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(define debug #f)
+(define debug #t)
 
 (struct comminfo (msgs placeset firstast))
 
@@ -16,7 +16,8 @@
     (init-field core-space 
                 num-core 
                 [env (make-hash)] 
-                [places (make-cores #:capacity core-space #:max-cores num-core)])
+                [places (make-cores #:capacity core-space #:max-cores num-core)]
+		[known-stack (list #t)])
     
     ;; use this when we see @place(exp)
     (define (find-place ast [modify #t])
@@ -38,10 +39,17 @@
 
       (if (is-a? place-exp Place%)
           (let ([place (derive-place (get-field at place-exp))])
+            (pretty-display (format "derive = ~a" place))
             (when modify
                   (set-field! place ast place))
             place)
           place-exp))
+    
+    (define (find-index place-obj)
+      (let ([at (get-field at place-obj)])
+	(if (is-a? at Array%)
+	    (get-field index at)
+	    at)))
 
     (define (find-place-type ast)
       (define place (find-place ast #f))
@@ -49,7 +57,7 @@
               (is-a? (cdr place) Base%))
           place
           (let ([place-exp (get-field place ast)]) ; Place%
-            (cons place (get-field at place-exp)))))
+            (cons place (find-index place-exp)))))
 
     ;; env dictionary map variable to (place . known-type)
     ;; place has 2 categories
@@ -147,7 +155,8 @@
 	;(assert (place-type? p))
         (if (or (or (number? p)
                     (and (is-a? p Place%) (equal? (get-field at p) "any")))
-                (get-field known-type (cdr p))) ;; get known type of the index
+                (and (get-field known-type (cdr p)) ; get known type of the index
+		     (car known-stack))) ; get known type of the scope
             1
             (length (car p))))
       
@@ -180,10 +189,6 @@
          (add-comm y)
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
          (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
-
-    (define (count-msg-against-set x-ast blocks-set)
-      (let ([place-set (to-place-set (get-field place-type x-ast))])
-        (set-count (set-subtract blocks-set place-set))))
 
     (define (lookup env ast)
       (dict-ref env (get-field name ast)
@@ -321,9 +326,12 @@
           (define e1-ret (send e1 accept this))
           (define e2-ret (send e2 accept this))
 	  ;(define op-ret (send op accept this))
+
+	  (pretty-display "here")
           
           ;; set place-type known-type
           (define place-type (find-place-type op))
+	  (pretty-display "here")
           (set-field! place-type ast place-type)
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
           ;; ^ problematic here
@@ -440,6 +448,8 @@
         (define condition (get-field condition ast))
         (define condition-ret (send condition accept this))
         
+	; push to stack
+	(set! known-stack (cons (get-field known-type condition) known-stack))
         (define true-ret (send (get-field true-block ast) accept this))
         
         ; between condition and true-block
@@ -454,6 +464,8 @@
            (comminfo-firstast condition-ret)))
         
         (define false-block (get-field false-block ast))
+	; pop from stack
+	(set! known-stack (cdr known-stack))
         
         (set! ret 
               (let ([false-block (get-field false-block ast)])
@@ -471,6 +483,25 @@
         ; increase space
         (inc-space-placeset (comminfo-placeset ret) est-if)
         ret]
+
+       [(is-a? ast While%)
+        (define condition (get-field condition ast))
+        (define condition-ret (send condition accept this))
+        
+	; push to stack
+	(set! known-stack (cons (get-field known-type condition) known-stack))
+        (define body-ret (send (get-field body ast) accept this))
+	; pop from stack
+	(set! known-stack (cdr known-stack))
+
+        ; increase space
+        (inc-space-placeset (comminfo-placeset body-ret) est-while)
+
+	(comminfo
+	 (+ (comminfo-msgs condition-ret) 
+	    (* (comminfo-msgs body-ret) (get-field bound ast)))
+	 (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret))
+	 (comminfo-firstast condition-ret))]
 
        [(is-a? ast Assign%) 
           (when debug (newline))
