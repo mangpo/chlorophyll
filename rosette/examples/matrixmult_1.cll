@@ -12,3 +12,7 @@ for(i from 0 to 7) {
     C[7*i + j] = sum;
   }
 }
+
+// # messages = 735
+// # cores = 4
+// 37 sec (kaopad)
