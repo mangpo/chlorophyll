@@ -1,6 +1,6 @@
 TODO
-- investigate examples/add
-- ;; ^ problematic comment in visitor-interpreter
+- ; ^ problematic comment in visitor-interpreter (maybe not anymore)
+- test more
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])
 - do we have to support int@any x?

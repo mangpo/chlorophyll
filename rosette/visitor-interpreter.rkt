@@ -19,8 +19,11 @@
                 [places (make-cores #:capacity core-space #:max-cores num-core)]
 		[known-stack (list #t)])
     
-    ;; use this when we see @place(exp)
+    ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
+      (when (not (is-a? ast Livable%))
+        (raise "find-place: ast is not Livable%"))
+      
       (define place-exp (get-field place ast))
 
       (define (derive-place p)
@@ -29,7 +32,7 @@
           (car (lookup env p))]
          
          [(is-a? p Array%)
-          (cons (car (lookup env p)) (get-field index p))]
+          (car (lookup env p))]
          
          [else
           (raise-syntax-error 'unsupported (format "place(~a) at src: l: ~a c: ~a"
@@ -39,25 +42,52 @@
 
       (if (is-a? place-exp Place%)
           (let ([place (derive-place (get-field at place-exp))])
-            (pretty-display (format "derive = ~a" place))
-            (when modify
-                  (set-field! place ast place))
+            ;(pretty-display (format "derive = ~a" place))
+            (when modify (set-field! place ast place))
             place)
           place-exp))
     
-    (define (find-index place-obj)
-      (let ([at (get-field at place-obj)])
-	(if (is-a? at Array%)
-	    (get-field index at)
-	    at)))
+    ;; find index of @place(x[i]) if x is distributed.
+    (define (find-index place)
+      (if (is-a? place Place%)
+          (let* ([at (get-field at place)]
+                 [index (if (is-a? at Array%)
+                            ; return i when place = @place(x[i])
+                            (get-field index at)
+                            ; return i when place = @place(i)
+                            at)])
+            (if (is-a? index Var%)
+                ; need to set known-type to match with the environment
+                (let ([known-type (cdr (lookup env index))])
+                  (set-field! known-type index known-type)
+                  ; return index
+                  index)
+                (raise "Place expression cannot be more complicated than @place(x[i])")))         
+          ; return false otherwise
+          #f))
 
-    (define (find-place-type ast)
-      (define place (find-place ast #f))
-      (if (or (number? place) 
-              (is-a? (cdr place) Base%))
-          place
-          (let ([place-exp (get-field place ast)]) ; Place%
-            (cons place (find-index place-exp)))))
+    ;; find place-type for @place(x)
+    (define (find-place-type ast native)
+      (when (not (is-a? native Livable%))
+        (raise "find-place-type: native is not Livable%"))
+      
+      ;(pretty-display (format "find-place-type ~a" (send ast to-string)))
+      
+      (define place-type (get-field place-type ast))
+      (if (or (number? place-type) (pair? place-type))
+          ; place-type is infered during abstract interpretation
+          ; and the format is right, we can return right away
+          place-type
+          (begin
+            ; get index for @place(i) before place because (find-place) will remove that info
+            (define index (find-index (get-field place native)))
+            ;(when index
+            ;  (pretty-display (format "index = ~a\nknown = ~a"
+            ;                    (send index to-string) (get-field known-type index))))
+            (define place (find-place native))
+            (if (number? place)
+                place
+                (cons place index)))))
 
     ;; env dictionary map variable to (place . known-type)
     ;; place has 2 categories
@@ -153,12 +183,18 @@
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p)
 	;(assert (place-type? p))
-        (if (or (or (number? p)
-                    (and (is-a? p Place%) (equal? (get-field at p) "any")))
-                (and (get-field known-type (cdr p)) ; get known type of the index
-		     (car known-stack))) ; get known type of the scope
-            1
-            (length (car p))))
+        (cond
+          [(number? p) 1]
+          [(is-a? p Place%)
+           (let ([at (get-field at p)])
+             (if (equal? at "any")
+                 1
+                 (raise "count-comm doesn't support Place% that is not @any")))]
+          [(pair? p)
+           (if (and (get-field known-type (cdr p)) (car known-stack))
+               1
+               (length (car p)))]
+          [else (raise "implemented for this type")]))
       
       ;; x and y in form (cons place-list known-type)
       ;(pretty-display (send x-ast to-string))
@@ -233,7 +269,7 @@
           (when debug (pretty-display (format ">> Num ~a" (send ast to-string))))
 
 	  ;(send const accept this)
-          (define place-type (find-place-type (get-field n ast)))
+          (define place-type (find-place-type ast (get-field n ast)))
 	  (set-field! place-type ast place-type)
 
           (comminfo 0 (to-place-set place-type) ast)]
@@ -303,7 +339,7 @@
 	  ;(define op-ret (send op accept this))
           
           ;; set place-type known-type
-          (define place-type (find-place-type op))
+          (define place-type (find-place-type ast op))
           (set-field! place-type ast place-type)
           (set-field! known-type ast (get-field known-type e1))
 
@@ -327,14 +363,12 @@
           (define e2-ret (send e2 accept this))
 	  ;(define op-ret (send op accept this))
 
-	  (pretty-display "here")
           
           ;; set place-type known-type
-          (define place-type (find-place-type op))
-	  (pretty-display "here")
+          (define place-type (find-place-type ast op))
           (set-field! place-type ast place-type)
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
-          ;; ^ problematic here
+          ;; ^ problematic here (maybe not anymore)
           
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))

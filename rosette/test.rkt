@@ -3,7 +3,7 @@
 (require "partitioner.rkt" "symbolic-dict.rkt" rackunit)
 
 ;; Check with expected number of messages
-(define (test-num-msgs file expected-msgs [cores 4] [capacity 256] #:max-msgs [max-msgs 8])
+(define (test-num-msgs file expected-msgs #:cores [cores 4] [capacity 256] #:max-msgs [max-msgs 8])
   (check-equal? 
    (result-msgs (optimize-comm file #:cores cores #:capacity capacity #:max-msgs max-msgs))
    expected-msgs))
@@ -23,6 +23,7 @@
 (test-num-msgs "tests/for-array4.cll"    120 #:max-msgs 300)
 (test-num-msgs "tests/for-array5.cll"    720 #:max-msgs 800)
 (test-num-msgs "tests/for-array6.cll"    0)
+(test-num-msgs "tests/add.cll"           100 #:cores 8 #:max-msgs 200)
 
 (test-consistent "tests/space_concrete.cll" "tests/space_symbolic.cll")
 (test-consistent "tests/if_concrete.cll" "tests/if_symbolic.cll")

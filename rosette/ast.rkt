@@ -139,7 +139,7 @@
     (set! place-type (get-field place n))
 
     (define/public (infer-place p)
-      (set-field! place n p)
+      ;(set-field! place n p)
       (set! place-type p))
 
     (define/public (get-value)

@@ -159,4 +159,4 @@
   )
 
 (result-msgs 
- (optimize-comm "examples/add.cll" #:cores 8 #:capacity 256))
+ (optimize-comm "tests/add.cll" #:cores 8 #:capacity 256))
