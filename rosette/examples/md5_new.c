@@ -136,11 +136,11 @@ void@(104,4) md5() {
     // These multiple @'s indicate that we need this loop in these cores.
     // Also, since this is an inner loop, we need to replicate outter loop as well.
     for(_myInt@any i = 0; i < 64; i++) {
-      myInt@h temp = d;
+      myInt@h temp = inner(a, b, c, d, i);
+      a = d;
       d = c;
       c = b;
-      b = inner(a, b, c, d, i);
-      a = temp;
+      b = temp;
     }
     hash[0] += a;
     hash[1] += b;

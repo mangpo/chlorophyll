@@ -1,0 +1,32 @@
+int[] s[64];
+int[] k[64];
+int[] r[64];
+int[] message[64]; // in fact = 16
+
+int[] hash[4];
+int a, b, c, d, temp;
+
+for(t from 0 to 16) {
+  a = hash[0];
+  b = hash[1];
+  c = hash[2];
+  d = hash[3];
+
+  for(i from 0 to 64)@any {
+    temp = (b && c) || ((!b) && d);
+    temp = a + temp + k[i] + message[i];
+    temp = (temp << r[i]) || (temp >> (32 - r[i])); // assume unsigned shift for now
+    a = d;
+    d = c;
+    c = b;
+    b = temp;
+  }
+
+  hash[0] = hash[0] + a;
+  hash[1] = hash[1] + b;
+  hash[2] = hash[2] + c;
+  hash[3] = hash[3] + d;
+}
+
+// # messages = 4096
+// # cores = 9

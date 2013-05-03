@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(define debug #t)
+(define debug #f)
 
 (struct comminfo (msgs placeset firstast))
 

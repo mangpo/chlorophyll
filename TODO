@@ -1,23 +1,26 @@
 TODO
-- ; ^ problematic comment in visitor-interpreter (maybe not anymore)
-- test more
+- test + time md5_2
+
+- declaration inside bloce
+  for {
+    int x = 0;
+  }
+  (matrixmultiply caching)
+- general for?
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])
 - do we have to support int@any x?
+  might need one more pass to get inferred place (e.g. @any)
 - check if printing for @any make sense
-- general for, while, if
-- really need to be careful about for/parfor (prefixsum.cll)
+- really need to be careful about for/parfor
+  need better data dependency analysis (prefixsum, convolution)
 - space estimator: if local var inside a loop -> no space required
 - annotation that says split array into x chunks without specify the partitions.
    int[]@{split=4} x; 
 - should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
-- precise abstract interpret for
-- might need one more pass to get inferred place (e.g. @any)
-- declaration inside bloce
-  for {
-    int x = 0;
-  }
+- precise abstract interpret?
+
 
 SYMBOLIC DICT
 - symbolic set or lower space to 4
@@ -25,14 +28,14 @@ SYMBOLIC DICT
   (vector-ref v i) -> (ite cond (set *) (set * /))
   (set-add (vector-ref v i) %) => ERROR
 
-CHECK
-- unnecessary symbolic-var (DONE?)
-
 MEMO
 - same VarDecl => same sym-place!!!
 
-BENCHMAKR
+BENCHMARKS
 - insertion sort
+- add
+- md5 without function and tuple
+- matrix multiply
 
 future
 - 1D convolution (better analysis)

@@ -91,7 +91,8 @@
 (define (optimize-comm file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
-                        #:max-msgs [best-num-msg #f])
+                        #:max-msgs [best-num-msg #f]
+                        #:verbose [verbose #f])
   
   #|(let ([bitwidth (+ (inexact->exact (ceiling 
                     (/ (log (max best-num-cores capacity best-num-msg)) (log 2)))) 10)])
@@ -106,22 +107,25 @@
   
   ;; Easy inference happens here
   (define my-ast (ast-from-file file))
-  (pretty-display "=== Original AST ===")
-  (send my-ast pretty-print)
+  (when verbose
+    (pretty-display "=== Original AST ===")
+    (send my-ast pretty-print))
   
   ;; Collect real physical places
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
   (define place-set (send my-ast accept collector))
-  (pretty-display "\n=== Places ===")
-  (pretty-print place-set)
+  (when verbose
+    (pretty-display "\n=== Places ===")
+    (pretty-print place-set))
   
   ;; Convert distinct abstract partitions into distinct numbers
   ;; and different symbolic vars for different holes
   (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
   (send my-ast accept converter)
-  (pretty-display "\n=== After string -> number ===")
-  (send my-ast pretty-print)
+  (when verbose
+    (pretty-display "\n=== After string -> number ===")
+    (send my-ast pretty-print))
   
   ;; Count number of messages
   (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
@@ -150,13 +154,14 @@
   
   ;void
   (with-handlers* ([exn:fail? (lambda (e) 
-                                (pretty-display "\n=== Solution ===")
-                                (send my-ast accept concise-printer) 
-                                (pretty-display best-sol)
-                                (send interpreter display-used-space)
+                                (when verbose
+                                  (pretty-display "\n=== Solution ===")
+                                  (send my-ast accept concise-printer) 
+                                  (pretty-display best-sol)
+                                  (send interpreter display-used-space))
 				(result (evaluate num-msg) (send interpreter get-concrete-cores)))])
                   (loop))
   )
 
-(result-msgs 
- (optimize-comm "tests/add.cll" #:cores 8 #:capacity 256))
+;(result-msgs 
+; (optimize-comm "examples/md5_2.cll" #:cores 16 #:capacity 256))
