@@ -386,4 +386,20 @@
 
 ))
 
+(define FuncDecl%
+  (class Base%
+    (super-new)
+    (init-field name args body return)
+    ;; args = list of VarDecl%
+    ;; return = VarDecl%
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "(FUNCTION ~a" name))
+      (send return pretty-print (inc indent))
+      (for ([arg args])
+           (send arg pretty-print (inc indent)))
+      (send body pretty-print (inc indent)))
+
+    ))
+
 

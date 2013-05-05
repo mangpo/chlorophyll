@@ -128,7 +128,7 @@
     (send my-ast pretty-print))
   
   ;; Count number of messages
-  (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
+  #|(define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
   (define num-msg (comminfo-msgs (send my-ast accept interpreter)))
@@ -160,8 +160,9 @@
                                   (pretty-display best-sol)
                                   (send interpreter display-used-space))
 				(result (evaluate num-msg) (send interpreter get-concrete-cores)))])
-                  (loop))
+                  (loop))|#
+  void
   )
 
-;(result-msgs 
-; (optimize-comm "examples/md5_2.cll" #:cores 16 #:capacity 256))
+(result-msgs 
+ (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t))

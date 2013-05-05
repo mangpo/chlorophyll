@@ -73,6 +73,13 @@
          (foldl (lambda (stmt var-set) (set-union var-set (send stmt accept this)))
                 (set) (get-field stmts ast))
          ]
+
+        [(is-a? ast FuncDecl%)
+         (let ([return-set (send (get-field return ast) accept this)]
+               [args-set (foldl (lambda (stmt var-set) (set-union var-set (send stmt accept this)))
+                                (set) (get-field args ast))]
+               [body-set (send (get-field body ast) accept this)])
+           (set-union (set-union return-set args-set) body-set))]
         
         [else (raise "Error: var-collector unimplemented!")]
         

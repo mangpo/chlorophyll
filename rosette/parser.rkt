@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT KNOWN FOR WHILE IF ELSE FROM TO
+                               INT VOID KNOWN FOR WHILE IF ELSE FROM TO
                                PLACE HERE ANY))
 
 (define-lex-trans number
@@ -42,6 +42,7 @@
   (lexer-src-pos
    ;(whitespace (return-without-pos (simple-math-lexer input-port)))
    ("int"   (token-INT))
+   ("void"  (token-VOID))
    ("known" (token-KNOWN))
    ("for"   (token-FOR))
    ("while" (token-WHILE))
@@ -115,7 +116,7 @@
 
 (define simple-math-parser
   (parser
-   (start block)
+   (start func-decl)
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
@@ -207,11 +208,27 @@
          ((KNOWN) "known"))
 
     (data-type
-         ((INT) "int"))
+         ((INT) "int")
+         ((VOID) "void")
+         )
+
+    (data-place-type
+         ((data-type) (cons $1 (get-sym))) ;; get symbolic place if there is no @ specified
+         ((data-type @ place-exp) (cons $1 $3)))
 
     (var-list
          ((VAR) (list $1))
          ((VAR COMMA var-list) (cons $1 $3))) 
+
+    (arg
+         ((known-type data-place-type VAR)
+            (new VarDecl% [var-list (list $3)] [type (car $2)] [known (equal? $1 "known")]
+                 [place (cdr $2)]
+                 [pos $3-start-pos])))
+
+    (arg-list
+         ((arg) (list $1))
+         ((arg COMMA arg-list) (cons $1 $3)))
          
     (stmt 
          ; assignment
@@ -219,13 +236,8 @@
             (new Assign% [lhs $1] [rhs $3] [pos $1-start-pos]))
 
          ; var declaration
-         ((known-type data-type var-list SEMICOL) 
-            (new VarDecl% [var-list $3] [type $2] [known (equal? $1 "known")] 
-                 [pos $3-start-pos]))
-
-         ; var declaration with placement
-         ((known-type data-type @ place-exp var-list SEMICOL) 
-            (new VarDecl% [var-list $5] [type $2] [known (equal? $1 "known")] [place $4] 
+         ((known-type data-place-type var-list SEMICOL) 
+            (new VarDecl% [var-list $3] [type (car $2)] [known (equal? $1 "known")] [place (cdr $2)]
                  [pos $3-start-pos]))
          
          ; array declaration
@@ -276,6 +288,18 @@
          ((stmt stmts) (cons $1 $2)))
 
     (block ((stmts) (new Block% [stmts $1])))
+
+    (args 
+         (() (list))
+         ((arg-list) $1))
+
+    (func-decl
+         ((known-type data-place-type VAR LPAREN args RPAREN LBRACK block RBRACK)
+          (new FuncDecl% [name $3] [args $5] [body $8] 
+               [return (new VarDecl% [var-list (list "#return")] [type (car $2)] [place (cdr $2)]
+                            [known (equal? $1 "known")])]
+               [pos $2-start-pos]))
+         )
 
 )))
 

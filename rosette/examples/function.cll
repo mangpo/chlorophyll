@@ -1,0 +1,4 @@
+int@a main(int@b x, int@c y) {
+  int@d z;
+  x = 10;
+}

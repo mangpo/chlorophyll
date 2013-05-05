@@ -94,6 +94,12 @@
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))]
 
+       [(is-a? ast FuncDecl%)
+        (send (get-field return ast) accept this)
+        (for ([stmt (get-field args ast)])
+             (send stmt accept this))
+        (send (get-field body ast) accept this)]
+
        [else (raise (format "Error: in partition-to-number, ~a unimplemented!" ast))]
        ))
     ))
