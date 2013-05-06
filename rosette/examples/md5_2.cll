@@ -47,3 +47,4 @@ for(t from 0 to 16) {
 
 // # messages = 1536
 // # cores = 4
+// 2745 sec = 45 min (kaopad)
