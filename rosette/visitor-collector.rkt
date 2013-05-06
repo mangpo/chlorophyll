@@ -26,7 +26,7 @@
 	 (let* ([place (get-field place-list ast)]
                 [ret (if (list? place)
                          (foldl (lambda (p var-set) (set-union var-set (send p accept this)))
-                                (set) (get-field place-list ast))
+                                (set) place)
                          (create-set place))])
            (if (is-a? ast For%)
 	       (set-union ret (send (get-field body ast) accept this))
@@ -76,10 +76,13 @@
 
         [(is-a? ast FuncDecl%)
          (let ([return-set (send (get-field return ast) accept this)]
-               [args-set (foldl (lambda (stmt var-set) (set-union var-set (send stmt accept this)))
-                                (set) (get-field args ast))]
+               [args-set (send (get-field args ast) accept this)]
                [body-set (send (get-field body ast) accept this)])
            (set-union (set-union return-set args-set) body-set))]
+
+        [(is-a? ast Program%)
+         (foldl (lambda (decl var-set) (set-union var-set (send decl accept this)))
+                           (set) (get-field decls ast))]
         
         [else (raise "Error: var-collector unimplemented!")]
         

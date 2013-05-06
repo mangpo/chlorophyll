@@ -116,7 +116,7 @@
 
 (define simple-math-parser
   (parser
-   (start func-decl)
+   (start program)
    (end EOF)
    (error
     (lambda (tok-ok? tok-name tok-value start-pos end-pos) 
@@ -229,12 +229,8 @@
     (arg-list
          ((arg) (list $1))
          ((arg COMMA arg-list) (cons $1 $3)))
-         
-    (stmt 
-         ; assignment
-         ((ele = exp SEMICOL) 
-            (new Assign% [lhs $1] [rhs $3] [pos $1-start-pos]))
 
+    (var-decl
          ; var declaration
          ((known-type data-place-type var-list SEMICOL) 
             (new VarDecl% [var-list $3] [type (car $2)] [known (equal? $1 "known")] [place (cdr $2)]
@@ -245,7 +241,7 @@
             (new ArrayDecl% [var $5] [type $2] [known (equal? $1 "known")] [bound $7]
 		 [place-list (default-array-place 0 $7)]
                  [pos $5-start-pos]))
-         
+
          ; array declaration with placement
          ((known-type data-type LSQBR RSQBR @ place-dist 
                       VAR LSQBR NUM RSQBR SEMICOL)
@@ -253,7 +249,15 @@
                  [place-list (if (list? $6)
                                  $6
                                  (list (new RangePlace% [from 0] [to $9] [place $6])))]
-                 [pos $7-start-pos]))
+                 [pos $7-start-pos])))
+         
+    (stmt 
+         ; assignment
+         ((ele = exp SEMICOL) 
+            (new Assign% [lhs $1] [rhs $3] [pos $1-start-pos]))
+
+         ; var declaration/array declaration
+         ((var-decl) $1)
 
          ; for loop
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK block RBRACK)
@@ -295,11 +299,22 @@
 
     (func-decl
          ((known-type data-place-type VAR LPAREN args RPAREN LBRACK block RBRACK)
-          (new FuncDecl% [name $3] [args $5] [body $8] 
+          (new FuncDecl% [name $3] [args (new Block% [stmts $5])] [body $8] 
                [return (new VarDecl% [var-list (list "#return")] [type (car $2)] [place (cdr $2)]
                             [known (equal? $1 "known")])]
                [pos $2-start-pos]))
          )
+
+    (decl
+         ((var-decl) $1)
+         ((func-decl) $1))
+
+    (decls
+         ((decl) (list $1))
+         ((decl decls) (cons $1 $2)))
+         
+    (program
+         ((decls) (new Program% [decls $1])))
 
 )))
 

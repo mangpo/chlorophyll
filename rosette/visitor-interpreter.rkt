@@ -13,10 +13,8 @@
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field core-space 
-                num-core 
+    (init-field places
                 [env (make-hash)] 
-                [places (make-cores #:capacity core-space #:max-cores num-core)]
 		[known-stack (list #t)])
     
     ;; find actual place for @place(exp)
@@ -232,6 +230,14 @@
                   (if (dict-has-key? env "__up__")
                       (lookup (dict-ref env "__up__") ast)
                       (send ast not-found-error)))))
+
+    (define (push-scope)
+      (let ([new-env (make-hash)])
+        (dict-set! new-env "__up__" env)
+        (set! env new-env)))
+
+    (define (pop-scope)
+      (set! env (dict-ref env "__up__")))
     
     (define (place-at places index ast)
       (when (empty? places)
@@ -453,9 +459,7 @@
 		 ;(inc-space (get-field place p) est-for))) ; increase space
 
           ;; Add new scope for body.
-          (define new-env (make-hash))
-          (dict-set! new-env "__up__" env)
-          (set! env new-env)
+          (push-scope)
 
           ;; This "for" iterating pattern is satically known.
           (dict-set! env 
@@ -470,7 +474,7 @@
           (inc-space-placeset body-place-set est-for)
 
           ;; Remove scope.
-          (set! env (dict-ref env "__up__"))
+          (pop-scope)
 
           (comminfo
            (* (comminfo-msgs body-ret) (- (get-field to ast) (get-field from ast)))
@@ -484,7 +488,10 @@
         
 	; push to stack
 	(set! known-stack (cons (get-field known-type condition) known-stack))
+
+        (push-scope)
         (define true-ret (send (get-field true-block ast) accept this))
+        (pop-scope)
         
         ; between condition and true-block
         (define ret
@@ -501,6 +508,7 @@
 	; pop from stack
 	(set! known-stack (cdr known-stack))
         
+        (push-scope)
         (set! ret 
               (let ([false-block (get-field false-block ast)])
                 (if false-block
@@ -513,29 +521,30 @@
                        (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))
                        (comminfo-firstast ret)))
                     ret)))
+        (pop-scope)
         
         ; increase space
         (inc-space-placeset (comminfo-placeset ret) est-if)
         ret]
 
        [(is-a? ast While%)
-        (define condition (get-field condition ast))
-        (define condition-ret (send condition accept this))
-        
-	; push to stack
-	(set! known-stack (cons (get-field known-type condition) known-stack))
-        (define body-ret (send (get-field body ast) accept this))
-	; pop from stack
-	(set! known-stack (cdr known-stack))
+          (define condition (get-field condition ast))
+          (define condition-ret (send condition accept this))
+          
+          ; push to stack
+          (set! known-stack (cons (get-field known-type condition) known-stack))
+          (define body-ret (send (get-field body ast) accept this))
+	  ; pop from stack
+          (set! known-stack (cdr known-stack))
+          
+          ; increase space
+          (inc-space-placeset (comminfo-placeset body-ret) est-while)
 
-        ; increase space
-        (inc-space-placeset (comminfo-placeset body-ret) est-while)
-
-	(comminfo
-	 (+ (comminfo-msgs condition-ret) 
-	    (* (comminfo-msgs body-ret) (get-field bound ast)))
-	 (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret))
-	 (comminfo-firstast condition-ret))]
+          (comminfo
+           (+ (comminfo-msgs condition-ret) 
+              (* (comminfo-msgs body-ret) (get-field bound ast)))
+           (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret))
+           (comminfo-firstast condition-ret))]
 
        [(is-a? ast Assign%) 
           (when debug (newline))
@@ -579,5 +588,16 @@
                            (set-union (comminfo-placeset all) (comminfo-placeset ret))
                            (or (comminfo-firstast all) (comminfo-firstast ret)))))
                    (comminfo 0 (set) #f) (get-field stmts ast))]
+
+       [(is-a? ast FuncDecl%)
+          (push-scope)
+          (define args-ret (send (get-field args ast) accept this))
+          (define body-ret (send (get-field body ast) accept this))
+          (pop-scope)
+          
+          (comminfo (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret))
+                    (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret))
+                    (comminfo-firstast args-ret))]
+
        [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))

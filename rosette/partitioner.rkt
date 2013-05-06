@@ -3,10 +3,12 @@
 (require "header.rkt"
          "ast.rkt" 
          "parser.rkt" 
+         "symbolic-dict.rkt"
          "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
          "visitor-rename.rkt"
-         "visitor-printer.rkt")
+         "visitor-printer.rkt"
+         "visitor-evaluator.rkt")
 
 (provide optimize-comm (struct-out result))
 
@@ -88,7 +90,7 @@
 ;;; (define concise-printer (new printer%))
 ;;; (send my-ast accept concise-printer)
 
-(define (optimize-comm file 
+#|(define (optimize-comm-backup file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
                         #:max-msgs [best-num-msg #f]
@@ -128,7 +130,7 @@
     (send my-ast pretty-print))
   
   ;; Count number of messages
-  #|(define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
+  (define interpreter (new count-msg-interpreter% [core-space capacity] [num-core best-num-cores]))
   (define best-sol #f)
   
   (define num-msg (comminfo-msgs (send my-ast accept interpreter)))
@@ -160,9 +162,97 @@
                                   (pretty-display best-sol)
                                   (send interpreter display-used-space))
 				(result (evaluate num-msg) (send interpreter get-concrete-cores)))])
-                  (loop))|#
-  void
+                  (loop))
+  )|#
+
+(define (optimize-comm file 
+                        #:cores [num-cores 144] 
+                        #:capacity [capacity 256] 
+                        #:max-msgs [best-num-msg #f]
+                        #:verbose [verbose #f])
+  
+  #|(let ([bitwidth (+ (inexact->exact (ceiling 
+                    (/ (log (max num-cores capacity best-num-msg)) (log 2)))) 10)])
+      
+    ;; Set bidwidth for rosette
+    (pretty-display (format "bidwidth = ~a" bitwidth))
+    (configure [bitwidth bitwidth]))|#
+  (configure [bitwidth 32])
+  
+  ;; Define printer
+  (define concise-printer (new printer%))
+  
+  ;; Easy inference happens here
+  (define my-ast (ast-from-file file))
+  (when verbose
+    (pretty-display "=== Original AST ===")
+    (send my-ast pretty-print))
+  
+  ;; Collect real physical places
+  (define collector (new place-collector% 
+                         [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
+  (define place-set (send my-ast accept collector))
+  (when verbose
+    (pretty-display "\n=== Places ===")
+    (pretty-print place-set))
+  
+  ;; Convert distinct abstract partitions into distinct numbers
+  ;; and different symbolic vars for different holes
+  (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
+  (send my-ast accept converter)
+  (when verbose
+    (pretty-display "\n=== After string -> number ===")
+    (send my-ast pretty-print))
+  
+  ;; Create abstract interpreter
+  (define cores (make-cores #:capacity capacity #:max-cores num-cores))
+  (define interpreter (new count-msg-interpreter% 
+                           [places cores]))
+  (define evaluator (new symbolic-evaluator%))
+  (define best-sol #f)
+  
+  (define (solve-function func-ast [min-num-msg #f])
+    ;; Count number of messages
+    (define num-msg (comminfo-msgs (send func-ast accept interpreter)))
+    (define num-cores (cores-count cores))
+  
+    (define (loop)
+      (if min-num-msg
+          (solve (assert (< num-msg min-num-msg)))
+          (solve (assert #t)))
+      (set! min-num-msg (evaluate num-msg))
+      
+      (set! best-sol (current-solution))
+      
+      ;; display
+      (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+      (pretty-display (format "# cores = ~a" (evaluate num-cores)))
+      (loop)
+      )
+  
+    (with-handlers* ([exn:fail? (lambda (e) 
+                                  (when verbose
+                                    (pretty-display "\n=== Solution ===")
+                                    (cores-evaluate cores)
+                                    (send my-ast accept evaluator)
+                                    (send func-ast accept concise-printer)
+                                    ;(pretty-display best-sol)
+                                    ;(send interpreter display-used-space))
+                                    ;(result (evaluate num-msg) (send interpreter get-concrete-cores)
+                                    ))])
+                    (loop)))
+  
+  (for ([decl (get-field decls my-ast)])
+    (when verbose (pretty-display "------------------------------------------------"))
+    (if (is-a? decl FuncDecl%)
+      (solve-function decl)
+      (send decl accept interpreter)))
+  
+  (when verbose
+    (pretty-display "\n=== Final Solution ===")
+    (send my-ast accept concise-printer)
+    (pretty-display best-sol)
+    (send interpreter display-used-space))
   )
 
-(result-msgs 
- (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
+(optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t)

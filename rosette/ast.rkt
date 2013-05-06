@@ -396,10 +396,19 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))
       (send return pretty-print (inc indent))
-      (for ([arg args])
-           (send arg pretty-print (inc indent)))
+      (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
+    ))
+
+(define Program%
+  (class Base%
+    (super-new)
+    (init-field decls)
+
+    (define/override (pretty-print [indent ""])
+      (for ([decl decls])
+           (send decl pretty-print)))
     ))
 
 

@@ -127,6 +127,39 @@
 	   (display indent)
            (send stmt accept this)
            (newline))]
+
+        [(is-a? ast FuncDecl%)
+         (define (print-arg arg pre)
+           (display (format "~a~a@~a ~a" pre
+                           (get-field type arg) 
+                           (send arg get-place) 
+                           (car (get-field var-list arg)))))
+
+         ;; Print function signature
+         (let ([return (get-field return ast)])
+           (display (format "~a@~a ~a(" 
+                            (get-field type return) 
+                            (send return get-place) 
+                            (get-field name ast))))
+
+         ;; Print arguments
+         (let ([arg-list (get-field stmts (get-field args ast))])
+           (print-arg (car arg-list) "")
+           (for ([arg (cdr arg-list)])
+                (print-arg arg ",")))
+
+         (pretty-display ") {")
+
+         ;; Print Body
+         (inc-indent)
+         (send (get-field body ast) accept this)
+         (pretty-display "}")
+         ]
+
+        [(is-a? ast Program%)
+         (for ([decl (get-field decls ast)])
+              (send decl accept this)
+              (newline))]
         
         [else (raise "Error: printer unimplemented!")]
         

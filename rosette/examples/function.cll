@@ -1,4 +1,9 @@
-int@a main(int@b x, int@c y) {
-  int@d z;
-  x = 10;
+int a;
+
+int md5(int x, int y) {
+  a = x + y;
+}
+
+int main(int x, int y) {
+  a = a + x * y;
 }
