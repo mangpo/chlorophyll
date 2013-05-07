@@ -600,13 +600,14 @@
 
        [(is-a? ast FuncDecl%)
           (push-scope)
+          (define return-ret (send (get-field return ast) accept this))
           (define args-ret (send (get-field args ast) accept this))
           (define body-ret (send (get-field body ast) accept this))
           (pop-scope)
           
-          (comminfo (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret))
-                    (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret))
-                    (comminfo-firstast args-ret))]
+          (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
+                    (set-union (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret)) (comminfo-placeset return-ret))
+                    (comminfo-firstast return-ret))]
 
        [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))

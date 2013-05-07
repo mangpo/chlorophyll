@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT VOID KNOWN FOR WHILE IF ELSE FROM TO
+                               INT VOID KNOWN FOR WHILE IF ELSE FROM TO RETURN
                                PLACE HERE ANY))
 
 (define-lex-trans number
@@ -43,6 +43,7 @@
    ;(whitespace (return-without-pos (simple-math-lexer input-port)))
    ("int"   (token-INT))
    ("void"  (token-VOID))
+   ("return" (token-RETURN))
    ("known" (token-KNOWN))
    ("for"   (token-FOR))
    ("while" (token-WHILE))
@@ -177,6 +178,7 @@
 	 ((ele) $1)
 
          ((BNOT exp)         (UnaExp "!" $2 $1-start-pos))
+         ((ARITHOP2 exp)     (prec BNOT) (UnaExp $1 $2 $1-start-pos))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP2 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP3 exp) (BinExp $1 $2 $3 $2-start-pos))
@@ -189,6 +191,7 @@
          ((exp OR exp)       (BinExp $1 "||" $3 $2-start-pos))
          
          ((BNOT @ place-exp exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
+         ((ARITHOP2 @ place-exp exp)     (prec BNOT) (UnaExp $1 $4 $3 $1-start-pos))
          ((exp ARITHOP1 @ place-exp exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp ARITHOP2 @ place-exp exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp ARITHOP3 @ place-exp exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))
@@ -285,6 +288,10 @@
          ((IF LPAREN exp RPAREN LBRACK block RBRACK ELSE LBRACK block RBRACK)
             (new If% [condition $3] [true-block $6] [false-block $10] [pos $1-start-pos]))
 
+         ; return
+         ((RETURN exp SEMICOL)
+            (new Assign% [lhs (new Var% [name "#return"] [pos $1-start-pos])] 
+                 [rhs $2] [pos $1-start-pos]))
          )
 
     (stmts

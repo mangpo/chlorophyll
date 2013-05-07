@@ -1,9 +1,14 @@
 int a;
 
-int md5(int x, int y) {
-  a = x + y;
+int abs(int x) {
+  if(x < 0) {
+    return -x;
+  } else {
+    return x;
+  }
 }
 
+
 int main(int x, int y) {
-  a = a + x * y;
+  return a + x * y;
 }

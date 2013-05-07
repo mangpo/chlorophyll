@@ -47,7 +47,8 @@
 
 
         [(is-a? ast Num%)
-         (send (get-field n ast) accept this)
+         ;(send (get-field n ast) accept this)
+         (display (format "~a@~a" (get-field n (get-field n ast)) (send ast get-place)))
          ]
       
         [(is-a? ast Array%)
@@ -154,6 +155,7 @@
          ;; Print Body
          (inc-indent)
          (send (get-field body ast) accept this)
+         (dec-indent)
          (pretty-display "}")
          ]
 

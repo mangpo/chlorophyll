@@ -198,5 +198,5 @@
   (result total-msg (cores-evaluate cores))
   )
 
-;(result-msgs
-; (optimize-comm "tests/array-dynamic.cll" #:cores 16 #:capacity 256 #:verbose #t #:max-msgs 8))
+(result-msgs
+ (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t #:max-msgs 8))
