@@ -210,11 +210,26 @@
                            [places cores]))
   (define evaluator (new symbolic-evaluator%))
   (define best-sol #f)
+  (define partial-hash (make-hash))
+  (define partial-sol (sat (hash)))
+  
+  ;(define (assert-partial-solution sol)
+    ;; Assert all symbolic variables that are already in the solution to the current value.
+    ;; TODO
+    ;)
   
   (define (solve-function func-ast [min-num-msg #f])
     ;; Count number of messages
-    (define num-msg (comminfo-msgs (send func-ast accept interpreter)))
-    (define num-cores (cores-count cores))
+    (define num-msg-before (comminfo-msgs (send func-ast accept interpreter)))
+    (define num-msg 
+      (if partial-sol
+          (evaluate num-msg-before partial-sol)
+          num-msg-before))
+    (define num-cores (evaluate (cores-count cores) partial-sol))
+    
+    (pretty-display (format "partial-sol: ~a" partial-sol))
+    (pretty-display (format "before: ~a" num-msg-before))
+    (pretty-display (format "after: ~a" num-msg))
   
     (define (loop)
       (if min-num-msg
@@ -229,14 +244,27 @@
       (pretty-display (format "# cores = ~a" (evaluate num-cores)))
       (loop)
       )
+    
+    (define (add-to-partial)
+      ;; Add to hash map
+      (for ([mapping (solution->list best-sol)])
+        (when (not (hash-has-key? partial-hash (car mapping)))
+          (hash-set! partial-hash (car mapping) (cdr mapping))))
+      
+      ;; Create partial solution
+      (set! partial-sol (sat (make-immutable-hash (hash->list partial-hash))))
+      )
   
     (with-handlers* ([exn:fail? (lambda (e) 
                                   (when verbose
                                     (pretty-display "\n=== Solution ===")
+                                    (add-to-partial)
                                     (cores-evaluate cores)
-                                    (send my-ast accept evaluator)
+                                    ;(send my-ast accept evaluator)
                                     (send func-ast accept concise-printer)
-                                    ;(pretty-display best-sol)
+                                    (send my-ast pretty-print)
+                                    (pretty-display partial-sol)
+                                    ;(assert-partial-sol best-sol)
                                     ;(send interpreter display-used-space))
                                     ;(result (evaluate num-msg) (send interpreter get-concrete-cores)
                                     ))])
@@ -250,9 +278,10 @@
   
   (when verbose
     (pretty-display "\n=== Final Solution ===")
-    (send my-ast accept concise-printer)
-    (pretty-display best-sol)
-    (send interpreter display-used-space))
+    ;(send my-ast accept concise-printer)
+    (pretty-display partial-sol)
+    ;(send interpreter display-used-space)
+    )
   )
 
 (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t)

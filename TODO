@@ -1,7 +1,7 @@
 TODO
-- test + time md5_2
+- fix evalution at many places
 
-- declaration inside bloce
+- declaration inside block
   for {
     int x = 0;
   }
