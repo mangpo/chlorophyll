@@ -8,7 +8,7 @@
 (require "header.rkt"
          "visitor-interface.rkt")
 
-(provide (all-defined-out))
+(provide (except-out (all-defined-out) inc))
 
 (define (get-sym)
   (define-symbolic* sym-place number?)
@@ -55,7 +55,7 @@
     (init-field [place (get-sym)])
 
     (define/public (get-place)
-      (evaluate place))
+      (evaluate-with-sol place))
     (define/public (set-place new-place)
       (set! place new-place))
     ))
@@ -124,7 +124,7 @@
       known-type)
 
     (define/public (get-place)
-      (evaluate (place-type-to-string place-type)))
+      (evaluate-with-sol (place-type-to-string place-type)))
 
     ;; This is used to construct place-type representation.
     (abstract to-string)
@@ -147,7 +147,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
-			      indent (get-field n n) (evaluate place-type) known-type)))
+			      indent (get-field n n) (evaluate-with-sol place-type) known-type)))
 
     (define/override (to-string) (send n to-string))
     ))
@@ -160,7 +160,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (known=~a))" 
-			      indent name (evaluate place-type) known-type)))
+			      indent name (evaluate-with-sol place-type) known-type)))
 
     (define/override (to-string) name)
 
@@ -180,7 +180,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" 
-			      indent name (evaluate place-type) known-type))
+			      indent name (evaluate-with-sol place-type) known-type))
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)
@@ -207,7 +207,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
-			      indent (evaluate place-type) known-type))
+			      indent (evaluate-with-sol place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
@@ -232,7 +232,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
-			      indent (evaluate place-type) known-type))
+			      indent (evaluate-with-sol place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))

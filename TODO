@@ -1,5 +1,6 @@
 TODO
 - fix evalution at many places
+  = ast.rkt (evaluate place-type) to (get-place)
 
 - declaration inside block
   for {

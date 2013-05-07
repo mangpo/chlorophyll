@@ -18,7 +18,7 @@
           (if (list? place)
               (for ([p place])
                    (send p accept this))
-              (set-field! place ast (evaluate place))))
+              (set-field! place ast (evaluate place global-sol))))
 
         (when (is-a? ast For%)
               (send (get-field body ast) accept this))]

@@ -250,17 +250,17 @@
             (place-at (cdr places) index ast))))
         
     
-    (define/public (assert-capacity)
-      (cores-assert places))
+    ;; (define/public (assert-capacity)
+    ;;   (cores-assert places))
 
-    (define/public (display-used-space)
-      (display-cores places))
+    ;; (define/public (display-used-space)
+    ;;   (display-cores places))
     
-    (define/public (get-concrete-cores)
-      (cores-evaluate places))
+    ;; (define/public (get-concrete-cores)
+    ;;   (cores-evaluate places))
 
-    (define/public (num-cores)
-      (cores-count places))
+    ;; (define/public (num-cores)
+    ;;   (cores-count places))
       
     (define/public (visit ast)
       (cond
