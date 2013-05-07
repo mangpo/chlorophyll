@@ -1,6 +1,10 @@
 TODO
-- fix evalution at many places
-  = ast.rkt (evaluate place-type) to (get-place)
+- fix function.cll
+- known-type check across functions
+- master/slave block,function,(array)
+- topological sort
+- recursion
+- one function at multiple places
 
 - declaration inside block
   for {
@@ -22,12 +26,14 @@ TODO
    int[]@{[0:30]=a,[30:50]=b}
 - precise abstract interpret?
 
-
 SYMBOLIC DICT
 - symbolic set or lower space to 4
   vector v of set s
   (vector-ref v i) -> (ite cond (set *) (set * /))
   (set-add (vector-ref v i) %) => ERROR
+
+MINI-PROJECTS
+- optimization: SSE, dead code elimiation
 
 MEMO
 - same VarDecl => same sym-place!!!

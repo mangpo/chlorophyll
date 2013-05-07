@@ -204,6 +204,7 @@
          ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2)
+	 ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3]))
          )
 
     (known-type
@@ -219,19 +220,34 @@
          ((data-type) (cons $1 (get-sym))) ;; get symbolic place if there is no @ specified
          ((data-type @ place-exp) (cons $1 $3)))
 
+    ;; a,b,c
     (var-list
          ((VAR) (list $1))
          ((VAR COMMA var-list) (cons $1 $3))) 
 
-    (arg
+    ;; a, abs(b), c+d
+    (arg-list
+         ((exp) (list $1))
+	 ((exp COMMA arg-list) (cons $1 $3)))
+
+    (args
+         (() (list))
+	 ((arg-list) $1))
+
+    ;; int a, int b, int c
+    (param
          ((known-type data-place-type VAR)
-            (new VarDecl% [var-list (list $3)] [type (car $2)] [known (equal? $1 "known")]
+            (new Param% [var-list (list $3)] [type (car $2)] [known (equal? $1 "known")]
                  [place (cdr $2)]
                  [pos $3-start-pos])))
 
-    (arg-list
-         ((arg) (list $1))
-         ((arg COMMA arg-list) (cons $1 $3)))
+    (param-list
+         ((param) (list $1))
+         ((param COMMA param-list) (cons $1 $3)))
+
+    (params 
+         (() (list))
+         ((param-list) $1))
 
     (var-decl
          ; var declaration
@@ -300,12 +316,8 @@
 
     (block ((stmts) (new Block% [stmts $1])))
 
-    (args 
-         (() (list))
-         ((arg-list) $1))
-
     (func-decl
-         ((known-type data-place-type VAR LPAREN args RPAREN LBRACK block RBRACK)
+         ((known-type data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
           (new FuncDecl% [name $3] [args (new Block% [stmts $5])] [body $8] 
                [return (new VarDecl% [var-list (list "#return")] [type (car $2)] [place (cdr $2)]
                             [known (equal? $1 "known")])]

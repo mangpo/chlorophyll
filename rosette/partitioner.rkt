@@ -171,7 +171,7 @@
   
     (with-handlers* ([exn:fail? (lambda (e) 
                                   (add-to-partial)
-                                  (set! total-msg (+ total-msg (evaluate num-msg)))
+                                  (set! total-msg (evaluate num-msg))
                                   (when verbose
                                     (pretty-display "\n=== Solution ===")
                                     (pretty-display (format "num-msg = ~a" (evaluate num-msg)))
@@ -196,6 +196,7 @@
   
   (pretty-display (format "total-msg = ~a" total-msg))
   (result total-msg (cores-evaluate cores))
+  ;(result 0 #f)
   )
 
 (result-msgs

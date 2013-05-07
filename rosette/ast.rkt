@@ -60,6 +60,15 @@
       (set! place new-place))
     ))
 
+
+;; list -> string
+(define (list-to-string ast-list)
+  (if (empty? ast-list)
+      ""
+      (foldl (lambda (ast str) (string-append (string-append str ", ") (send ast to-string))) 
+	     (send (car ast-list) to-string) 
+	     (cdr ast-list))))
+
 ;; place-list -> string
 (define (place-list-to-string place-list)
   (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
@@ -242,6 +251,23 @@
     
     ))
 
+(define FuncCall%
+  (class Exp%
+    (super-new)
+    (inherit-field known-type place-type)
+    (init-field name args)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
+			      indent name (evaluate-with-sol place-type) known-type))
+      (for ([arg args])
+	   (send arg pretty-print (inc indent)))
+      (pretty-display (format "~a)" indent)))
+
+    (define/override (to-string)
+      (format "~a(~a)" name (list-to-string args)))
+    ))
+
 
 (define Const%
   (class Livable%
@@ -283,6 +309,11 @@
       (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
                               indent type var-list (get-place) known)))
   ))
+
+(define Param%
+  (class VarDecl%
+    (super-new)
+    (init-field [place-type #f] [known-type #f])))
 
 (define RangePlace%
   (class Livable%

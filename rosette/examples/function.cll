@@ -9,6 +9,7 @@ int abs(int x) {
 }
 
 
-int main(int x, int y) {
-  return a + x * y;
+int main() {
+  int@1 x,y;
+  return a + abs(x) * y;
 }

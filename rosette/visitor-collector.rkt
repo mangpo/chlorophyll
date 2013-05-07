@@ -37,9 +37,9 @@
 	 (send (get-field n ast) accept this)
 	 ]
       
-        [(is-a? ast Var%)
-         (set) ; we handle var at declaration.
-         ]
+        [(is-a? ast Var%) 
+	 (set) ; we handle var at declaration. 
+	 ]
         
         [(is-a? ast UnaExp%)
          (set-union (send (get-field op ast) accept this)
@@ -55,6 +55,8 @@
         [(is-a? ast Assign%)
          (send (get-field rhs ast) accept this)
          ]
+
+	[(is-a? ast FuncCall%) (set)]
 
         [(is-a? ast If%)
          (set-union (set-union (send (get-field condition ast) accept this)
@@ -85,5 +87,6 @@
                            (set) (get-field decls ast))]
         
         [else (raise "Error: var-collector unimplemented!")]
+	))))
         
-        ))))
+        

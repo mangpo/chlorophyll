@@ -59,7 +59,7 @@
                     (set-field! place-list ast (convert-to-num place)))))
 	(when (is-a? ast For%) (send (get-field body ast) accept this))]
        
-       [(or (is-a? ast Var%) (is-a? ast Num%))
+       [(or (or (is-a? ast Var%) (is-a? ast Num%)) (is-a? ast FuncCall%))
         (void)]
 
        [(is-a? ast BinExp%)

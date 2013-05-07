@@ -80,6 +80,9 @@
          (send (get-field e2 ast) accept this)
          (display ")")
          ]
+
+	[(is-a? ast FuncCall%)
+	 (display (send ast to-string))]
         
         [(is-a? ast Assign%)
          (send (get-field lhs ast) accept this)

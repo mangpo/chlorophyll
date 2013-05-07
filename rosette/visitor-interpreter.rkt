@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(define debug #f)
+(define debug #t)
 
 (struct comminfo (msgs placeset firstast))
 
@@ -395,11 +395,42 @@
            (set-union (set-union (comminfo-placeset e1-ret) (comminfo-placeset e2-ret)) (to-place-set place-type))
            (comminfo-firstast e1-ret))
           ]
+
+       [(is-a? ast FuncCall%)
+          (when debug
+                (pretty-display (format ">> FuncCall ~a" (send ast to-string))))
+
+	  (define func (lookup env ast))
+	  (define func-ast (car func))
+	  (define func-ret (cdr func))
+
+          (define msgs (comminfo-msgs func-ret))
+	  (define placeset (comminfo-placeset func-ret))
+	  (define firstast (comminfo-firstast func-ret))
+
+	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
+		[arg   (get-field args ast)]) ; actual
+	       (let ([arg-ret (send arg accept this)])
+		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
+		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
+
+
+	  ;; set place-type known-type
+	  (let ([return (get-field return func-ast)])
+	    (set-field! place-type ast (get-field place return))
+	    (set-field! known-type ast (get-field known return)))
+		 
+	  (comminfo msgs placeset firstast)]
                 
        [(is-a? ast VarDecl%) 
           (define place (find-place ast))
 	  (define known (get-field known ast))
           (define var-list (get-field var-list ast))
+
+	  ;; Param% only
+	  (when (is-a? ast Param%)
+		(set-field! place-type ast place)
+		(set-field! known-type ast known))
           
           ;; put vars into env
           (for ([var var-list])
@@ -600,14 +631,21 @@
 
        [(is-a? ast FuncDecl%)
           (push-scope)
-          (define return-ret (send (get-field return ast) accept this))
+	  (define return (get-field return ast))
+          (define return-ret (send return accept this))
           (define args-ret (send (get-field args ast) accept this))
           (define body-ret (send (get-field body ast) accept this))
           (pop-scope)
           
-          (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
-                    (set-union (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret)) (comminfo-placeset return-ret))
-                    (comminfo-firstast return-ret))]
+          (when debug
+                (pretty-display (format ">> FuncDecl ~a" (get-field name ast))))
 
+	  (let ([ret (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
+			       (set-union (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret)) (comminfo-placeset return-ret))
+			       (comminfo-firstast return-ret))])
+	    ;; declare function
+	    (declare env (get-field name ast) (cons ast ret))
+	    ret)]
+		
        [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))
