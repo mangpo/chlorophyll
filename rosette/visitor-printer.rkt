@@ -144,9 +144,10 @@
 
          ;; Print arguments
          (let ([arg-list (get-field stmts (get-field args ast))])
-           (print-arg (car arg-list) "")
-           (for ([arg (cdr arg-list)])
-                (print-arg arg ",")))
+           (when (not (empty? arg-list))
+                 (print-arg (car arg-list) "")
+                 (for ([arg (cdr arg-list)])
+                      (print-arg arg ","))))
 
          (pretty-display ") {")
 

@@ -1,7 +1,9 @@
-int@1 x;
-int y;
-int z;
-
-for(i from 0 to 4) {
-  x = x + y + z;
+void main() {
+  int@1 x;
+  int y;
+  int z;
+  
+  for(i from 0 to 4) {
+    x = x + y + z;
+  }
 }

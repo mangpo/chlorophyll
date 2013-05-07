@@ -1,10 +1,12 @@
-int@0 x;
-int@0 y;
-int@0 z;
-int@0 j;
+void main() {
+  int@0 x;
+  int@0 y;
+  int@0 z;
+  int@0 j;
 
-if(j %@0 2 ==@0 0) {
-  x = x +@0 y;
-} else {
-  z = y +@0 z;
+  if(j %@0 2 ==@0 0) {
+    x = x +@0 y;
+  } else {
+    z = y +@0 z;
+  }
 }

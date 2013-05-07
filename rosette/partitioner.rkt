@@ -95,14 +95,14 @@
                         #:capacity [capacity 256] 
                         #:max-msgs [best-num-msg #f]
                         #:verbose [verbose #f])
-  
-  #|(let ([bitwidth (+ (inexact->exact (ceiling 
-                    (/ (log (max num-cores capacity best-num-msg)) (log 2)))) 10)])
+  (if best-num-msg
+      (let ([bitwidth (+ (inexact->exact (ceiling 
+                                          (/ (log (max num-cores capacity best-num-msg)) (log 2)))) 5)])
       
-    ;; Set bidwidth for rosette
-    (pretty-display (format "bidwidth = ~a" bitwidth))
-    (configure [bitwidth bitwidth]))|#
-  (configure [bitwidth 32])
+        ;; Set bidwidth for rosette
+        (pretty-display (format "bidwidth = ~a" bitwidth))
+        (configure [bitwidth bitwidth]))
+      (configure [bitwidth 32]))
   
   ;; Define printer
   (define concise-printer (new printer%))
@@ -170,10 +170,11 @@
       )
   
     (with-handlers* ([exn:fail? (lambda (e) 
+                                  (add-to-partial)
+                                  (set! total-msg (+ total-msg (evaluate num-msg)))
                                   (when verbose
                                     (pretty-display "\n=== Solution ===")
-                                    (add-to-partial)
-                                    (set! total-msg (+ total-msg (evaluate num-msg)))
+                                    (pretty-display (format "num-msg = ~a" (evaluate num-msg)))
                                     (send func-ast accept concise-printer)
                                     (pretty-display global-sol)
                                     ))])
@@ -193,8 +194,9 @@
     (display-cores cores)
     )
   
+  (pretty-display (format "total-msg = ~a" total-msg))
   (result total-msg (cores-evaluate cores))
   )
 
-(result-msgs
- (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
+;(result-msgs
+; (optimize-comm "tests/array-dynamic.cll" #:cores 16 #:capacity 256 #:verbose #t #:max-msgs 8))

@@ -2,7 +2,9 @@ int[]@{[0:25],[25:50],[50:75],[75:100]} x[100];
 int[]@{[0:25],[25:50],[50:75],[75:100]} y[100];
 int[]@{[0:25],[25:50],[50:75],[75:100]} z[100];
 
-for(i from 0 to 100) {
-  z[i] = x[i] +@place(z[i]) y[i];
-  //z[i] = x[i] +@place(i) y[i]; //can't do place(i) when we don't know i
+void main() {
+  for(i from 0 to 100) {
+    z[i] = x[i] +@place(z[i]) y[i];
+    //z[i] = x[i] +@place(i) y[i]; //can't do place(i) when we don't know i
+  }
 }

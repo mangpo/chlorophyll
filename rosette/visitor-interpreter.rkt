@@ -131,7 +131,7 @@
 
       (define (place-type? p)
 	(or (number? p) (place-type-dist? p)))
-      
+
       (define (place-type-dist? p)
         (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
       
@@ -226,10 +226,19 @@
 
     (define (lookup env ast)
       (dict-ref env (get-field name ast)
-                (lambda ()
-                  (if (dict-has-key? env "__up__")
-                      (lookup (dict-ref env "__up__") ast)
-                      (send ast not-found-error)))))
+                (lambda () (lookup (dict-ref env "__up__" 
+                                             (lambda () (send ast not-found-error)))
+                                   ast))))
+
+    (define (update env ast val)
+      (let ([name (get-field name ast)])
+        (if (dict-has-key? env name)
+            (dict-set! env name val)
+            (update (dict-ref env "__up__"
+                              (lambda () (send ast not-found-error))) ast val))))
+
+    (define (declare env name val)
+      (dict-set! env name val))
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -394,7 +403,7 @@
           
           ;; put vars into env
           (for ([var var-list])
-               (dict-set! env var (cons place known)))
+               (declare env var (cons place known)))
 
           (when debug
                 (pretty-display (format ">> VarDecl ~a" var-list)))
@@ -435,7 +444,7 @@
             
 
           ;; put array into env
-          (dict-set! env (get-field var ast) (cons place-list known))
+          (declare env (get-field var ast) (cons place-list known))
 
           (comminfo 0 (to-place-set place-list) ast)
           ]
@@ -462,7 +471,7 @@
           (push-scope)
 
           ;; This "for" iterating pattern is satically known.
-          (dict-set! env 
+          (declare env 
                      (get-field name (get-field iter ast))
                      (cons place-list #t))
 
@@ -570,8 +579,8 @@
           (define rhs-known-type (get-field known-type rhs))
           (when (and (not rhs-known-type) lhs-known-type)
                 (set-field! known-type lhs #f)
-		(let ([old (dict-ref env lhs-name)])
-		  (dict-set! env lhs (cons (car old) #f))))
+		(let ([old (lookup env lhs)])
+		  (update env lhs (cons (car old) #f))))
 
 	  ;; Don't increase space
        

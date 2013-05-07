@@ -1,5 +1,7 @@
 int[]@{[0:10]=0,[10:20]=1,[20:30]=2} x[30];
 
-for(i from 1 to 30)@any {
-  x[i] = x[i] + x[i-1];
+void main() {
+  for(i from 1 to 30)@any {
+      x[i] = x[i] + x[i-1];
+    }
 }
