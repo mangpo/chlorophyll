@@ -12,4 +12,5 @@
   (set! global-sol sol))
 
 (define-syntax-rule (evaluate-with-sol x)
-  (evaluate x global-sol))
+  (evaluate x))
+  ;(evaluate x global-sol))

@@ -319,10 +319,10 @@
     (func-decl
          ((known-type data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
           (new FuncDecl% [name $3] [args (new Block% [stmts $5])] [body $8] 
-               [return (new VarDecl% [var-list (list "#return")] [type (car $2)] [place (cdr $2)]
-                            [known (equal? $1 "known")])]
-               [pos $2-start-pos]))
-         )
+               [return (new VarDecl% [var-list (list "#return")] 
+			    [type (car $2)] [place (cdr $2)]
+			    [known (equal? $1 "known")])]
+               [pos $2-start-pos])))
 
     (decl
          ((var-decl) $1)

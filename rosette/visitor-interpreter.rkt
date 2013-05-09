@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(define debug #t)
+(define debug #f)
 
 (struct comminfo (msgs placeset firstast))
 
@@ -439,8 +439,9 @@
           (when debug
                 (pretty-display (format ">> VarDecl ~a" var-list)))
 
-	  ;; increase space for variable
-          (inc-space place (* (length var-list) est-data)) ; increase space
+	  ;; increase space for variable if it is the return variable
+	  (when (not (equal? (car var-list) "#return"))
+		(inc-space place (* (length var-list) est-data))) ; increase space
           (comminfo 0 (set place) ast)
           ]
 
@@ -646,6 +647,14 @@
 	    ;; declare function
 	    (declare env (get-field name ast) (cons ast ret))
 	    ret)]
+
+       [(is-a? ast Program%)
+	(define ret #f)
+	(for ([decl (get-field decls ast)])
+	     (let ([decl-ret (send decl accept this)])
+	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+		     (set! ret decl-ret))))
+	ret]
 		
        [else (raise "Error: count-msg-interpreter unimplemented!")]))
 ))

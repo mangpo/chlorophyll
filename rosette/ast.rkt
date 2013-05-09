@@ -426,7 +426,8 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))
-      (send return pretty-print (inc indent))
+      (when return
+	    (send return pretty-print (inc indent)))
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
