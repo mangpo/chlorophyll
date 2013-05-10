@@ -82,7 +82,13 @@
          ]
 
 	[(is-a? ast FuncCall%)
-	 (display (send ast to-string))]
+	 (display (format "~a(" (get-field name ast)))
+	 (let ([args (get-field args ast)])
+	   (send (car args) accept this)
+	   (for ([arg (cdr args)])
+		(display ", ")
+		(send arg accept this)))
+	 (display ")")]
         
         [(is-a? ast Assign%)
          (send (get-field lhs ast) accept this)

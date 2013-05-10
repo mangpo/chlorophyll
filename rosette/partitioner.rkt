@@ -94,22 +94,15 @@
                         #:capacity [capacity 256] 
                         #:max-msgs [upperbound #f]
                         #:verbose [verbose #f])
-  
-  (if upperbound
-      (let ([bitwidth (+ (inexact->exact (ceiling 
-                                          (/ (log (max best-num-cores capacity upperbound)) 
-                                             (log 2)))) 2)])
-      
-        ;; Set bidwidth for rosette
-        (pretty-display (format "bidwidth = ~a" bitwidth))
-        (configure [bitwidth bitwidth]))
-      (configure [bitwidth 16]))
+
+  (configure [bitwidth 16])
   
   ;; Define printer
   (define concise-printer (new printer%))
   
   ;; Easy inference happens here
   (define my-ast (ast-from-file file))
+  (send my-ast accept concise-printer)
   (when verbose
     (pretty-display "=== Original AST ===")
     (send my-ast pretty-print))
@@ -136,11 +129,14 @@
   (define best-sol #f)
   
   (define num-msg (comminfo-msgs (send my-ast accept interpreter)))
-  (define num-cores (cores-count cores))
+  (define num-cores (cores-count cores))  
   (define lowerbound 0)
-  (define middle #f)
+  (define middle (if upperbound 
+                     (floor (/ (+ lowerbound upperbound) 2))
+                     #f))
   
   (define (inner-loop)
+    (pretty-display (format "num-msg <= ~a" middle))
     (if middle
       (solve (assert (<= num-msg middle)))
       (solve (assert #t)))
@@ -152,6 +148,11 @@
     ;; display
     (pretty-display (format "# messages = ~a" (evaluate num-msg)))
     (pretty-display (format "# cores = ~a" (evaluate num-cores)))
+    (when verbose
+         (pretty-display "\n=== New Solution ===")
+         (send my-ast accept concise-printer) 
+         (pretty-display best-sol)
+         (display-cores cores))
     
     (if (< lowerbound upperbound)
         (inner-loop)
@@ -161,12 +162,6 @@
   ;void
   (define (outter-loop)
     (with-handlers* ([exn:fail? (lambda (e) 
-                                  #|(when verbose
-                                    (pretty-display "\n=== Solution ===")
-                                    (send my-ast accept concise-printer) 
-                                    (pretty-display best-sol)
-                                    (display-cores cores))|#
-                                  
                                   (set! lowerbound (add1 middle))
                                   (set! middle (floor (/ (+ lowerbound upperbound) 2)))
                                   (if (< lowerbound upperbound)
@@ -182,9 +177,8 @@
        res)
   )
 
-#|
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "tests/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "examples/md5_2.cll" #:cores 16 #:capacity 256 #:verbose #t #:max-msgs 2048))
 
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))

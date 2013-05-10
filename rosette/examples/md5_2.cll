@@ -10,8 +10,7 @@ void leftrotate(int x, int r) {
 }
 
 void main() {
-  int[] s[32]; // full = 64 entries
-  int[] k[32];
+  int[] k[32]; // full = 64 entries
   int[] r[32];
   int[] message[16];
   
@@ -36,17 +35,13 @@ void main() {
     
     g = 0;
     for(i from 16 to 32)@any {
+	g = (g + 5) & 15;
 	temp = (d && b) || ((! d) && c);
-	temp = b + leftrotate(a + temp + k[i] + message[i], r[i]);
+	temp = b + leftrotate(a + temp + k[i] + message[g], r[i]);
 	a = d;
 	d = c;
 	c = b;
 	b = temp;
-	
-	g = g + 5;
-	if(g > 16) {
-	  g = g - 16;
-	}
     }
   
     hash[0] = hash[0] + a;
@@ -66,3 +61,55 @@ void main() {
 // # messages = 1024
 // # cores = 5
 // 519 sec
+
+/*
+void@11 leftrotate(int@11 x,int@11 r) {
+  #return= ((x <<@11 r) ||@11 (x >>@11 (32@11 -@11 r)))
+}
+
+void@(#<syntax sym-place> . 8) main() {
+  int@{[0:32]=8} s;
+  int@{[0:32]=9} k;
+  int@{[0:32]=0} r;
+  int@{[0:16]=11} message;
+  int@{[0:4]=11} hash;
+  int@11 (a b c d temp);
+  int@11 (g);
+  for(t from 0 to 16)@place(any) {
+    a= hash[0@11]
+    b= hash[1@11]
+    c= hash[2@11]
+    d= hash[3@11]
+    for(i from 0 to 16)@place(any) {
+      temp= ((b &&@11 c) ||@11 ((!@11 b) &&@11 d))
+      temp= (b +@11 leftrotate((((a +@11 temp) +@11 k[i]) +@11 message[i])#<void>, r[i]))
+      a= d
+      d= c
+      c= b
+      b= temp
+    }
+
+    g= 0@11
+    for(i from 16 to 32)@place(any) {
+      g= ((g +@11 5@11) &@11 15@11)
+      temp= ((d &&@11 b) ||@11 ((!@11 d) &&@11 c))
+      temp= (b +@11 leftrotate((((a +@11 temp) +@11 k[i]) +@11 message[g])#<void>, r[i]))
+      a= d
+      d= c
+      c= b
+      b= temp
+    }
+
+    hash[0@11]= (hash[0@11] +@11 a)
+    hash[1@11]= (hash[1@11] +@11 b)
+    hash[2@11]= (hash[2@11] +@11 c)
+    hash[3@11]= (hash[3@11] +@11 d)
+  }
+
+}
+
+core = 0, space = 196, ops = #<set:>
+core = 8, space = 128, ops = #<set:>
+core = 9, space = 196, ops = #<set:>
+core = 11, space = 220, ops = #<set:>
+*/
