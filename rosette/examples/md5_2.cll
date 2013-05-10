@@ -10,8 +10,8 @@ void leftrotate(int x, int r) {
 }
 
 void main() {
-  int[] k[32]; // full = 64 entries
-  int[] r[32];
+  int[] k[64]; // full = 64 entries
+  int[] r[64];
   int[] message[16];
   
   int[] hash[4];
@@ -25,7 +25,7 @@ void main() {
     d = hash[3];
     
     for(i from 0 to 16)@any {
-	temp = (b && c) || ((!b) && d);
+	temp = (b && c) || (!b && d);
 	temp = b + leftrotate(a + temp + k[i] + message[i], r[i]);
 	a = d;
 	d = c;
@@ -35,15 +35,37 @@ void main() {
     
     g = 0;
     for(i from 16 to 32)@any {
-	g = (g + 5) & 15;
-	temp = (d && b) || ((! d) && c);
+	temp = (d && b) || (!d && c);
 	temp = b + leftrotate(a + temp + k[i] + message[g], r[i]);
 	a = d;
 	d = c;
 	c = b;
 	b = temp;
+	g = (g + 5) & 15;
     }
   
+    g = 0;
+    for(i from 32 to 48)@any {
+	temp = b ^ c ^ d;
+	temp = b + leftrotate(a + temp + k[i] + message[g], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+	g = (g + 3) & 15;
+    }
+  
+    g = 0;
+    for(i from 48 to 64)@any {
+	temp = c ^ (b || !d);
+	temp = b + leftrotate(a + temp + k[i] + message[g], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+	g = (g + 7) & 15;
+    }
+
     hash[0] = hash[0] + a;
     hash[1] = hash[1] + b;
     hash[2] = hash[2] + c;
@@ -58,6 +80,7 @@ void main() {
 // 2745 sec = 45 min (kaopad)
 
 // function + binary search
+// 32 iterations
 // # messages = 1024
 // # cores = 5
 // 519 sec
