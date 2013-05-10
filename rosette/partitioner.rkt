@@ -179,6 +179,6 @@
 
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "examples/md5_2.cll" #:cores 16 #:capacity 256 #:verbose #t #:max-msgs 2048))
+ (optimize-comm "examples/md5_2.cll" #:cores 16 #:capacity 256 #:verbose #t))
 
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
