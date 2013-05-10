@@ -92,16 +92,18 @@
 (define (optimize-comm file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
-                        #:max-msgs [best-num-msg #f]
-                        #:verbose [verbose #t])
+                        #:max-msgs [upperbound #f]
+                        #:verbose [verbose #f])
   
-  #|(let ([bitwidth (+ (inexact->exact (ceiling 
-                    (/ (log (max best-num-cores capacity best-num-msg)) (log 2)))) 10)])
+  (if upperbound
+      (let ([bitwidth (+ (inexact->exact (ceiling 
+                                          (/ (log (max best-num-cores capacity upperbound)) 
+                                             (log 2)))) 2)])
       
-    ;; Set bidwidth for rosette
-    (pretty-display (format "bidwidth = ~a" bitwidth))
-    (configure [bitwidth bitwidth]))|#
-  (configure [bitwidth 32])
+        ;; Set bidwidth for rosette
+        (pretty-display (format "bidwidth = ~a" bitwidth))
+        (configure [bitwidth bitwidth]))
+      (configure [bitwidth 16]))
   
   ;; Define printer
   (define concise-printer (new printer%))
@@ -135,35 +137,54 @@
   
   (define num-msg (comminfo-msgs (send my-ast accept interpreter)))
   (define num-cores (cores-count cores))
+  (define lowerbound 0)
+  (define middle #f)
   
-  (define (loop)
-    ;(solve (assert (< num-cores best-num-cores)))
-    ;(set! best-num-cores (evaluate num-cores))
-    (if best-num-msg
-      (solve (assert (< num-msg best-num-msg)))
+  (define (inner-loop)
+    (if middle
+      (solve (assert (<= num-msg middle)))
       (solve (assert #t)))
-    (set! best-num-msg (evaluate num-msg))
+    (set! upperbound (evaluate num-msg))
+    (set! middle (floor (/ (+ lowerbound upperbound) 2)))
     
     (set! best-sol (current-solution))
     
     ;; display
-    ;(send my-ast accept concise-printer)
-    ;(send interpreter display-used-space)
     (pretty-display (format "# messages = ~a" (evaluate num-msg)))
     (pretty-display (format "# cores = ~a" (evaluate num-cores)))
-    (loop)
+    
+    (if (< lowerbound upperbound)
+        (inner-loop)
+        (result (evaluate num-msg) (cores-evaluate cores)))
   )
   
   ;void
-  (with-handlers* ([exn:fail? (lambda (e) 
-                                (when verbose
-                                  (pretty-display "\n=== Solution ===")
-                                  (send my-ast accept concise-printer) 
-                                  (pretty-display best-sol)
-                                  (display-cores cores))
-				(result (evaluate num-msg) (cores-evaluate cores)))])
-                  (loop))
+  (define (outter-loop)
+    (with-handlers* ([exn:fail? (lambda (e) 
+                                  #|(when verbose
+                                    (pretty-display "\n=== Solution ===")
+                                    (send my-ast accept concise-printer) 
+                                    (pretty-display best-sol)
+                                    (display-cores cores))|#
+                                  
+                                  (set! lowerbound (add1 middle))
+                                  (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+                                  (if (< lowerbound upperbound)
+                                      (outter-loop)
+                                      (result (evaluate num-msg) (cores-evaluate cores))))])
+                    (inner-loop)))
+  (let ([res (outter-loop)])
+       (when verbose
+         (pretty-display "\n=== Solution ===")
+         (send my-ast accept concise-printer) 
+         (pretty-display best-sol)
+         (display-cores cores))
+       res)
   )
 
-;(result-msgs 
-; (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
+#|
+(define t (current-seconds))
+(result-msgs 
+ (optimize-comm "tests/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
+
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#

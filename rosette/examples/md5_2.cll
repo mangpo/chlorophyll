@@ -1,50 +1,68 @@
-int[] s[32]; // full = 64 entries
-int[] k[32];
-int[] r[32];
-int[] message[16];
-
-int[] hash[4];
-int a, b, c, d, temp;
-int g;
-
-for(t from 0 to 16) {
-  a = hash[0];
-  b = hash[1];
-  c = hash[2];
-  d = hash[3];
-
-  for(i from 0 to 16)@any {
-    temp = (b && c) || ((!b) && d);
-    temp = a + temp + k[i] + message[i];
-    temp = (temp << r[i]) || (temp >> (32 - r[i])); // assume unsigned shift for now
-    a = d;
-    d = c;
-    c = b;
-    b = temp;
-  }
-
-  g = 0;
-  for(i from 16 to 32)@any {
-    temp = (d && b) || ((! d) && c);
-    temp = a + temp + k[i] + message[g];
-    temp = (temp << r[i]) || (temp >> (32 - r[i])); // assume unsigned shift for now
-    a = d;
-    d = c;
-    c = b;
-    b = temp;
-
-    g = g + 5;
-    if(g > 16) {
-      g = g - 16;
+void leftrotate(int x, int r) {
+  return (x << r) || (x >> (32 - r));
+  /*
+    if(32 - r > 0) {
+    return (x << r) || (((1 << 31) & x) >> (31 - r)) ^ (x >> (32 - r));
+    } else {
+    return x;
     }
-  }
-
-  hash[0] = hash[0] + a;
-  hash[1] = hash[1] + b;
-  hash[2] = hash[2] + c;
-  hash[3] = hash[3] + d;
+   */
 }
 
+void main() {
+  int[] s[32]; // full = 64 entries
+  int[] k[32];
+  int[] r[32];
+  int[] message[16];
+  
+  int[] hash[4];
+  int a, b, c, d, temp;
+  int g;
+  
+  for(t from 0 to 16) {
+    a = hash[0];
+    b = hash[1];
+    c = hash[2];
+    d = hash[3];
+    
+    for(i from 0 to 16)@any {
+	temp = (b && c) || ((!b) && d);
+	temp = b + leftrotate(a + temp + k[i] + message[i], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+    }
+    
+    g = 0;
+    for(i from 16 to 32)@any {
+	temp = (d && b) || ((! d) && c);
+	temp = b + leftrotate(a + temp + k[i] + message[i], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+	
+	g = g + 5;
+	if(g > 16) {
+	  g = g - 16;
+	}
+    }
+  
+    hash[0] = hash[0] + a;
+    hash[1] = hash[1] + b;
+    hash[2] = hash[2] + c;
+    hash[3] = hash[3] + d;
+  }
+}
+
+// without function
+// 32 iterations
 // # messages = 1536
 // # cores = 4
 // 2745 sec = 45 min (kaopad)
+
+// function + binary search
+// # messages = 1024
+// # cores = 5
+// 519 sec

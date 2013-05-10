@@ -1,5 +1,4 @@
 TODO
-- fix function.cll
 - known-type check across functions
 - master/slave block,function,(array)
 - topological sort
@@ -25,6 +24,7 @@ TODO
 - should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
 - precise abstract interpret?
+
 
 SYMBOLIC DICT
 - symbolic set or lower space to 4

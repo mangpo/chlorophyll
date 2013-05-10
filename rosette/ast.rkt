@@ -421,6 +421,7 @@
   (class Base%
     (super-new)
     (init-field name args body return)
+    (inherit-field pos)
     ;; args = list of VarDecl%
     ;; return = VarDecl%
 
@@ -431,6 +432,12 @@
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
+    (define/public (not-found-error)
+      (raise-syntax-error 'undefined
+			  (format "'~a' error at src: l:~a c:~a" 
+				  name
+				  (position-line pos) 
+				  (position-col pos))))
     ))
 
 (define Program%
@@ -441,6 +448,7 @@
     (define/override (pretty-print [indent ""])
       (for ([decl decls])
            (send decl pretty-print)))
+
     ))
 
 
