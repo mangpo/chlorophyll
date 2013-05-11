@@ -1,0 +1,74 @@
+void leftrotate(int x, int r) {
+  return (x << r) || (x >> (32 - r));
+}
+
+void main() {
+  int[] k[64]; // full = 64 entries
+  int[] r[64];
+  int[] message[16];
+  
+  int[]@x hash[4];
+  int@x a, b, c, d, temp;
+  int g;
+  
+  for(t from 0 to 16) {
+    a = hash[0];
+    b = hash[1];
+    c = hash[2];
+    d = hash[3];
+    
+    for(i from 0 to 16)@any {
+	temp = (b &&@x c) ||@x (!@x b &&@x d);
+	temp = b +@x leftrotate(a +@x temp + k[i] + message[i], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+    }
+    
+    g = 0;
+    for(i from 16 to 32)@any {
+	temp = (d &&@x b) ||@x (!@x d &&@x c);
+	temp = b +@x leftrotate(a +@x temp + k[i] + message[g], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+	g = (g +@place(g) 5) &@place(g) 15;
+    }
+  
+    g = 0;
+    for(i from 32 to 48)@any {
+	temp = b ^@x c ^@x d;
+	temp = b +@x leftrotate(a +@x temp + k[i] + message[g], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+	g = (g +@place(g) 3) &@place(g) 15;
+    }
+  
+    g = 0;
+    for(i from 48 to 64)@any {
+	temp = c ^@x (b ||@x !@x d);
+	temp = b +@x leftrotate(a +@x temp + k[i] + message[g], r[i]);
+	a = d;
+	d = c;
+	c = b;
+	b = temp;
+	g = (g +@place(g) 7) &@place(g) 15;
+    }
+
+    hash[0] = hash[0] +@x a;
+    hash[1] = hash[1] +@x b;
+    hash[2] = hash[2] +@x c;
+    hash[3] = hash[3] +@x d;
+  }
+}
+
+/*
+partial or no partial
+# messages = 3072
+# cores = 6
+partitioning time = 445 s = 7 min
+*/

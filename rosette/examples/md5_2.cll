@@ -137,13 +137,30 @@ core = 9, space = 196, ops = #<set:>
 core = 11, space = 220, ops = #<set:>
 */
 
-// binary search
+// binary search (no partial)
 // 64 iterations (matrix len = 64)
 // # messages = 3072
 // # cores = 6
-// 3072 sec = 51 min
+// ?? sec = ?? min (woonsen)
+
+// binary search (partial)
+// 64 iterations (matrix len = 64)
+// # messages = 3072
+// # cores = 6
+// 7613 sec = 126 min (kaopad)
 
 /*
+core = 3, space = 244, ops = #<set:>
+core = 4, space = 0, ops = #<set:>
+core = 5, space = 188, ops = #<set:>
+core = 6, space = 248, ops = #<set:>
+core = 7, space = 248, ops = #<set:>
+core = 8, space = 0, ops = #<set:>
+core = 9, space = 0, ops = #<set:>
+core = 10, space = 0, ops = #<set:>
+core = 11, space = 248, ops = #<set:>
+core = 12, space = 248, ops = #<set:>
+
 void@12 leftrotate(int@12 x,int@12 r) {
   #return= ((x <<@12 r) ||@12 (x >>@12 (32@12 -@12 r)))
 }

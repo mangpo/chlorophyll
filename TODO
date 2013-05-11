@@ -41,15 +41,15 @@ MEMO
 BENCHMARKS
 - insertion sort
 - add
-- md5 without function and tuple
-- matrix multiply
+- md5 (RUNNING: no partial, RUN: partial)
+- matrix multiply (2D?)
 
-future
+RUN
+- blackscholes (float) in laptop?
 - 1D convolution (better analysis)
 - prefixsum (better analysis)
-- md5 (function)
-- ssd (multiple copies)
-- mergesort (function)
-- matrixmultiply (2D)
+- ssd (multiple copies) in laptop?
+
+future
+- mergesort (function, recursion)
 - FFT
-- balckscholes (float)

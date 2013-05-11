@@ -25,6 +25,7 @@
 (test-num-msgs "tests/for-array6.cll"    0)
 (test-num-msgs "tests/add.cll"           100 #:cores 8 #:max-msgs 200)
 (test-num-msgs "tests/function.cll"      2)
+(test-num-msgs "tests/function2.cll"     2)
 
 (test-consistent "tests/space_concrete.cll" "tests/space_symbolic.cll")
 (test-consistent "tests/if_concrete.cll" "tests/if_symbolic.cll")

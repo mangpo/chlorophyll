@@ -16,6 +16,11 @@
           (set)))
     
     (define/public (visit ast)
+      
+      (define-syntax-rule (union-set-from-list x)
+	(foldl (lambda (ele var-set) (set-union var-set (send ele accept this)))
+                (set) x))
+
       (cond
         [(is-a? ast Livable%)
          (let ([place (get-field place ast)])
@@ -56,7 +61,8 @@
          (send (get-field rhs ast) accept this)
          ]
 
-	[(is-a? ast FuncCall%) (set)]
+	[(is-a? ast FuncCall%)
+	 (union-set-from-list (get-field args ast))]
 
         [(is-a? ast If%)
          (set-union (set-union (send (get-field condition ast) accept this)
@@ -72,9 +78,7 @@
 		    (send (get-field body ast) accept this))]
         
         [(is-a? ast Block%)
-         (foldl (lambda (stmt var-set) (set-union var-set (send stmt accept this)))
-                (set) (get-field stmts ast))
-         ]
+	 (union-set-from-list (get-field stmts ast))]
 
         [(is-a? ast FuncDecl%)
          (let ([return-set (send (get-field return ast) accept this)]
@@ -83,8 +87,7 @@
            (set-union (set-union return-set args-set) body-set))]
 
         [(is-a? ast Program%)
-         (foldl (lambda (decl var-set) (set-union var-set (send decl accept this)))
-                           (set) (get-field decls ast))]
+	 (union-set-from-list (get-field decls ast))]
         
         [else (raise "Error: var-collector unimplemented!")]
 	))))

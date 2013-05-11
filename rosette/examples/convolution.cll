@@ -1,0 +1,23 @@
+void main() {
+  int[] in[100];
+  int[] out[100];
+  int[] kernel[5]; // best to duplicate kernel on every core that has input/output
+  
+  for(i from 0 to 96) {
+    for(j from 0 to 5) {
+      out[i] = out[i] +@place(out[i]) in[i + j] * kernel[j];
+    }
+  }
+
+  // more efficient
+  /*
+  for(i from 0 to 96) {
+    int@any sum = 0;
+    for(j from 0 to 5) {
+      sum = sum +@place(sum) in[i + j] * kernel[j];
+    }
+    out[i] = sum;
+  }
+  */
+
+}

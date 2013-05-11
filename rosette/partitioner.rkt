@@ -92,7 +92,7 @@
 (define (optimize-comm file 
                         #:cores [best-num-cores 144] 
                         #:capacity [capacity 256] 
-                        #:max-msgs [upperbound #f]
+                        #:max-msgs [max-msgs #f]
                         #:verbose [verbose #f])
 
   (configure [bitwidth 16])
@@ -102,7 +102,6 @@
   
   ;; Easy inference happens here
   (define my-ast (ast-from-file file))
-  (send my-ast accept concise-printer)
   (when verbose
     (pretty-display "=== Original AST ===")
     (send my-ast pretty-print))
@@ -126,59 +125,108 @@
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores best-num-cores))
   (define interpreter (new count-msg-interpreter% [places cores]))
-  (define best-sol #f)
   
-  (define num-msg (comminfo-msgs (send my-ast accept interpreter)))
-  (define num-cores (cores-count cores))  
-  (define lowerbound 0)
-  (define middle (if upperbound 
-                     (floor (/ (+ lowerbound upperbound) 2))
-                     #f))
+  ;; Place holder for solution
+  (define num-msg #f)
   
-  (define (inner-loop)
-    (pretty-display (format "num-msg <= ~a" middle))
-    (if middle
-      (solve (assert (<= num-msg middle)))
-      (solve (assert #t)))
-    (set! upperbound (evaluate num-msg))
-    (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+  (define (solve-function func-ast)
+    (set! num-msg (evaluate (comminfo-msgs (send func-ast accept interpreter)) global-sol))
+    (define num-cores (evaluate (cores-count cores) global-sol))  
+    (define lowerbound 0)
+    (define upperbound max-msgs)
+    (define middle (if upperbound 
+                       (floor (/ (+ lowerbound upperbound) 2))
+                       #f))
+    (define best-sol #f)
     
-    (set! best-sol (current-solution))
+    (define (update-global-sol)
+      (define unified-hash (make-hash))
+      (define concrete-to-sym (make-hash))
+      
+      (for ([mapping (solution->list global-sol)])
+        (let ([key (car mapping)]
+              [val (evaluate (cdr mapping) best-sol)])
+          (hash-set! concrete-to-sym val key)
+          (hash-set! unified-hash key val)))
+      
+      (for ([mapping (solution->list best-sol)])
+        (let ([key (car mapping)]
+              [val (evaluate (cdr mapping) best-sol)])
+          (when (not (hash-has-key? unified-hash key))
+            (hash-set! concrete-to-sym val key)
+            (hash-set! unified-hash key val))))
+      
+      (if (equal? (get-field name func-ast) "main")
+          (set-global-sol (sat (make-immutable-hash (hash->list unified-hash))))
+          (let ([global-hash (make-hash)])
+            (hash-for-each unified-hash 
+                           (lambda (key val) 
+                             (hash-set! global-hash key (hash-ref concrete-to-sym val))))
+            (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))
+      
+      (when verbose
+        (pretty-display "\n=== Update Global Solution ===")
+        (send func-ast accept concise-printer) 
+        (pretty-display global-sol)
+        (display-cores cores)
+        )
+      )
+      
+                
+    (define (inner-loop)
+      (when verbose
+        (pretty-display (format "num-msg <= ~a" middle)))
+      (if middle
+          (solve (assert (<= num-msg middle)))
+          (solve (assert #t)))
+      (set! upperbound (evaluate num-msg))
+      (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+      
+      (set! best-sol (current-solution))
+      
+      ;; display
+      (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+      (pretty-display (format "# cores = ~a" (evaluate num-cores)))
+      
+      (if (< lowerbound upperbound)
+          (inner-loop)
+          (update-global-sol))
+          ;(result (evaluate num-msg) (cores-evaluate cores)))
+      )
     
-    ;; display
-    (pretty-display (format "# messages = ~a" (evaluate num-msg)))
-    (pretty-display (format "# cores = ~a" (evaluate num-cores)))
-    (when verbose
-         (pretty-display "\n=== New Solution ===")
-         (send my-ast accept concise-printer) 
-         (pretty-display best-sol)
-         (display-cores cores))
+    ;void
+    (define (outter-loop)
+      (with-handlers* ([exn:fail? (lambda (e) 
+                                    (set! lowerbound (add1 middle))
+                                    (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+                                    (if (< lowerbound upperbound)
+                                        (outter-loop)
+                                        (update-global-sol)))])
+                                        ;(result (evaluate num-msg) (cores-evaluate cores))))])
+                      (inner-loop)))
     
-    (if (< lowerbound upperbound)
-        (inner-loop)
-        (result (evaluate num-msg) (cores-evaluate cores)))
-  )
+    (outter-loop)
+    )
+    
+  (for ([decl (get-field decls my-ast)])
+    (if (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+        (begin
+          (solve-function decl)
+          (when verbose (pretty-display "------------------------------------------------")))
+        (send decl accept interpreter)))
   
-  ;void
-  (define (outter-loop)
-    (with-handlers* ([exn:fail? (lambda (e) 
-                                  (set! lowerbound (add1 middle))
-                                  (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-                                  (if (< lowerbound upperbound)
-                                      (outter-loop)
-                                      (result (evaluate num-msg) (cores-evaluate cores))))])
-                    (inner-loop)))
-  (let ([res (outter-loop)])
-       (when verbose
-         (pretty-display "\n=== Solution ===")
-         (send my-ast accept concise-printer) 
-         (pretty-display best-sol)
-         (display-cores cores))
-       res)
+  #|(when verbose
+    (pretty-display "\n=== Final Solution ===")
+    (send my-ast accept concise-printer)
+    (pretty-display global-sol)
+    (display-cores cores)
+    )|#
+  
+  (result (evaluate-with-sol num-msg) (cores-evaluate cores))
   )
 
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "examples/md5_2.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "examples/md5_4.cll" #:cores 16 #:capacity 256 #:verbose #t))
 
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))

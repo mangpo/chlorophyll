@@ -44,7 +44,12 @@
       (define (check-place)
         (let ([p (get-field place ast)])
           (when (string? p)
-            (set-field! place ast (convert-to-num p)))))
+		(set-field! place ast (convert-to-num p)))))
+
+      (define (check-place-type)
+	(let ([p (get-field place-type ast)])
+	  (when (string? p)
+		(set-field! place-type ast (convert-to-num p)))))
 
       (cond
        [(is-a? ast Livable%)
@@ -59,7 +64,7 @@
                     (set-field! place-list ast (convert-to-num place)))))
 	(when (is-a? ast For%) (send (get-field body ast) accept this))]
        
-       [(or (or (is-a? ast Var%) (is-a? ast Num%)) (is-a? ast FuncCall%))
+       [(or (is-a? ast Var%) (is-a? ast Num%))
         (void)]
 
        [(is-a? ast BinExp%)
@@ -69,13 +74,19 @@
         (send e1 accept this)
         (send e2 accept this)
         (send op accept this)
+	(check-place-type)
         ]
 
        [(is-a? ast UnaExp%)
         (define e1 (get-field e1 ast))
         (define op (get-field op ast))
         (send e1 accept this)
-        (send op accept this)]
+        (send op accept this)
+	(check-place-type)]
+       
+       [(is-a? ast FuncCall%)
+	(for ([arg (get-field args ast)])
+	     (send arg accept this))]
 
        [(is-a? ast Assign%) 
         (send (get-field rhs ast) accept this)]
