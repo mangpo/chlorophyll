@@ -7,7 +7,8 @@
          "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
          "visitor-rename.rkt"
-         "visitor-printer.rkt")
+         "visitor-printer.rkt"
+         "visitor-evaluator.rkt")
 
 (provide optimize-comm (struct-out result))
 
@@ -15,7 +16,7 @@
 ;(configure [bitwidth bitwidth])
 
 ;; struct used to return result from optimize-comm
-(struct result (msgs cores))
+(struct result (msgs cores ast))
 
 ;; Concrete version
 (define (concrete)
@@ -179,9 +180,6 @@
       ;; Use this when solve the entire program at once.
       (set-global-sol best-sol)
       
-      ;; This doesn't help increasing the synthesis speed.
-      ;(send interpreter evaluate-comminfo func-ast)
-      
       (define stop (current-seconds))
       (when verbose
         (pretty-display "\n=== Update Global Solution ===")
@@ -242,10 +240,15 @@
     (display-cores cores)
     )
   
-  (result (evaluate-with-sol num-msg) (cores-evaluate cores)))
+  (let ([evaluator (new symbolic-evaluator%)])
+    (send my-ast accept evaluator)
+    ;(send my-ast pretty-print)
+    )
+  
+  (result (evaluate-with-sol num-msg) (cores-evaluate cores) my-ast))
 
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "tests/for-array4.cll" #:cores 16 #:capacity 256 #:verbose #t))
 
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))

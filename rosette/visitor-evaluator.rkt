@@ -11,34 +11,53 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast Livable%)
-        (set-field! place ast (send ast get-place))]
+        ;(set-field! place ast (send ast get-place))
+        (send ast to-concrete)
+        ]
 
        [(is-a? ast LivableGroup%)
         (let ([place (get-field place-list ast)])
           (if (list? place)
               (for ([p place])
                    (send p accept this))
-              (set-field! place ast (evaluate place global-sol))))
+              ;(set-field! place ast (evaluate place global-sol))))
+              (send ast to-concrete)))
 
         (when (is-a? ast For%)
               (send (get-field body ast) accept this))]
 
        [(is-a? ast Num%)
-	 (send (get-field n ast) accept this)]
+	 (send (get-field n ast) accept this)
+         (send ast to-concrete)
+         ]
 
-       [(is-a? ast Var%) void]
+       [(is-a? ast Array%)
+        (send ast to-concrete)
+        (send (get-field index ast) accept this)]
+
+       [(is-a? ast Var%) 
+        (send ast to-concrete)]
 
        [(is-a? ast UnaExp%)
         (send (get-field op ast) accept this)
-        (send (get-field e1 ast) accept this)]
+        (send (get-field e1 ast) accept this)
+        (send ast to-concrete)
+        ]
 
        [(is-a? ast BinExp%)
         (send (get-field op ast) accept this)
         (send (get-field e1 ast) accept this)
-        (send (get-field e2 ast) accept this)]
+        (send (get-field e2 ast) accept this)
+        (send ast to-concrete)
+        ]
+
+       [(is-a? ast FuncCall%)
+        (for ([arg (get-field args ast)])
+             (send arg accept this))]
 
        [(is-a? ast Assign%)
-         (send (get-field rhs ast) accept this)]
+        (send (get-field lhs ast) accept this)
+        (send (get-field rhs ast) accept this)]
 
        [(is-a? ast If%)
         (send (get-field condition ast) accept this)
@@ -65,6 +84,6 @@
         (for ([decl (get-field decls ast)])
              (send decl accept this))]
 
-       [else (raise "Error: symbolic-evaluator unimplemented!")]
+       [else (raise (format "Error: symbolic-evaluator unimplemented for ~a!" ast))]
 
        ))))

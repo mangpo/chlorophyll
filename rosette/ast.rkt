@@ -58,6 +58,9 @@
       (evaluate-with-sol place))
     (define/public (set-place new-place)
       (set! place new-place))
+
+    (define/public (to-concrete)
+      (set! place (concrete-place place)))
     ))
 
 
@@ -77,11 +80,16 @@
 
 ;; place-type -> number or string
 (define (place-type-to-string place-type)
-  (if (number? place-type)
-      place-type
-      (if (is-a? place-type Place%)
-	  (send place-type to-string)
-	  (format "{~a}" (place-list-to-string (car place-type))))))
+  (cond
+   [(is-a? place-type Place%) 
+    (send place-type to-string)]
+
+   [(pair? place-type)
+    (format "{~a; index=~a}" 
+            (place-list-to-string (car place-type)) 
+            (send (cdr place-type) to-string))]
+
+   [else place-type]))
 
 ;; number, place-list -> string
 (define (place-to-string place)
@@ -90,6 +98,28 @@
       (if (is-a? place Place%)
 	  (send place to-string)
 	  (format "{~a}" (place-list-to-string place)))))
+
+;; evaluate place-type
+(define (concrete-place-type place-type)
+  (if (number? place-type)
+      (evaluate-with-sol place-type)
+      (if (is-a? place-type Place%)
+          place-type
+          (begin
+            (for ([p (car place-type)])
+                 (send p to-concrete))
+            place-type))))
+
+;; evaluate place
+(define (concrete-place place)
+  (if (number? place)
+      (evaluate-with-sol place)
+      (if (is-a? place Place%)
+          place
+          (begin
+            (for ([p place])
+                 (send p to-concrete)
+                 place)))))
       
 ;; number, place-list, place-type -> set
 (define (to-place-set place)
@@ -115,6 +145,9 @@
   (class Base%
     (super-new)
     (init-field place-list) ; doesn't have to be list
+
+    (define/public (to-concrete)
+      (set! place-list (concrete-place place-list)))
 ))
 
 (define Exp%
@@ -133,7 +166,10 @@
       known-type)
 
     (define/public (get-place)
-      (evaluate-with-sol (place-type-to-string place-type)))
+      (place-type-to-string place-type))
+
+    (define/public (to-concrete)
+      (set! place-type (concrete-place-type place-type)))
 
     ;; This is used to construct place-type representation.
     (abstract to-string)
@@ -156,7 +192,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
-			      indent (get-field n n) (evaluate-with-sol place-type) known-type)))
+			      indent (get-field n n) (place-type-to-string place-type) known-type)))
 
     (define/override (to-string) (send n to-string))
     ))
@@ -169,7 +205,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (known=~a))" 
-			      indent name (evaluate-with-sol place-type) known-type)))
+			      indent name (place-type-to-string place-type) known-type)))
 
     (define/override (to-string) name)
 
@@ -189,7 +225,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" 
-			      indent name (evaluate-with-sol place-type) known-type))
+			      indent name (place-type-to-string place-type) known-type))
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)
@@ -216,7 +252,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
-			      indent (evaluate-with-sol place-type) known-type))
+			      indent (place-type-to-string place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
@@ -241,7 +277,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
-			      indent (evaluate-with-sol place-type) known-type))
+			      indent (place-type-to-string place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
@@ -307,7 +343,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
-                              indent type var-list (get-place) known)))
+                              indent type var-list place known)))
   ))
 
 (define Param%
