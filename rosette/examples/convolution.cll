@@ -5,7 +5,7 @@ void main() {
   
   for(i from 0 to 96) {
     for(j from 0 to 5) {
-      out[i] = out[i] +@place(out[i]) in[i + j] * kernel[j];
+      out[i] = in[i + j] * kernel[j] +@place(out[i]) + out[i];
     }
   }
 

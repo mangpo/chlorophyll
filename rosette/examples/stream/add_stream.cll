@@ -1,0 +1,14 @@
+class Add: Filter {
+
+  void init() {
+    setInput(int);
+    setOutput(int);
+    setPop(2);
+    setPush(1);
+  }
+
+  void main() {
+    output.push(input.pop() + input.pop());
+  }
+
+}

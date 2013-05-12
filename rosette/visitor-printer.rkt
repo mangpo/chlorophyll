@@ -21,7 +21,7 @@
         [(is-a? ast VarDecl%)
          (display (format "~a@~a ~a;"
                                (get-field type ast)
-                               (send ast get-place)
+                               (place-to-string (get-field place ast))
                                (get-field var-list ast)))
          ]
         

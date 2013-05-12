@@ -1,0 +1,65 @@
+void leftrotate(int x, int r) {
+  return (x << r) || (x >> (32 - r));
+}
+
+int func_f(int b, int c, int d) {
+  return (b && c) || (!b && d);
+}
+
+/*
+int func_g(int b, int c, int d) {
+  return (d && b) || (!d && c);
+}
+
+int func_h(int b, int c, int d) {
+  return b ^ c ^ d;
+}
+
+int func_i(int b, int c, int d) {
+  return c ^ (b || !d);
+}
+*/
+int sumrotate(int a, int b, int f, int k, int m, int r) {
+  return b + leftrotate(a + f + k + m, r);
+}
+
+void main() {
+  int[] k[64]; // full = 64 entries
+  int[] r[64];
+  int[] message[16];
+  
+  int[] hash[4];
+  int a, b, c, d, temp;
+  int g;
+  
+  for(t from 0 to 16) {
+    a = hash[0];
+    b = hash[1];
+    c = hash[2];
+    d = hash[3];
+
+    for(i from 0 to 64) {
+      temp = sumrotate(a,b,func_f(b,c,d),k[i],message[g],r[i]);
+    }
+
+    hash[0] = hash[0] + a;
+    hash[1] = hash[1] + b;
+    hash[2] = hash[2] + c;
+    hash[3] = hash[3] + d;
+  }
+}
+
+/*
+no partial
+# msgs = 2048
+# synthesis time: 549
+
+partial symbolic
+# msgs = 2048
+# synthesis time: 2,5,12,687 = 707
+
+partial concrete
+# msgs 6144
+# synthesis time: 4,5,13,537 = 561
+
+ */

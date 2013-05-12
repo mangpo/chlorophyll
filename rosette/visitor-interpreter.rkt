@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(define debug #t)
+(define debug #f)
 
 (struct comminfo (msgs placeset firstast))
 
@@ -236,6 +236,15 @@
             (dict-set! env name val)
             (update (dict-ref env "__up__"
                               (lambda () (send ast not-found-error))) ast val))))
+    
+    (define/public (evaluate-comminfo func-ast)
+      (let* ([name (get-field name func-ast)]
+             [ret  (cdr (dict-ref env name))])
+            (dict-set! env name 
+                       (cons func-ast (comminfo (evaluate-with-sol (comminfo-msgs ret))
+                                                (comminfo-placeset ret)
+                                                (comminfo-firstast ret))))))
+                                       
 
     (define (declare env name val)
       (dict-set! env name val))

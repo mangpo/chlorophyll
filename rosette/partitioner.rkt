@@ -95,7 +95,7 @@
                         #:max-msgs [max-msgs #f]
                         #:verbose [verbose #f])
 
-  (configure [bitwidth 16])
+  (configure [bitwidth 32])
   
   ;; Define printer
   (define concise-printer (new printer%))
@@ -128,10 +128,12 @@
   
   ;; Place holder for solution
   (define num-msg #f)
+  (define partial-hash (make-hash))
   
   (define (solve-function func-ast)
-    (set! num-msg (evaluate (comminfo-msgs (send func-ast accept interpreter)) global-sol))
-    (define num-cores (evaluate (cores-count cores) global-sol))  
+    (define start (current-seconds))
+    (set! num-msg (evaluate-with-sol (comminfo-msgs (send func-ast accept interpreter))))
+    (define num-cores (evaluate-with-sol (cores-count cores)))  
     (define lowerbound 0)
     (define upperbound max-msgs)
     (define middle (if upperbound 
@@ -140,7 +142,8 @@
     (define best-sol #f)
     
     (define (update-global-sol)
-      (define unified-hash (make-hash))
+      ;; Unify solutions symbolically. Use this when solve function by function
+      #|(define unified-hash (make-hash))
       (define concrete-to-sym (make-hash))
       
       (for ([mapping (solution->list global-sol)])
@@ -162,13 +165,30 @@
             (hash-for-each unified-hash 
                            (lambda (key val) 
                              (hash-set! global-hash key (hash-ref concrete-to-sym val))))
-            (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))
+            (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))|#
       
+      ;; Unify solutions concretely. Don't use this
+      #|(for ([mapping (solution->list best-sol)])
+        (let ([key (car mapping)]
+              [val (cdr mapping)])
+          (when (not (hash-has-key? partial-hash key))
+            (hash-set! partial-hash key val))))
+        
+      (set-global-sol (sat (make-immutable-hash (hash->list partial-hash)))|#
+      
+      ;; Use this when solve the entire program at once.
+      (set-global-sol best-sol)
+      
+      ;; This doesn't help increasing the synthesis speed.
+      ;(send interpreter evaluate-comminfo func-ast)
+      
+      (define stop (current-seconds))
       (when verbose
         (pretty-display "\n=== Update Global Solution ===")
         (send func-ast accept concise-printer) 
         (pretty-display global-sol)
         (display-cores cores)
+        (pretty-display (format "synthesis time = ~a sec" (- stop start)))
         )
       )
       
@@ -191,7 +211,6 @@
       (if (< lowerbound upperbound)
           (inner-loop)
           (update-global-sol))
-          ;(result (evaluate num-msg) (cores-evaluate cores)))
       )
     
     ;void
@@ -202,31 +221,31 @@
                                     (if (< lowerbound upperbound)
                                         (outter-loop)
                                         (update-global-sol)))])
-                                        ;(result (evaluate num-msg) (cores-evaluate cores))))])
                       (inner-loop)))
     
     (outter-loop)
     )
     
   (for ([decl (get-field decls my-ast)])
-    (if (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+    (if 
+     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
+     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
         (begin
           (solve-function decl)
           (when verbose (pretty-display "------------------------------------------------")))
         (send decl accept interpreter)))
   
-  #|(when verbose
+  (when verbose
     (pretty-display "\n=== Final Solution ===")
     (send my-ast accept concise-printer)
     (pretty-display global-sol)
     (display-cores cores)
-    )|#
+    )
   
-  (result (evaluate-with-sol num-msg) (cores-evaluate cores))
-  )
+  (result (evaluate-with-sol num-msg) (cores-evaluate cores)))
 
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "examples/md5_4.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "examples/function.cll" #:cores 16 #:capacity 256 #:verbose #t))
 
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))

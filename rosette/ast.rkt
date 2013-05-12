@@ -86,7 +86,7 @@
 ;; number, place-list -> string
 (define (place-to-string place)
   (if (number? place)
-      place
+      (evaluate-with-sol place)
       (if (is-a? place Place%)
 	  (send place to-string)
 	  (format "{~a}" (place-list-to-string place)))))

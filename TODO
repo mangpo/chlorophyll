@@ -45,11 +45,11 @@ BENCHMARKS
 - matrix multiply (2D?)
 
 RUN
-- blackscholes (float) in laptop?
 - 1D convolution (better analysis)
 - prefixsum (better analysis)
 - ssd (multiple copies) in laptop?
 
 future
+- blackscholes (float, log, exp)
 - mergesort (function, recursion)
 - FFT
