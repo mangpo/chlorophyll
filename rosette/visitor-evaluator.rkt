@@ -53,7 +53,8 @@
 
        [(is-a? ast FuncCall%)
         (for ([arg (get-field args ast)])
-             (send arg accept this))]
+             (send arg accept this))
+        (send ast to-concrete)]
 
        [(is-a? ast Assign%)
         (send (get-field lhs ast) accept this)

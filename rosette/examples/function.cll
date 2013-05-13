@@ -6,12 +6,8 @@ int abs(int x) {
   }
 }
 
-int square_distance(int x, int y) {
-  return (x - y) * (x - y);
-}
-
 int main() {
   int@1 x;
   int@2 y;
-  return abs(x) + abs(y) * square_distance(x,y);
+  return abs(x);
 }

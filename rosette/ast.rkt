@@ -89,7 +89,7 @@
             (place-list-to-string (car place-type)) 
             (send (cdr place-type) to-string))]
 
-   [else place-type]))
+   [else (evaluate-with-sol place-type)]))
 
 ;; number, place-list -> string
 (define (place-to-string place)
@@ -349,7 +349,11 @@
 (define Param%
   (class VarDecl%
     (super-new)
-    (init-field [place-type #f] [known-type #f])))
+    (init-field [place-type #f] [known-type #f])
+    
+    (define/override (to-concrete)
+      (super to-concrete)
+      (set! place-type (concrete-place-type place-type)))))
 
 (define RangePlace%
   (class Livable%
@@ -445,7 +449,7 @@
 (define Block%
   (class Base%
      (super-new)
-     (init-field stmts)
+     (init-field stmts [firstexp #f])
 
      (define/override (pretty-print [indent ""])
        (for ([stmt stmts])

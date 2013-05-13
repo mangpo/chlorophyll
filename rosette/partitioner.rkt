@@ -1,7 +1,7 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "ast.rkt" 
+         "ast.rkt" "ast-util.rkt"
          "parser.rkt" 
          "symbolic-dict.rkt"
          "visitor-interpreter.rkt" 
@@ -16,7 +16,7 @@
 ;(configure [bitwidth bitwidth])
 
 ;; struct used to return result from optimize-comm
-(struct result (msgs cores ast))
+(struct result (msgs cores ast env))
 
 ;; Concrete version
 (define (concrete)
@@ -237,7 +237,8 @@
     (pretty-display "\n=== Final Solution ===")
     (send my-ast accept concise-printer)
     (pretty-display global-sol)
-    (display-cores cores)
+    ;(send my-ast pretty-print)
+    ;(display-cores cores)
     )
   
   (let ([evaluator (new symbolic-evaluator%)])
@@ -245,10 +246,14 @@
     ;(send my-ast pretty-print)
     )
   
-  (result (evaluate-with-sol num-msg) (cores-evaluate cores) my-ast))
+  (result (evaluate-with-sol num-msg) 
+          (cores-evaluate cores) 
+          my-ast 
+          (send interpreter get-env)))
 
+#|
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "tests/for-array4.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "tests/array-dynamic.cll" #:cores 16 #:capacity 256 #:verbose #t))
 
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#

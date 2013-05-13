@@ -1,7 +1,8 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "ast.rkt" "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
+         "ast.rkt" "ast-util.rkt"
+         "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
          "symbolic-dict.rkt")
 
 (provide (all-defined-out))
@@ -16,6 +17,8 @@
     (init-field places
                 [env (make-hash)] 
 		[known-stack (list #t)])
+
+    (define/public (get-env) env)
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
@@ -101,8 +104,10 @@
       ;(assert (or (number? place) (list? place)))
       (if (number? place)
           (cores-inc-space places place add-space)
-          (for ([p place])
-               (cores-inc-space places (get-field place p) add-space))))
+          (let ([place-list 
+                 (if (place-type-dist? place) (car place) place)])
+            (for ([p place-list])
+                 (cores-inc-space places (get-field place p) add-space)))))
     
     ;;; Increase the used space of "place" with op.
     (define (inc-space-with-op place op)
@@ -110,8 +115,10 @@
       ;TODO: change to (cores-add-op places place op)
       (if (number? place)
           (cores-inc-space places place (est-space op))
-          (for ([p place])
-               (cores-inc-space places (get-field place p) (est-space op)))))
+          (let ([place-list
+                 (if (place-type-dist? place) (car place) place)])
+            (for ([p place-list])
+                 (cores-inc-space places (get-field place p) (est-space op))))))
     
     ;; Increase the used space of places in the given set by "add-space".
     ;; Used in body inside for and if.
@@ -129,12 +136,6 @@
     (define (count-msg x-ast y-ast)
       ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
-      (define (place-type? p)
-	(or (number? p) (place-type-dist? p)))
-
-      (define (place-type-dist? p)
-        (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
-      
       ;; Return the place that a resides if a only lives in one place. 
       ;; Otherwise, return string representation of a.
       (define (get-str-rep a)
@@ -156,25 +157,6 @@
              (inc-space x est-comm)
              (for ([p (car x)])
                   (inc-space (get-field place p) est-comm))))
-
-      (define (same-place? a b)
-	;(assert (and (place-type? a) (place-type? b)))
-       
-        (if (and (number? a) (number? b))
-            (equal? a b)
-            (if (and (place-type-dist? a) (place-type-dist? b))
-                (let ([a-list (car a)]
-                      [b-list (car b)]
-                      [a-index (cdr a)]
-                      [b-index (cdr b)])
-                  (and (and (equal? (length a-list) (length b-list))
-                            (equal? (send a-index to-string) (send b-index to-string)))
-                       (andmap (lambda (a-p b-p) (send a-p equal-rangeplace? b-p))
-                               a-list b-list)))
-                ; if one of them is @any
-                (or (and (is-a? a Place%) (equal? (get-field at a) "any"))
-                    (and (is-a? b Place%) (equal? (get-field at b) "any")))))
-        )
 
       ;; Return 1 if it is absolutly in one place
       ;;             or the index is known.
@@ -224,19 +206,6 @@
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
          (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
 
-    (define (lookup env ast)
-      (dict-ref env (get-field name ast)
-                (lambda () (lookup (dict-ref env "__up__" 
-                                             (lambda () (send ast not-found-error)))
-                                   ast))))
-
-    (define (update env ast val)
-      (let ([name (get-field name ast)])
-        (if (dict-has-key? env name)
-            (dict-set! env name val)
-            (update (dict-ref env "__up__"
-                              (lambda () (send ast not-found-error))) ast val))))
-    
     (define/public (evaluate-comminfo func-ast)
       (let* ([name (get-field name func-ast)]
              [ret  (cdr (dict-ref env name))])
@@ -244,11 +213,7 @@
                        (cons func-ast (comminfo (evaluate-with-sol (comminfo-msgs ret))
                                                 (comminfo-placeset ret)
                                                 (comminfo-firstast ret))))))
-                                       
-
-    (define (declare env name val)
-      (dict-set! env name val))
-
+                 
     (define (push-scope)
       (let ([new-env (make-hash)])
         (dict-set! new-env "__up__" env)
@@ -266,27 +231,22 @@
         (if (and (>= index from) (< index to))
             (get-field place current)
             (place-at (cdr places) index ast))))
-        
-    
-    ;; (define/public (assert-capacity)
-    ;;   (cores-assert places))
-
-    ;; (define/public (display-used-space)
-    ;;   (display-cores places))
-    
-    ;; (define/public (get-concrete-cores)
-    ;;   (cores-evaluate places))
-
-    ;; (define/public (num-cores)
-    ;;   (cores-count places))
       
     (define/public (visit ast)
       (cond
        [(is-a? ast Const%)
-          (raise "error")
-          (define place (find-place ast))
+          (raise "visitor-interpreter: can't visit Const%")
+          (define place (find-place ast #f)) ; don't modify
 	  (inc-space place est-num) ; increase space
           (comminfo 0 (set place) ast)]
+
+
+       [(is-a? ast Op%)
+          (raise "visitor-interpreter: can't visit Op%")
+          (define place (find-place ast #f)) ; don't modify
+	  (inc-space-with-op place (get-field op ast)) ; increase space
+	  (comminfo 0 (to-place-set place) ast)
+          ]
 
        [(is-a? ast Num%)
 	  ;(define const (get-field n ast))
@@ -295,6 +255,7 @@
 	  ;(send const accept this)
           (define place-type (find-place-type ast (get-field n ast)))
 	  (set-field! place-type ast place-type)
+	  (inc-space place-type est-num) ; increase space
 
           (comminfo 0 (to-place-set place-type) ast)]
        
@@ -347,14 +308,6 @@
           (comminfo 0 (to-place-set place) ast)
           ]
 
-       [(is-a? ast Op%)
-          (raise "error")
-          (define place (find-place ast))
-	  (inc-space-with-op place (get-field op ast)) ; increase space
-	  (comminfo 0 (to-place-set place) ast)
-          ]
-
-
        [(is-a? ast UnaExp%)
           (when debug (newline))
           (define e1 (get-field e1 ast))
@@ -367,7 +320,7 @@
           (set-field! place-type ast place-type)
           (set-field! known-type ast (get-field known-type e1))
 
-	  ;; already set place type
+	  (inc-space place-type est-num) ; increase space
 
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
@@ -394,6 +347,8 @@
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
           ;; ^ problematic here (maybe not anymore)
           
+	  (inc-space place-type est-num) ; increase space
+
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
 
@@ -417,13 +372,15 @@
 	  (define placeset (comminfo-placeset func-ret))
 	  (define firstast (comminfo-firstast func-ret))
 
+          ;; increase space
+          (inc-space-placeset placeset est-funccall)
+
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
 	       (let ([arg-ret (send arg accept this)])
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
-
-
+          
 	  ;; set place-type known-type
 	  (let ([return (get-field return func-ast)])
 	    (set-field! place-type ast (get-field place return))
@@ -536,44 +493,45 @@
         (define condition (get-field condition ast))
         (define condition-ret (send condition accept this))
         
-	; push to stack
+	;; push to stack
 	(set! known-stack (cons (get-field known-type condition) known-stack))
 
         (push-scope)
         (define true-ret (send (get-field true-block ast) accept this))
         (pop-scope)
         
-        ; between condition and true-block
+        ;; between condition and true-block
         (define ret
           (comminfo
            (+ (+ (count-msg condition (comminfo-firstast true-ret))
                  (comminfo-msgs condition-ret))
-              ; *2 for 1) sending condition result to body
-              ;        2) communication within body themselves
+              ;; *2 for 1) sending condition result to body
+              ;;        2) communication within body themselves
+              ;; This applies only master scheme
               (* 2 (comminfo-msgs true-ret)))
            (set-union (comminfo-placeset condition-ret) (comminfo-placeset true-ret))
            (comminfo-firstast condition-ret)))
         
         (define false-block (get-field false-block ast))
-	; pop from stack
+	;; pop from stack
 	(set! known-stack (cdr known-stack))
         
         (push-scope)
         (set! ret 
               (let ([false-block (get-field false-block ast)])
                 (if false-block
-                    ; between condition and false-block
+                    ;; between condition and false-block
                     (let ([false-ret (send false-block accept this)])
                       (comminfo
                        (+ (comminfo-msgs ret)
-                          (+ (count-msg condition (comminfo-firstast false-ret))
-                             (* 2 (comminfo-msgs false-ret))))
+                          (count-msg condition (comminfo-firstast false-ret))
+                             (* 2 (comminfo-msgs false-ret)))
                        (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))
                        (comminfo-firstast ret)))
                     ret)))
         (pop-scope)
         
-        ; increase space
+        ;; increase space
         (inc-space-placeset (comminfo-placeset ret) est-if)
         ret]
 
@@ -581,18 +539,20 @@
           (define condition (get-field condition ast))
           (define condition-ret (send condition accept this))
           
-          ; push to stack
+          ;; push to stack
           (set! known-stack (cons (get-field known-type condition) known-stack))
           (define body-ret (send (get-field body ast) accept this))
-	  ; pop from stack
+	  ;; pop from stack
           (set! known-stack (cdr known-stack))
           
-          ; increase space
+          ;; increase space
           (inc-space-placeset (comminfo-placeset body-ret) est-while)
 
           (comminfo
-           (+ (comminfo-msgs condition-ret) 
-              (* (comminfo-msgs body-ret) (get-field bound ast)))
+           (+ (* (get-field bound ast)
+                 (+ (comminfo-msgs condition-ret)
+                    (count-msg condition (comminfo-firstast body-ret))))
+              (* 2 (get-field bound ast) (comminfo-msgs body-ret)))
            (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret))
            (comminfo-firstast condition-ret))]
 
@@ -632,12 +592,18 @@
          ]
 
        [(is-a? ast Block%) 
-          (foldl (lambda (stmt all) 
-                   (let ([ret (send stmt accept this)])
-                     (comminfo (+ (comminfo-msgs all) (comminfo-msgs ret))
-                           (set-union (comminfo-placeset all) (comminfo-placeset ret))
-                           (or (comminfo-firstast all) (comminfo-firstast ret)))))
-                   (comminfo 0 (set) #f) (get-field stmts ast))]
+        (let ([ret
+               (foldl (lambda (stmt all) 
+                        (let ([ret (send stmt accept this)])
+                          (comminfo (+ (comminfo-msgs all) (comminfo-msgs ret))
+                                    (set-union (comminfo-placeset all) 
+                                               (comminfo-placeset ret))
+                                    (or (comminfo-firstast all) (comminfo-firstast ret)))))
+                      (comminfo 0 (set) #f) (get-field stmts ast))])
+          (set-field! firstexp ast (comminfo-firstast ret)) ; useful info for If% and While%
+          ret
+          )
+          ]
 
        [(is-a? ast FuncDecl%)
           (push-scope)
@@ -665,5 +631,5 @@
 		     (set! ret decl-ret))))
 	ret]
 		
-       [else (raise "Error: count-msg-interpreter unimplemented!")]))
+       [else (raise (format "Error: count-msg-interpreter unimplemented for ~a" ast))]))
 ))
