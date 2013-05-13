@@ -353,8 +353,9 @@
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
 
           (comminfo
-           (+ (+ (+ (comminfo-msgs e1-ret) (comminfo-msgs e2-ret))
-                 (count-msg ast e1))
+           (+ (comminfo-msgs e1-ret) 
+              (comminfo-msgs e2-ret)
+              (count-msg ast e1)
               (count-msg ast e2))
            (set-union (set-union (comminfo-placeset e1-ret) (comminfo-placeset e2-ret)) (to-place-set place-type))
            (comminfo-firstast e1-ret))
@@ -503,8 +504,8 @@
         ;; between condition and true-block
         (define ret
           (comminfo
-           (+ (+ (count-msg condition (comminfo-firstast true-ret))
-                 (comminfo-msgs condition-ret))
+           (+ (count-msg condition (comminfo-firstast true-ret))
+              (comminfo-msgs condition-ret)
               ;; *2 for 1) sending condition result to body
               ;;        2) communication within body themselves
               ;; This applies only master scheme
@@ -586,7 +587,7 @@
 	  ;; Don't increase space
        
           (comminfo
-           (+ (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret)) (count-msg lhs rhs))
+           (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
            (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret))
            (comminfo-firstast rhs-ret))
          ]

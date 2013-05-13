@@ -52,8 +52,8 @@
          ]
         
         [(is-a? ast BinExp%)
-         (set-union (set-union (send (get-field op ast) accept this)
-                               (send (get-field e1 ast) accept this))
+         (set-union (send (get-field op ast) accept this)
+                    (send (get-field e1 ast) accept this)
                     (send (get-field e2 ast) accept this))
          ]
         
@@ -65,8 +65,8 @@
 	 (union-set-from-list (get-field args ast))]
 
         [(is-a? ast If%)
-         (set-union (set-union (send (get-field condition ast) accept this)
-                               (send (get-field true-block ast) accept this))
+         (set-union (send (get-field condition ast) accept this)
+                    (send (get-field true-block ast) accept this)
                     (let ([false-block (get-field false-block ast)])
                       (if false-block
                           (send false-block accept this)
