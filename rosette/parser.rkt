@@ -163,6 +163,10 @@
          ((place-exp) $1)
          ((LBRACK array-place-exp RBRACK) $2))
 
+    (place-type-dist
+         ((place-exp) $1)
+         ((LBRACK array-place-exp SEMICOL ele RBRACK) (cons $2 $4)))
+
     (const ((NUM)           (new Const% [n $1] [pos $1-start-pos])))
 
     (lit ((const)             (new Num% [n $1]))
@@ -190,18 +194,18 @@
          ((exp AND exp)      (BinExp $1 "&&" $3 $2-start-pos))
          ((exp OR exp)       (BinExp $1 "||" $3 $2-start-pos))
          
-         ((BNOT @ place-exp exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
-         ((ARITHOP2 @ place-exp exp)     (prec BNOT) (UnaExp $1 $4 $3 $1-start-pos))
-         ((exp ARITHOP1 @ place-exp exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp ARITHOP2 @ place-exp exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp ARITHOP3 @ place-exp exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp RELOP @ place-exp exp)    (prec RELOP) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp EQOP @ place-exp exp)     (prec EQOP) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp BAND @ place-exp exp)     (prec BAND) (BinExp $1 "&" $5 $4 $2-start-pos))
-         ((exp BXOR @ place-exp exp)     (prec BXOR) (BinExp $1 "^" $5 $4 $2-start-pos))
-         ((exp BOR @ place-exp exp)      (prec BOR) (BinExp $1 "|" $5 $4 $2-start-pos))
-         ((exp AND @ place-exp exp)      (prec AND) (BinExp $1 "&&" $5 $4 $2-start-pos))
-         ((exp OR @ place-exp exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
+         ((BNOT @ place-type-dist exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
+         ((ARITHOP2 @ place-type-dist exp)     (prec BNOT) (UnaExp $1 $4 $3 $1-start-pos))
+         ((exp ARITHOP1 @ place-type-dist exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp ARITHOP2 @ place-type-dist exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp ARITHOP3 @ place-type-dist exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp RELOP @ place-type-dist exp)    (prec RELOP) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp EQOP @ place-type-dist exp)     (prec EQOP) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp BAND @ place-type-dist exp)     (prec BAND) (BinExp $1 "&" $5 $4 $2-start-pos))
+         ((exp BXOR @ place-type-dist exp)     (prec BXOR) (BinExp $1 "^" $5 $4 $2-start-pos))
+         ((exp BOR @ place-type-dist exp)      (prec BOR) (BinExp $1 "|" $5 $4 $2-start-pos))
+         ((exp AND @ place-type-dist exp)      (prec AND) (BinExp $1 "&&" $5 $4 $2-start-pos))
+         ((exp OR @ place-type-dist exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2)
 	 ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3]))

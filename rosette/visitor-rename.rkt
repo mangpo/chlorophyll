@@ -43,13 +43,28 @@
     (define/public (visit ast)
       (define (check-place)
         (let ([p (get-field place ast)])
-          (when (string? p)
-		(set-field! place ast (convert-to-num p)))))
+          (cond 
+	   [(string? p)
+	    (set-field! place ast (convert-to-num p))]
+	   [(list? p)
+	    (for ([i p])
+		 (send i accept this))]
+	   [(pair? p)
+	    (for ([i (car p)])
+		 (send i accept this))])))
 
       (define (check-place-type)
 	(let ([p (get-field place-type ast)])
-	  (when (string? p)
-		(set-field! place-type ast (convert-to-num p)))))
+	  (cond 
+	   [(string? p)
+	    (set-field! place-type ast (convert-to-num p))]
+	   [(list? p)
+	    (for ([i p])
+		 (send i accept this))]
+	   [(pair? p)
+	    (for ([i (car p)])
+		 (send i accept this))])))
+	
 
       (cond
        [(is-a? ast Livable%)

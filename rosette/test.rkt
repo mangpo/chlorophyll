@@ -20,6 +20,7 @@
 (test-num-msgs "tests/for-array1.cll"    0)
 (test-num-msgs "tests/for-array2.cll"    240 #:max-msgs 300)
 (test-num-msgs "tests/for-array3.cll"    0)
+(test-num-msgs "tests/for-array3-2.cll"    0)
 (test-num-msgs "tests/for-array4.cll"    120 #:max-msgs 300)
 (test-num-msgs "tests/for-array5.cll"    720 #:max-msgs 800)
 (test-num-msgs "tests/for-array6.cll"    0)

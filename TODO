@@ -1,6 +1,7 @@
 TODO
 - real partial evaluate, then check perf test b/c of inc-space bug
 - generate intermediate reps and modify parser so that it can parse intermediate reps
+  make sure parser support: for-array1/3
 
 - known-type check across functions
 - master/slave block,function,(array)

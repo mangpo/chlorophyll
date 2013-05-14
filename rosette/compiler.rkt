@@ -2,10 +2,15 @@
 
 (require "partitioner.rkt" "layout-sa.rkt")
 
-(define partition (optimize-comm 
-                       "tests/function.cll" 
-                       #:cores 2 #:capacity 256 #:verbose #t))
+(define (compile file name)
+  
+  (define partition (optimize-comm file
+                                   #:name name
+                                   #:cores 4 #:capacity 256 #:verbose #t))
+  
+  (layout (result-ast partition) 
+          (result-env partition)
+          4 2 2 name)
+  )
 
-(layout 
- (result-ast partition) (result-env partition)
- 4 2 2 "function")
+(compile "tests/array-known.cll" "array-known")

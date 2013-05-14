@@ -7,6 +7,7 @@
 (define printer%
   (class* object% (visitor<%>)
     (super-new)
+    (init-field [out #f])
 
     (define indent "")
 
@@ -21,34 +22,39 @@
         [(is-a? ast VarDecl%)
          (display (format "~a@~a ~a;"
                                (get-field type ast)
-                               (place-to-string (get-field place ast))
-                               (get-field var-list ast)))
+                               (place-to-string (send ast get-place) out)
+                               (list-to-string (get-field var-list ast))
+			       ))
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a@~a ~a;"
+         (display (format "~a[]@~a ~a[~a];"
                                (get-field type ast)
-                               (place-to-string (get-field place-list ast))
-                               (get-field var ast)))
+                               (place-to-string (get-field place-list ast) out)
+                               (get-field var ast)
+			       (get-field bound ast)))
          ]
 
         [(is-a? ast Const%)
          (display (format "~a@~a"
                         (send ast to-string)
-                        (place-type-to-string (send ast get-place))))]
+                        (place-to-string (send ast get-place))) out)]
          
         
         
         [(is-a? ast Op%)
          (display (format "~a@~a"
                         (get-field op ast)
-                        (send ast get-place)))
+                        (place-to-string (send ast get-place) out)))
          ]
 
 
         [(is-a? ast Num%)
          ;(send (get-field n ast) accept this)
-         (display (format "~a@~a" (get-field n (get-field n ast)) (send ast get-place)))
+	 (if out
+	     (display (get-field n (get-field n ast)))
+	     (display (format "~a@~a" (get-field n (get-field n ast)) 
+			      (place-to-string (send ast get-place) out))))
          ]
       
         [(is-a? ast Array%)
@@ -59,14 +65,18 @@
          ]
       
         [(is-a? ast Var%)
-         (display (format "~a" (get-field name ast)))
+	 (let ([name (get-field name ast)])
+	   (if (equal? name "#return")
+	       (display "return ")
+	       (display (format "~a" (get-field name ast)))))
          ]
         
         [(is-a? ast UnaExp%)
          (display "(")
          ;(send (get-field op ast) accept this)
 	 ;; don't call this because we can have @any @place(i)
-	 (display (format "~a@~a " (send (get-field op ast) to-string) (send ast get-place)))
+	 (display (format "~a@~a " (send (get-field op ast) to-string) 
+			  (place-to-string (send ast get-place) out)))
          (send (get-field e1 ast) accept this)
          (display ")")
          ]
@@ -76,7 +86,8 @@
          (send (get-field e1 ast) accept this)
          ;(send (get-field op ast) accept this)
 	 ;; don't call this because we can have @any @place(i)
-	 (display (format " ~a@~a " (send (get-field op ast) to-string) (send ast get-place)))
+	 (display (format " ~a@~a " (send (get-field op ast) to-string) 
+			  (place-to-string (send ast get-place) out)))
          (send (get-field e2 ast) accept this)
          (display ")")
          ]
@@ -91,9 +102,12 @@
 	 (display ")")]
         
         [(is-a? ast Assign%)
-         (send (get-field lhs ast) accept this)
-         (display "= ")
+	 (let ([lhs (get-field lhs ast)])
+	   (send lhs accept this)
+	   (unless (equal? (get-field name lhs) "#return")
+		   (display " = ")))
          (send (get-field rhs ast) accept this)
+         (display ";")
          ]
 
         [(is-a? ast If%)
@@ -146,11 +160,13 @@
                            (car (get-field var-list arg)))))
 
          ;; Print function signature
-         (let ([return (get-field return ast)])
-           (display (format "~a@~a ~a(" 
-                            (get-field type return) 
-                            (send return get-place) 
-                            (get-field name ast))))
+         (let* ([return (get-field return ast)]
+		[type (get-field type return)]
+		[place (send return get-place)]
+		[name (get-field name ast)])
+	   (if (equal? type "void")
+	       (display (format "~a ~a(" type name))
+	       (display (format "~a@~a ~a(" type place name))))
 
          ;; Print arguments
          (let ([arg-list (get-field stmts (get-field args ast))])

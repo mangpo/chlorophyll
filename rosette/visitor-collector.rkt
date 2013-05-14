@@ -14,6 +14,17 @@
       (if (collect? place)
           (set place)
           (set)))
+
+    (define (place-set place)
+      (cond
+       [(list? place)
+	(foldl (lambda (p var-set) (set-union var-set (send p accept this)))
+	       (set) place)]
+
+       [(pair? place)
+	(place-set (car place))]
+
+       [else (create-set place)]))
     
     (define/public (visit ast)
       
@@ -23,16 +34,11 @@
 
       (cond
         [(is-a? ast Livable%)
-         (let ([place (get-field place ast)])
-           (create-set place))
+         (place-set (get-field place ast))
          ]
 
         [(is-a? ast LivableGroup%)
-	 (let* ([place (get-field place-list ast)]
-                [ret (if (list? place)
-                         (foldl (lambda (p var-set) (set-union var-set (send p accept this)))
-                                (set) place)
-                         (create-set place))])
+	 (let ([ret (place-set (get-field place-list ast))])
            (if (is-a? ast For%)
 	       (set-union ret (send (get-field body ast) accept this))
 	       ret))

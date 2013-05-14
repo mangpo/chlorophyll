@@ -45,7 +45,10 @@
 							at))))
     
     (define/public (to-string)
-      (format "place(~a)" (if (is-a? at Base%) (send at to-string) at)))
+      (if (equal? at "any")
+	  "any"
+	  (format "place(~a)" (if (is-a? at Base%) (send at to-string) at)))
+      )
 
     ))
 
@@ -65,7 +68,15 @@
 
 
 ;; list -> string
-(define (list-to-string ast-list)
+(define (list-to-string items)
+  (if (empty? items)
+      ""
+      (foldl (lambda (item str) (format "~a, ~a" item str))
+	     (format "~a" (car items))
+	     (cdr items))))
+
+;; ast-list -> string
+(define (ast-list-to-string ast-list)
   (if (empty? ast-list)
       ""
       (foldl (lambda (ast str) (string-append (string-append str ", ") (send ast to-string))) 
@@ -73,53 +84,46 @@
 	     (cdr ast-list))))
 
 ;; place-list -> string
-(define (place-list-to-string place-list)
-  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
-         (send (car place-list) to-string) 
+(define (place-list-to-string place-list [out #f])
+  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string out))) 
+         (send (car place-list) to-string out) 
          (cdr place-list)))
 
-;; place-type -> number or string
-(define (place-type-to-string place-type)
+;; place-type, place-list -> string
+(define (place-to-string place [out #t])
   (cond
-   [(is-a? place-type Place%) 
-    (send place-type to-string)]
+   [(is-a? place Place%)
+    (send place to-string)]
 
-   [(pair? place-type)
-    (format "{~a; index=~a}" 
-            (place-list-to-string (car place-type)) 
-            (send (cdr place-type) to-string))]
+   [(list? place)
+    (format "{~a}" (place-list-to-string place out))]
 
-   [else (evaluate-with-sol place-type)]))
+   [(pair? place)
+    (format "{~a; ~a}" 
+            (place-to-string (car place)) 
+            (send (cdr place) to-string))]
 
-;; number, place-list -> string
-(define (place-to-string place)
-  (if (number? place)
-      (evaluate-with-sol place)
-      (if (is-a? place Place%)
-	  (send place to-string)
-	  (format "{~a}" (place-list-to-string place)))))
-
-;; evaluate place-type
-(define (concrete-place-type place-type)
-  (if (number? place-type)
-      (evaluate-with-sol place-type)
-      (if (is-a? place-type Place%)
-          place-type
-          (begin
-            (for ([p (car place-type)])
-                 (send p to-concrete))
-            place-type))))
+   [else
+    (let ([p (evaluate-with-sol place)])
+      (if (and out (symbolic? p)) "??" p))]
+   ))
 
 ;; evaluate place
 (define (concrete-place place)
-  (if (number? place)
-      (evaluate-with-sol place)
-      (if (is-a? place Place%)
-          place
-          (begin
-            (for ([p place])
-                 (send p to-concrete)
-                 place)))))
+  (cond
+   [(number? place)
+    (evaluate-with-sol place)]
+
+   [(is-a? place Place%) 
+    place]
+
+   [(list? place)
+    (for ([p place])
+	 (send p to-concrete)
+	 place)]
+
+   [(pair? place)
+    (concrete-place (car place))]))
       
 ;; number, place-list, place-type -> set
 (define (to-place-set place)
@@ -166,10 +170,10 @@
       known-type)
 
     (define/public (get-place)
-      (place-type-to-string place-type))
+      (place-to-string place-type))
 
     (define/public (to-concrete)
-      (set! place-type (concrete-place-type place-type)))
+      (set! place-type (concrete-place place-type)))
 
     ;; This is used to construct place-type representation.
     (abstract to-string)
@@ -192,7 +196,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
-			      indent (get-field n n) (place-type-to-string place-type) known-type)))
+			      indent (get-field n n) (place-to-string place-type) known-type)))
 
     (define/override (to-string) (send n to-string))
     ))
@@ -205,7 +209,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (known=~a))" 
-			      indent name (place-type-to-string place-type) known-type)))
+			      indent name (place-to-string place-type) known-type)))
 
     (define/override (to-string) name)
 
@@ -225,7 +229,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" 
-			      indent name (place-type-to-string place-type) known-type))
+			      indent name (place-to-string place-type) known-type))
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)
@@ -252,7 +256,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
-			      indent (place-type-to-string place-type) known-type))
+			      indent (place-to-string place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
@@ -277,7 +281,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
-			      indent (place-type-to-string place-type) known-type))
+			      indent (place-to-string place-type) known-type))
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
@@ -301,7 +305,7 @@
       (pretty-display (format "~a)" indent)))
 
     (define/override (to-string)
-      (format "~a(~a)" name (list-to-string args)))
+      (format "~a(~a)" name (ast-list-to-string args)))
     ))
 
 
@@ -353,7 +357,7 @@
     
     (define/override (to-concrete)
       (super to-concrete)
-      (set! place-type (concrete-place-type place-type)))))
+      (set! place-type (concrete-place place-type)))))
 
 (define RangePlace%
   (class Livable%
@@ -370,8 +374,10 @@
                 (equal? to   (get-field to   other)))
            (equal? place (get-field place other))))
     
-    (define/public (to-string)
-      (format "[~a:~a]=~a" from to (get-place)))
+    (define/public (to-string [out #f])
+      (let* ([place (get-place)]
+	     [print (if (and out (symbolic? place)) "??" place)])
+	(format "[~a:~a]=~a" from to print)))
     
     ))
 

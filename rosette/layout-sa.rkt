@@ -21,13 +21,17 @@
   (with-output-to-string 
    (lambda () (system (format "./qap/graph2matrix.py output/~a.graph > output/~a.dat" name name))))
   
-  (string-split
-   (last (string-split
-          (with-output-to-string
-           (lambda () (system (format "./qap/sa_qap output/~a.dat 10000000 3" name))))
-          "\n")))
-   
-  
+  (define layout
+    (string-split
+     (last (string-split
+	    (with-output-to-string
+	      (lambda () (system (format "./qap/sa_qap output/~a.dat 10000000 3" name))))
+	    "\n"))))
+
+  (with-output-to-file #:exists 'truncate (format "output/~a.layout" name)
+    (lambda () (display layout)))
+
+  layout
   )
 
   
