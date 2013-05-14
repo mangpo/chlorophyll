@@ -1,4 +1,5 @@
 TODO
+- rosette/lang/tools.rkt
 - real partial evaluate, then check perf test b/c of inc-space bug
 - generate intermediate reps and modify parser so that it can parse intermediate reps
 

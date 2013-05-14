@@ -144,7 +144,7 @@
     
     (define (update-global-sol)
       ;; Unify solutions symbolically. Use this when solve function by function
-      #|(define unified-hash (make-hash))
+      (define unified-hash (make-hash))
       (define concrete-to-sym (make-hash))
       
       (for ([mapping (solution->list global-sol)])
@@ -166,7 +166,7 @@
             (hash-for-each unified-hash 
                            (lambda (key val) 
                              (hash-set! global-hash key (hash-ref concrete-to-sym val))))
-            (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))|#
+            (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))
       
       ;; Unify solutions concretely. Don't use this
       #|(for ([mapping (solution->list best-sol)])
@@ -178,7 +178,9 @@
       (set-global-sol (sat (make-immutable-hash (hash->list partial-hash)))|#
       
       ;; Use this when solve the entire program at once.
-      (set-global-sol best-sol)
+      ;; (set-global-sol best-sol)
+      
+      (cores-evaluate cores)
       
       (define stop (current-seconds))
       (when verbose
@@ -195,8 +197,8 @@
       (when verbose
         (pretty-display (format "num-msg <= ~a" middle)))
       (if middle
-          (solve (assert (<= num-msg middle)))
-          (solve (assert #t)))
+          (solve-with-sol (assert (<= num-msg middle)) global-sol)
+          (solve-with-sol (assert #t) global-sol))
       (set! upperbound (evaluate num-msg))
       (set! middle (floor (/ (+ lowerbound upperbound) 2)))
       
@@ -226,8 +228,8 @@
     
   (for ([decl (get-field decls my-ast)])
     (if 
-     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
-     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+     (is-a? decl FuncDecl%) ;; Use this for solving function by function
+     ;(and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
         (begin
           (solve-function decl)
           (when verbose (pretty-display "------------------------------------------------")))
@@ -247,13 +249,12 @@
     )
   
   (result (evaluate-with-sol num-msg) 
-          (cores-evaluate cores) 
+          cores 
           my-ast 
           (send interpreter get-env)))
 
-#|
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "tests/array-dynamic.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "examples/function2.cll" #:cores 1 #:capacity 256 #:verbose #t))
 
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
