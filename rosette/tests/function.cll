@@ -11,7 +11,7 @@ int square_distance(int x, int y) {
 }
 
 int main() {
-  int@1 x;
-  int@2 y;
+  int@0 x;
+  int@1 y;
   return abs(x) + abs(y) * square_distance(x,y);
 }
