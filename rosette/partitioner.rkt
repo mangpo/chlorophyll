@@ -260,9 +260,8 @@
           my-ast 
           (send interpreter get-env)))
 
-#|
 (define t (current-seconds))
 (result-msgs 
- (optimize-comm "examples/for-array3.cll" #:cores 16 #:capacity 256 #:verbose #t))
+ (optimize-comm "examples/bug.cll" #:cores 1 #:capacity 256 #:verbose #t))
 
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))

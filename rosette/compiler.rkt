@@ -6,11 +6,11 @@
   
   (define partition (optimize-comm file
                                    #:name name
-                                   #:cores 4 #:capacity 256 #:verbose #t))
+                                   #:cores 8 #:capacity 256 #:verbose #t))
   
   (layout (result-ast partition) 
           (result-env partition)
-          4 2 2 name)
+          8 2 4 name)
   )
 
-(compile "tests/array-known.cll" "array-known")
+(compile "examples/add.cll" "insertionsort")

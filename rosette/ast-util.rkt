@@ -69,4 +69,5 @@
         [y (get-field place-type y-ast)])
     (cond
      [(same-place? x y) (cons (set) (set))]
-     [else (cons (place-set x) (place-set y))])))
+     [else 
+      (cons (place-set x) (place-set y))])))

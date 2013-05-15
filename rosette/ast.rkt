@@ -119,8 +119,8 @@
 
    [(list? place)
     (for ([p place])
-	 (send p to-concrete)
-	 place)]
+	 (send p to-concrete))
+    place]
 
    [(pair? place)
     (concrete-place (car place))]))

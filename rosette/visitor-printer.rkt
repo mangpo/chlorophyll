@@ -127,6 +127,7 @@
          ]
 
 	[(is-a? ast While%)
+	 (display "while(")
 	 (send (get-field condition ast) accept this)
 	 (pretty-display ") {")
          (inc-indent)
