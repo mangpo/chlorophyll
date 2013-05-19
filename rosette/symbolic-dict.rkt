@@ -66,7 +66,7 @@
                   [new-space (+ val-space add-space)]) ; <-- optimization
              (assert (<= new-space capacity))
              (vector-set! space i new-space))))
-  (assert (<= (cores-count cores) max-cores))
+  ;(assert (<= (cores-count cores) max-cores))
   )
 
 (define (cores-add-op cores i op)

@@ -1,4 +1,5 @@
 TODO
+- to make pair work => need to do data type check before/while create symbolic variables
 - real partial evaluate, then check perf test b/c of inc-space bug
 
 - known-type check across functions

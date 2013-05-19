@@ -7,7 +7,7 @@
 
 (provide (all-defined-out))
 
-(define debug #f)
+(define debug #t)
 
 (struct comminfo (msgs placeset firstast))
 
@@ -267,7 +267,6 @@
           (set-field! known-type ast known-type)
 
 	  (define index (get-field index ast))
-	  (define index-ret (send index accept this))
 
           (when debug (pretty-display (format ">> Array ~a" (send ast to-string))))
 
@@ -280,7 +279,16 @@
 		  ;; Pair of list of possible places and index
 		  (set-field! place-type ast (cons places index))))
 
+          ;; Infer place for number
+          (when (is-a? index Num%) (send index infer-place (get-field place-type ast)))
+	  (define index-ret (send index accept this))
+
           (inc-space places est-acc-arr) ; not accurate
+
+          ;; (when (symbolic? (+ (comminfo-msgs index-ret) (count-msg index ast)))
+          ;;       (pretty-display (format ">> SYM Array ~a\n~a" 
+          ;;                               (send ast to-string)
+          ;;                               (+ (comminfo-msgs index-ret) (count-msg index ast)))))
 
           (comminfo 
            (+ (comminfo-msgs index-ret) (count-msg index ast))
@@ -324,6 +332,9 @@
 
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
+          ;; (when (symbolic? (+ (comminfo-msgs e1-ret) (count-msg ast e1)))
+          ;;       (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string))
+          ;;                       (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
           
           (comminfo
            (+ (comminfo-msgs e1-ret) (count-msg ast e1))
@@ -351,6 +362,18 @@
 
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
+
+          ;; (when (symbolic? (+ (comminfo-msgs e1-ret) 
+          ;;                     (comminfo-msgs e2-ret)
+          ;;                     (count-msg ast e1)
+          ;;                     (count-msg ast e2)))
+          ;;       (pretty-display (format ">> SYM BinOp ~a\n~a" 
+          ;;                               (send ast to-string)
+          ;;                               (+ (comminfo-msgs e1-ret) 
+          ;;                                  (comminfo-msgs e2-ret)
+          ;;                                  (count-msg ast e1)
+          ;;                                  (count-msg ast e2)))))
+
 
           (comminfo
            (+ (comminfo-msgs e1-ret) 

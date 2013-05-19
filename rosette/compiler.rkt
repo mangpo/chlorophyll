@@ -13,4 +13,4 @@
           8 2 4 name)
   )
 
-(compile "examples/add.cll" "insertionsort")
+(compile "examples/add.cll" "add")

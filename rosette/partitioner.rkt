@@ -261,8 +261,5 @@
           (send interpreter get-env)))
 
 (define t (current-seconds))
-;; error
-(result-msgs (optimize-comm "examples/bug.cll" #:cores 1 #:capacity 256 #:verbose #t))
-;; this is fine
-;(result-msgs (optimize-comm "examples/bug.cll" #:cores 2 #:capacity 256 #:verbose #t))
+(result-msgs (optimize-comm "examples/md5/md5_2.cll" #:cores 1 #:capacity 512 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
