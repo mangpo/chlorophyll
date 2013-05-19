@@ -1,0 +1,55 @@
+int leftrotate(int x, int r) {
+  return (x << r) || (x >> (32 - r));
+}
+
+int func_f(int b, int c, int d) {
+  return (b && c) || (!b && d);
+}
+
+
+int sumrotate(int a, int b, int f, int k, int m, int r) {
+  return b + leftrotate(a + f + k + m, r);
+}
+
+void main() {
+  int[] k[64]; // full = 64 entries
+  int[] r[64];
+  int[] message[16];
+  
+  int a, b, c, d, temp;
+  int g;
+  
+  for(t from 0 to 16) {
+    for(i from 0 to 64) { 
+      temp = sumrotate(a,b,func_f(b,c,d),k[i],message[g],r[i]);
+    }
+  } 
+}
+
+/*
+no partial
+# asserts = 3701
+# msgs = 3072
+# time = 226 s
+solve time = 11 - 19 s
+
+core = 0, space = 170, ops = #<set:>
+core = 1, space = 0, ops = #<set:>
+core = 2, space = 0, ops = #<set:>
+core = 3, space = 0, ops = #<set:>
+core = 4, space = 0, ops = #<set:>
+core = 5, space = 0, ops = #<set:>
+core = 6, space = 0, ops = #<set:>
+core = 7, space = 0, ops = #<set:>
+core = 8, space = 170, ops = #<set:>
+core = 9, space = 197, ops = #<set:>
+core = 10, space = 248, ops = #<set:>
+core = 11, space = 0, ops = #<set:>
+core = 12, space = 170, ops = #<set:>
+
+  int[]@{[0:32]=8, [32:64]=12} k[64];
+  int[]@{[0:32]=10, [32:64]=0} r[64];
+  int[]@{[0:16]=10} message[16];
+  int@9 temp, d, c, b, a;
+  int@10 g;
+*/
