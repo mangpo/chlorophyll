@@ -7,7 +7,8 @@
 
 (provide (all-defined-out))
 
-(define debug #t)
+(define debug #f)
+(define debug-sym #f)
 
 (struct comminfo (msgs placeset firstast))
 
@@ -285,10 +286,10 @@
 
           (inc-space places est-acc-arr) ; not accurate
 
-          ;; (when (symbolic? (+ (comminfo-msgs index-ret) (count-msg index ast)))
-          ;;       (pretty-display (format ">> SYM Array ~a\n~a" 
-          ;;                               (send ast to-string)
-          ;;                               (+ (comminfo-msgs index-ret) (count-msg index ast)))))
+          (when (and debug-sym (symbolic? (+ (comminfo-msgs index-ret) (count-msg index ast))))
+                (pretty-display (format ">> SYM Array ~a\n~a" 
+                                        (send ast to-string)
+                                        (+ (comminfo-msgs index-ret) (count-msg index ast)))))
 
           (comminfo 
            (+ (comminfo-msgs index-ret) (count-msg index ast))
@@ -332,9 +333,9 @@
 
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
-          ;; (when (symbolic? (+ (comminfo-msgs e1-ret) (count-msg ast e1)))
-          ;;       (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string))
-          ;;                       (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
+          (when (and debug-sym (symbolic? (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
+                (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string))
+                                (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
           
           (comminfo
            (+ (comminfo-msgs e1-ret) (count-msg ast e1))
@@ -347,14 +348,19 @@
           (define e1 (get-field e1 ast))
           (define e2 (get-field e2 ast))
           (define op (get-field op ast))
-          (define e1-ret (send e1 accept this))
-          (define e2-ret (send e2 accept this))
-	  ;(define op-ret (send op accept this))
-
           
           ;; set place-type known-type
           (define place-type (find-place-type ast op))
           (set-field! place-type ast place-type)
+
+          ;; Infer place-type for number.
+          (when (is-a? e1 Num%) (send e1 infer-place place-type))
+          (when (is-a? e2 Num%) (send e2 infer-place place-type))
+
+          (define e1-ret (send e1 accept this))
+          (define e2-ret (send e2 accept this))
+	  ;(define op-ret (send op accept this))
+
           (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
           ;; ^ problematic here (maybe not anymore)
           
@@ -363,16 +369,17 @@
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
 
-          ;; (when (symbolic? (+ (comminfo-msgs e1-ret) 
-          ;;                     (comminfo-msgs e2-ret)
-          ;;                     (count-msg ast e1)
-          ;;                     (count-msg ast e2)))
-          ;;       (pretty-display (format ">> SYM BinOp ~a\n~a" 
-          ;;                               (send ast to-string)
-          ;;                               (+ (comminfo-msgs e1-ret) 
-          ;;                                  (comminfo-msgs e2-ret)
-          ;;                                  (count-msg ast e1)
-          ;;                                  (count-msg ast e2)))))
+          (when (and debug-sym
+                 (symbolic? (+ (comminfo-msgs e1-ret) 
+                               (comminfo-msgs e2-ret)
+                               (count-msg ast e1)
+                               (count-msg ast e2))))
+                (pretty-display (format ">> SYM BinOp ~a\n~a" 
+                                        (send ast to-string)
+                                        (+ (comminfo-msgs e1-ret) 
+                                           (comminfo-msgs e2-ret)
+                                           (count-msg ast e1)
+                                           (count-msg ast e2)))))
 
 
           (comminfo
@@ -625,6 +632,8 @@
                                     (or (comminfo-firstast all) (comminfo-firstast ret)))))
                       (comminfo 0 (set) #f) (get-field stmts ast))])
           (set-field! firstexp ast (comminfo-firstast ret)) ; useful info for If% and While%
+          (when (and debug-sym (symbolic? (comminfo-msgs ret)))
+                (pretty-display `(BLOCK SYM num-msgs = ,(comminfo-msgs ret))))
           ret
           )
           ]

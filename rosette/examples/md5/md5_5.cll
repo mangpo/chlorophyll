@@ -62,4 +62,9 @@ partial concrete
 # msgs 6144
 # synthesis time: 4,5,13,537 = 561
 
+----- fix-space -------
+no partial
+# msgs = 4096
+# synthesis time: 790
+
  */
