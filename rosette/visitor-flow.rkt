@@ -9,7 +9,6 @@
 (define flow-generator%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field env)
 
     (define (cross-product-raw x y)
       (define pair-set (flow x y))

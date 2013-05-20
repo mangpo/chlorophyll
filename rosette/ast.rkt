@@ -24,6 +24,10 @@
 
     (abstract pretty-print)
 
+    (define/public (print-send-path indent)
+      (when send-path
+            (pretty-display (format "~a(send-path ~a)" (inc indent) send-path))))
+
     (define/public (accept v)
       (send v visit this))
 
@@ -185,6 +189,7 @@
     (inherit-field known-type place-type pos)
     (super-new [known-type #t])
     (init-field n)
+    (inherit print-send-path)
     (set! place-type (get-field place n))
 
     (define/public (infer-place p)
@@ -196,7 +201,8 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
-			      indent (get-field n n) (place-to-string place-type) known-type)))
+			      indent (get-field n n) (place-to-string place-type) known-type))
+      (print-send-path indent))
 
     (define/override (to-string) (send n to-string))
     ))
@@ -206,10 +212,12 @@
     (super-new)
     (inherit-field known-type place-type pos)
     (init-field name)
+    (inherit print-send-path)
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (known=~a))" 
-			      indent name (place-to-string place-type) known-type)))
+			      indent name (place-to-string place-type) known-type))
+      (print-send-path indent))
 
     (define/override (to-string) name)
 
@@ -226,10 +234,12 @@
     (super-new)
     (inherit-field known-type place-type pos name)
     (init-field index)
+    (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" 
 			      indent name (place-to-string place-type) known-type))
+      (print-send-path indent)
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)
@@ -248,6 +258,7 @@
     (super-new)
     (inherit-field known-type place-type)
     (init-field op e1 e2)
+    (inherit print-send-path)
     (set! place-type (get-field place op))
 
     ;;; Infer place for numbers.
@@ -257,6 +268,7 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
 			      indent (place-to-string place-type) known-type))
+      (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (send e2 pretty-print (inc indent))
@@ -274,6 +286,7 @@
     (super-new)
     (inherit-field known-type place-type)
     (init-field op e1)
+    (inherit print-send-path)
     (set! place-type (get-field place op))
 
     ;;; Infer place for numbers.
@@ -282,6 +295,7 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
 			      indent (place-to-string place-type) known-type))
+      (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
@@ -296,10 +310,12 @@
     (super-new)
     (inherit-field known-type place-type)
     (init-field name args [signature #f])
+    (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
 			      indent name (evaluate-with-sol place-type) known-type))
+      (print-send-path indent)
       (for ([arg args])
 	   (send arg pretty-print (inc indent)))
       (pretty-display (format "~a)" indent)))
@@ -314,13 +330,14 @@
     (super-new)
     (inherit-field place)
     (init-field n)
-    (inherit get-place)
+    (inherit get-place print-send-path)
 
     (define/public (inter-place p)
       (set! place p))
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Const:~a @~a)" indent n (get-place))))
+      (pretty-display (format "~a(Const:~a @~a)" indent n (get-place)))
+      (print-send-path indent))
 
     (define/public (to-string) n)
 ))
@@ -329,10 +346,11 @@
   (class Livable%
     (super-new)
     (init-field op)
-    (inherit get-place)
+    (inherit get-place print-send-path)
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Op:~a @~a)" indent op (get-place))))
+      (pretty-display (format "~a(Op:~a @~a)" indent op (get-place)))
+      (print-send-path indent))
 
     (define/public (to-string) op)
     
@@ -343,11 +361,12 @@
     (super-new)
     (inherit-field place)
     (init-field var-list type known)
-    (inherit get-place)
+    (inherit get-place print-send-path)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
-                              indent type var-list place known)))
+                              indent type var-list place known))
+      (print-send-path indent))
   ))
 
 (define Param%
@@ -386,10 +405,12 @@
     (super-new)
     (init-field iter from to body known)
     (inherit-field place-list)
+    (inherit print-send-path)
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
 			      indent (send iter to-string) from to 
                               (place-to-string place-list)))
+      (print-send-path indent)
       (send body pretty-print (inc indent)))
 
 ))
@@ -399,12 +420,14 @@
     (super-new)
     (inherit-field pos place-list)
     (init-field var type known bound)
+    (inherit print-send-path)
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
                               indent type var
                               (place-to-string place-list)
-                              known)))
+                              known))
+      (print-send-path indent))
 
     (define/public (bound-error)
       (raise-mismatch-error 'mismatch 

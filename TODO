@@ -1,8 +1,7 @@
 TODO
-- no env in visitor-flow when initiate
-- placeset for If% and While% (intepreter DONE, flow, comminsert)
-- test!!!!
+- test!!!! + print result from comminsert
 - get rid of firstast
+- comminsert: list into tree
 
 
 - fix add1 error!

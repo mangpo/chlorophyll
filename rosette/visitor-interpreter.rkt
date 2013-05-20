@@ -18,8 +18,6 @@
     (init-field places
                 [env (make-hash)] 
 		[known-stack (list #t)])
-
-    (define/public (get-env) env)
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
@@ -454,7 +452,11 @@
 	  ;; increase space for variable if it is the return variable
 	  (when (not (equal? (car var-list) "#return"))
 		(inc-space place (* (length var-list) est-data))) ; increase space
-          (comminfo 0 (set place) ast)
+          (comminfo 0 
+                    (if (equal? (get-field type ast) "void")
+                        (set)
+                        (set place)) 
+                    ast)
           ]
 
        [(is-a? ast ArrayDecl%)

@@ -16,7 +16,7 @@
 ;(configure [bitwidth bitwidth])
 
 ;; struct used to return result from optimize-comm
-(struct result (msgs cores ast env))
+(struct result (msgs cores ast))
 
 ;; Concrete version
 (define (concrete)
@@ -281,8 +281,7 @@
   
   (result (evaluate-with-sol num-msg) 
           cores 
-          my-ast 
-          (send interpreter get-env)))
+          my-ast))
 
 #|
 (define t (current-seconds))

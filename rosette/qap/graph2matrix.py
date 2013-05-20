@@ -34,10 +34,10 @@ if __name__ == "__main__":
   print()
 
   # D - manhattan distrance matrix
-  for x1 in xrange(w):
-    for y1 in xrange(h):
-      for x2 in xrange(w):
-        for y2 in xrange(h):
+  for x1 in xrange(h):
+    for y1 in xrange(w):
+      for x2 in xrange(h):
+        for y2 in xrange(w):
           print(abs(x1-x2) + abs(y1-y2),end=' ')
 
       print()
