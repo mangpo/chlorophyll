@@ -11,7 +11,7 @@
     (super-new)
     (init-field env)
 
-    (define (cross-product x y)
+    (define (cross-product-raw x y)
       (define pair-set (flow x y))
       (define x-set (car pair-set))
       (define y-set (cdr pair-set))
@@ -21,6 +21,11 @@
             (when (not (equal? x y))
                   (set! edges (cons (edge x y 1) edges))))
       edges)
+    
+    
+    (define (cross-product x-ast y-ast)
+      (cross-product-raw (get-field place-type x-ast) (get-field place-type y-ast)))
+      
         
     (define (multiply edges c)
       (for/list ([e edges])
@@ -46,7 +51,7 @@
 
        [(is-a? ast FuncCall%)
         (let ([edges (list)]
-              [func-ast (car (lookup env ast))])
+              [func-ast (get-field signature ast)])
           (for ([param (get-field stmts (get-field args func-ast))] ; signature
                 [arg   (get-field args ast)]) ; actual
                (set! edges (append (cross-product param arg) edges))
@@ -64,11 +69,11 @@
               [false-block (get-field false-block ast)])
           (define ret
             (append (send condition accept this)
-                    (multiply (send true-block accept this) 2)
-                    (cross-product condition (get-field firstexp true-block))))
+                    (send true-block accept this)
+                    (cross-product-raw (get-field place-type condition) 
+                                       (get-field body-placeset ast))))
           (if false-block
-              (append (multiply (send false-block accept this) 2)
-                      (cross-product condition (get-field firstexp false-block))
+              (append (send false-block accept this)
                       ret)
               ret))]
 
@@ -79,11 +84,12 @@
           (append
            (multiply
             (append (send condition accept this)
-                    (cross-product condition (get-field firstexp body)))
+                    (cross-product-raw (get-field place-type condition) 
+                                       (get-field body-placeset ast)))
             bound)
            (multiply
             (send body accept this)
-            (* 2 bound))))]
+            bound)))]
 
        [(is-a? ast Assign%)
         (let ([lhs (get-field lhs ast)]

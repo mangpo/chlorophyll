@@ -9,6 +9,14 @@
     (super-new)
     
     (define/public (visit ast)
+
+      (define (evaluate-placeset)
+        (let ([symplace-list (set->list (get-field body-placeset ast))])
+          (set-field! body-placeset ast
+                      (list->set 
+                       (map (lambda (x) (evaluate-with-sol x)) 
+                            symplace-list)))))
+        
       (cond
        [(is-a? ast Livable%)
         ;(set-field! place ast (send ast get-place))
@@ -66,11 +74,14 @@
         (let ([false-block (get-field false-block ast)])
           (when false-block
               (send false-block accept this)))
+        (evaluate-placeset)
         ]
 
        [(is-a? ast While%)
         (send (get-field condition ast) accept this)
-        (send (get-field body ast) accept this)]
+        (send (get-field body ast) accept this)
+        (evaluate-placeset)
+        ]
 
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])

@@ -52,7 +52,16 @@
 (define (declare env name val)
   (dict-set! env name val))
 
-(define (flow x-ast y-ast)
+
+(define (vector-2d-set! vector n a b val)
+  (unless (vector-ref vector a)
+     (vector-set! vector a (make-vector n #f)))
+  (vector-set! (vector-ref vector a) b val))
+
+(define (vector-2d-ref vector a b)
+  (vector-ref (vector-ref vector a) b))
+
+(define (flow x y)
   (define (place-set p)
     (cond
      [(number? p) (set p)]
@@ -63,11 +72,13 @@
             (raise "ast-util:place-set doesn't support Place% that is not @any")))]
      [(pair? p)
       (to-place-set p)]
+
+     [(set? p)
+      p]
+
      [else (raise (format "ast-util:place-set unimplemented for ~a" p))]))
     
-  (let ([x (get-field place-type x-ast)]
-        [y (get-field place-type y-ast)])
-    (cond
-     [(same-place? x y) (cons (set) (set))]
-     [else 
-      (cons (place-set x) (place-set y))])))
+  (cond
+   [(same-place? x y) (cons (set) (set))]
+   [else 
+    (cons (place-set x) (place-set y))]))

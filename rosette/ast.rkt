@@ -20,7 +20,7 @@
 (define Base%
   (class object%
     (super-new)
-    (init-field [pos #f])   
+    (init-field [pos #f] [send-path #f])   
 
     (abstract pretty-print)
 
@@ -295,7 +295,7 @@
   (class Exp%
     (super-new)
     (inherit-field known-type place-type)
-    (init-field name args)
+    (init-field name args [signature #f])
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
@@ -431,7 +431,7 @@
 (define If%
   (class Base%
     (super-new)
-    (init-field condition true-block [false-block #f])
+    (init-field condition true-block [false-block #f] [body-placeset #f])
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(IF" indent))
@@ -443,7 +443,7 @@
 (define While%
   (class Base%
     (super-new)
-    (init-field condition body bound)
+    (init-field condition body bound [body-placeset #f])
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(WHILE" indent))
@@ -455,7 +455,7 @@
 (define Block%
   (class Base%
      (super-new)
-     (init-field stmts [firstexp #f])
+     (init-field stmts)
 
      (define/override (pretty-print [indent ""])
        (for ([stmt stmts])

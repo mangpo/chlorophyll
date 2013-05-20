@@ -1,6 +1,12 @@
 TODO
+- no env in visitor-flow when initiate
+- placeset for If% and While% (intepreter DONE, flow, comminsert)
+- test!!!!
+- get rid of firstast
+
+
 - fix add1 error!
-- time md5_2
+- wait for response from emina about md5_5
 - test partial evaluate again
 - to make pair work => need to do data type check before/while create symbolic variables
 

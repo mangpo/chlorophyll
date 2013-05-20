@@ -13,4 +13,4 @@
           8 2 4 name)
   )
 
-(compile "examples/add.cll" "add")
+(compile "tests/while.cll" "add")

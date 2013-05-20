@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "header.rkt" "visitor-flow.rkt")
+(require "header.rkt" "ast-util.rkt" "visitor-flow.rkt")
 
 (provide (all-defined-out))
 
@@ -8,11 +8,6 @@
   (pretty-display (format "~a ~a ~a" n w h))
   (for ([e edges])
        (pretty-display (format "~a ~a ~a" (edge-x e) (edge-y e) (edge-w e)))))
-
-(define (vector-2d-set! vector n a b val)
-  (unless (vector-ref vector a)
-     (vector-set! vector a (make-vector n #f)))
-  (vector-set! (vector-ref vector a) b val))
 
 (define (index x y w)
   (+ (* x w) y))

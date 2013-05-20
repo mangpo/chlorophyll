@@ -135,9 +135,8 @@
     (define start (current-seconds))
     (set! num-msg (evaluate-with-sol (comminfo-msgs (send func-ast accept interpreter))))
     
+    (when verbose (pretty-display `(num-msg , num-msg)))
     #|
-    (pretty-display `(num-msg , num-msg))
-    
     (when (equal? (get-field name func-ast) "main")
       (define stmts (get-field stmts (get-field body func-ast)))
       (define r (get-field place-list (cadr stmts)))
@@ -166,7 +165,7 @@
     
     (define (update-global-sol)
       ;; Unify solutions symbolically. Use this when solve function by function
-      (define unified-hash (make-hash))
+      #|(define unified-hash (make-hash))
       (define concrete-to-sym (make-hash))
       
       (for ([mapping (solution->list global-sol)])
@@ -191,7 +190,7 @@
             (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))   
 
       ;; Unify solutions concretely. Don't use this
-      #|(for ([mapping (solution->list best-sol)])
+      (for ([mapping (solution->list best-sol)])
         (let ([key (car mapping)]
               [val (cdr mapping)])
           (when (not (hash-has-key? partial-hash key))
@@ -200,7 +199,7 @@
       (set-global-sol (sat (make-immutable-hash (hash->list partial-hash)))|#
       
       ;; Use this when solve the entire program at once.
-      ;(set-global-sol best-sol)
+      (set-global-sol best-sol)
       
       (cores-evaluate cores)
       
@@ -218,12 +217,12 @@
     (define (inner-loop)
       (when verbose
         (pretty-display (format "num-msg <= ~a" middle)))
-      (if middle
-          (solve-with-sol (assert (<= num-msg middle)) global-sol)
-          (solve-with-sol (assert #t) global-sol))
       #|(if middle
+          (solve-with-sol (assert (<= num-msg middle)) global-sol)
+          (solve-with-sol (assert #t) global-sol))|#
+      (if middle
           (solve (assert (<= num-msg middle)))
-          (solve (assert #t)))|#
+          (solve (assert #t)))
       (set! upperbound (evaluate num-msg))
       (set! middle (floor (/ (+ lowerbound upperbound) 2)))
       
@@ -241,12 +240,15 @@
     ;void
     (define (outter-loop)
       (with-handlers* ([exn:fail? (lambda (e) 
-                                    (pretty-display e)
-                                    (set! lowerbound (add1 middle))
-                                    (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-                                    (if (< lowerbound upperbound)
-                                        (outter-loop)
-                                        (update-global-sol)))])
+                                    (if middle
+                                        (begin
+                                          (set! lowerbound (add1 middle))
+                                          (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+                                          (if (< lowerbound upperbound)
+                                              (outter-loop)
+                                              (update-global-sol)))
+                                        (pretty-display e))
+                                    )])
                       (inner-loop)))
     
     (outter-loop)
@@ -254,8 +256,8 @@
     
   (for ([decl (get-field decls my-ast)])
     (if 
-     (is-a? decl FuncDecl%) ;; Use this for solving function by function
-     ;(and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
+     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
         (begin
           (solve-function decl)
           (when verbose (pretty-display "------------------------------------------------")))
@@ -282,6 +284,8 @@
           my-ast 
           (send interpreter get-env)))
 
+#|
 (define t (current-seconds))
-(result-msgs (optimize-comm "examples/md5/md5_11_concrete.cll" #:cores 16 #:capacity 256 #:verbose #t))
+(result-msgs (optimize-comm "tests/while.cll" #:cores 16 #:capacity 256 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+|#
