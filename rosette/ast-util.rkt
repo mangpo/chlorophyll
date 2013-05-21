@@ -4,13 +4,6 @@
 
 (provide (all-defined-out))
 
-
-(define (place-type? p)
-  (or (number? p) (place-type-dist? p)))
-
-(define (place-type-dist? p)
-  (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
-
 (define (same-place? a b)
   ;;(assert (and (place-type? a) (place-type? b)))
   

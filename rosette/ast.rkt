@@ -10,6 +10,8 @@
 
 (provide (except-out (all-defined-out) inc))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;; Helper Functions ;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (get-sym)
   (define-symbolic* sym-place number?)
   sym-place)
@@ -17,16 +19,123 @@
 (define (inc space)
   (string-append space "  "))
 
+(define (place-type? p)
+  (or (number? p) (place-type-dist? p)))
+
+(define (place-type-dist? p)
+  (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
+
+;; list -> string
+(define (list-to-string items)
+  (if (empty? items)
+      ""
+      (foldl (lambda (item str) (format "~a, ~a" item str))
+	     (format "~a" (car items))
+	     (cdr items))))
+
+;; ast-list -> string
+(define (ast-list-to-string ast-list)
+  (if (empty? ast-list)
+      ""
+      (foldl (lambda (ast str) (string-append (string-append str ", ") (send ast to-string))) 
+	     (send (car ast-list) to-string) 
+	     (cdr ast-list))))
+
+;; place-list -> string
+(define (place-list-to-string place-list [out #f])
+  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string out))) 
+         (send (car place-list) to-string out) 
+         (cdr place-list)))
+
+;; place-type, place-list -> string
+(define (place-to-string place [out #t])
+  (cond
+   [(is-a? place Place%)
+    (send place to-string)]
+
+   [(list? place)
+    (format "{~a}" (place-list-to-string place out))]
+
+   [(pair? place)
+    (format "{~a; ~a}" 
+            (place-list-to-string (car place) out) 
+            (send (cdr place) to-string))]
+
+   [else
+    (let ([p (evaluate-with-sol place)])
+      (if (and out (symbolic? p)) "??" p))]
+   ))
+
+;; path-list -> string
+(define (path-list-to-string place-list [out #f])
+  (foldl (lambda (p str) (string-append (string-append str ", ") 
+                                        (send p path-to-string)))
+         (send (car place-list) path-to-string) 
+         (cdr place-list)))
+
+(define (send-path-to-string path)
+  (cond
+   [(place-type-dist? path)
+    (format "{~a; ~a}" 
+            (path-list-to-string (car path)) 
+            (send (cdr path) to-string))]
+
+   [(list? path)
+    path]
+
+   [else
+    (raise (format "send-path-to-string: unimplemented for ~a" path))]))
+
+;; evaluate place
+(define (concrete-place place)
+  (cond
+   [(number? place)
+    (evaluate-with-sol place)]
+
+   [(is-a? place Place%) 
+    place]
+
+   [(list? place)
+    (for ([p place])
+	 (send p to-concrete))
+    place]
+
+   [(pair? place)
+    (cons (concrete-place (car place)) (cdr place))]))
+      
+;; number, place-list, place-type -> set
+(define (to-place-set place)
+  (cond
+   [(number? place)
+    (set place)]
+   [(list? place)
+    (foldl (lambda (p place-set) (set-add place-set (get-field place p)))
+           (set) place)]
+   [(pair? place)
+    (to-place-set (car place))]
+   [(and (is-a? place Place%) (equal? (get-field at place) "any"))
+    (set)]
+   [else (raise "Error: cannot handle this object type")]))
+
+;; number, place-list -> place-type
+(define (to-place-type ast place)
+  (if (or (number? place) (is-a? place Place%))
+      place
+      (cons place ast)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; AST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define Base%
   (class object%
     (super-new)
-    (init-field [pos #f] [send-path #f])   
+    (init-field [pos #f] [send-path #f] [convert #f])   
 
     (abstract pretty-print)
 
     (define/public (print-send-path indent)
       (when send-path
-            (pretty-display (format "~a(send-path ~a)" (inc indent) send-path))))
+            (pretty-display (format "~a(send-path ~a)" (inc indent) 
+                                    (send-path-to-string send-path)))))
 
     (define/public (accept v)
       (send v visit this))
@@ -71,83 +180,6 @@
     ))
 
 
-;; list -> string
-(define (list-to-string items)
-  (if (empty? items)
-      ""
-      (foldl (lambda (item str) (format "~a, ~a" item str))
-	     (format "~a" (car items))
-	     (cdr items))))
-
-;; ast-list -> string
-(define (ast-list-to-string ast-list)
-  (if (empty? ast-list)
-      ""
-      (foldl (lambda (ast str) (string-append (string-append str ", ") (send ast to-string))) 
-	     (send (car ast-list) to-string) 
-	     (cdr ast-list))))
-
-;; place-list -> string
-(define (place-list-to-string place-list [out #f])
-  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string out))) 
-         (send (car place-list) to-string out) 
-         (cdr place-list)))
-
-;; place-type, place-list -> string
-(define (place-to-string place [out #t])
-  (cond
-   [(is-a? place Place%)
-    (send place to-string)]
-
-   [(list? place)
-    (format "{~a}" (place-list-to-string place out))]
-
-   [(pair? place)
-    (format "{~a; ~a}" 
-            (place-to-string (car place)) 
-            (send (cdr place) to-string))]
-
-   [else
-    (let ([p (evaluate-with-sol place)])
-      (if (and out (symbolic? p)) "??" p))]
-   ))
-
-;; evaluate place
-(define (concrete-place place)
-  (cond
-   [(number? place)
-    (evaluate-with-sol place)]
-
-   [(is-a? place Place%) 
-    place]
-
-   [(list? place)
-    (for ([p place])
-	 (send p to-concrete))
-    place]
-
-   [(pair? place)
-    (concrete-place (car place))]))
-      
-;; number, place-list, place-type -> set
-(define (to-place-set place)
-  (cond
-   [(number? place)
-    (set place)]
-   [(list? place)
-    (foldl (lambda (p place-set) (set-add place-set (get-field place p)))
-           (set) place)]
-   [(pair? place)
-    (to-place-set (car place))]
-   [(and (is-a? place Place%) (equal? (get-field at place) "any"))
-    (set)]
-   [else (raise "Error: cannot handle this object type")]))
-
-;; number, place-list -> place-type
-(define (to-place-type ast place)
-  (if (or (number? place) (is-a? place Place%))
-      place
-      (cons place ast)))
 
 (define LivableGroup%
   (class Base%
@@ -381,7 +413,7 @@
 (define RangePlace%
   (class Livable%
     (super-new)
-    (inherit-field place)
+    (inherit-field place send-path)
     (init-field from to)
     (inherit get-place)
 
@@ -397,6 +429,9 @@
       (let* ([place (get-place)]
 	     [print (if (and out (symbolic? place)) "??" place)])
 	(format "[~a:~a]=~a" from to print)))
+
+    (define/public (path-to-string)
+      (format "[~a:~a]=~a" from to send-path))
     
     ))
 

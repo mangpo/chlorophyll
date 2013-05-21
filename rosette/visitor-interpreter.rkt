@@ -7,7 +7,7 @@
 
 (provide (all-defined-out))
 
-(define debug #f)
+(define debug #t)
 (define debug-sym #f)
 
 (struct comminfo (msgs placeset firstast))

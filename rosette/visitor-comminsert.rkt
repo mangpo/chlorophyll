@@ -6,6 +6,8 @@
 
 (provide (all-defined-out))
 
+(define debug #t)
+
 (define commcode-inserter%
   (class* object% (visitor<%>)
     (super-new)
@@ -44,6 +46,7 @@
          [else (raise "contruct-placelist: unimplemented")])))
     
     (define (gen-path x-ast y-ast)
+      (pretty-display `(gen-path ,(send x-ast to-string) ,(send y-ast to-string)))
       (define x (get-field place-type x-ast))
       (define y (get-field place-type y-ast))
 
@@ -55,15 +58,20 @@
           (vector-2d-ref routing-table x y)]
          
          [(and (number? x) (place-type-dist? y))
-          (for/list ([p (car y)])
-                    (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                         [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))]
+          (cons
+           (for/list ([p (car y)])
+                     (pretty-display `(path ,(vector-2d-ref routing-table x (get-field place p))))
+                     (new RangePlace% [from (get-field from p)] [to (get-field to p)]
+                          [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))
+           (cdr y))]
          
          [(and (number? y) (place-type-dist? x))
-          (for/list ([p (car x)])
-                    (let ([place (get-field place p)])
-                      (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                           [place place] [send-path (vector-2d-ref routing-table y place)])))]
+          (cons 
+           (for/list ([p (car x)])
+                     (let ([place (get-field place p)])
+                       (new RangePlace% [from (get-field from p)] [to (get-field to p)]
+                            [place place] [send-path (vector-2d-ref routing-table place y)])))
+           (cdr x))]
          
          [(and (place-type-dist? x) 
                (place-type-dist? y) 
@@ -74,7 +82,7 @@
                     (raise "visitor-comminsert: distributions do not start at the same index"))
             (construct-placelist (car x) (car y) x-from))]
          
-         [else (raise "gen-path: unimplemented")])))
+         [else (raise (format "gen-path: unimplemented for ~a and ~a" x y))])))
 
     ;; TODO turn list into tree!
     (define (get-path-one-to-many from placeset)
@@ -101,32 +109,36 @@
 
     (define/public (visit ast)
       (define (convert-place)
-        (let ([p (get-field place ast)])
-          (cond
-           [(number? p)
-            (set-field! place ast (vector-ref part2core p))]
-           [(list? p)
-            (for ([i p])
-                 (send i accept this))]
-           [(pair? p)
-            (for ([i (car p)])
-                 (send i accept this))]
-           [else
-            (raise (format "convert-place: unimplemented for ~a" p))])))
+        (unless (get-field convert ast)
+          (set-field! convert ast #t)
+          (let ([p (get-field place ast)])
+            (cond
+             [(number? p)
+              (set-field! place ast (vector-ref part2core p))]
+             [(list? p)
+              (for ([i p])
+                   (send i accept this))]
+             [(pair? p)
+              (for ([i (car p)])
+                   (send i accept this))]
+             [else
+              (raise (format "convert-place: unimplemented for ~a" p))]))))
 
       (define (convert-place-type)
-        (let ([p (get-field place-type ast)])
-          (cond
-           [(number? p)
-            (set-field! place-type ast (vector-ref part2core p))]
-           [(list? p)
-            (for ([i p])
+        (unless (get-field convert ast)
+          (set-field! convert ast #t)
+          (let ([p (get-field place-type ast)])
+            (cond
+             [(number? p)
+              (set-field! place-type ast (vector-ref part2core p))]
+             [(list? p)
+              (for ([i p])
                  (send i accept this))]
-           [(pair? p)
-            (for ([i (car p)])
-                 (send i accept this))]
-           [else
-            (raise (format "convert-place-type: unimplemented for ~a" p))])))
+             [(pair? p)
+              (for ([i (car p)])
+                   (send i accept this))]
+             [else
+              (raise (format "convert-place-type: unimplemented for ~a" p))]))))
 
       (define (convert-placeset)
         (set-field! body-placeset ast
@@ -135,32 +147,64 @@
 
       (cond
        [(is-a? ast VarDecl%)
+        (when debug 
+              (pretty-display (format "\nCOMMINSERT: VarDecl ~a" (get-field var-list ast))))
         (unless (equal? (get-field type ast) "void")
                 (convert-place))]
         
        [(is-a? ast Livable%)
-        (convert-place)]
+        (when debug 
+              (pretty-display (format "\nCOMMINSERT: Livable")))
+        (when  (is-a? ast RangePlace%)
+              (pretty-display (format "COMMINSERT: RangePlace before ~a" (send ast to-string))))
+        (convert-place)
+
+        (when  (is-a? ast RangePlace%)
+              (pretty-display (format "COMMINSERT: RangePlace after ~a" (send ast to-string))))
+
+        ]
 
        [(is-a? ast LivableGroup%)
+        (when debug 
+              (pretty-display (format "\nCOMMINSERT: LivableGroup")))
+
+        (when (is-a? ast ArrayDecl%)
+              (pretty-display (format "COMMINSERT: ArrayDecl")))
+
+        (send ast pretty-print)
         (let ([place (get-field place-list ast)])
           (if (list? place)
               (for ([p (get-field place-list ast)])
                    (send p accept this))
               (when (number? place)
                     (set-field! place-list ast (vector-ref part2core place)))))
+
+        (send ast pretty-print)
 	(when (is-a? ast For%) (send (get-field body ast) accept this))]
 
        [(is-a? ast Num%)
+        (when debug 
+              (pretty-display (format "\nCOMMINSERT: Num ~a" (send ast to-string))))
         (convert-place-type)]
 
        [(is-a? ast Array%)
         (define index (get-field index ast))
         (send index accept this)
         (convert-place-type)
+        (when debug 
+              (pretty-display (format "\nCOMMINSERT: Array ~a" (send ast to-string))))
         (gen-path index ast)
+        (define index-sp (get-field send-path index))
+        (pretty-display `(Index send-path ,index-sp))
+        (when (place-type-dist? index-sp)
+              (for ([p (car index-sp)])
+                   (pretty-display `(send-path ,(get-field send-path p)))))
+        (send ast pretty-print)
         ]
 
        [(is-a? ast Var%)
+        (when debug 
+              (pretty-display (format "COMMINSERT: Var ~a" (send ast to-string))))
         (convert-place-type)]
 
        [(is-a? ast BinExp%)
@@ -171,6 +215,8 @@
         (send e2 accept this)
         (send op accept this)
         (convert-place-type)
+        (when debug 
+              (pretty-display (format "COMMINSERT: BinExp ~a" (send ast to-string))))
         (gen-path e1 ast)
         (gen-path e2 ast)
         ]
@@ -181,12 +227,16 @@
         (send e1 accept this)
         (send op accept this)
 	(convert-place-type)
+        (when debug 
+              (pretty-display (format "COMMINSERT: UnaExp ~a" (send ast to-string))))
         (gen-path e1 ast)
         ]
 
        [(is-a? ast FuncCall%)
 	(for ([arg (get-field args ast)])
 	     (send arg accept this))
+        (when debug 
+              (pretty-display (format "COMMINSERT: FuncCall ~a" (send ast to-string))))
         (let ([func-sig (get-field signature ast)])
           (for ([param (get-field stmts (get-field args func-sig))]
                 [arg (get-field args ast)])
@@ -199,6 +249,8 @@
               [lhs (get-field lhs ast)])
           (send rhs accept this)
           (send lhs accept this)
+          (when debug 
+                (pretty-display (format "COMMINSERT: Assign")))
           (gen-path rhs lhs))
         ]
 
@@ -209,6 +261,8 @@
               (send (get-field false-block ast) accept this))
         (convert-placeset)
         ;; TODO
+        (when debug 
+              (pretty-display (format "COMMINSERT: If")))
         (gen-path-condition ast)
         ]
 
@@ -217,14 +271,20 @@
         (send (get-field body ast) accept this)
         (convert-placeset)
         ;; TODO
+        (when debug 
+              (pretty-display (format "COMMINSERT: While")))
         (gen-path-condition ast)
         ]
 
        [(is-a? ast Block%) 
+        (when debug 
+              (pretty-display (format "COMMINSERT: Block")))
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))]
 
        [(is-a? ast FuncDecl%)
+        (when debug 
+              (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
         (send (get-field return ast) accept this)
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)]

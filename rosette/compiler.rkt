@@ -21,4 +21,4 @@
   (send (result-ast partition) pretty-print)
   )
 
-(compile "examples/test.cll" "add")
+(compile "tests/array-known.cll" "array-known")
