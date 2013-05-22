@@ -1,3 +1,18 @@
-void main() {
-  int[]@{[0:51],[51:100]} x[100];
+int@1 sumrotate(int@1 k, int@1 m, int@1 r) {
+  return k + m;
 }
+
+
+void main() {
+  int[] k[64];
+  int[] r[64];
+  int[] message[16];
+
+  int g;
+  int temp;
+  
+  for(i from 0 to 64) { 
+    temp = sumrotate(k[i],message[g],r[i]);
+  }
+}
+

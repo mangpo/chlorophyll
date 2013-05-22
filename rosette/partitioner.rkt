@@ -241,12 +241,17 @@
     ;void
     (define (outter-loop)
       (with-handlers* ([exn:fail? (lambda (e) 
-                                    (pretty-display e)
-                                    (set! lowerbound (add1 middle))
-                                    (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-                                    (if (< lowerbound upperbound)
-                                        (outter-loop)
-                                        (update-global-sol)))])
+                                    (if (equal? (exn-message e)
+                                                "solve: no satisfying execution found")
+                                        (begin
+                                          (set! lowerbound (add1 middle))
+                                          (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+                                          (if (< lowerbound upperbound)
+                                              (outter-loop)
+                                              (update-global-sol)))
+                                        (begin
+                                          (pretty-display e)
+                                          (raise e))))])
                       (inner-loop)))
     
     (outter-loop)
@@ -283,5 +288,5 @@
           (send interpreter get-env)))
 
 (define t (current-seconds))
-(result-msgs (optimize-comm "examples/md5/md5_11_concrete.cll" #:cores 16 #:capacity 256 #:verbose #t))
+(result-msgs (optimize-comm "examples/bug.cll" #:cores 16 #:capacity 256 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
