@@ -1,5 +1,10 @@
 TODO
+- test if more
 - test!!!! + remove debug messages
+- investigate why tests/function2.cll SA solution: 1 3 5
+
+- refactoring interpretor & flow & comminsert
+- master/slave block,function,array (tests/for-array2)
 - get rid of firstast
 - comminsert: list into tree
 
@@ -10,7 +15,6 @@ TODO
 - to make pair work => need to do data type check before/while create symbolic variables
 
 - known-type check across functions
-- master/slave block,function,(array)
 - topological sort
 - recursion
 - one function at multiple places

@@ -405,6 +405,10 @@
   (class VarDecl%
     (super-new)
     (init-field [place-type #f] [known-type #f])
+    (inherit-field var-list)
+    
+    (define/public (to-string)
+      (format "param:~a" (car var-list)))
     
     (define/override (to-concrete)
       (super to-concrete)
