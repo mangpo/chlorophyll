@@ -240,15 +240,19 @@
     ;void
     (define (outter-loop)
       (with-handlers* ([exn:fail? (lambda (e) 
-                                    (if middle
+                                    (if (or (equal? (exn-message e)
+                                                    "solve: no satisfying execution found")
+                                            (equal? (exn-message e)
+                                                    "assert: failed"))
                                         (begin
                                           (set! lowerbound (add1 middle))
                                           (set! middle (floor (/ (+ lowerbound upperbound) 2)))
                                           (if (< lowerbound upperbound)
                                               (outter-loop)
                                               (update-global-sol)))
-                                        (pretty-display e))
-                                    )])
+                                        (begin
+                                          (pretty-display e)
+                                          (raise e))))])
                       (inner-loop)))
     
     (outter-loop)
@@ -283,8 +287,7 @@
           cores 
           my-ast))
 
-#|
+
 (define t (current-seconds))
 (result-msgs (optimize-comm "tests/while.cll" #:cores 16 #:capacity 256 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
-|#
