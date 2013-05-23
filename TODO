@@ -1,6 +1,4 @@
 TODO
-- test if more
-- test!!!! + remove debug messages
 - investigate why tests/function2.cll SA solution: 1 3 5
 
 - refactoring interpretor & flow & comminsert

@@ -59,9 +59,6 @@
       (vector-2d-set! core2route n a-core b-core path)
       (vector-2d-set! core2route n b-core a-core (reverse path))))
   
-  (for ([i (range n)])
-    (pretty-display (vector-ref core2route i)))
-  
   core2route)
 
 ;;test

@@ -287,7 +287,8 @@
           cores 
           my-ast))
 
-
+#|
 (define t (current-seconds))
 (result-msgs (optimize-comm "tests/while.cll" #:cores 16 #:capacity 256 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+|#

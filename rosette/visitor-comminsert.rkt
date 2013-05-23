@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(define debug #t)
+(define debug #f)
 
 (define commcode-inserter%
   (class* object% (visitor<%>)
@@ -48,7 +48,8 @@
     (define (gen-path x-ast y-ast)
       (define x (get-field place-type x-ast))
       (define y (get-field place-type y-ast))
-      (pretty-display `(gen-path ,(send x-ast to-string) ,x  ,(send y-ast to-string) ,y))
+      (when debug
+        (pretty-display `(gen-path ,(send x-ast to-string) ,x  ,(send y-ast to-string) ,y)))
 
       (set-field! send-path x-ast
         (cond
@@ -60,7 +61,6 @@
          [(and (number? x) (place-type-dist? y))
           (cons
            (for/list ([p (car y)])
-                     (pretty-display `(path ,(vector-2d-ref routing-table x (get-field place p))))
                      (new RangePlace% [from (get-field from p)] [to (get-field to p)]
                           [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))
            (cdr y))]
@@ -80,14 +80,14 @@
                 [y-from (get-field from (caar y))])
             (unless (equal? x-from y-from) 
                     (raise "visitor-comminsert: distributions do not start at the same index"))
-            (pretty-display `((car x) ,(car x) (car y) ,(car y)))
             (cons (construct-placelist (car x) (car y) x-from) (cdr x)))]
          
          [else (raise (format "gen-path: unimplemented for ~a and ~a" x y))])))
 
     ;; TODO turn list into tree!
     (define (get-path-one-to-many from placelist)
-      (pretty-display `(get-path-one-to-many ,from ,placelist))
+      (when debug
+        (pretty-display `(get-path-one-to-many ,from ,placelist)))
       (let* ([filtered-list (filter (lambda (x) (not (equal? x from))) placelist)]
              [ret (for/list ([p filtered-list])
                             (vector-2d-ref routing-table from p))])

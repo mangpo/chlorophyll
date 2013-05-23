@@ -21,4 +21,4 @@
   (send (result-ast partition) pretty-print)
   )
 
-(compile "tests/space_symbolic.cll" "space_symbolic")
+(compile "examples/if.cll" "if")
