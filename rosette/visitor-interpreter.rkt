@@ -523,6 +523,7 @@
 
           (define body-ret (send (get-field body ast) accept this))
           (define body-place-set (comminfo-placeset body-ret))
+          (set-field! body-placeset ast body-place-set)
           
           ;(for ([p body-place-set])
           ;     (inc-space p est-for)) ; increase space (already accounts for i here)
@@ -685,8 +686,11 @@
           (when debug
                 (pretty-display (format ">> FuncDecl ~a" (get-field name ast))))
 
+          (define body-placeset (set-union (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret)) (comminfo-placeset return-ret)))
+          (set-field! body-placeset ast body-placeset)
+
 	  (let ([ret (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
-			       (set-union (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret)) (comminfo-placeset return-ret))
+			       body-placeset
 			       (comminfo-firstast return-ret))])
 	    ;; declare function
 	    (declare env (get-field name ast) (cons ast ret))

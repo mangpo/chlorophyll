@@ -1,5 +1,5 @@
 TODO
-- investigate why tests/function2.cll SA solution: 1 3 5
+- run md5_4 again
 
 - refactoring interpretor & flow & comminsert
 - master/slave block,function,array (tests/for-array2)

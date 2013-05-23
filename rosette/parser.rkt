@@ -208,7 +208,7 @@
          ((exp OR @ place-type-dist exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2)
-	 ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3]))
+	 ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos]))
          )
 
     (known-type

@@ -340,7 +340,7 @@
 (define FuncCall%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type)
+    (inherit-field known-type place-type pos)
     (init-field name args [signature #f])
     (inherit print-send-path)
 
@@ -354,6 +354,13 @@
 
     (define/override (to-string)
       (format "~a(~a)" name (ast-list-to-string args)))
+
+    (define/public (not-found-error)
+      (raise-syntax-error 'undefined-function
+			  (format "'~a' error at src: l:~a c:~a" 
+				  name
+				  (position-line pos) 
+				  (position-col pos))))
     ))
 
 
@@ -442,7 +449,7 @@
 (define For%
   (class LivableGroup%
     (super-new)
-    (init-field iter from to body known)
+    (init-field iter from to body known [body-placeset #t])
     (inherit-field place-list)
     (inherit print-send-path)
     (define/override (pretty-print [indent ""])
@@ -528,7 +535,7 @@
 (define FuncDecl%
   (class Base%
     (super-new)
-    (init-field name args body return)
+    (init-field name args body return [body-placeset #f])
     (inherit-field pos)
     ;; args = list of VarDecl%
     ;; return = VarDecl%
@@ -541,7 +548,7 @@
       (send body pretty-print (inc indent)))
 
     (define/public (not-found-error)
-      (raise-syntax-error 'undefined
+      (raise-syntax-error 'undefined-function
 			  (format "'~a' error at src: l:~a c:~a" 
 				  name
 				  (position-line pos) 

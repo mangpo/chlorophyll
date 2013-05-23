@@ -6,10 +6,10 @@
   
   (define partition (optimize-comm file
                                    #:name name
-                                   #:cores 8 #:capacity 256 #:verbose #t))
+                                   #:cores 20 #:capacity 512 #:verbose #f))
   
   (define layout-res (layout (result-ast partition) 
-                             8 2 4 name))
+                             20 5 4 name))
   
   (pretty-display `(routing-table ,(layoutinfo-routes layout-res)))
   (pretty-display `(part2core ,(layoutinfo-part2core layout-res)))
@@ -21,4 +21,5 @@
   (send (result-ast partition) pretty-print)
   )
 
-(compile "tests/function2.cll" "function2")
+;(compile "examples/md5/md5_4.cll" "md5_4")
+(compile "examples/if.cll" "if")

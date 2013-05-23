@@ -199,7 +199,9 @@
                     (set-field! place-list ast (vector-ref part2core place)))))
 
         (send ast pretty-print)
-	(when (is-a? ast For%) (send (get-field body ast) accept this))]
+	(when (is-a? ast For%) 
+              (send (get-field body ast) accept this)
+              (convert-placeset))]
 
        [(is-a? ast Num%)
         (when debug 
@@ -306,7 +308,9 @@
               (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
         (send (get-field return ast) accept this)
         (send (get-field args ast) accept this)
-        (send (get-field body ast) accept this)]
+        (send (get-field body ast) accept this)
+        (convert-placeset)
+        ]
 
        [(is-a? ast Program%)
         (for ([decl (get-field decls ast)])

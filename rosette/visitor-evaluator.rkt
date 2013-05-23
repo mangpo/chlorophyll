@@ -32,7 +32,9 @@
               (send ast to-concrete)))
 
         (when (is-a? ast For%)
-              (send (get-field body ast) accept this))]
+              (send (get-field body ast) accept this)
+              (evaluate-placeset))
+        ]
 
        [(is-a? ast Num%)
 	 (send (get-field n ast) accept this)
@@ -90,7 +92,8 @@
        [(is-a? ast FuncDecl%)
         (send (get-field return ast) accept this)
         (send (get-field args ast) accept this)
-        (send (get-field body ast) accept this)]
+        (send (get-field body ast) accept this)
+        (evaluate-placeset)]
 
        [(is-a? ast Program%)
         (for ([decl (get-field decls ast)])

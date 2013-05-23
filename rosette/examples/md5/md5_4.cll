@@ -1,34 +1,19 @@
-void leftrotate(int x, int r) {
+int leftrotate(int x, int r) {
   return (x << r) || (x >> (32 - r));
-}
-
-int func_f(int b, int c, int d) {
-  return (b && c) || (!b && d);
-}
-
-int func_g(int b, int c, int d) {
-  return (d && b) || (!d && c);
-}
-
-int func_h(int b, int c, int d) {
-  return b ^ c ^ d;
-}
-
-int func_i(int b, int c, int d) {
-  return c ^ (b || !d);
 }
 
 int sumrotate(int a, int b, int f, int k, int m, int r) {
   return b + leftrotate(a + f + k + m, r);
 }
 
+
 void main() {
   int[] k[64]; // full = 64 entries
   int[] r[64];
-  int[] message[16];
+  int[]@a message[32];
   
   int[] hash[4];
-  int a, b, c, d, temp;
+  int@b a, b, c, d, temp;
   int g;
   
   for(t from 0 to 16) {
@@ -38,7 +23,7 @@ void main() {
     d = hash[3];
     
     for(i from 0 to 16)@any {
-	temp = sumrotate(a,b,func_f(b,c,d),k[i],message[i],r[i]);
+	temp = sumrotate(a,b,(b && c) || (!b && d),k[i],message[i],r[i]);
 	a = d;
 	d = c;
 	c = b;
@@ -47,7 +32,7 @@ void main() {
     
     g = 0;
     for(i from 16 to 32)@any {
-	temp = sumrotate(a,b,func_g(b,c,d),k[i],message[g],r[i]);
+	temp = sumrotate(a,b,(d && b) || (!d && c),k[i],message[g],r[i]);
 	a = d;
 	d = c;
 	c = b;
@@ -57,7 +42,7 @@ void main() {
   
     g = 0;
     for(i from 32 to 48)@any {
-	temp = sumrotate(a,b,func_h(b,c,d),k[i],message[g],r[i]);
+	temp = sumrotate(a,b,b ^ c ^ d,k[i],message[g],r[i]);
 	a = d;
 	d = c;
 	c = b;
@@ -67,7 +52,7 @@ void main() {
   
     g = 0;
     for(i from 48 to 64)@any {
-	temp = sumrotate(a,b,func_i(b,c,d),k[i],message[g],r[i]);
+	temp = sumrotate(a,b,c ^ (b || !d),k[i],message[g],r[i]);
 	a = d;
 	d = c;
 	c = b;

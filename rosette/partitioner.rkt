@@ -204,6 +204,10 @@
       (cores-evaluate cores)
       
       (define stop (current-seconds))
+      
+      (with-output-to-file #:exists 'truncate (format "output/~a.bestsofar" name)
+        (lambda () (send my-ast accept concise-printer)))
+      
       (when verbose
         (pretty-display "\n=== Update Global Solution ===")
         (send func-ast accept concise-printer) 
@@ -212,17 +216,20 @@
         (pretty-display (format "synthesis time = ~a sec" (- stop start)))
         )
       )
+    
+    (define t 0)
       
                 
     (define (inner-loop)
-      (when verbose
-        (pretty-display (format "num-msg <= ~a" middle)))
+      (pretty-display (format "num-msg <= ~a" middle))
       #|(if middle
           (solve-with-sol (assert (<= num-msg middle)) global-sol)
           (solve-with-sol (assert #t) global-sol))|#
+      (set! t (current-seconds))
       (if middle
           (solve (assert (<= num-msg middle)))
           (solve (assert #t)))
+      (pretty-display `(solve-time ,(- (current-seconds) t)))
       (set! upperbound (evaluate num-msg))
       (set! middle (floor (/ (+ lowerbound upperbound) 2)))
       
@@ -240,6 +247,7 @@
     ;void
     (define (outter-loop)
       (with-handlers* ([exn:fail? (lambda (e) 
+                                    (pretty-display `(solve-time ,(- (current-seconds) t)))
                                     (if (or (equal? (exn-message e)
                                                     "solve: no satisfying execution found")
                                             (equal? (exn-message e)
@@ -270,13 +278,9 @@
   (with-output-to-file #:exists 'truncate (format "output/~a.part" name)
     (lambda () (send my-ast accept concise-printer)))
   
-  (when verbose
-    (pretty-display "\n=== Final Solution ===")
-    (send my-ast accept concise-printer)
-    (pretty-display global-sol)
-    ;(send my-ast pretty-print)
-    ;(display-cores cores)
-    )
+  (pretty-display "\n=== Final Solution ===")
+  (send my-ast accept concise-printer)
+  (display-cores cores)
   
   (let ([evaluator (new symbolic-evaluator%)])
     (send my-ast accept evaluator)
