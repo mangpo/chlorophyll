@@ -21,4 +21,4 @@
   (send (result-ast partition) pretty-print)
   )
 
-(compile "examples/if.cll" "if")
+(compile "tests/function2.cll" "function2")

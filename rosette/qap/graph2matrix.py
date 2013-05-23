@@ -47,7 +47,7 @@ if __name__ == "__main__":
   f = numpy.zeros((n,n))
   s = inp.readline()
   while(s):
-    s = inp.readline().split()
+    s = s.split()
     if len(s) == 3:
       # u v f_uv
       (u,v,w) = [int(x) for x in s]
@@ -56,6 +56,7 @@ if __name__ == "__main__":
       assert(u != v)
     elif len(s) != 0:
       raise "Flow information is given as 'u v f' per line."
+    s = inp.readline()
       
   for row in f:
     for x in row:
