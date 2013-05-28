@@ -45,7 +45,6 @@
 (define (declare env name val)
   (dict-set! env name val))
 
-
 (define (vector-2d-set! vector n a b val)
   (unless (vector-ref vector a)
      (vector-set! vector a (make-vector n #f)))
@@ -75,3 +74,34 @@
    [(same-place? x y) (cons (set) (set))]
    [else 
     (cons (place-set x) (place-set y))]))
+
+(define (direction me other w)
+  (let ([me-x (floor (/ me w))]
+        [me-y (modulo me w)]
+        [other-x (modulo other w)]
+        [other-y (floor (/ other w))])
+    (cond 
+     [(< other-x me-x)
+      (assert (= (add1 other-x) me-x) `(= (add1 other-x) me-x))
+      (assert (= other-y me-y) `(= other-y me-y))
+      `N]
+
+     [(> other-x me-x)
+      (assert (= (sub1 other-x) me-x) `(= (sub1 other-x) me-x))
+      (assert (= other-y me-y) `(= other-y me-y))
+      `S]
+
+     [(< other-y me-y)
+      (assert (= (add1 other-y) me-y) `(= (add1 other-y) me-y))
+      (assert (= other-x me-x) `(= other-x me-x))
+      `W]
+
+     [(> other-y me-y)
+      (assert (= (sub1 other-y) me-y) `(= (sub1 other-y) me-y))
+      (assert (= other-x me-x) `(= other-x me-x))
+      `E])))
+
+
+      
+        
+                  

@@ -259,6 +259,9 @@
 				  name
 				  (position-line pos) 
 				  (position-col pos))))
+
+    (define/public (clone)
+      (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
     ))
 
 (define Array%
@@ -565,5 +568,15 @@
            (send decl pretty-print)))
 
     ))
+
+(define Send%
+  (class Base%
+    (super-new)
+    (init-field port)))
+
+(define Recv%
+  (class Exp%
+    (super-new)
+    (init-field data port)))
 
 

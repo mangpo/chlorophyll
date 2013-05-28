@@ -1,5 +1,8 @@
 TODO
+- rerun compiler.rkt: fix Num% place-type after unroll
+- unroll -> comminsert -> divider
 - run md5_4 again
+- visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
 
 - refactoring interpretor & flow & comminsert
 - master/slave block,function,array (tests/for-array2)

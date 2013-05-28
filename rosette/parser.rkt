@@ -169,8 +169,7 @@
 
     (const ((NUM)           (new Const% [n $1] [pos $1-start-pos])))
 
-    (lit ((const)             (new Num% [n $1]))
-         ((const @ place-exp) (new Num% [n $1] [place $3])))
+    (lit ((const)             (new Num% [n $1])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
          ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos])))
