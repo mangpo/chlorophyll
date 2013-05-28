@@ -85,7 +85,7 @@
             ;  (pretty-display (format "index = ~a\nknown = ~a"
             ;                    (send index to-string) (get-field known-type index))))
             (define place (find-place native))
-            (if (number? place)
+            (if (or (number? place) (place-type-dist? place))
                 place
                 (cons place index)))))
 

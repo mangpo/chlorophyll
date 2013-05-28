@@ -222,10 +222,8 @@
     (super-new [known-type #t])
     (init-field n)
     (inherit print-send-path)
-    (set! place-type (get-field place n))
 
     (define/public (infer-place p)
-      ;(set-field! place n p)
       (set! place-type p))
 
     (define/public (get-value)
@@ -294,11 +292,6 @@
     (inherit-field known-type place-type)
     (init-field op e1 e2)
     (inherit print-send-path)
-    (set! place-type (get-field place op))
-
-    ;;; Infer place for numbers.
-    (when (is-a? e1 Num%) (send e1 infer-place place-type))
-    (when (is-a? e2 Num%) (send e2 infer-place place-type))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
@@ -322,10 +315,6 @@
     (inherit-field known-type place-type)
     (init-field op e1)
     (inherit print-send-path)
-    (set! place-type (get-field place op))
-
-    ;;; Infer place for numbers.
-    (when (is-a? e1 Num%) (send e1 infer-place place-type))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
@@ -489,8 +478,6 @@
   (class Base%
     (super-new)
     (init-field lhs rhs)
-
-    ;;; Infer place for numbers. TODO
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN" indent))
