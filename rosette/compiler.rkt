@@ -17,13 +17,13 @@
   (pretty-display `(part2core ,(layoutinfo-part2core layout-res)))
 
   (pretty-display "--- before unroll ---")
-  ;(send (result-ast partition) accept concise-printer)
+  (send (result-ast partition) accept concise-printer)
   (send (result-ast partition) pretty-print)
   
   (unroll (result-ast partition))
   
   (pretty-display "--- after unroll ---")
-  ;(send (result-ast partition) accept concise-printer)
+  (send (result-ast partition) accept concise-printer)
   
   #|
   (insert-comm (result-ast partition) 
@@ -34,4 +34,4 @@
   )
 
 ;(compile "examples/md5/md5_4.cll" "md5_4")
-(compile "tests/for-array1.cll" "debug")
+(compile "tests/for-array3-3.cll" "debug")

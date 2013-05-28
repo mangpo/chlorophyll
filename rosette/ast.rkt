@@ -441,13 +441,15 @@
 (define For%
   (class LivableGroup%
     (super-new)
-    (init-field iter from to body known [body-placeset #t])
+    (init-field iter from to body known [body-placeset #f])
     (inherit-field place-list)
     (inherit print-send-path)
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
 			      indent (send iter to-string) from to 
                               (place-to-string place-list)))
+      (when body-placeset
+            (pretty-display (format "~a(body-placeset ~a)" (inc indent) body-placeset)))
       (print-send-path indent)
       (send body pretty-print (inc indent)))
 
@@ -532,6 +534,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))
+      (pretty-display (format "~a(body-placeset ~a)" (inc indent) body-placeset))
       (when return
 	    (send return pretty-print (inc indent)))
       (send args pretty-print (inc indent))

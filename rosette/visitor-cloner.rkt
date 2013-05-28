@@ -25,10 +25,11 @@
           (if (and (place-type-dist? place-type) 
                    (equal? (get-field name (cdr place-type)) index))
               (ormap (lambda (x) 
-                       ;; x will fall into one of the ranges
-                       (and (and (>= (get-field from x) (get-field from range))
-                                (<= (get-field to x) (get-field to range)))
-                           (get-field place x))) (car place-type))
+                       ;; return x that covers the given range
+                       (and (and (<= (get-field from x) (get-field from range))
+                                (>= (get-field to x) (get-field to range)))
+                           (get-field place x))) 
+                     (car place-type))
               place-type)))
         
       (cond
@@ -36,13 +37,8 @@
         (new Const% [n (get-field n ast)] [place (get-field place ast)])]
 
        [(is-a? ast Num%)
-        (pretty-display `(CLONER: Num ,(get-field place-type ast) ,(get-place-type)))
-        (send ast pretty-print)
-        (define ret (new Num% [n (send (get-field n ast) accept this)] 
-             [place-type (get-place-type)]))
-        (send ret pretty-print)
-        (pretty-display `(place-type ,(get-field place-type ret)))
-        ret
+        (new Num% [n (send (get-field n ast) accept this)] 
+             [place-type (get-place-type)])
         ]
 
        [(is-a? ast Array%)
@@ -53,6 +49,8 @@
        [(is-a? ast Var%)
         (new Var% [name (get-field name ast)]
              [place-type (get-place-type)] [known-type (get-known-type)])]
+       [(is-a? ast Op%)
+        (new Op% [op (get-field op ast)] [place (get-field place ast)])]
 
        [(is-a? ast UnaExp%)
         (new UnaExp% 
@@ -137,6 +135,9 @@
        [(is-a? ast Program%)
         (new Program%
              [delcs (map (lambda (x) (send x accept this)) (get-field decls ast))])]
+
+       [else
+        (raise (format "visitor-cloner: unimplemented for ~a" ast))]
 
        ))))
              

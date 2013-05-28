@@ -1,5 +1,5 @@
 TODO
-- rerun compiler.rkt: fix Num% place-type after unroll
+- data type check (x[i] + y) when y is alreay array
 - unroll -> comminsert -> divider
 - run md5_4 again
 - visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
@@ -9,10 +9,6 @@ TODO
 - get rid of firstast
 - comminsert: list into tree
 
-
-- fix add1 error!
-- wait for response from emina about md5_5
-- test partial evaluate again
 - to make pair work => need to do data type check before/while create symbolic variables
 
 - known-type check across functions
@@ -40,6 +36,10 @@ TODO
    int[]@{[0:30]=a,[30:50]=b}
 - precise abstract interpret?
 
+ISSUE ABOUT RACKET
+- branch master
+- email emina about smaller example
+- after the error is gone, do perf test again (partial vs no partial)
 
 SYMBOLIC DICT
 - symbolic set or lower space to 4

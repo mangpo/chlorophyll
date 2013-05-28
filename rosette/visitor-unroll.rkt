@@ -151,15 +151,18 @@
           (pop-scope)
           ;(pretty-display "UNROLL: For (after lookup)")
           ;(pretty-display `(rangeplace-list ,rangeplace-list))
-          (for/list ([rangeplace rangeplace-list])
-                    (send cloner set-range rangeplace iter-name)
-                    (new For% 
-                         [iter (send iter clone)] 
-                         [body (send body accept cloner)]
-                         [from (get-field from rangeplace)]
-                         [to (get-field to rangeplace)]
-                         [known (get-field known ast)]
-                         [place-list (get-field place rangeplace)])))
+          (if (empty? rangeplace-list)
+              ast
+              (for/list ([rangeplace rangeplace-list])
+                        (send cloner set-range rangeplace iter-name)
+                        (new For% 
+                             [iter (send iter clone)] 
+                             [body (send body accept cloner)]
+                             [from (get-field from rangeplace)]
+                             [to (get-field to rangeplace)]
+                             [known (get-field known ast)]
+                             [place-list (get-field place rangeplace)]
+                             [body-placeset (get-field body-placeset ast)]))))
         ;; Return list of For%
         ]
 
