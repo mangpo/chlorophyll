@@ -1,6 +1,7 @@
 TODO
 - data type check (x[i] + y) when y is alreay array
 - unroll -> comminsert -> divider
+- test on for-array3-3
 - run md5_4 again
 - visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
 

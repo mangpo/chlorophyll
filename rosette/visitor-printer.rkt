@@ -184,11 +184,6 @@
          (dec-indent)
          (pretty-display "}")
          ]
-
-        [(is-a? ast Program%)
-         (for ([decl (get-field decls ast)])
-              (send decl accept this)
-              (newline))]
         
         [else (raise "Error: printer unimplemented!")]
         

@@ -656,6 +656,14 @@
            (comminfo-firstast rhs-ret))
          ]
 
+       [(is-a? ast Program%)
+	(define ret #f)
+	(for ([decl (get-field stmts ast)])
+	     (let ([decl-ret (send decl accept this)])
+	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+		     (set! ret decl-ret))))
+	ret]
+
        [(is-a? ast Block%) 
         
         (when debug
@@ -696,13 +704,6 @@
 	    (declare env (get-field name ast) (cons ast ret))
 	    ret)]
 
-       [(is-a? ast Program%)
-	(define ret #f)
-	(for ([decl (get-field decls ast)])
-	     (let ([decl-ret (send decl accept this)])
-	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
-		     (set! ret decl-ret))))
-	ret]
 		
        [else (raise (format "Error: count-msg-interpreter unimplemented for ~a" ast))]))
 ))

@@ -49,6 +49,7 @@
        [(is-a? ast Var%)
         (new Var% [name (get-field name ast)]
              [place-type (get-place-type)] [known-type (get-known-type)])]
+
        [(is-a? ast Op%)
         (new Op% [op (get-field op ast)] [place (get-field place ast)])]
 
@@ -131,10 +132,6 @@
              [body (send (get-field body ast) accept this)]
              [return (send (get-field return ast) accept this)]
              [body-placeset (get-field body-placeset ast)])] ;; not copy
-
-       [(is-a? ast Program%)
-        (new Program%
-             [delcs (map (lambda (x) (send x accept this)) (get-field decls ast))])]
 
        [else
         (raise (format "visitor-cloner: unimplemented for ~a" ast))]

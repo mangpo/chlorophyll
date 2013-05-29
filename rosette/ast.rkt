@@ -19,6 +19,9 @@
 (define (inc space)
   (string-append space "  "))
 
+(define (at-any? x)
+  (or (equal? x #f) (and (is-a? x Place%) (equal? (get-field at x) "any"))))
+
 (define (place-type? p)
   (or (number? p) (place-type-dist? p)))
 
@@ -215,6 +218,15 @@
     (abstract to-string)
   ))
 
+(define Scope%
+  (class Base%
+    (super-new)
+    (init-field [body-placeset #f] [parent #f])
+
+    (define/public (print-body-placeset indent)
+      (when body-placeset
+            (pretty-display (format "~a(body-placeset ~a)" (inc indent) body-placeset))))))
+
 
 (define Num%
   (class Exp%
@@ -223,9 +235,6 @@
     (init-field n)
     (inherit print-send-path)
 
-    (define/public (infer-place p)
-      (set! place-type p))
-
     (define/public (get-value)
       (get-field n n))
     
@@ -233,6 +242,10 @@
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
 			      indent (get-field n n) (place-to-string place-type) known-type))
       (print-send-path indent))
+
+    (define/public (infer-place [p place-type])
+      (when (at-any? place-type)
+            (set! place-type p)))
 
     (define/override (to-string) (send n to-string))
     ))
@@ -257,6 +270,10 @@
 				  name
 				  (position-line pos) 
 				  (position-col pos))))
+
+    (define/public (infer-place [p place-type])
+      (when (at-any? place-type)
+            (set! place-type p)))
 
     (define/public (clone)
       (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
@@ -302,6 +319,12 @@
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
+    (define/public (infer-place [p place-type])
+      (when (at-any? place-type)
+            (set! place-type p))
+      (send e1 infer-place p)
+      (send e2 infer-place p))
+
     (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
     
@@ -324,6 +347,11 @@
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
+    (define/public (infer-place [p place-type])
+      (when (at-any? place-type)
+            (set! place-type p))
+      (send e1 infer-place p))
+
     (define/override (to-string)
       (format "(~a ~a)" (send op to-string) (send e1 to-string)))
     
@@ -335,6 +363,21 @@
     (inherit-field known-type place-type pos)
     (init-field name args [signature #f])
     (inherit print-send-path)
+
+    (define/public (infer-place p)
+      void)
+
+    (define/public (copy-at core)
+      (new FuncCall% [name name] 
+           [args (filter (lambda (x) 
+                           (let ([send-path (get-field send-path x)])
+                             (or (not send-path) (= (last send-path) core))))
+                         args)]
+           [known-type known-type]
+           [place-type place-type]
+           [signature signature]))
+
+
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
@@ -439,17 +482,19 @@
     ))
 
 (define For%
-  (class LivableGroup%
+  (class Scope%
     (super-new)
-    (init-field iter from to body known [body-placeset #f])
-    (inherit-field place-list)
-    (inherit print-send-path)
+    (init-field iter from to body place-list known)
+    (inherit print-send-path print-body-placeset)
+
+    (define/public (to-concrete)
+      (set! place-list (concrete-place place-list)))
+
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
 			      indent (send iter to-string) from to 
                               (place-to-string place-list)))
-      (when body-placeset
-            (pretty-display (format "~a(body-placeset ~a)" (inc indent) body-placeset)))
+      (print-body-placeset indent)
       (print-send-path indent)
       (send body pretty-print (inc indent)))
 
@@ -490,24 +535,28 @@
   ))
 
 (define If%
-  (class Base%
+  (class Scope%
     (super-new)
-    (init-field condition true-block [false-block #f] [body-placeset #f])
+    (init-field condition true-block [false-block #f])
+    (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(IF" indent))
+      (print-send-path indent)
       (send condition pretty-print (inc indent))
       (send true-block pretty-print (inc indent))
       (when false-block (send false-block pretty-print (inc indent))))
 ))
 
 (define While%
-  (class Base%
+  (class Scope%
     (super-new)
-    (init-field condition body bound [body-placeset #f])
+    (init-field condition body bound)
+    (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(WHILE" indent))
+      (print-send-path indent)
       (send condition pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
@@ -525,16 +574,17 @@
 ))
 
 (define FuncDecl%
-  (class Base%
+  (class Scope%
     (super-new)
-    (init-field name args body return [body-placeset #f])
+    (init-field name args body return)
     (inherit-field pos)
+    (inherit print-body-placeset)
     ;; args = list of VarDecl%
     ;; return = VarDecl%
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))
-      (pretty-display (format "~a(body-placeset ~a)" (inc indent) body-placeset))
+      (print-body-placeset indent)
       (when return
 	    (send return pretty-print (inc indent)))
       (send args pretty-print (inc indent))
@@ -549,14 +599,8 @@
     ))
 
 (define Program%
-  (class Base%
+  (class Block%
     (super-new)
-    (init-field decls)
-
-    (define/override (pretty-print [indent ""])
-      (for ([decl decls])
-           (send decl pretty-print)))
-
     ))
 
 (define Send%

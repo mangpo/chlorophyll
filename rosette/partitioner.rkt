@@ -266,7 +266,7 @@
     (outter-loop)
     )
     
-  (for ([decl (get-field decls my-ast)])
+  (for ([decl (get-field stmts my-ast)])
     (if 
      ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
      (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
@@ -293,6 +293,6 @@
 
 #|
 (define t (current-seconds))
-(result-msgs (optimize-comm "tests/for-array3-3.cll" #:cores 16 #:capacity 256 #:verbose #t))
+(result-msgs (optimize-comm "tests/for-array1.cll" #:cores 16 #:capacity 256 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
 |#

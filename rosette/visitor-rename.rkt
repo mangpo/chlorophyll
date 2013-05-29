@@ -76,8 +76,16 @@
               (for ([p (get-field place-list ast)])
                    (send p accept this))
               (when (string? place)
+                    (set-field! place-list ast (convert-to-num place)))))]
+
+       [(is-a? ast For%)
+        (let ([place (get-field place-list ast)])
+          (if (list? place)
+              (for ([p (get-field place-list ast)])
+                   (send p accept this))
+              (when (string? place)
                     (set-field! place-list ast (convert-to-num place)))))
-	(when (is-a? ast For%) (send (get-field body ast) accept this))]
+	(send (get-field body ast) accept this)]
        
        [(or (is-a? ast Var%) (is-a? ast Num%))
         (void)]
@@ -124,10 +132,6 @@
         (send (get-field return ast) accept this)
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)]
-
-       [(is-a? ast Program%)
-        (for ([decl (get-field decls ast)])
-             (send decl accept this))]
 
        [else (raise (format "Error: in partition-to-number, ~a unimplemented!" ast))]
        ))

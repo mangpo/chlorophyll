@@ -111,7 +111,7 @@
         ast]
 
        [(is-a? ast VarDecl%) 
-        ;(pretty-display "UNROLL: VarDecl (before declare)")
+        (pretty-display "UNROLL: VarDecl (before declare)")
         (for ([var (get-field var-list ast)])
              ;; Delcare as #f because this is not loop index.
              (declare index-map var #f))
@@ -167,6 +167,7 @@
         ]
 
        [(is-a? ast If%)
+        (pretty-display "UNROLL: If")
         (send (get-field condition ast) accept this)
         (send (get-field true-block ast) accept this)
         (when (get-field false-block ast)
@@ -179,9 +180,14 @@
         ast]
 
        [(is-a? ast Assign%)
+        (pretty-display "UNROLL: Assign")
         (send (get-field lhs ast) accept this)
         (send (get-field rhs ast) accept this)
         ast]
+
+       [(is-a? ast Program%)
+        (for ([decl (get-field stmts ast)])
+             (send decl accept this))]
 
        [(is-a? ast Block%)
         
@@ -192,10 +198,6 @@
 
        [(is-a? ast FuncDecl%)
         (send (get-field body ast) accept this)]
-
-       [(is-a? ast Program%)
-        (for ([decl (get-field decls ast)])
-             (send decl accept this))]
 
        ))))
        

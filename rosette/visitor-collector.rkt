@@ -38,11 +38,12 @@
          ]
 
         [(is-a? ast LivableGroup%)
-	 (let ([ret (place-set (get-field place-list ast))])
-           (if (is-a? ast For%)
-	       (set-union ret (send (get-field body ast) accept this))
-	       ret))
+	 (place-set (get-field place-list ast))
 	 ]
+
+        [(is-a? ast For%)
+         (let ([ret (place-set (get-field place-list ast))])
+           (set-union ret (send (get-field body ast) accept this)))]
 
 	[(is-a? ast Num%)
 	 (send (get-field n ast) accept this)
@@ -91,11 +92,8 @@
                [args-set (send (get-field args ast) accept this)]
                [body-set (send (get-field body ast) accept this)])
            (set-union (set-union return-set args-set) body-set))]
-
-        [(is-a? ast Program%)
-	 (union-set-from-list (get-field decls ast))]
         
-        [else (raise "Error: var-collector unimplemented!")]
+        [else (raise (format "Error: var-collector unimplemented for ~a" ast))]
 	))))
         
         

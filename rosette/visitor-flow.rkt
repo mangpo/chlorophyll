@@ -106,10 +106,6 @@
        [(is-a? ast FuncDecl%)
         (send (get-field body ast) accept this)]
 
-       [(is-a? ast Program%)
-        (foldl (lambda (decl edges) (append (send decl accept this) edges))
-               (list) (get-field decls ast))]
-
        [(or (is-a? ast Num%)
             (is-a? ast Var%)
             (is-a? ast Livable%)

@@ -30,11 +30,18 @@
                    (send p accept this))
               ;(set-field! place ast (evaluate place global-sol))))
               (send ast to-concrete)))
-
-        (when (is-a? ast For%)
-              (send (get-field body ast) accept this)
-              (evaluate-placeset))
         ]
+
+       [(is-a? ast For%)
+        (let ([place (get-field place-list ast)])
+          (if (list? place)
+              (for ([p place])
+                   (send p accept this))
+              ;(set-field! place ast (evaluate place global-sol))))
+              (send ast to-concrete)))
+
+        (send (get-field body ast) accept this)
+        (evaluate-placeset)]
 
        [(is-a? ast Num%)
 	 (send (get-field n ast) accept this)
@@ -43,7 +50,8 @@
 
        [(is-a? ast Array%)
         (send ast to-concrete)
-        (send (get-field index ast) accept this)]
+        (send (get-field index ast) accept this)
+        (send (get-field index ast) infer-place (get-field place-type ast))]
 
        [(is-a? ast Var%) 
         (send ast to-concrete)]
@@ -52,23 +60,36 @@
         (send (get-field op ast) accept this)
         (send (get-field e1 ast) accept this)
         (send ast to-concrete)
+        (send ast infer-place (get-field place-type ast))
         ]
 
        [(is-a? ast BinExp%)
+        (define e1 (get-field e1 ast))
+        (define e2 (get-field e1 ast))
         (send (get-field op ast) accept this)
         (send (get-field e1 ast) accept this)
         (send (get-field e2 ast) accept this)
         (send ast to-concrete)
+        (send ast infer-place (get-field place-type ast))
         ]
 
        [(is-a? ast FuncCall%)
         (for ([arg (get-field args ast)])
              (send arg accept this))
-        (send ast to-concrete)]
+        (send ast to-concrete)
+        (for ([arg (get-field args ast)]
+              [param (get-field stmts (get-field args (get-field signature ast)))])
+             (send arg infer-place (get-field place-type param)))
+        ]
 
        [(is-a? ast Assign%)
-        (send (get-field lhs ast) accept this)
-        (send (get-field rhs ast) accept this)]
+        (define lhs (get-field lhs ast))
+        (define rhs (get-field rhs ast))
+        (send lhs accept this)
+        (send rhs accept this)
+        (send lhs infer-place (get-field place-type rhs))
+        (send rhs infer-place (get-field place-type lhs))
+        ]
 
        [(is-a? ast If%)
         (send (get-field condition ast) accept this)
@@ -94,10 +115,6 @@
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)
         (evaluate-placeset)]
-
-       [(is-a? ast Program%)
-        (for ([decl (get-field decls ast)])
-             (send decl accept this))]
 
        [else (raise (format "Error: symbolic-evaluator unimplemented for ~a!" ast))]
 

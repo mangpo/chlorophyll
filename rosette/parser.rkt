@@ -177,6 +177,9 @@
     (ele ((id) $1)
 	 ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3])))
 
+    (funccall
+         ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos])))
+
     (exp ((lit) $1)
 	 ((ele) $1)
 
@@ -207,7 +210,7 @@
          ((exp OR @ place-type-dist exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2)
-	 ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos]))
+	 ((funccall) $1)
          )
 
     (known-type
@@ -311,6 +314,9 @@
          ((RETURN exp SEMICOL)
             (new Assign% [lhs (new Var% [name "#return"] [pos $1-start-pos])] 
                  [rhs $2] [pos $1-start-pos]))
+
+         ; function call
+         ((funccall) $1)
          )
 
     (stmts
@@ -336,7 +342,7 @@
          ((decl decls) (cons $1 $2)))
          
     (program
-         ((decls) (new Program% [decls $1])))
+         ((decls) (new Program% [stmts $1])))
 
 )))
 
