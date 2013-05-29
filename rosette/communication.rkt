@@ -1,8 +1,15 @@
 #lang racket
 
-(require "visitor-comminsert.rkt" "visitor-unroll.rkt")
+(require "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt")
 
 (provide (all-defined-out))
+
+;; Unroll for loop according to array distributions of variables inside its body.
+;; Note: given AST is mutated.
+(define (unroll ast)
+  (define for-unroller (new loop-unroller%))
+  (send ast accept for-unroller)
+  )
 
 ;; 1) Insert communication route to send-path field.
 ;; 2) Convert partition ID to actual core ID.
@@ -14,9 +21,7 @@
 
   (send ast accept commcode-inserter))
 
-;; Unroll for loop according to array distributions of variables inside its body.
-;; Note: given AST is mutated.
-(define (unroll ast)
-  (define for-unroller (new loop-unroller%))
-  (send ast accept for-unroller)
-  )
+(define (regenerate ast w h)
+  (define divider (new ast-divider% [w w] [h h]))
+  (send ast accept divider))
+

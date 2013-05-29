@@ -32,6 +32,7 @@
   (pretty-display "--- after insert communication ---")
   (send (result-ast partition) pretty-print)
 
+  (regenerate (result-ast partition) 5 4)
   )
 
 ;(compile "examples/md5/md5_4.cll" "md5_4")

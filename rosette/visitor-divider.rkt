@@ -15,11 +15,14 @@
                                         (let ([block (new Program% [stmts (list)])])
                                           (core block block (list) #f)))])
 
-    (define-syntax-rule (get-program i)
+   (define-syntax-rule (get-program i)
       (core-program (vector-ref cores i)))
 
-    ;; (define-syntax-rule (get-workspace i)
-    ;;   (core-workspace (vector-ref cores i)))
+    (define-syntax-rule (get-workspace i)
+      (core-workspace (vector-ref cores i)))
+
+    (define-syntax-rule (set-workspace i x)
+      (set-core-workspace! (vector-ref cores i) x))
 
     (define-syntax-rule (push-workspace i x)
       (let ([block (core-workspace (vector-ref cores i))])
@@ -50,25 +53,24 @@
     (define-syntax-rule (get-parent i)
       (core-parent (vector-ref cores i)))
 
-    (define-syntax-rule (send x to data)
-      (new Send% [data data] [port (direction x to)]))
+    (define (gen-send x to data)
+      (new Send% [data data] [port (direction x to w)]))
 
-    (define-syntax-rule (recv x from)
-      (new Recv% [port (direction x from)]))
+    (define (gen-recv x from)
+      (new Recv% [port (direction x from w)]))
 
-    (define-syntax-rule (transfer from x to)
-      (send x to (recv x from)))
+    (define (transfer from x to)
+      (gen-send x to (gen-recv x from)))
 
     (define (clear-stack c)
       (let ([stack (get-stack c)])
         (unless (empty? stack)
-          (assert (= (length stack) 1)
-                  "visitor-divider: thre is more than one EXP remained in the stack!")
+          (unless (= (length stack) 1)
+            (raise "visitor-divider: thre is more than one EXP remained in the stack!"))
           (push-workspace c (car stack)))))
 
     (define (reverse-stmts block)
-      (set-field stmts block (reverse (get-field stmts block))))
-    
+      (set-field! stmts block (reverse (get-field stmts block))))
 
     (define/public (visit ast)
       (define (gen-comm-path path)    
@@ -80,12 +82,12 @@
                 (push-workspace b (transfer a b c)))
               (let ([from (car path)]
                     [to (cadr path)])
-                (push-stack to (recv to from)))))
+                (push-stack to (gen-recv to from)))))
         
         (let ([from (car path)]
               [to (cadr path)])
-          (push-work-space from (send from to (top-stack from))))
-        (intermediate path)))
+          (push-workspace from (gen-send from to (top-stack from))))
+        (intermediate path))
   
       (define (gen-comm)
         (let ([path (get-field send-path ast)])
@@ -97,7 +99,7 @@
                 ;;       (pop-stack (caar path)))
                 ;;     (begin
                       (gen-comm-path path)
-                      (pop-stack (get-field place-type ast) (car path)))))
+                      (pop-stack (car path)))))
 
       (define (gen-comm-condition)
         (let ([path (get-field send-path ast)]
@@ -107,13 +109,13 @@
           (define (gen-condition-path path)
             (let ([from (car path)]
                   [x (cadr path)])
-              (unless (set-member? x)
+              (unless (set-member? visit x)
                 (set! visit (set-add visit x))
-                (push-workspace from (send from x (new Var% [name "#tmp"] [place-type from])))
+                (push-workspace from (gen-send from x (new Var% [name "#tmp"] [place-type from])))
                 (push-workspace x (new Assign% 
                                    ;; special variable
                                    [lhs (new Var% [name "#tmp"] [place-type x])]
-                                   [rhs (recv x from)]))
+                                   [rhs (gen-recv x from)]))
                 (push-stack x (new Var% [name "#tmp"] [place-type x]))))
             (when (> (length path) 2)
                     (gen-condition-path (cdr path))))
@@ -124,7 +126,7 @@
                                            ;; special variable
                                            [lhs (new Var% [name "#tmp"] [place-type place])]
                                            [rhs (pop-stack place)]))
-                (push-stack place (new Var% [name "#tmp"] [place-type x]))
+                (push-stack place (new Var% [name "#tmp"] [place-type place]))
                 (for ([p path])
                      (gen-condition-path p)))
         ))
@@ -133,9 +135,9 @@
         (for ([c (get-field body-placeset ast)])
              (let* ([old-space (get-workspace c)]
                     ;; pop stack and put in in if condition
-                    [new-ast (gen-ast c)]
+                    [new-ast (gen-ast c)])
                (clear-stack c)     
-               (set-field parent (get-field body new-ast) new-ast)
+               (set-field! parent (get-field body new-ast) new-ast)
                (push-workspace c new-ast)
                (set-workspace c (get-field body new-ast))))
 
@@ -146,7 +148,7 @@
                     [new-ast (get-field parent body)])
                (clear-stack c)
                (reverse-stmts body)
-               (set-workspace c (get-field parent new-ast))))))
+               (set-workspace c (get-field parent new-ast)))))
                 
 
       (cond
@@ -207,8 +209,8 @@
                                 [false-block (new Block% [stmts (list)])]
                                 [parent old-space])])
                (clear-stack c)     
-               (set-field parent (get-field true-block new-if) new-if)
-               (set-field parent (get-field false-block new-if) new-if)
+               (set-field! parent (get-field true-block new-if) new-if)
+               (set-field! parent (get-field false-block new-if) new-if)
                (push-workspace c new-if)
                (set-workspace c (get-field true-block new-if))))
 
@@ -263,7 +265,8 @@
 
         (define (func-return-at ast core)
           (let ([return (get-field return ast)])
-            (if (= (get-field place return) core)
+            (if (and (not (equal? (get-field type return) "void")) 
+                     (= (get-field place return) core))
                 return
                 (new VarDecl% [var-list (list "#return")]
                      [type "void"] [place core] [known (get-field known return)]))))
@@ -284,8 +287,48 @@
 
         (when (is-a? ast Program%)
               (for ([i (in-range n)])
-                   (assert (is-a? (get-workspace i) Program%) "Top level scope is not Program!")
+                   (unless (is-a? (get-workspace i) Program%) 
+                           (raise "Top level scope is not Program!"))
                    (reverse-workspace i)))]
 
-       )))
-                                              
+       ))))                            
+
+ 
+#|     (cond
+       [(is-a? ast Num%)
+        void
+        ]
+
+       [(is-a? ast Var%)
+        void]
+
+       [(is-a? ast BinExp%)
+        (send (get-field e1 ast) accept this)]
+       
+       [(is-a? ast UnaExp%)
+        void]
+
+       [(is-a? ast FuncCall%)
+        void]
+
+       [(is-a? ast Assign%) 
+        void]
+
+       [(is-a? ast If%)
+        void]
+               
+       [(is-a? ast While%)
+        void]
+
+       [(is-a? ast For%)
+        void]
+
+       [(is-a? ast FuncDecl%)
+        void]
+       
+
+       [(is-a? ast Block%)
+        void]
+
+       ))))                 
+|#

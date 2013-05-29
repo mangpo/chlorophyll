@@ -78,8 +78,8 @@
 (define (direction me other w)
   (let ([me-x (floor (/ me w))]
         [me-y (modulo me w)]
-        [other-x (modulo other w)]
-        [other-y (floor (/ other w))])
+        [other-x (floor (/ other w))]
+        [other-y (modulo other w)])
     (cond 
      [(< other-x me-x)
       (assert (= (add1 other-x) me-x) `(= (add1 other-x) me-x))
