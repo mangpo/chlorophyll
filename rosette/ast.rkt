@@ -565,7 +565,7 @@
 (define Block%
   (class Base%
      (super-new)
-     (init-field stmts)
+     (init-field stmts [parent #f])
 
      (define/override (pretty-print [indent ""])
        (for ([stmt stmts])
