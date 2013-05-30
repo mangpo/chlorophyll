@@ -283,17 +283,22 @@
   (class Var%
     (super-new)
     (inherit-field known-type place-type pos name)
-    (init-field index)
+    (init-field index [offset 0])
     (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Array:~a @~a (known=~a))" 
 			      indent name (place-to-string place-type) known-type))
       (print-send-path indent)
+      (when (> indent 0)
+	    (pretty-display (format "~a(offset: ~a)" (inc indent) offset)))
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)
-      (format "~a[~a]" name (send index to-string)))
+      (if (> offset 0)
+	  (format "~a[(~a)-~a]" name (send index to-string) offset)
+	  (format "~a[~a]" name (send index to-string)))
+      )
 
     (define/public (index-out-of-bound index)
       (raise-range-error 'array "error at src" "" index 
@@ -301,8 +306,7 @@
 			 0 3))
     ))
 
-;; AST for Binary opteration. Easy inferences happen here.
-;; If left or right operand is a constant, infer its placement equal to the operator's.
+;; AST for Binary opteration. 
 (define BinExp%
   (class Exp%
     (super-new)
@@ -330,8 +334,7 @@
     
     ))
 
-;; AST for Binary opteration. Easy inferences happen here.
-;; If the operand is a constant, infer its placement equal to the operator's.
+;; AST for Unary opteration. 
 (define UnaExp%
   (class Exp%
     (super-new)
@@ -606,11 +609,22 @@
 (define Send%
   (class Base%
     (super-new)
-    (init-field port)))
+    (init-field data port)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(SEND to:~a" indent port))
+      (send data pretty-print (inc indent)))))
 
 (define Recv%
   (class Exp%
     (super-new)
-    (init-field data port)))
+    (init-field port)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(RECV from:~a)" indent port)))
+
+    (define/override (to-string)
+      (format "read(~a)" port))))
+    
 
 

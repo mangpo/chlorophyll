@@ -1,4 +1,5 @@
 TODO
+- something wrong with solve examples/if.cll
 - data type check (x[i] + y) when y is alreay array
 - unroll -> comminsert -> divider
 - test on for-array3-3

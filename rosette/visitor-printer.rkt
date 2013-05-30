@@ -100,6 +100,14 @@
 		(display ", ")
 		(send arg accept this)))
 	 (display ")")]
+
+	[(is-a? ast Recv%)
+	 (display (format "read(~a)" (get-field port ast)))]
+
+	[(is-a? ast Send%)
+	 (display (format "send(~a," (get-field port ast)))
+	 (send (get-field data ast) accept this)
+	 (display ");")]
         
         [(is-a? ast Assign%)
 	 (let ([lhs (get-field lhs ast)])

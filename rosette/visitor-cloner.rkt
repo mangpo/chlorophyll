@@ -28,10 +28,22 @@
                        ;; return x that covers the given range
                        (and (and (<= (get-field from x) (get-field from range))
                                 (>= (get-field to x) (get-field to range)))
-                           (get-field place x))) 
+			    (get-field place x))) 
                      (car place-type))
               place-type)))
         
+      (define (get-place-offset)
+        (let ([place-type (get-field place-type ast)])
+          (if (and (place-type-dist? place-type) 
+                   (equal? (get-field name (cdr place-type)) index))
+              (ormap (lambda (x) 
+                       ;; return x that covers the given range
+                       (and (and (<= (get-field from x) (get-field from range))
+                                (>= (get-field to x) (get-field to range)))
+			    (cons (get-field place x) (get-field from x)))) 
+                     (car place-type))
+              (cons place-type 0))))
+
       (cond
        [(is-a? ast Const%)
         (new Const% [n (get-field n ast)] [place (get-field place ast)])]
@@ -42,9 +54,11 @@
         ]
 
        [(is-a? ast Array%)
+	(define place-offset (get-place-offset))
         (new Array% [name (get-field name ast)] 
              [index (send (get-field index ast) accept this)]
-             [place-type (get-place-type)] [known-type (get-known-type)])]
+	     [offset (cdr place-offset)] ;; need this to substract from the index
+             [place-type (car place-offset)] [known-type (get-known-type)])]
 
        [(is-a? ast Var%)
         (new Var% [name (get-field name ast)]

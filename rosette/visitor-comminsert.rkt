@@ -364,11 +364,11 @@
         (when debug 
               (pretty-display (format "COMMINSERT: If")))
         
-        (define ret (set-union cond-ret true-ret false-ret))
-        (set-field! body-placeset ast ret)
+        (define body-ret (set-union true-ret false-ret))
+        (set-field! body-placeset ast body-ret)
         
         (gen-path-condition ast)
-        (set-union ret (all-path ast))
+        (set-union body-ret cond-ret (all-path ast))
         ]
 
        [(is-a? ast While%)

@@ -1,6 +1,6 @@
 #lang racket
 
-(require "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt")
+(require "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt" "visitor-printer.rkt")
 
 (provide (all-defined-out))
 
@@ -21,7 +21,18 @@
 
   (send ast accept commcode-inserter))
 
-(define (regenerate ast w h)
+(define (regenerate ast w h name)
   (define divider (new ast-divider% [w w] [h h]))
-  (send ast accept divider))
+  (define programs (send ast accept divider))
+
+  (define concise-printer (new printer% [out #t]))
+  
+  (with-output-to-file #:exists 'truncate (format "output/~a.block" name)
+    (lambda ()
+      (for ([i (in-range (* w h))])
+	   (pretty-display (format "----------------------- CORE ~a(~a,~a) ------------------------"
+				   i (floor (/ i w)) (modulo i w)))
+	   (send (vector-ref programs i) accept concise-printer)
+	   (newline)))))
+       
 
