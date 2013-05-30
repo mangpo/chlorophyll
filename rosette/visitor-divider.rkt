@@ -96,7 +96,8 @@
               (let ([a (car path)]
                     [b (cadr path)]
                     [c (caddr path)])
-                (push-workspace b (transfer a b c)))
+                (push-workspace b (transfer a b c))
+		(intermediate (cdr path)))
               (let ([from (car path)]
                     [to (cadr path)])
                 (push-stack to (gen-recv to from)))))
@@ -222,15 +223,29 @@
           (gen-comm))]
 
        [(is-a? ast FuncCall%)
+        (define (func-args-at ast core)
+          (filter 
+	   (lambda (x) (= (get-field place-type x) core))
+	   (get-field stmts (get-field args ast))))
+
+	(define (new-funccall core)
+	  (let ([args (func-args-at (get-field signature ast) core)])
+	    (new FuncCall% [name (get-field name ast)]
+		 ;; reverse order because we pop from stack
+		 [args (reverse (map (lambda (x) (pop-stack core)) args))])))
+
+	;; add expressions for arguments
         (for ([arg (get-field args ast)])
              (send arg accept this))
+
 	(pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string)))
         (let ([place (get-field place-type ast)])
           (for ([c (get-field body-placeset (get-field signature ast))])
                (if (not (= place c))
-                   (push-workspace c (send ast copy-at c))
-                   (send ast copy-ast c)))
-          ;; TODO: check when funcCall is stmt not exp!
+		   ;; if return place is not here, funcall is statment
+                   (push-workspace c (new-funccall c))
+		   ;; if it is here, funccall is exp
+                   (push-stack c (new-funccall c))))
           (gen-comm))]
 
        [(is-a? ast ArrayDecl%)

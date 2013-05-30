@@ -36,4 +36,4 @@
   )
 
 ;(compile "examples/md5/md5_4.cll" "md5_4")
-(compile "examples/if.cll" "if")
+(compile "tests/function3.cll" "function3")

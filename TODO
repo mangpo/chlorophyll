@@ -1,4 +1,6 @@
 TODO
+- fix deadlock
+- funccall inside for/while/if
 - something wrong with solve examples/if.cll
 - data type check (x[i] + y) when y is alreay array
 - unroll -> comminsert -> divider

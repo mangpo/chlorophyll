@@ -338,7 +338,8 @@
                (gen-path arg param)
                (set! path-ret (all-path arg))))
 
-        (set-union args-ret (get-field body-placeset (get-field signature ast)) (all-place-type) (path-ret))
+        (set-union path-ret args-ret 
+		   (get-field body-placeset (get-field signature ast)) (all-place-type))
         ]
 
        [(is-a? ast Assign%) 

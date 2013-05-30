@@ -96,10 +96,11 @@
 	[(is-a? ast FuncCall%)
 	 (display (format "~a(" (get-field name ast)))
 	 (let ([args (get-field args ast)])
-	   (send (car args) accept this)
-	   (for ([arg (cdr args)])
-		(display ", ")
-		(send arg accept this)))
+	   (unless (empty? args)
+		   (send (car args) accept this)
+		   (for ([arg (cdr args)])
+			(display ", ")
+			(send arg accept this))))
 	 (display ")")]
 
 	[(is-a? ast Recv%)
