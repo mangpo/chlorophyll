@@ -50,7 +50,6 @@
 
 
         [(is-a? ast Num%)
-         ;(send (get-field n ast) accept this)
 	 (if out
 	     (display (get-field n (get-field n ast)))
 	     (display (format "~a@~a" (get-field n (get-field n ast)) 
@@ -58,9 +57,11 @@
          ]
       
         [(is-a? ast Array%)
-         (display (format "~a["
-                        (get-field name ast)))
+         (display (format "~a[" (get-field name ast)))
 	 (send (get-field index ast) accept this)
+	 (let ([offset (get-field offset ast)])
+	   (when (> offset 0)
+		 (display (format "-~a" offset))))
 	 (display (format "]"))
          ]
       

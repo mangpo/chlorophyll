@@ -290,7 +290,7 @@
       (pretty-display (format "~a(Array:~a @~a (known=~a))" 
 			      indent name (place-to-string place-type) known-type))
       (print-send-path indent)
-      (when (> indent 0)
+      (when (> offset 0)
 	    (pretty-display (format "~a(offset: ~a)" (inc indent) offset)))
       (send index pretty-print (inc indent)))
 

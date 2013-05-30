@@ -80,7 +80,11 @@
 	    (for ([e stack])
 		 (pretty-display (send e to-string)))
             (raise "visitor-divider: thre is more than one EXP remained in the stack!"))
-          (push-workspace c (car stack)))))
+
+	  (let ([e (car stack)])
+	    (if (is-a? e FuncCall%)
+		(push-workspace c (car stack))
+		(pretty-display (format "WARNING: ~a is left unused @CORE ~a" (send e to-string) c)))))))
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
@@ -173,23 +177,25 @@
         (gen-comm)
         ]
 
-       [(is-a? ast Var%)
-	(pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string)))
-        (push-stack (get-field place-type ast) ast)
-        (gen-comm)]
-
        [(is-a? ast Array%)
 	(send (get-field index ast) accept this)
 
-	(pretty-display (format "\nDIVIDE: Array ~a\n" (send ast to-string)))
+	(pretty-display (format "\nDIVIDE: Array ~a (known=~a)\n" 
+				(send ast to-string) 
+				(get-field known-type ast)))
 	;; only work for known type for now
-	(unless (not (get-field known-type ast))
+	(unless (get-field known-type ast)
 		(raise "We only handle known-type array for now. Sorry!"))
 
 	(let ([place (get-field place-type ast)])
 	  (set-field! index ast (pop-stack place))
 	  (push-stack place ast)
 	  (gen-comm))]
+
+       [(is-a? ast Var%)
+	(pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string)))
+        (push-stack (get-field place-type ast) ast)
+        (gen-comm)]
 
        [(is-a? ast BinExp%)
         (send (get-field e1 ast) accept this)
@@ -223,7 +229,7 @@
           (gen-comm))]
 
        [(is-a? ast ArrayDecl%)
-	(let ([place (get-field place ast)])
+	(let ([place (get-field place-list ast)])
 	  (if (number? place)
 	      (push-workspace place ast)
 	      (for ([p place])
