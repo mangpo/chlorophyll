@@ -8,7 +8,7 @@
 
 (define ast-divider%
   (class* object% (visitor<%>)
-    (struct core (program workspace stack) #:mutable)
+    (struct core (program workspace stack temp) #:mutable)
 
     (super-new)
     (init-field w h [n (* w h)] [cores (make-vector n)])
@@ -17,7 +17,7 @@
     (for ([i (in-range n)])
 	 (vector-set! cores i 
 		      (let ([block (new Program% [stmts (list)])])
-			(core block block (list)))))
+			(core block block (list) 0))))
 
    (define (get-program i)
       (core-program (vector-ref cores i)))
@@ -62,6 +62,12 @@
 	(pretty-display `(top-stack ,i -> ,(send (car stack) to-string)))
         (car stack)))
 
+    (define (get-temp i)
+      (let* ([id (vector-ref cores i)]
+	     [temp (core-temp id)])
+	(set-core-temp! id (add1 temp))
+	(format "#tmp~a" temp)))
+
     (define (gen-send x to data)
       (new Send% [data data] [port (direction x to w)]))
 
@@ -98,9 +104,13 @@
                     [c (caddr path)])
                 (push-workspace b (transfer a b c))
 		(intermediate (cdr path)))
-              (let ([from (car path)]
-                    [to (cadr path)])
-                (push-stack to (gen-recv to from)))))
+              (let* ([from (car path)]
+		     [to (cadr path)]
+		     [temp (get-temp to)])
+		(push-workspace to (new Assign%
+					[lhs (new Var% [name temp] [place-type to])]
+					[rhs (gen-recv to from)]))
+                (push-stack to (new Var% [name temp] [place-type to])))))
         
         (let ([from (car path)]
               [to (cadr path)])
