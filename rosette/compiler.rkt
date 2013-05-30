@@ -36,4 +36,4 @@
   )
 
 ;(compile "examples/md5/md5_4.cll" "md5_4")
-(compile "tests/add-known.cll" "add-known")
+(compile "examples/if.cll" "if")

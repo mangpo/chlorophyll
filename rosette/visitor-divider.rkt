@@ -164,11 +164,16 @@
         
         (for ([c (get-field body-placeset ast)])
              (let* ([body (get-workspace c)]
-                    [new-ast (get-field parent body)])
+                    [new-ast (get-field parent body)]
+		    [old-workspace (get-field parent new-ast)])
                (clear-stack c)
                (reverse-stmts body)
-               (set-workspace c (get-field parent new-ast)))))
-                
+               (set-workspace c old-workspace)
+
+	       ;; remove new-ast if its body is empty
+	       (when (empty? (get-field stmts body))
+		     (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))
+	       )))
 
       (cond
        [(is-a? ast Num%)
@@ -273,6 +278,7 @@
         (gen-comm-condition)
 
 	(pretty-display (format "\nDIVIDE: If (true)\n"))
+	;; add If AST and prepare for true-block
         (for ([c (get-field body-placeset ast)])
              (let* ([old-space (get-workspace c)]
                     ;; pop stack and put in in if condition
@@ -286,8 +292,10 @@
                (push-workspace c new-if)
                (set-workspace c (get-field true-block new-if))))
 
+	;; add content inside true-block
         (send (get-field true-block ast) accept this)
 
+	;; prepare for false-block
 	(pretty-display (format "\nDIVIDE: If (false)\n"))
         (for ([c (get-field body-placeset ast)])
              (let* ([true-block (get-workspace c)]
@@ -296,15 +304,24 @@
                (reverse-stmts true-block)
                (set-workspace c (get-field false-block if))))
 
+	;; add content inside false-block
         (when (get-field false-block ast)
               (send (get-field false-block ast) accept this))
               
+	;; pop scope
         (for ([c (get-field body-placeset ast)])
              (let* ([false-block (get-workspace c)]
-                    [if (get-field parent false-block)])
+                    [if (get-field parent false-block)]
+		    [old-workspace (get-field parent if)])
                (clear-stack c)
                (reverse-stmts false-block)
-               (set-workspace c (get-field parent if))))]
+               (set-workspace c old-workspace)
+
+	       ;; remove new-ast if its true-block and false-block are empty
+	       (when (and (empty? (get-field stmts (get-field true-block if)))
+			  (empty? (get-field stmts false-block)))
+		     (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))))
+	]
                
        [(is-a? ast While%)
         (send (get-field condition ast) accept this)
