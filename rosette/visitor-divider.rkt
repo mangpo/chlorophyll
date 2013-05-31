@@ -78,19 +78,22 @@
       (gen-send x to (gen-recv x from)))
 
     (define (clear-stack c)
-      (let ([stack (get-stack c)])
+      (let ([stack (get-stack c)]
+	    [count 0])
 	(pretty-display `(clear-stack ,c))
-        (unless (empty? stack)
-          (unless (= (length stack) 1)
-	    (pretty-display (format "REMAINING ITEMS @CORE ~a:" c))
-	    (for ([e stack])
-		 (pretty-display (send e to-string)))
-            (raise "visitor-divider: thre is more than one EXP remained in the stack!"))
+	(for ([e stack])
+	     (cond
+	      [(is-a? e FuncCall%)
+	       (if (= count 0)
+		   (push-workspace c e)
+		   (raise (format "@CORE ~a: ~a.\nThere is more than one function call left in the stack!" c (send e to-srting))))
+	       (set! count (add1 count))]
 
-	  (let ([e (car stack)])
-	    (if (is-a? e FuncCall%)
-		(push-workspace c (car stack))
-		(pretty-display (format "WARNING: ~a is left unused @CORE ~a" (send e to-string) c)))))))
+	      [(and (is-a? e Var%) (regexp-match #rx"#tmp.*" (get-field name e)))
+	       void]
+
+	      [else
+	       (raise (format "@CORE ~a: ~a is left in the stack!" c (send e to-sring)))]))))
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
@@ -252,7 +255,7 @@
         (let ([place (get-field place-type ast)])
           (for ([c (get-field body-placeset (get-field signature ast))])
                (if (not (= place c))
-		   ;; if return place is not here, funcall is statment
+		   ;; if return place is not here, funcall is statement
                    (push-workspace c (new-funccall c))
 		   ;; if it is here, funccall is exp
                    (push-stack c (new-funccall c))))

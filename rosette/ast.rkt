@@ -91,20 +91,51 @@
 
 ;; evaluate place
 (define (concrete-place place)
+  ;; (define (all-equal? ref l)
+  ;;   (andmap (lambda (x) (= (get-field place x) ref)) l))
+
+  ;; (define (compress p)
+  ;;   (let ([ref (get-field place (car p))])
+  ;;     (if (all-equal? ref (cdr p))
+  ;; 	  ref
+  ;; 	  p)))
+
+  (define (compress p)
+    (define (compress-inner l)
+      (if (empty? (cdr l))
+	  l
+	  (let ([first (car l)]
+		[rest (compress-inner (cdr l))])
+	  (if (= (get-field place first) (get-field place (car rest)))
+	      (begin
+		;; merge
+		(set-field! from (car rest) (get-field from first))
+		rest)
+	      (cons first rest)))))
+    
+    (let ([ret (compress-inner p)])
+      (if (= (length ret) 1)
+	  (get-field place (car ret))
+	  ret)))
+
   (cond
    [(number? place)
     (evaluate-with-sol place)]
-
+   
    [(is-a? place Place%) 
     place]
-
+   
    [(list? place)
     (for ([p place])
 	 (send p to-concrete))
-    place]
-
+    (compress place)]
+   
    [(pair? place)
-    (cons (concrete-place (car place)) (cdr place))]))
+    (let ([ret (concrete-place (car place))])
+      (if (number? ret)
+	  ret
+	  (cons ret (cdr place))))]))
+    
       
 ;; number, place-list, place-type -> set
 (define (to-place-set place)

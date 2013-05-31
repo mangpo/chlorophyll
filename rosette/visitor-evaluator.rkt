@@ -24,12 +24,13 @@
         ]
 
        [(is-a? ast LivableGroup%)
-        (let ([place (get-field place-list ast)])
-          (if (list? place)
-              (for ([p place])
-                   (send p accept this))
-              ;(set-field! place ast (evaluate place global-sol))))
-              (send ast to-concrete)))
+        ;; (let ([place (get-field place-list ast)])
+        ;;   (if (list? place)
+        ;;       (for ([p place])
+        ;;            (send p accept this))
+        ;;       ;(set-field! place ast (evaluate place global-sol))))
+        ;;       (send ast to-concrete)))
+	(send ast to-concrete)
         ]
 
        [(is-a? ast For%)

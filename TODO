@@ -1,8 +1,6 @@
 TODO
-- fix deadlock
-- funccall inside for/while/if
-- something wrong with solve examples/if.cll
-- data type check (x[i] + y) when y is alreay array
+- something wrong with solve examples/if.cll tests/function4.cll tests/for1
+- data type check (x[i] + y) when y is array
 - unroll -> comminsert -> divider
 - test on for-array3-3
 - run md5_4 again
