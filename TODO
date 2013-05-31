@@ -6,6 +6,9 @@ TODO
 - run md5_4 again
 - visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
 
+- visitor-divider: naive test
+- AST interpreter on multicore
+
 - refactoring interpretor & flow & comminsert
 - master/slave block,function,array (tests/for-array2)
 - get rid of firstast
