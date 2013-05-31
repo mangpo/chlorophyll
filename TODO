@@ -1,13 +1,13 @@
 TODO
-- something wrong with solve examples/if.cll tests/function4.cll tests/for1
-- data type check (x[i] + y) when y is array
-- unroll -> comminsert -> divider
-- test on for-array3-3
-- run md5_4 again
-- visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
+- rosette is broken on kaopad
 
-- visitor-divider: naive test
 - AST interpreter on multicore
+- known type
+- visitor-divider: naive test
+- run md5_4 again
+
+- data type check (x[i] + y) when y is array
+- visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
 
 - refactoring interpretor & flow & comminsert
 - master/slave block,function,array (tests/for-array2)

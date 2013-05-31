@@ -4,7 +4,7 @@
          "ast.rkt" "ast-util.rkt"
          "visitor-interface.rkt")
 
-(provide (all-defined-out))
+(provide commcode-inserter%)
 
 (define debug #f)
 
@@ -176,21 +176,21 @@
       
       (define (all-place)
         (send ast pretty-print)
-        (pretty-display `(all-place ,(get-field place ast)))
+        ;(pretty-display `(all-place ,(get-field place ast)))
         (all-place-from (get-field place ast)))
 
       (define (all-place-list)
         (send ast pretty-print)
-        (pretty-display `(all-place-type ,(get-field place-list ast)))
+        ;(pretty-display `(all-place-type ,(get-field place-list ast)))
         (all-place-from (get-field place-list ast)))
 
       (define (all-place-type)
         (send ast pretty-print)
-        (pretty-display `(all-place-type ,(get-field place-type ast)))
+        ;(pretty-display `(all-place-type ,(get-field place-type ast)))
         (all-place-from (get-field place-type ast)))
 
       (define (all-path-from path)
-        (pretty-display `(all-path-from ,path))
+        ;(pretty-display `(all-path-from ,path))
         (cond 
           [(equal? path #f)
            (set)]
@@ -240,7 +240,7 @@
         ]
 
        [(is-a? ast LivableGroup%)
-        (pretty-display (format "COMMINSERT: ArrayDecl"))
+        (when debug (pretty-display (format "COMMINSERT: ArrayDecl")))
 
         (send ast pretty-print)
         (let ([place (get-field place-list ast)])
@@ -249,8 +249,6 @@
                    (send p accept this))
               (when (number? place)
                     (set-field! place-list ast (vector-ref part2core place)))))
-
-        (send ast pretty-print)
 
         (all-place-list)
         ]
@@ -281,12 +279,11 @@
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Array ~a" (send ast to-string))))
         (gen-path index ast)
-        (define index-sp (get-field send-path index))
-        (pretty-display `(Index send-path ,index-sp))
-        (when (place-type-dist? index-sp)
-              (for ([p (car index-sp)])
-                   (pretty-display `(send-path ,(get-field send-path p)))))
-        (send ast pretty-print)
+        ;; (define index-sp (get-field send-path index))
+        ;; (pretty-display `(Index send-path ,index-sp))
+        ;; (when (place-type-dist? index-sp)
+        ;;       (for ([p (car index-sp)])
+        ;;            (pretty-display `(send-path ,(get-field send-path p)))))
         (set-union (all-place-type) (all-path index))
         ]
 

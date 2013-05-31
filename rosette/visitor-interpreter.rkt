@@ -5,7 +5,7 @@
          "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
          "symbolic-dict.rkt")
 
-(provide (all-defined-out))
+(provide count-msg-interpreter% (struct-out comminfo))
 
 (define debug #f)
 (define debug-sym #f)

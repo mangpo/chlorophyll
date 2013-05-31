@@ -4,7 +4,9 @@
          "ast.rkt" "ast-util.rkt"
          "visitor-interface.rkt")
 
-(provide (all-defined-out))
+(provide ast-divider%)
+
+(define debug #f)
 
 (define ast-divider%
   (class* object% (visitor<%>)
@@ -30,7 +32,7 @@
 
     (define (push-workspace i x)
       (let ([block (core-workspace (vector-ref cores i))])
-	(pretty-display `(push-workspace ,i ,x))
+	(when debug (pretty-display `(push-workspace ,i ,x)))
         (set-field! stmts block (cons x (get-field stmts block)))
 	))
 
@@ -40,26 +42,26 @@
 
     (define (get-stack i)
       (begin
-	(pretty-display `(get-stack ,i))
+	(when debug (pretty-display `(get-stack ,i)))
 	(core-stack (vector-ref cores i))))
 
     (define (push-stack i x)
       (let ([id (vector-ref cores i)])
-	(pretty-display `(push-stack ,i ,(send x to-string)))
+	(when debug (pretty-display `(push-stack ,i ,(send x to-string))))
         (set-core-stack! id (cons x (core-stack id)))
 	))
 
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
              [stack (core-stack id)])
-	(pretty-display `(pop-stack ,i -> ,(send (car stack) to-string)))
+	(when debug (pretty-display `(pop-stack ,i -> ,(send (car stack) to-string))))
         (set-core-stack! id (cdr stack))
         (car stack)))
 
     (define (top-stack i)
       (let* ([id (vector-ref cores i)]
              [stack (core-stack id)])
-	(pretty-display `(top-stack ,i -> ,(send (car stack) to-string)))
+	(when debug (pretty-display `(top-stack ,i -> ,(send (car stack) to-string))))
         (car stack)))
 
     (define (get-temp i)
@@ -80,7 +82,7 @@
     (define (clear-stack c)
       (let ([stack (get-stack c)]
 	    [count 0])
-	(pretty-display `(clear-stack ,c))
+	(when debug (pretty-display `(clear-stack ,c)))
 	(for ([e stack])
 	     (cond
 	      [(is-a? e FuncCall%)
@@ -133,13 +135,13 @@
                       (pop-stack (car path)))))
 
       (define (gen-comm-condition)
-	(pretty-display `(gen-comm-condition))
+	(when debug (pretty-display `(gen-comm-condition)))
         (let ([path (get-field send-path ast)]
               [place (get-field place-type (get-field condition ast))])
           (define visit (set place))
 
           (define (gen-condition-path path)
-	    (pretty-display `(gen-condition-path ,path))
+	    ;(pretty-display `(gen-condition-path ,path))
             (let ([from (car path)]
                   [x (cadr path)])
               (unless (set-member? visit x)
@@ -155,12 +157,12 @@
 
           
           (when path
-		(pretty-display `(gen-comm-condition:push-workspace))
+		;(pretty-display `(gen-comm-condition:push-workspace))
                 (push-workspace place (new Assign% 
                                            ;; special variable
                                            [lhs (new Var% [name "#tmp"] [place-type place])]
                                            [rhs (pop-stack place)]))
-		(pretty-display `(gen-comm-condition:push-stack))
+		;(pretty-display `(gen-comm-condition:push-stack))
                 (push-stack place (new Var% [name "#tmp"] [place-type place]))
                 (for ([p path])
                      (gen-condition-path p)))
@@ -191,7 +193,7 @@
 
       (cond
        [(is-a? ast Num%)
-	(pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string)))
+	(when debug (pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string))))
         (push-stack (get-field place-type ast) ast)
         (gen-comm)
         ]
@@ -199,9 +201,10 @@
        [(is-a? ast Array%)
 	(send (get-field index ast) accept this)
 
-	(pretty-display (format "\nDIVIDE: Array ~a (known=~a)\n" 
-				(send ast to-string) 
-				(get-field known-type ast)))
+        (when debug
+              (pretty-display (format "\nDIVIDE: Array ~a (known=~a)\n" 
+                                      (send ast to-string) 
+                                      (get-field known-type ast))))
 	;; only work for known type for now
 	(unless (get-field known-type ast)
 		(raise "We only handle known-type array for now. Sorry!"))
@@ -212,7 +215,7 @@
 	  (gen-comm))]
 
        [(is-a? ast Var%)
-	(pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string)))
+	(when debug (pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string))))
         (push-stack (get-field place-type ast) ast)
         (gen-comm)]
 
@@ -220,7 +223,8 @@
         (send (get-field e1 ast) accept this)
         (send (get-field e2 ast) accept this)
         (let ([place (get-field place-type ast)])
-	  (pretty-display (format "\nDIVIDE: BinExp ~a\n" (send ast to-string)))
+	  (when debug 
+                (pretty-display (format "\nDIVIDE: BinExp ~a\n" (send ast to-string))))
           ;; pop in the reverse order
           (set-field! e2 ast (pop-stack place))
           (set-field! e1 ast (pop-stack place))
@@ -230,7 +234,8 @@
        [(is-a? ast UnaExp%)
         (send (get-field e1 ast) accept this)
         (let ([place (get-field place-type ast)])
-	  (pretty-display (format "\nDIVIDE: UnaExp ~a\n" (send ast to-string)))
+	  (when debug 
+                (pretty-display (format "\nDIVIDE: UnaExp ~a\n" (send ast to-string))))
           (set-field! e1 ast (pop-stack place))
           (push-stack place ast)
           (gen-comm))]
@@ -251,7 +256,9 @@
         (for ([arg (get-field args ast)])
              (send arg accept this))
 
-	(pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string)))
+	(when debug 
+              (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
+
         (let ([place (get-field place-type ast)])
           (for ([c (get-field body-placeset (get-field signature ast))])
                (if (not (= place c))
@@ -277,7 +284,9 @@
        
        [(is-a? ast VarDecl%)
 	(let ([place (get-field place ast)])
-	  (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" (get-field var-list ast) place))
+	  (when debug 
+                (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" 
+                                        (get-field var-list ast) place)))
 	  (if (number? place)
 	      (push-workspace place ast)
 	      (for ([p place])
@@ -293,19 +302,19 @@
        [(is-a? ast Assign%) 
         (send (get-field lhs ast) accept this)
         (send (get-field rhs ast) accept this)
-	(pretty-display (format "\nDIVIDE: Assign\n"))
+	(when debug (pretty-display (format "\nDIVIDE: Assign\n")))
         (let ([place (get-field place-type (get-field lhs ast))])
           (set-field! rhs ast (pop-stack place))
           (set-field! lhs ast (pop-stack place))
           (push-workspace place ast))]
 
        [(is-a? ast If%)
-	(pretty-display (format "\nDIVIDE: If (condition)\n"))
+	(when debug (pretty-display (format "\nDIVIDE: If (condition)\n")))
         (send (get-field condition ast) accept this)
-	(pretty-display (format "\nDIVIDE: If (gen-comm-condition)\n"))
+	(when debug (pretty-display (format "\nDIVIDE: If (gen-comm-condition)\n")))
         (gen-comm-condition)
 
-	(pretty-display (format "\nDIVIDE: If (true)\n"))
+	(when debug (pretty-display (format "\nDIVIDE: If (true)\n")))
 	;; add If AST and prepare for true-block
         (for ([c (get-field body-placeset ast)])
              (let* ([old-space (get-workspace c)]
@@ -324,7 +333,7 @@
         (send (get-field true-block ast) accept this)
 
 	;; prepare for false-block
-	(pretty-display (format "\nDIVIDE: If (false)\n"))
+	(when debug (pretty-display (format "\nDIVIDE: If (false)\n")))
         (for ([c (get-field body-placeset ast)])
              (let* ([true-block (get-workspace c)]
                     [if (get-field parent true-block)])

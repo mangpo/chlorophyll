@@ -35,5 +35,5 @@
   (regenerate (result-ast partition) 5 4 name)
   )
 
-;(compile "examples/md5/md5_4.cll" "md5_4")
-(compile "tests/for1-break.cll" "for1-break")
+;(compile "examples/md5/md5_4-known.cll" "md5_4-known")
+(compile "tests/divider/for1.cll" "for1")
