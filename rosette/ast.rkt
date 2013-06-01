@@ -472,7 +472,7 @@
             (set! place p)))
 
     (define/public (copy)
-      (pretty-display `(copy vardecl ,var-list ,type))
+      ;(pretty-display `(copy vardecl ,var-list ,type))
       (new VarDecl% [var-list var-list] [type type] [known known] [place place]))
 
     (define/override (pretty-print [indent ""])
@@ -634,7 +634,7 @@
     ;; return = VarDecl%
 
     (define/public (get-signature)
-      (pretty-display `(get-signature ,name))
+      ;(pretty-display `(get-signature ,name))
       (new FuncDecl% [name name] 
 	   [args (send args copy)] 
 	   [body (new Block% [stmts (list)])]

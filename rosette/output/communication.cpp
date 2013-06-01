@@ -7,7 +7,7 @@
 
 int channel[N];
 bool empty[N];
-std::mutex lock[N];
+std::mutex wlock[N];
 
 void setup() {
   for(int i=0; i<N ; i++) {
@@ -18,22 +18,22 @@ void setup() {
 void write(int port, int data) {
   if(!empty[port]) { printf("%d: deadlock\n", port); exit(1); }
 
-  lock[port].lock();
+  wlock[port].lock();
   channel[port] = data;
   empty[port] = false;
-  lock[port].unlock();
 
-  while(!empty[port]) {}
+  while(!empty[port]) { 
+    //printf("-"); 
+  }
+  wlock[port].unlock();
 }
 
 int read(int port) {
   while(empty[port]) {}
-
-  lock[port].lock();
+  
   int data = channel[port];
-  printf("%d : receive %d\n", port, data);
+  printf("R%d : receive %d\n", port, data);
   empty[port] = true;
-  lock[port].unlock();
 
   return data;
 }

@@ -451,13 +451,11 @@
           ;; increase space
           (inc-space-placeset placeset est-funccall)
 
-	  (pretty-display "before count-msg")
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
 	       (let ([arg-ret (send arg accept this)])
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
-	  (pretty-display "after count-msg")
           
 	  ;; set place-type known-type
 	  (let ([return (get-field return func-ast)])
