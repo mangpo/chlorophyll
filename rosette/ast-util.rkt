@@ -30,6 +30,7 @@
                                name))))
 
 (define (lookup env ast)
+  ;(pretty-display `(lookup ,env ,(send ast to-string)))
   (dict-ref env (get-field name ast)
             (lambda () (lookup (dict-ref env "__up__" 
                                          (lambda () (send ast not-found-error)))
@@ -37,12 +38,14 @@
 
 (define (update env ast val)
   (let ([name (get-field name ast)])
+    ;(pretty-display `(lookup ,env ,name ,val))
     (if (dict-has-key? env name)
         (dict-set! env name val)
             (update (dict-ref env "__up__"
                               (lambda () (send ast not-found-error))) ast val))))
 
 (define (declare env name val)
+  ;(pretty-display `(declare ,env ,name ,val))
   (dict-set! env name val))
 
 (define (vector-2d-set! vector n a b val)
@@ -100,6 +103,8 @@
       (assert (= (sub1 other-y) me-y) `(= (sub1 other-y) me-y))
       (assert (= other-x me-x) `(= other-x me-x))
       `E])))
+
+
 
 
       

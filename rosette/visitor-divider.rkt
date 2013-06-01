@@ -6,7 +6,7 @@
 
 (provide ast-divider%)
 
-(define debug #f)
+(define debug #t)
 
 (define ast-divider%
   (class* object% (visitor<%>)
@@ -258,10 +258,13 @@
 
 	(when debug 
               (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
-
-        (let ([place (get-field place-type ast)])
-          (for ([c (get-field body-placeset (get-field signature ast))])
-               (if (not (= place c))
+        (let* ([place (get-field place-type ast)]
+	       [sig (get-field signature ast)]
+	       [type (get-field type (get-field return sig))])
+          (for ([c (get-field body-placeset sig)])
+	       ;; body-placeset of IO function is empty
+	       (pretty-display `(core ,c))
+               (if (or (equal? type "void") (not (= place c)))
 		   ;; if return place is not here, funcall is statement
                    (push-workspace c (new-funccall c))
 		   ;; if it is here, funccall is exp

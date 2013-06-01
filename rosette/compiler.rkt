@@ -24,6 +24,7 @@
   (pretty-display "--- after unroll ---")
   (send (result-ast partition) pretty-print)
   
+  (pretty-display "--- before insert communication ---")
   (insert-comm (result-ast partition) 
                (layoutinfo-routes layout-res)
                (layoutinfo-part2core layout-res))
@@ -36,4 +37,4 @@
   )
 
 ;(compile "examples/md5/md5_4-known.cll" "md5_4-known")
-(compile "tests/divider/for1.cll" "for1")
+(compile "examples/io/inout.cll" "inout")

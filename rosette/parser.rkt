@@ -316,7 +316,7 @@
                  [rhs $2] [pos $1-start-pos]))
 
          ; function call
-         ((funccall) $1)
+         ((funccall SEMICOL) $1)
          )
 
     (stmts

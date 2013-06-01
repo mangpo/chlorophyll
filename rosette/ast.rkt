@@ -229,6 +229,10 @@
     (super-new)
     (init-field [known-type #f] [place-type #f])
 
+    (define/public (infer-place [p place-type])
+      (when (at-any? place-type)
+            (set! place-type p)))
+
     (define/public (get-place-known)
       (cons place-type known-type))
 
@@ -252,7 +256,7 @@
 (define Scope%
   (class Base%
     (super-new)
-    (init-field [body-placeset #f] [parent #f])
+    (init-field [body-placeset (set)] [parent #f])
 
     (define/public (print-body-placeset indent)
       (when body-placeset
@@ -273,10 +277,6 @@
       (pretty-display (format "~a(Num:~a @~a (known=~a))" 
 			      indent (get-field n n) (place-to-string place-type) known-type))
       (print-send-path indent))
-
-    (define/public (infer-place [p place-type])
-      (when (at-any? place-type)
-            (set! place-type p)))
 
     (define/override (to-string) (send n to-string))
     ))
@@ -301,10 +301,6 @@
 				  name
 				  (position-line pos) 
 				  (position-col pos))))
-
-    (define/public (infer-place [p place-type])
-      (when (at-any? place-type)
-            (set! place-type p)))
 
     (define/public (clone)
       (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
@@ -354,7 +350,7 @@
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
-    (define/public (infer-place [p place-type])
+    (define/override (infer-place [p place-type])
       (when (at-any? place-type)
             (set! place-type p))
       (send e1 infer-place p)
@@ -381,7 +377,7 @@
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
-    (define/public (infer-place [p place-type])
+    (define/override (infer-place [p place-type])
       (when (at-any? place-type)
             (set! place-type p))
       (send e1 infer-place p))
@@ -397,9 +393,6 @@
     (inherit-field known-type place-type pos)
     (init-field name args [signature #f])
     (inherit print-send-path)
-
-    (define/public (infer-place p)
-      void)
 
     (define/public (copy-at core)
       (new FuncCall% [name name] 
@@ -471,6 +464,14 @@
     (init-field var-list type known)
     (inherit get-place print-send-path)
 
+    (define/public (infer-place p)
+      (when (at-any? place)
+            (set! place p)))
+
+    (define/public (copy)
+      (pretty-display `(copy vardecl ,var-list ,type))
+      (new VarDecl% [var-list var-list] [type type] [known known] [place place]))
+
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
                               indent type var-list place known))
@@ -481,14 +482,24 @@
   (class VarDecl%
     (super-new)
     (init-field [place-type #f] [known-type #f])
-    (inherit-field var-list)
+    (inherit-field var-list type known place)
+
+    (define/override (infer-place [p place-type])
+      (when (at-any? place-type)
+            (set! place p)
+            (set! place-type p)))
     
+    (define/override (copy)
+      (new Param% [var-list var-list] [type type] [known known] [place place] 
+	   [known-type known-type] [place-type place-type]))
+
     (define/public (to-string)
       (format "param:~a" (car var-list)))
     
     (define/override (to-concrete)
       (super to-concrete)
-      (set! place-type (concrete-place place-type)))))
+      (set! place-type (concrete-place place-type))
+      (set! place (concrete-place place)))))
 
 (define RangePlace%
   (class Livable%
@@ -601,6 +612,9 @@
      (super-new)
      (init-field stmts [parent #f])
 
+     (define/public (copy)
+       (new Block% [stmts (map (lambda (x) (send x copy)) stmts)]))
+
      (define/override (pretty-print [indent ""])
        (for ([stmt stmts])
             (send stmt pretty-print indent)))
@@ -611,10 +625,18 @@
   (class Scope%
     (super-new)
     (init-field name args body return)
-    (inherit-field pos)
+    (inherit-field pos body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%
     ;; return = VarDecl%
+
+    (define/public (get-signature)
+      (pretty-display `(get-signature ,name))
+      (new FuncDecl% [name name] 
+	   [args (send args copy)] 
+	   [body (new Block% [stmts (list)])]
+	   [return (send return copy)]
+	   [body-placeset body-placeset]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))

@@ -1,6 +1,6 @@
 #lang racket
 
-(require "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt" "visitor-printer.rkt")
+(require "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt" "visitor-cprinter.rkt")
 
 (provide (all-defined-out))
 
@@ -25,14 +25,16 @@
   (define divider (new ast-divider% [w w] [h h]))
   (define programs (send ast accept divider))
 
-  (define concise-printer (new printer% [out #t]))
+  (define cprinter (new cprinter% [w w] [h h]))
   
-  (with-output-to-file #:exists 'truncate (format "output/~a.block" name)
+  (with-output-to-file #:exists 'truncate (format "output/~a.c" name)
     (lambda ()
+      (pretty-display "#include \"communication.cpp\"\n")
       (for ([i (in-range (* w h))])
-	   (pretty-display (format "----------------------- CORE ~a(~a,~a) ------------------------"
-				   i (floor (/ i w)) (modulo i w)))
-	   (send (vector-ref programs i) accept concise-printer)
-	   (newline)))))
+        (pretty-display (format "//----------------------- CORE ~a(~a,~a) ------------------------"
+                                i (floor (/ i w)) (modulo i w)))
+        (send cprinter set-core i)
+        (send (vector-ref programs i) accept cprinter)
+        (newline)))))
        
 

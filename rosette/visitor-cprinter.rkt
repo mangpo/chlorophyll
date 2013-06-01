@@ -1,13 +1,13 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "visitor-interface.rkt")
+(require "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
 
 (provide (all-defined-out))
 
-(define printer%
+(define cprinter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [out #f])
+    (init-field w h [core #f] [n (* w h)])
 
     (define indent "")
 
@@ -16,48 +16,58 @@
 
     (define (dec-indent)
       (set! indent (substring indent 2)))
+
+    (define (channel core port)
+      (cond
+       [(equal? port `S)
+	core]
+       
+       [(equal? port `N)
+	(- core - w)]
+       
+       [(equal? port `E)
+	(+ n core)]
+
+       [(equal? port `W)
+	(sub1 (+ n core))]))
+
+    (define/public (set-core c)
+      (set! core c))
     
     (define/public (visit ast)
       (cond
         [(is-a? ast VarDecl%)
-         (display (format "~a@~a ~a"
+         (display (format "~a ~a_~a;"
                                (get-field type ast)
-                               (place-to-string (send ast get-place) out)
                                (list-to-string (get-field var-list ast))
+			       core
 			       ))
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a[]@~a ~a[~a]"
+         (display (format "~a ~a_~a[~a];"
                                (get-field type ast)
-                               (place-to-string (get-field place-list ast) out)
                                (get-field var ast)
+			       core
 			       (get-field bound ast)))
          ]
 
         [(is-a? ast Const%)
-         (display (format "~a@~a"
-                        (send ast to-string)
-                        (place-to-string (send ast get-place))) out)]
+         (display (send ast to-string))]
          
         
         
         [(is-a? ast Op%)
-         (display (format "~a@~a"
-                        (get-field op ast)
-                        (place-to-string (send ast get-place) out)))
+         (display (get-field op ast))
          ]
 
 
         [(is-a? ast Num%)
-	 (if out
-	     (display (get-field n (get-field n ast)))
-	     (display (format "~a@~a" (get-field n (get-field n ast)) 
-			      (place-to-string (send ast get-place) out))))
+	 (display (get-field n (get-field n ast)))
          ]
       
         [(is-a? ast Array%)
-         (display (format "~a[" (get-field name ast)))
+         (display (format "~a_~a[" (get-field name ast) core))
 	 (send (get-field index ast) accept this)
 	 (let ([offset (get-field offset ast)])
 	   (when (> offset 0)
@@ -69,15 +79,12 @@
 	 (let ([name (get-field name ast)])
 	   (if (equal? name "#return")
 	       (display "return ")
-	       (display (format "~a" (get-field name ast)))))
+	       (display (format "~a_~a" (get-field name ast) core))))
          ]
         
         [(is-a? ast UnaExp%)
          (display "(")
-         ;(send (get-field op ast) accept this)
-	 ;; don't call this because we can have @any @place(i)
-	 (display (format "~a@~a " (send (get-field op ast) to-string) 
-			  (place-to-string (send ast get-place) out)))
+	 (display (send (get-field op ast) to-string))
          (send (get-field e1 ast) accept this)
          (display ")")
          ]
@@ -85,38 +92,51 @@
         [(is-a? ast BinExp%)
          (display "(")
          (send (get-field e1 ast) accept this)
-         ;(send (get-field op ast) accept this)
-	 ;; don't call this because we can have @any @place(i)
-	 (display (format " ~a@~a " (send (get-field op ast) to-string) 
-			  (place-to-string (send ast get-place) out)))
+	 (display (send (get-field op ast) to-string))
          (send (get-field e2 ast) accept this)
          (display ")")
          ]
 
 	[(is-a? ast FuncCall%)
-	 (display (format "~a(" (get-field name ast)))
-	 (let ([args (get-field args ast)])
+	 (define name (get-field name ast))
+	 (define args (get-field args ast))
+	 (cond
+	  [(equal? name "out")
+	   (display "printf(\"%d\\n\", ")
+	   (send (car args) accept this)
+	   (display ")")]
+
+	  [else
+	   (display (format "~a_~a(" name core))
 	   (unless (empty? args)
 		   (send (car args) accept this)
 		   (for ([arg (cdr args)])
 			(display ", ")
-			(send arg accept this))))
-	 (display ")")]
+			(send arg accept this)))
+	   (display ")")])]
 
 	[(is-a? ast Recv%)
-	 (display (format "read(~a)" (get-field port ast)))]
+	 (display (format "read(~a)" (channel core (get-field port ast))))]
 
 	[(is-a? ast Send%)
-	 (display (format "send(~a," (get-field port ast)))
+	 (display (format "write(~a," (channel core (get-field port ast))))
 	 (send (get-field data ast) accept this)
 	 (display ");")]
         
         [(is-a? ast Assign%)
-	 (let ([lhs (get-field lhs ast)])
-	   (send lhs accept this)
-	   (unless (equal? (get-field name lhs) "#return")
-		   (display " = ")))
-         (send (get-field rhs ast) accept this)
+	 (let ([lhs (get-field lhs ast)]
+	       [rhs (get-field rhs ast)])
+	   (if (and (is-a? rhs FuncCall%) (equal? (get-field name rhs) "in"))
+	       (begin
+		 (display "scanf(\"%d\", &")
+		 (send lhs accept this)
+		 (display ")"))
+	       (begin
+		(send lhs accept this)
+		(unless (equal? (get-field name lhs) "#return")
+			(display " = "))
+		(send (get-field rhs ast) accept this))
+	   ))
          (display ";")
          ]
 
@@ -146,11 +166,10 @@
          (display (format "~a}" indent))]
 
         [(is-a? ast For%)
-         (pretty-display (format "for(~a from ~a to ~a)@~a {"
+         (pretty-display (format "for(~a from ~a to ~a) {"
 			  (send (get-field iter ast) to-string)
 			  (get-field from ast)
-			  (get-field to ast)
-			  (place-to-string (get-field place-list ast))))
+			  (get-field to ast)))
 	 (inc-indent)
 	 (send (get-field body ast) accept this)
 	 (dec-indent)
@@ -167,19 +186,20 @@
 
         [(is-a? ast FuncDecl%)
          (define (print-arg arg pre)
-           (display (format "~a~a@~a ~a" pre
+           (display (format "~a~a ~a_~a" pre
                            (get-field type arg) 
-                           (send arg get-place) 
-                           (car (get-field var-list arg)))))
+                           (car (get-field var-list arg))
+			   core)))
 
+	 (define name (get-field name ast))
          ;; Print function signature
-         (let* ([return (get-field return ast)]
-		[type (get-field type return)]
-		[place (send return get-place)]
-		[name (get-field name ast)])
-	   (if (equal? type "void")
-	       (display (format "~a ~a(" type name))
-	       (display (format "~a@~a ~a(" type place name))))
+	 (if (equal? name "main")
+	     (display (format "void *main_~a(" core))
+	     (let* ([return (get-field return ast)]
+		    [type (get-field type return)]
+		    [place (send return get-place)])
+	       (display (format "~a ~a_~a(" type name core))))
+	     
 
          ;; Print arguments
          (let ([arg-list (get-field stmts (get-field args ast))])
@@ -193,6 +213,9 @@
          ;; Print Body
          (inc-indent)
          (send (get-field body ast) accept this)
+	 (when (equal? name "main")
+	       (display indent)
+	       (pretty-display "return NULL;"))
          (dec-indent)
          (pretty-display "}")
          ]

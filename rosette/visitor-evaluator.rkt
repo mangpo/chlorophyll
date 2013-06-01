@@ -76,11 +76,19 @@
 
        [(is-a? ast FuncCall%)
         (for ([arg (get-field args ast)])
-             (send arg accept this))
+	     (send arg accept this))
+	(send (get-field signature ast) accept this)
         (send ast to-concrete)
-        (for ([arg (get-field args ast)]
-              [param (get-field stmts (get-field args (get-field signature ast)))])
-             (send arg infer-place (get-field place-type param)))
+
+	;; infer
+	(define func-ast (get-field signature ast))
+	(for ([param (get-field stmts (get-field args func-ast))] ; signature
+		[arg   (get-field args ast)]) ; actual
+	       (send arg infer-place (get-field place-type param))
+	       (send param infer-place (get-field place-type arg)))
+	
+	(send (get-field return func-ast) infer-place (get-field place-type ast))
+	;; (send arg infer-place (get-field place-type param)))
         ]
 
        [(is-a? ast Assign%)

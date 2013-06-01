@@ -1,11 +1,11 @@
 TODO
-- rosette is broken on kaopad
-
 - AST interpreter on multicore
+  = in(), out(data)
 - known type
 - visitor-divider: naive test
 - run md5_4 again
 
+- dependency analysis to do parallel loop
 - data type check (x[i] + y) when y is array
 - visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
 

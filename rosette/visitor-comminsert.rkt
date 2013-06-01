@@ -6,7 +6,7 @@
 
 (provide commcode-inserter%)
 
-(define debug #f)
+(define debug #t)
 
 ;; 1) Insert communication route to send-path field.
 ;; 2) Convert partition ID to actual core ID.
@@ -128,6 +128,8 @@
            [(pair? p)
             (for ([i (car p)])
                  (send i accept this))]
+	   [(at-any? p)
+	    void]
            [else
             (raise (format "convert-place: unimplemented for ~a" p))])))
     
@@ -170,6 +172,9 @@
 
          [(list? place)
           (list->set (map (lambda (x) (get-field place x)) place))]
+
+	 [(at-any? place)
+	  (set)]
 
          [else
           (raise (format "visitor-comminsert: all-place-from: unimplemented for ~a" place))]))
@@ -220,7 +225,8 @@
         
        [(is-a? ast VarDecl%)
         (when debug 
-              (pretty-display (format "\nCOMMINSERT: VarDecl ~a" (get-field var-list ast))))
+              (pretty-display (format "\nCOMMINSERT: VarDecl ~a, type:~a" 
+				      (get-field var-list ast) (get-field type ast))))
         (if (equal? (get-field type ast) "void")
             (set)
             (begin
@@ -321,17 +327,25 @@
         ]
 
        [(is-a? ast FuncCall%)
-        (define args-ret (set))
+	;; recurse on signature
+        (define args-ret (send (get-field signature ast) accept this))
+
+	;; recurse on arguments
 	(for ([arg (get-field args ast)])
 	     (set! args-ret (set-union args-ret (send arg accept this))))
         (when debug 
               (pretty-display (format "COMMINSERT: FuncCall ~a" (send ast to-string))))
+	(convert)
         
         (define path-ret (set))
         (let ([func-sig (get-field signature ast)])
+	  ;; Body-placeset of IO function is empty. Add funccall's place-type to it.
+	  (when (set-empty? (get-field body-placeset func-sig))
+		(set-field! body-placeset func-sig (set (get-field place-type ast))))
+
+	  ;; Generate path for argument to parameter.
           (for ([param (get-field stmts (get-field args func-sig))]
                 [arg (get-field args ast)])
-               (convert)
                (gen-path arg param)
                (set! path-ret (all-path arg))))
 

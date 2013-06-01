@@ -18,6 +18,36 @@
     (init-field places
                 [env (make-hash)] 
 		[known-stack (list #t)])
+
+    
+    ;; Declare IO function: in(), out(data)
+    (declare env "in"
+	     (cons
+	      (new FuncDecl% [name "in"] 
+		   [args (new Block% [stmts (list)])] 
+		   [body #f] 
+		   [return (new VarDecl% [var-list (list "#return")]
+			        [type "int"] ;; TODO: make it generic
+				[place (new Place% [at "any"])]
+				[known #f])])
+	      (comminfo 0 (set) #f)))
+
+    (declare env "out"
+	     (cons
+	      (new FuncDecl% [name "out"] 
+		   [args (new Block% [stmts (list 
+					     (new Param% 
+						  [var-list (list "data")]
+						  [type "int"] ;; TODO: make it generic
+						  [known #f]
+						  [place (new Place% [at "any"])]
+						  [place-type (new Place% [at "any"])]))])]
+		   [body #f] 
+		   [return (new VarDecl% [var-list (list "#return")]
+			        [type "void"]
+				[known #f]
+				[place (new Place% [at "any"])])])
+	      (comminfo 0 (set) #f)))
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
@@ -175,7 +205,7 @@
            (if (and (get-field known-type (cdr p)) (car known-stack))
                1
                (length (car p)))]
-          [else (raise "implemented for this type")]))
+          [else (raise (format "visiter-interpretor: count-comm: unimplemented for ~a" p))]))
       
       ;; x and y in form (cons place-list known-type)
       (define x-comm (count-comm x))
@@ -228,11 +258,13 @@
                                                 (comminfo-firstast ret))))))
                  
     (define (push-scope)
+      ;(pretty-display `(push-scope))
       (let ([new-env (make-hash)])
         (dict-set! new-env "__up__" env)
         (set! env new-env)))
 
     (define (pop-scope)
+      ;(pretty-display `(pop-scope))
       (set! env (dict-ref env "__up__")))
     
     (define (place-at places index ast)
@@ -410,7 +442,7 @@
 	  (define func (lookup env ast))
 	  (define func-ast (car func))
 	  (define func-ret (cdr func))
-          (set-field! signature ast func-ast)
+          (set-field! signature ast (send func-ast get-signature))
 
           (define msgs (comminfo-msgs func-ret))
 	  (define placeset (comminfo-placeset func-ret))
@@ -419,11 +451,13 @@
           ;; increase space
           (inc-space-placeset placeset est-funccall)
 
+	  (pretty-display "before count-msg")
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
 	       (let ([arg-ret (send arg accept this)])
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
+	  (pretty-display "after count-msg")
           
 	  ;; set place-type known-type
 	  (let ([return (get-field return func-ast)])
@@ -657,11 +691,13 @@
          ]
 
        [(is-a? ast Program%)
+
 	(define ret #f)
 	(for ([decl (get-field stmts ast)])
 	     (let ([decl-ret (send decl accept this)])
 	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
 		     (set! ret decl-ret))))
+	;; Return main declaration
 	ret]
 
        [(is-a? ast Block%) 
