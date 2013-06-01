@@ -29,7 +29,13 @@
 	(+ n core)]
 
        [(equal? port `W)
-	(sub1 (+ n core))]))
+	(sub1 (+ n core))]
+
+       [(equal? port `IO)
+        (+ (* 2 n) core)]
+
+       [(number? port)
+        (+ (* 2 n) port)]))
 
     (define/public (set-core c)
       (set! core c))

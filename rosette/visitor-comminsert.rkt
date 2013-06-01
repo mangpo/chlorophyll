@@ -14,7 +14,7 @@
 (define commcode-inserter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field routing-table part2core)
+    (init-field routing-table part2core n)
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -128,6 +128,8 @@
            [(pair? p)
             (for ([i (car p)])
                  (send i accept this))]
+           [(at-io? p)
+            (set-field! place ast n)]
 	   [(at-any? p)
 	    void]
            [else
@@ -144,6 +146,8 @@
            [(pair? p)
             (for ([i (car p)])
                  (send i accept this))]
+           [(at-io? p)
+            (set-field! place-type ast n)]
            [(and (is-a? p Place%) (equal? (get-field at p) "any"))
             void]
            [else
@@ -340,13 +344,13 @@
         (define path-ret (set))
         (let ([func-sig (get-field signature ast)])
 	  ;; Body-placeset of IO function is empty. Add funccall's place-type to it.
-	  (cond 
-           [(equal? (get-field name func-sig) "in")
-            (set-field! body-placeset func-sig (set (get-field place-type ast)))]
-           [(equal? (get-field name func-sig) "out")
-            (let ([arg (car (get-field stmts (get-field args func-sig)))])
-              (set-field! body-placeset func-sig (set (get-field place-type arg))))]
-           )
+	  ;; (cond 
+          ;;  [(equal? (get-field name func-sig) "in")
+          ;;   (set-field! body-placeset func-sig (set (get-field place-type ast)))]
+          ;;  [(equal? (get-field name func-sig) "out")
+          ;;   (let ([arg (car (get-field stmts (get-field args func-sig)))])
+          ;;     (set-field! body-placeset func-sig (set (get-field place-type arg))))]
+          ;;  )
 
 	  ;; Generate path for argument to parameter.
           (for ([param (get-field stmts (get-field args func-sig))]

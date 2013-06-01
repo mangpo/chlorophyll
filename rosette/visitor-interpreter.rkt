@@ -25,10 +25,10 @@
 	     (cons
 	      (new FuncDecl% [name "in"] 
 		   [args (new Block% [stmts (list)])] 
-		   [body #f] 
+		   [body (set (new Place% [at "io"]))] 
 		   [return (new VarDecl% [var-list (list "#return")]
 			        [type "int"] ;; TODO: make it generic
-				[place (new Place% [at "any"])]
+				[place (new Place% [at "io"])]
 				[known #f])])
 	      (comminfo 0 (set) #f)))
 
@@ -40,13 +40,13 @@
 						  [var-list (list "data")]
 						  [type "int"] ;; TODO: make it generic
 						  [known #f]
-						  [place (new Place% [at "any"])]
-						  [place-type (new Place% [at "any"])]))])]
-		   [body #f] 
+						  [place (new Place% [at "io"])]
+						  [place-type (new Place% [at "io"])]))])]
+		   [body (set (new Place% [at "io"]))] 
 		   [return (new VarDecl% [var-list (list "#return")]
 			        [type "void"]
 				[known #f]
-				[place (new Place% [at "any"])])])
+				[place (new Place% [at "io"])])])
 	      (comminfo 0 (set) #f)))
     
     ;; find actual place for @place(exp)
@@ -198,7 +198,7 @@
           [(number? p) 1]
           [(is-a? p Place%)
            (let ([at (get-field at p)])
-             (if (equal? at "any")
+             (if (or (equal? at "any") (equal? at "io"))
                  1
                  (raise "count-comm doesn't support Place% that is not @any")))]
           [(pair? p)

@@ -27,7 +27,8 @@
   (pretty-display "--- before insert communication ---")
   (insert-comm (result-ast partition) 
                (layoutinfo-routes layout-res)
-               (layoutinfo-part2core layout-res))
+               (layoutinfo-part2core layout-res)
+               5 4)
   
   
   (pretty-display "--- after insert communication ---")

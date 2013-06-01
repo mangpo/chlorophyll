@@ -19,9 +19,7 @@
                  (andmap (lambda (a-p b-p) (send a-p equal-rangeplace? b-p))
                          a-list b-list)))
           ;; if one of them is @any
-          (or (and (is-a? a Place%) (equal? (get-field at a) "any"))
-              (and (is-a? b Place%) (equal? (get-field at b) "any")))))
-  )
+          (or (at-any? a) (at-any? b) (at-io? a) (at-io? b)))))
 
 (define (lookup-name env name)
   (dict-ref env name
@@ -78,12 +76,18 @@
    [else 
     (cons (place-set x) (place-set y))]))
 
-(define (direction me other w)
+(define (direction me other w h)
   (let ([me-x (floor (/ me w))]
         [me-y (modulo me w)]
         [other-x (floor (/ other w))]
         [other-y (modulo other w)])
     (cond 
+     [(= me (* w h))
+      other]
+
+     [(= other (* w h))
+      `IO]
+
      [(< other-x me-x)
       (assert (= (add1 other-x) me-x) `(= (add1 other-x) me-x))
       (assert (= other-y me-y) `(= other-y me-y))

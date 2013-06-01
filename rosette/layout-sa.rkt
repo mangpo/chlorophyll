@@ -40,10 +40,12 @@
     
     (move-x a-x a-y)))
   
-
+;; Gnerate (w x h + 1) x (w x h + 1) table
+;; w x h corresponds to io
 (define (gen-route flow-graph part2core w h)
   ;; Mapping partitions to cores in form of x*w + y
-  (define n (* w h))
+  (define n-1 (* w h))
+  (define n (add1 n-1))
   
   ;; Mapping pair of partitions to route
   (define core2route (make-vector n #f))
@@ -58,6 +60,11 @@
       
       (vector-2d-set! core2route n a-core b-core path)
       (vector-2d-set! core2route n b-core a-core (reverse path))))
+
+  (vector-set! core2route n-1 (make-vector n #f))
+  (for ([i (in-range n)])
+       (vector-2d-set! core2route n i n-1 (list i n-1))
+       (vector-2d-set! core2route n n-1 i (list n-1 i)))
   
   core2route)
 

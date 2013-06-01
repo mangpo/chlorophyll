@@ -13,7 +13,7 @@
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
-    (init-field w h [n (* w h)] [cores (make-vector n)])
+    (init-field w h [n (add1 (* w h))] [cores (make-vector n)])
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -80,10 +80,10 @@
           new-temp)))
 
     (define (gen-send x to data)
-      (new Send% [data data] [port (direction x to w)]))
+      (new Send% [data data] [port (direction x to w h)]))
 
     (define (gen-recv x from)
-      (new Recv% [port (direction x from w)]))
+      (new Recv% [port (direction x from w h)]))
 
     (define (transfer from x to)
       (gen-send x to (gen-recv x from)))

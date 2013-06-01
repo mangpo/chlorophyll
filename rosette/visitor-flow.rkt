@@ -17,7 +17,7 @@
       (define edges (list))
       (for* ([x x-set]
              [y y-set])
-            (when (not (equal? x y))
+            (unless (same-place? x y)
                   (set! edges (cons (edge x y 1) edges))))
       edges)
     

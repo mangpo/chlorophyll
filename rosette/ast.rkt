@@ -22,6 +22,9 @@
 (define (at-any? x)
   (or (equal? x #f) (and (is-a? x Place%) (equal? (get-field at x) "any"))))
 
+(define (at-io? x)
+  (and (is-a? x Place%) (equal? (get-field at x) "io")))
+
 (define (place-type? p)
   (or (number? p) (place-type-dist? p)))
 
