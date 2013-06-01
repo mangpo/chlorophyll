@@ -89,7 +89,8 @@
 
       (cond
        [(or (is-a? ast Num%)
-            (is-a? ast Var%))
+            (is-a? ast Var%)
+            (is-a? ast Param%))
         (check)
         ast]
 
@@ -105,13 +106,14 @@
         ast]
 
        [(is-a? ast FuncCall%)
+        (send (get-field signature ast) accept this)
         (for ([arg (get-field args ast)])
              (send arg accept this))
         (check)
         ast]
 
        [(is-a? ast VarDecl%) 
-        (pretty-display "UNROLL: VarDecl (before declare)")
+        ;(pretty-display "UNROLL: VarDecl (before declare)")
         (for ([var (get-field var-list ast)])
              ;; Delcare as #f because this is not loop index.
              (declare index-map var #f))
@@ -197,6 +199,8 @@
         ]
 
        [(is-a? ast FuncDecl%)
+        (for ([arg (get-field stmts (get-field args ast))])
+             (send arg accept this))
         (send (get-field body ast) accept this)]
 
        ))))

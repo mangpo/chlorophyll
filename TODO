@@ -1,6 +1,6 @@
 TODO
 - AST interpreter on multicore
-  = in(), out(data)
+  = data dependency, sequential for in and out
 - known type
 - visitor-divider: naive test
 - run md5_4 again

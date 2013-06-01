@@ -624,7 +624,7 @@
 (define FuncDecl%
   (class Scope%
     (super-new)
-    (init-field name args body return)
+    (init-field name args body return [temps (list)])
     (inherit-field pos body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%

@@ -86,7 +86,16 @@
         (new FuncCall%
              [name (get-field name ast)]
              [args (map (lambda (x) (send x accept this)) (get-field args ast))]
-             [signature (get-field signature ast)]
+             [signature (send (get-field signature ast) accept this)]
+             [known-type (get-known-type)]
+             [place-type (get-place-type)])]
+
+       [(is-a? ast Param%)
+        (new Param%
+             [var-list (get-field var-list ast)] ;; not copy
+             [type (get-field type ast)]
+             [known (get-field known ast)]
+             [place (get-field place ast)]
              [known-type (get-known-type)]
              [place-type (get-place-type)])]
 

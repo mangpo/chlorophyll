@@ -340,8 +340,13 @@
         (define path-ret (set))
         (let ([func-sig (get-field signature ast)])
 	  ;; Body-placeset of IO function is empty. Add funccall's place-type to it.
-	  (when (set-empty? (get-field body-placeset func-sig))
-		(set-field! body-placeset func-sig (set (get-field place-type ast))))
+	  (cond 
+           [(equal? (get-field name func-sig) "in")
+            (set-field! body-placeset func-sig (set (get-field place-type ast)))]
+           [(equal? (get-field name func-sig) "out")
+            (let ([arg (car (get-field stmts (get-field args func-sig)))])
+              (set-field! body-placeset func-sig (set (get-field place-type arg))))]
+           )
 
 	  ;; Generate path for argument to parameter.
           (for ([param (get-field stmts (get-field args func-sig))]

@@ -24,10 +24,38 @@
 (define (regenerate ast w h name)
   (define divider (new ast-divider% [w w] [h h]))
   (define programs (send ast accept divider))
-
   (define cprinter (new cprinter% [w w] [h h]))
+
+  (define (print-main)
+    (pretty-display "int main() {")
+    (display "  pthread_t")
+
+    ;; declare pthread
+    (define first #t)
+    (for ([i (in-range (* w h))])
+         (unless (empty? (get-field stmts (vector-ref programs i)))
+           (if first 
+               (set! first #f)
+               (display ","))
+           (display (format " t_~a" i))))
+    (pretty-display ";")
   
-  (with-output-to-file #:exists 'truncate (format "output/~a.c" name)
+    ;; pthread_crate
+    (for ([i (in-range (* w h))])
+         (unless (empty? (get-field stmts (vector-ref programs i)))
+           (pretty-display (format "  pthread_create(&t_~a, NULL, main_~a, NULL);" i i))))
+
+    ;; pthread_join
+    (for ([i (in-range (* w h))])
+         (unless (empty? (get-field stmts (vector-ref programs i)))
+           (pretty-display (format "  pthread_join(t_~a, NULL);" i))))
+
+    ;; return
+    (pretty-display "  return 0;")
+    (pretty-display "}"))
+
+
+  (with-output-to-file #:exists 'truncate (format "output/~a.cpp" name)
     (lambda ()
       (pretty-display "#include \"communication.cpp\"\n")
       (for ([i (in-range (* w h))])
@@ -35,6 +63,7 @@
                                 i (floor (/ i w)) (modulo i w)))
         (send cprinter set-core i)
         (send (vector-ref programs i) accept cprinter)
-        (newline)))))
+        (newline))
+      (print-main))))
        
 

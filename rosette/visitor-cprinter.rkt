@@ -23,7 +23,7 @@
 	core]
        
        [(equal? port `N)
-	(- core - w)]
+	(- core w)]
        
        [(equal? port `E)
 	(+ n core)]
@@ -100,20 +100,23 @@
 	[(is-a? ast FuncCall%)
 	 (define name (get-field name ast))
 	 (define args (get-field args ast))
-	 (cond
-	  [(equal? name "out")
-	   (display "printf(\"%d\\n\", ")
-	   (send (car args) accept this)
-	   (display ")")]
+	 ;; (cond
+	 ;;  [(equal? name "out")
+	 ;;   (display "printf(\"%d\\n\", ")
+	 ;;   (send (car args) accept this)
+	 ;;   (display ")")]
 
-	  [else
-	   (display (format "~a_~a(" name core))
-	   (unless (empty? args)
-		   (send (car args) accept this)
-		   (for ([arg (cdr args)])
-			(display ", ")
-			(send arg accept this)))
-	   (display ")")])]
+	 ;;  [else
+         (if (or (equal? name "out") (equal? name "in"))
+             (display (format "~a(" name))
+             (display (format "~a_~a(" name core)))
+         (unless (empty? args)
+                 (send (car args) accept this)
+                 (for ([arg (cdr args)])
+                      (display ", ")
+                      (send arg accept this)))
+         (display ")")]
+        ;; )]
 
 	[(is-a? ast Recv%)
 	 (display (format "read(~a)" (channel core (get-field port ast))))]
@@ -126,17 +129,17 @@
         [(is-a? ast Assign%)
 	 (let ([lhs (get-field lhs ast)]
 	       [rhs (get-field rhs ast)])
-	   (if (and (is-a? rhs FuncCall%) (equal? (get-field name rhs) "in"))
-	       (begin
-		 (display "scanf(\"%d\", &")
-		 (send lhs accept this)
-		 (display ")"))
-	       (begin
-		(send lhs accept this)
-		(unless (equal? (get-field name lhs) "#return")
-			(display " = "))
-		(send (get-field rhs ast) accept this))
-	   ))
+	   ;; (if (and (is-a? rhs FuncCall%) (equal? (get-field name rhs) "in"))
+	   ;;     (begin
+	   ;;       (display "scanf(\"%d\", &")
+	   ;;       (send lhs accept this)
+	   ;;       (display ")"))
+	   ;;     (begin
+           (send lhs accept this)
+           (unless (equal? (get-field name lhs) "#return")
+                   (display " = "))
+           (send (get-field rhs ast) accept this))
+	   ;; ))
          (display ";")
          ]
 
@@ -166,10 +169,11 @@
          (display (format "~a}" indent))]
 
         [(is-a? ast For%)
-         (pretty-display (format "for(~a from ~a to ~a) {"
-			  (send (get-field iter ast) to-string)
-			  (get-field from ast)
-			  (get-field to ast)))
+         (let ([iter (send (get-field iter ast) to-string)])
+           (pretty-display (format "for(int ~a_~a = ~a; ~a_~a < ~a; ++~a_~a) {"
+                                   iter core (get-field from ast)
+                                   iter core (get-field to ast)
+                                   iter core)))
 	 (inc-indent)
 	 (send (get-field body ast) accept this)
 	 (dec-indent)
@@ -194,24 +198,34 @@
 	 (define name (get-field name ast))
          ;; Print function signature
 	 (if (equal? name "main")
-	     (display (format "void *main_~a(" core))
+             ;; main
+	     (pretty-display (format "void *main_~a(void *dummy) {" core))
+             ;; everything else
 	     (let* ([return (get-field return ast)]
 		    [type (get-field type return)]
 		    [place (send return get-place)])
-	       (display (format "~a ~a_~a(" type name core))))
+	       (display (format "~a ~a_~a(" type name core))
 	     
+               ;; Print arguments
+               (let ([arg-list (get-field stmts (get-field args ast))])
+                 (when (not (empty? arg-list))
+                       (print-arg (car arg-list) "")
+                       (for ([arg (cdr arg-list)])
+                            (print-arg arg ","))))
 
-         ;; Print arguments
-         (let ([arg-list (get-field stmts (get-field args ast))])
-           (when (not (empty? arg-list))
-                 (print-arg (car arg-list) "")
-                 (for ([arg (cdr arg-list)])
-                      (print-arg arg ","))))
-
-         (pretty-display ") {")
+               (pretty-display ") {")))
 
          ;; Print Body
          (inc-indent)
+         
+         ;; Declare temps
+         (display indent)
+         (display (format "int _tmp_~a" core))
+         (for ([temp (get-field temps ast)])
+              (display (format ", ~a_~a" temp core)))
+         (pretty-display ";")
+
+         ;; Body
          (send (get-field body ast) accept this)
 	 (when (equal? name "main")
 	       (display indent)

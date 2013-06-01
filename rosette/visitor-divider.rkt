@@ -10,7 +10,7 @@
 
 (define ast-divider%
   (class* object% (visitor<%>)
-    (struct core (program workspace stack temp) #:mutable)
+    (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
     (init-field w h [n (* w h)] [cores (make-vector n)])
@@ -19,7 +19,7 @@
     (for ([i (in-range n)])
 	 (vector-set! cores i 
 		      (let ([block (new Program% [stmts (list)])])
-			(core block block (list) 0))))
+			(core block block (list) 0 #f))))
 
    (define (get-program i)
       (core-program (vector-ref cores i)))
@@ -64,11 +64,20 @@
 	(when debug (pretty-display `(top-stack ,i -> ,(send (car stack) to-string))))
         (car stack)))
 
+    (define (get-func i)
+      (core-func (vector-ref cores i)))
+
+    (define (set-func i func)
+      (set-core-func! (vector-ref cores i) func))
+
     (define (get-temp i)
       (let* ([id (vector-ref cores i)]
-	     [temp (core-temp id)])
-	(set-core-temp! id (add1 temp))
-	(format "#tmp~a" temp)))
+	     [n (core-temp id)])
+	(set-core-temp! id (add1 n))
+	(let ([new-temp (format "_tmp~a" n)]
+              [func (get-func i)])
+          (set-field! temps func (cons new-temp (get-field temps func)))
+          new-temp)))
 
     (define (gen-send x to data)
       (new Send% [data data] [port (direction x to w)]))
@@ -91,7 +100,7 @@
 		   (raise (format "@CORE ~a: ~a.\nThere is more than one function call left in the stack!" c (send e to-srting))))
 	       (set! count (add1 count))]
 
-	      [(and (is-a? e Var%) (regexp-match #rx"#tmp.*" (get-field name e)))
+	      [(and (is-a? e Var%) (regexp-match #rx"_tmp.*" (get-field name e)))
 	       void]
 
 	      [else
@@ -146,12 +155,12 @@
                   [x (cadr path)])
               (unless (set-member? visit x)
                 (set! visit (set-add visit x))
-                (push-workspace from (gen-send from x (new Var% [name "#tmp"] [place-type from])))
+                (push-workspace from (gen-send from x (new Var% [name "_tmp"] [place-type from])))
                 (push-workspace x (new Assign% 
                                    ;; special variable
-                                   [lhs (new Var% [name "#tmp"] [place-type x])]
+                                   [lhs (new Var% [name "_tmp"] [place-type x])]
                                    [rhs (gen-recv x from)]))
-                (push-stack x (new Var% [name "#tmp"] [place-type x]))))
+                (push-stack x (new Var% [name "_tmp"] [place-type x]))))
             (when (> (length path) 2)
                     (gen-condition-path (cdr path))))
 
@@ -160,10 +169,10 @@
 		;(pretty-display `(gen-comm-condition:push-workspace))
                 (push-workspace place (new Assign% 
                                            ;; special variable
-                                           [lhs (new Var% [name "#tmp"] [place-type place])]
+                                           [lhs (new Var% [name "_tmp"] [place-type place])]
                                            [rhs (pop-stack place)]))
 		;(pretty-display `(gen-comm-condition:push-stack))
-                (push-stack place (new Var% [name "#tmp"] [place-type place]))
+                (push-stack place (new Var% [name "_tmp"] [place-type place]))
                 (for ([p path])
                      (gen-condition-path p)))
         ))
@@ -206,8 +215,8 @@
                                       (send ast to-string) 
                                       (get-field known-type ast))))
 	;; only work for known type for now
-	(unless (get-field known-type ast)
-		(raise "We only handle known-type array for now. Sorry!"))
+	;; (unless (get-field known-type ast)
+	;; 	(raise "We only handle known-type array for now. Sorry!"))
 
 	(let ([place (get-field place-type ast)])
 	  (set-field! index ast (pop-stack place))
@@ -403,14 +412,16 @@
                        
         (scope-pattern 
          (lambda (c)
-           (let ([return (get-field return ast)])
-             (new FuncDecl%
-                  [name (get-field name ast)]
-                  [args (func-args-at ast c)]
-                  [return (func-return-at ast c)]
-                  [body (new Block% [stmts (list)])]
-		  [parent (get-workspace c)]))))]
-       
+           (let ([return (get-field return ast)]
+                 [func (new FuncDecl%
+                            [name (get-field name ast)]
+                            [args (func-args-at ast c)]
+                            [return (func-return-at ast c)]
+                            [body (new Block% [stmts (list)])]
+                            [parent (get-workspace c)])])
+             (set-func c func)
+             func)))]
+         
 
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
