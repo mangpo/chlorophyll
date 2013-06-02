@@ -3,6 +3,8 @@
 (require "partitioner.rkt" "layout-sa.rkt" "communication.rkt"
          "visitor-printer.rkt")
 
+(provide compile)
+
 (define (compile file name)
   (define concise-printer (new printer% [out #t]))
   
@@ -35,11 +37,11 @@
   (send (result-ast partition) pretty-print)
 
   (regenerate (result-ast partition) 5 4 name)
-  (define diff (simulate name "if.in"))
-  (if (equal? diff "")
-      "PASSED"
-      "FAILED")
+  ;(define diff (simulate name "if.in"))
+  ;(if (equal? diff "")
+  ;    "PASSED"
+  ;    "FAILED")
   )
 
 ;(compile "examples/md5/md5_4-known.cll" "md5_4-known")
-(compile "../tests/run/if.cll" "if")
+;(compile "../tests/run/if.cll" "if")
