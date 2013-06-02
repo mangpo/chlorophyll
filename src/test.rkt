@@ -2,10 +2,12 @@
 
 (require "partitioner.rkt" "symbolic-dict.rkt" rackunit)
 
+(define testdir "../tests/")
+
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
                        #:cores [cores 4] [capacity 256] #:max-msgs [max-msgs 8]
-                       [file (string-append "tests/" name ".cll")])
+                       [file (string-append testdir name ".cll")])
   (check-equal? 
    (result-msgs (optimize-comm file #:cores cores #:capacity capacity #:max-msgs max-msgs))
    expected-msgs
@@ -15,8 +17,8 @@
 ;; Consistency Test
 (define (test-consistent name
                          [cores 4] [capacity 256] [max-msgs 8]
-                         [file1 (string-append "tests/" name "_concrete.cll")]
-                         [file2 (string-append "tests/" name "_symbolic.cll")])
+                         [file1 (string-append testdir name "_concrete.cll")]
+                         [file2 (string-append testdir name "_symbolic.cll")])
   (let ([res1 (optimize-comm file1 #:cores 4 #:capacity 256 #:max-msgs 8)]
         [res2 (optimize-comm file2 #:cores 4 #:capacity 256 #:max-msgs 8)])
   (check-equal? (result-msgs res1) (result-msgs res2))

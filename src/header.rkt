@@ -5,7 +5,8 @@
 
 (provide symbolic? foldl log
          global-sol set-global-sol
-         evaluate-with-sol)
+         evaluate-with-sol
+         outdir)
 
 (define global-sol (sat (hash)))
 (define (set-global-sol sol)
@@ -14,3 +15,5 @@
 (define-syntax-rule (evaluate-with-sol x)
   ;(evaluate x))
   (evaluate x global-sol))
+
+(define outdir "../output")

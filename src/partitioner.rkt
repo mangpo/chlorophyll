@@ -205,7 +205,7 @@
       
       (define stop (current-seconds))
       
-      (with-output-to-file #:exists 'truncate (format "output/~a.bestsofar" name)
+      (with-output-to-file #:exists 'truncate (format "~a/~a.bestsofar" outdir name)
         (lambda () (send my-ast accept concise-printer)))
       
       (when verbose
@@ -275,7 +275,7 @@
           (when verbose (pretty-display "------------------------------------------------")))
         (send decl accept interpreter)))
 
-  (with-output-to-file #:exists 'truncate (format "output/~a.part" name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a.part" outdir name)
     (lambda () (send my-ast accept concise-printer)))
   
   (pretty-display "\n=== Final Solution ===")

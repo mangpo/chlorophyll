@@ -77,12 +77,12 @@
   (define flow-gen (new flow-generator%))
   (define flow-graph (send ast accept flow-gen))
   
-  (with-output-to-file #:exists 'truncate (format "output/~a.graph" name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a.graph" outdir name)
     (lambda () (display-edges flow-graph num-cores w h)))
   
   ;; Convert a list of edges into a matrix
   (with-output-to-string 
-   (lambda () (system (format "./qap/graph2matrix.py output/~a.graph > output/~a.dat" name name))))
+   (lambda () (system (format "./qap/graph2matrix.py ~a/~a.graph > ~a/~a.dat" outdir name outdir name))))
   
   ;; Mapping from cores to partitions
   (define core2part
@@ -92,10 +92,10 @@
          (string-split
           (last (string-split
                  (with-output-to-string
-                  (lambda () (system (format "./qap/sa_qap output/~a.dat 10000000 3" name))))
+                  (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir name))))
                  "\n")))))
 
-  (with-output-to-file #:exists 'truncate (format "output/~a.layout" name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a.layout" outdir name)
     (lambda () (display core2part)))
 
   (define n (* w h))

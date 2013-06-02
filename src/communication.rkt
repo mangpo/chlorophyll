@@ -1,6 +1,6 @@
 #lang racket
 
-(require "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt" "visitor-cprinter.rkt")
+(require "header.rkt" "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt" "visitor-cprinter.rkt")
 
 (provide (all-defined-out))
 
@@ -60,7 +60,7 @@
     (pretty-display "}"))
 
 
-  (with-output-to-file #:exists 'truncate (format "output/~a.cpp" name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a.cpp" outdir name)
     (lambda ()
       (pretty-display "#include \"communication.cpp\"\n")
       (for ([i (in-range n)])
