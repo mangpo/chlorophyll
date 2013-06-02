@@ -73,17 +73,20 @@
   )
        
 (define (simulate name input)
-  (system (format "rm -f ~a/~a ~a/out/~a.tmp" 
-                  outdir name
-                  datadir name))
-  (system (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a/~a" outdir name outdir name))
-  (system (format "./~a/~a < ~a/~a > ~a/out/~a.tmp"
-                       outdir name
-                       datadir input
-                       datadir name))
+  (define binary (format "~a/~a" outdir name))
+  (define output (format "~a/out/~a_~a.tmp" datadir name input))
+  (define expect (format "~a/out/~a_~a.out" datadir name input))
+  
+  (system (format "rm -f ~a ~a" binary output))
+  (system (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a" 
+                  outdir name 
+                  binary))
+  (system (format "./~a < ~a/~a > ~a"
+                  binary
+                  datadir input  ;; input
+                  output)) ;; output
+  
   (with-output-to-string 
-    (lambda () (system (format "diff ~a/out/~a.out ~a/out/~a.tmp" 
-                               datadir name 
-                               datadir name)))))
+    (lambda () (system (format "diff ~a ~a" output expect)))))
       
   

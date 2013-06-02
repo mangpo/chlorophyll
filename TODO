@@ -1,8 +1,5 @@
 TODO
-- AST interpreter on multicore
-  = data dependency, sequential for in and out
 - known type
-- visitor-divider: naive test
 - run md5_4 again
 
 - dependency analysis to do parallel loop
