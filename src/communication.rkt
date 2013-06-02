@@ -69,6 +69,21 @@
         (send cprinter set-core i)
         (send (vector-ref programs i) accept cprinter)
         (newline))
-      (print-main))))
+      (print-main)))
+  )
        
-
+(define (simulate name input)
+  (system (format "rm -f ~a/~a ~a/out/~a.tmp" 
+                  outdir name
+                  datadir name))
+  (system (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a/~a" outdir name outdir name))
+  (system (format "./~a/~a < ~a/~a > ~a/out/~a.tmp"
+                       outdir name
+                       datadir input
+                       datadir name))
+  (with-output-to-string 
+    (lambda () (system (format "diff ~a/out/~a.out ~a/out/~a.tmp" 
+                               datadir name 
+                               datadir name)))))
+      
+  

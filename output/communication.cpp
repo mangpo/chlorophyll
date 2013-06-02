@@ -22,9 +22,7 @@ void write(int port, int data) {
   channel[port] = data;
   empty[port] = false;
 
-  while(!empty[port]) { 
-    //printf("-"); 
-  }
+  while(!empty[port]) {}
   wlock[port].unlock();
 }
 
@@ -32,7 +30,7 @@ int read(int port) {
   while(empty[port]) {}
   
   int data = channel[port];
-  printf("R%d : receive %d\n", port, data);
+  //printf("R%d : receive %d\n", port, data);
   empty[port] = true;
 
   return data;

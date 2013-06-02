@@ -1,3 +1,10 @@
 *~
 compiled/*
 */compiled/*
+*.bestsofar
+*.block
+*.dat
+*.cpp
+*.graph
+*.layout
+*.part

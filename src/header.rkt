@@ -4,9 +4,7 @@
 (require (only-in racket foldl log))
 
 (provide symbolic? foldl log
-         global-sol set-global-sol
-         evaluate-with-sol
-         outdir)
+         (all-defined-out))
 
 (define global-sol (sat (hash)))
 (define (set-global-sol sol)
@@ -17,3 +15,4 @@
   (evaluate x global-sol))
 
 (define outdir "../output")
+(define datadir "../testdata")
