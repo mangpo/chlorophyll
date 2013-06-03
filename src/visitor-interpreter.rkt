@@ -16,7 +16,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field places
-                [env (make-hash)] 
+                [env (make-hash)] ;; map varname -> place, arrayname -> (place cluster)
 		[known-stack (list #t)])
 
     
@@ -51,6 +51,7 @@
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
+      ;(pretty-display `(find-place ,ast))
       (when (not (is-a? ast Livable%))
         (raise "find-place: ast is not Livable%"))
       
@@ -58,11 +59,11 @@
 
       (define (derive-place p)
         (cond
-         [(is-a? p Var%) 
-          (car (lookup env p))]
-         
          [(is-a? p Array%)
           (car (lookup env p))]
+
+         [(is-a? p Var%) 
+          (lookup env p)]
          
          [else
           (raise-syntax-error 'unsupported (format "place(~a) at src: l: ~a c: ~a"
@@ -72,7 +73,6 @@
 
       (if (is-a? place-exp Place%)
           (let ([place (derive-place (get-field at place-exp))])
-            ;(pretty-display (format "derive = ~a" place))
             (when modify (set-field! place ast place))
             place)
           place-exp))
@@ -82,18 +82,19 @@
       (if (is-a? place Place%)
           (let* ([at (get-field at place)]
                  [index (if (is-a? at Array%)
-                            ; return i when place = @place(x[i])
-                            (get-field index at)
-                            ; return i when place = @place(i)
+			    ;; return i when place = @place(x[i])
+			    (get-field index at)
+                            ;; return i when place = @place(i)
                             at)])
+	    (define info (lookup env at))
+	    ;(pretty-display `(find-index at ,(send at to-string) info ,info))
+	    (when (and (pair? info) (not (list? info)) (cdr info)) 
+		  ;; @place(x[i]) if x is cluster, illegal
+		  (send place illegal-place))
             (if (is-a? index Var%)
-                ; need to set known-type to match with the environment
-                (let ([known-type (cdr (lookup env index))])
-                  (set-field! known-type index known-type)
-                  ; return index
-                  index)
+                  index
                 (raise "Place expression cannot be more complicated than @place(x[i])")))         
-          ; return false otherwise
+          ;; return false otherwise
           #f))
 
     ;; find place-type for @place(x)
@@ -111,10 +112,8 @@
           (begin
             ; get index for @place(i) before place because (find-place) will remove that info
             (define index (find-index (get-field place native)))
-            ;(when index
-            ;  (pretty-display (format "index = ~a\nknown = ~a"
-            ;                    (send index to-string) (get-field known-type index))))
             (define place (find-place native))
+	    ;(pretty-display `(find-place-type place ,place index ,index))
             (if (or (number? place) (place-type-dist? place))
                 place
                 (cons place index)))))
@@ -163,7 +162,7 @@
       (loop (set->list placeset)))
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
-    (define (count-msg-place-type x y)
+    (define (count-msg-place-type x y x-ast [y-ast #f])
       ;(pretty-display `(count-msg-place-type ,x ,y))
       ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
@@ -192,7 +191,7 @@
       ;; Return 1 if it is absolutly in one place
       ;;             or the index is known.
       ;; Return number of cores p resides in otherwise.
-      (define (count-comm p)
+      (define (count-comm p p-ast)
 	;(assert (place-type? p))
         (cond
           [(number? p) 1]
@@ -202,15 +201,15 @@
                  1
                  (raise "count-comm doesn't support Place% that is not @any")))]
           [(pair? p)
-           (if (and (get-field known-type (cdr p)) (car known-stack))
-               1
-               (length (car p)))]
+           (if (get-field cluster p-ast)
+	       (length (car p))
+	       1)]
           [else (raise (format "visiter-interpretor: count-comm: unimplemented for ~a" p))]))
       
       ;; x and y in form (cons place-list known-type)
-      (define x-comm (count-comm x))
+      (define x-comm (count-comm x x-ast))
       
-      (define y-comm (count-comm y))
+      (define y-comm (count-comm y y-ast))
 
       (cond 
         ;[(equal? x 0) 0] ;any
@@ -234,10 +233,13 @@
          (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
 
     (define (count-msg x-ast y-ast)
-      ;(pretty-display `(count-msg ,(send x-ast to-string) ,(send y-ast to-string)))
-      (count-msg-place-type (get-field place-type x-ast) (get-field place-type y-ast)))
+      (when debug
+	    (pretty-display `(count-msg ,(send x-ast to-string) ,(send y-ast to-string))))
+      (count-msg-place-type (get-field place-type x-ast) (get-field place-type y-ast)
+			    x-ast y-ast))
 
-    (define (count-msg-placeset p placeset)
+    (define (count-msg-placeset p-ast placeset)
+      (define p (get-field place-type p-ast))
       (define (loop placelist)
         (if (empty? placelist)
             0
@@ -245,7 +247,7 @@
                  [me (car placelist)])
               (+ (loop others)
                  (if (andmap (lambda (x) (not (equal? x me))) others)
-                     (count-msg-place-type p me)
+                     (count-msg-place-type p me p-ast)
                      0)))))
       (loop (set->list placeset)))
 
@@ -306,10 +308,10 @@
        
        [(is-a? ast Array%)
           ;; lookup place from env
-          (define place-known (lookup env ast))
-          (define places (car place-known))
-          (define known-type (cdr place-known))
-          (set-field! known-type ast known-type)
+          (define place-cluster (lookup env ast))
+          (define places (car place-cluster))
+          (define cluster (cdr place-cluster))
+          (set-field! cluster ast cluster)
 
 	  (define index (get-field index ast))
 
@@ -343,14 +345,10 @@
 
        [(is-a? ast Var%)
           ;; lookup place from env
-          (define place-known (lookup env ast))
-          (define place (car place-known))
-
+          (define place (lookup env ast))
           ;; place can be list if var is iterator
           ;; need to call to-place-type to turn place-list into (place-list . index)
           (set-field! place-type ast (to-place-type ast place))
-
-          (set-field! known-type ast (cdr place-known))
 
           (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
 
@@ -476,7 +474,7 @@
           
           ;; put vars into env
           (for ([var var-list])
-               (declare env var (cons place known)))
+               (declare env var place))
 
           (when debug
                 (pretty-display (format ">> VarDecl ~a" var-list)))
@@ -493,7 +491,7 @@
 
        [(is-a? ast ArrayDecl%)
           (define place-list (get-field place-list ast)) ; don't support place(x)
-          (define known (get-field known ast))
+          (define cluster (get-field cluster ast))
 
           (when debug
                 (pretty-display (format ">> ArrayDecl ~a" (get-field var ast))))
@@ -522,7 +520,7 @@
             
 
           ;; put array into env
-          (declare env (get-field var ast) (cons place-list known))
+          (declare env (get-field var ast) (cons place-list cluster))
 
           (comminfo 0 (to-place-set place-list) ast)
           ]
@@ -551,7 +549,7 @@
           ;; This "for" iterating pattern is satically known.
           (declare env 
                      (get-field name (get-field iter ast))
-                     (cons place-list #t))
+		     place-list)
 
           (define body-ret (send (get-field body ast) accept this))
           (define body-place-set (comminfo-placeset body-ret))
@@ -581,7 +579,7 @@
         (define true-ret (send (get-field true-block ast) accept this))
         (pop-scope)
 
-        (define cond-body-comm (count-msg-placeset (get-field place-type condition)
+        (define cond-body-comm (count-msg-placeset condition
                                                    (comminfo-placeset true-ret)
                                                    ))
         
@@ -624,7 +622,7 @@
         (set-field! body-placeset ast body-placeset)
 
         (comminfo (+ (comminfo-msgs ret) 
-                     (count-msg-placeset (get-field place-type condition) body-placeset))
+                     (count-msg-placeset condition body-placeset))
                   (comminfo-placeset ret)
                   (comminfo-firstast ret))
         ]
@@ -647,7 +645,7 @@
           (comminfo
            (+ (* (get-field bound ast)
                  (+ (comminfo-msgs condition-ret)
-                    (count-msg-placeset (get-field place-type condition)
+                    (count-msg-placeset condition
                                         (comminfo-placeset body-ret))))
               (* (get-field bound ast) (comminfo-msgs body-ret)))
            (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret))
@@ -659,13 +657,16 @@
           (define rhs (get-field rhs ast))
 
           (when debug
-                (pretty-display ">> Assign"))
+                (pretty-display ">> Assign (lhs)"))
           ;; Visit lhs
           (define lhs-ret (send lhs accept this))
 
           (define lhs-place-type (get-field place-type lhs))
           (define lhs-known-type (get-field known-type lhs))
 	  (define lhs-name (get-field name lhs))
+
+          (when debug
+                (pretty-display ">> Assign (rhs)"))
 
           ;; If rhs is a number, set place to be equal to lhs
           (when (is-a? rhs Num%) (send rhs infer-place lhs-place-type))
@@ -680,6 +681,8 @@
 		(let ([old (lookup env lhs)])
 		  (update env lhs (cons (car old) #f))))
 
+          (when debug
+                (pretty-display ">> Assign (connect)"))
 	  ;; Don't increase space
        
           (comminfo

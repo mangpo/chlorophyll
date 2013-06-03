@@ -1,7 +1,7 @@
 int i, j;   
 
 void main() {
-  int[]@{[0:5]=2,[5:10]=1} x[10];
-  int[] y[10];
+  cluster int[]@{[0:5]=2,[5:10]=1} x[10];
+  cluster int[] y[10];
   i = x[i] + y[i];
 }
