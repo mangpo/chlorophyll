@@ -188,6 +188,7 @@
   (class Base%
     (super-new)
     (init-field at)
+    (inherit-field pos)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Place:~a)" indent (if (is-a? at Base%)
@@ -200,6 +201,10 @@
 	  (format "place(~a)" (if (is-a? at Base%) (send at to-string) at)))
       )
 
+    (define/public (illegal-place)
+      (define string (to-string))
+      (raise (format "~a is illegal. It is clusterd array. Error at src: l:~a c:~a"
+		     string (position-line pos) (position-col pos))))
     ))
 
 (define Livable%
@@ -230,7 +235,7 @@
 (define Exp%
   (class Base%
     (super-new)
-    (init-field [known-type #f] [place-type #f])
+    (init-field [known-type #f] [place-type #f] [cluster #f])
 
     (define/public (infer-place [p place-type])
       (when (at-any? place-type)
@@ -464,7 +469,7 @@
   (class Livable%
     (super-new)
     (inherit-field place)
-    (init-field var-list type known)
+    (init-field var-list type [known #f])
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
@@ -552,7 +557,7 @@
   (class LivableGroup%
     (super-new)
     (inherit-field pos place-list)
-    (init-field var type known bound)
+    (init-field var type bound cluster [known #f])
     (inherit print-send-path)
     
     (define/override (pretty-print [indent ""])

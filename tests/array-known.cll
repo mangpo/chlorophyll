@@ -1,4 +1,4 @@
-known int@0 i, j;
+int@0 i, j;
 
 void main() {
 

@@ -27,7 +27,7 @@
 (test-num-msgs "array-known"   2)
 (test-num-msgs "array-dynamic" 6)
 (test-num-msgs "for-array1"    0)
-(test-num-msgs "for-array2"    240 #:max-msgs 300)
+(test-num-msgs "for-array2"    560 #:max-msgs 600)
 (test-num-msgs "for-array3"    0)
 (test-num-msgs "for-array3-2"  0)
 (test-num-msgs "for-array4"    120 #:max-msgs 300)

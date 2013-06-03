@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL
-                               INT VOID KNOWN FOR WHILE IF ELSE FROM TO RETURN
+                               INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
                                PLACE HERE ANY))
 
 (define-lex-trans number
@@ -40,11 +40,11 @@
   
 (define simple-math-lexer
   (lexer-src-pos
-   ;(whitespace (return-without-pos (simple-math-lexer input-port)))
    ("int"   (token-INT))
    ("void"  (token-VOID))
    ("return" (token-RETURN))
-   ("known" (token-KNOWN))
+   ;; ("known" (token-KNOWN))
+   ("cluster" (token-CLUSTER))
    ("for"   (token-FOR))
    ("while" (token-WHILE))
    ("if"    (token-IF))
@@ -145,7 +145,7 @@
          ((NUM) $1)
          ((VAR) $1)
          ;((HERE) (new Place% [at "here"] [pos $1-start-pos]))
-         ((ANY) (new Place% [at "any"]))
+         ((ANY) (new Place% [at "any"] [pos $1-start-pos]))
          ((PLACE LPAREN ele RPAREN) (new Place% [at $3] [pos $1-start-pos]))
          )
     
@@ -213,9 +213,13 @@
 	 ((funccall) $1)
          )
 
-    (known-type
-         (() "")
-         ((KNOWN) "known"))
+    ;; (known-type
+    ;;      (() "")
+    ;;      ((KNOWN) "known"))
+
+    (cluster
+         (() #f)
+         ((CLUSTER) #t))
 
     (data-type
          ((INT) "int")
@@ -242,10 +246,10 @@
 
     ;; int a, int b, int c
     (param
-         ((known-type data-place-type VAR)
-            (new Param% [var-list (list $3)] [type (car $2)] [known (equal? $1 "known")]
-                 [place (cdr $2)]
-                 [pos $3-start-pos])))
+         ((data-place-type VAR)
+            (new Param% [var-list (list $2)] [type (car $1)]
+                 [place (cdr $1)]
+                 [pos $2-start-pos])))
 
     (param-list
          ((param) (list $1))
@@ -257,20 +261,35 @@
 
     (var-decl
          ; var declaration
-         ((known-type data-place-type var-list SEMICOL) 
-            (new VarDecl% [var-list $3] [type (car $2)] [known (equal? $1 "known")] [place (cdr $2)]
-                 [pos $3-start-pos]))
+         ((data-place-type var-list SEMICOL) 
+            (new VarDecl% [var-list $2] [type (car $1)] [place (cdr $1)]
+                 [pos $2-start-pos]))
          
          ; array declaration
-         ((known-type data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
-            (new ArrayDecl% [var $5] [type $2] [known (equal? $1 "known")] [bound $7]
-		 [place-list (default-array-place 0 $7)]
+         ((data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
+            (new ArrayDecl% [var $4] [type $1] [cluster #f] [bound $6]
+	 	 [place-list (default-array-place 0 $6)]
+                 [pos $4-start-pos]))
+
+         ; array declaration with placement
+         ((data-type LSQBR RSQBR @ place-dist 
+                      VAR LSQBR NUM RSQBR SEMICOL)
+            (new ArrayDecl% [var $6] [type $1] [cluster #f] [bound $8] 
+                 [place-list (if (list? $5)
+                                 $5
+                                 (list (new RangePlace% [from 0] [to $8] [place $5])))]
+                 [pos $6-start-pos]))
+
+         ; array declaration
+         ((CLUSTER data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
+            (new ArrayDecl% [var $5] [type $2] [cluster #t] [bound $7]
+	 	 [place-list (default-array-place 0 $7)]
                  [pos $5-start-pos]))
 
          ; array declaration with placement
-         ((known-type data-type LSQBR RSQBR @ place-dist 
+         ((CLUSTER data-type LSQBR RSQBR @ place-dist 
                       VAR LSQBR NUM RSQBR SEMICOL)
-            (new ArrayDecl% [var $7] [type $2] [known (equal? $1 "known")] [bound $9] 
+            (new ArrayDecl% [var $7] [type $2] [cluster #t] [bound $9] 
                  [place-list (if (list? $6)
                                  $6
                                  (list (new RangePlace% [from 0] [to $9] [place $6])))]
@@ -326,11 +345,10 @@
     (block ((stmts) (new Block% [stmts $1])))
 
     (func-decl
-         ((known-type data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
-          (new FuncDecl% [name $3] [args (new Block% [stmts $5])] [body $8] 
+         ((data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
+          (new FuncDecl% [name $2] [args (new Block% [stmts $4])] [body $7] 
                [return (new VarDecl% [var-list (list "#return")] 
-			    [type (car $2)] [place (cdr $2)]
-			    [known (equal? $1 "known")])]
+			    [type (car $1)] [place (cdr $1)])]
                [pos $2-start-pos])))
 
     (decl
