@@ -1,0 +1,17 @@
+int sum(int a, int b, int c, int d) {
+  return a + b + c + d;
+}
+
+void main() {
+  int@1 a;
+  int@1 b;
+  int@2 c;
+  int@2 d;
+  int@0 ret;
+  a = in();
+  b = in();
+  c = in();
+  d = in();
+  ret = sum(a,b,c,sum(d,c,b,a));
+  out(ret);
+}
