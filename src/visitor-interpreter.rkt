@@ -7,7 +7,7 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #f)
+(define debug #t)
 (define debug-sym #f)
 
 (struct comminfo (msgs placeset firstast))
@@ -239,6 +239,7 @@
 			    x-ast y-ast))
 
     (define (count-msg-placeset p-ast placeset)
+      ;(when debug (pretty-display `(count-msg-placeset)))
       (define p (get-field place-type p-ast))
       (define (loop placelist)
         (if (empty? placelist)
@@ -578,10 +579,6 @@
         (push-scope)
         (define true-ret (send (get-field true-block ast) accept this))
         (pop-scope)
-
-        (define cond-body-comm (count-msg-placeset condition
-                                                   (comminfo-placeset true-ret)
-                                                   ))
         
         ;; between condition and true-block
         (define ret
@@ -621,6 +618,7 @@
         ;; save for use in flow and comminsert
         (set-field! body-placeset ast body-placeset)
 
+	(when debug (pretty-display ">> FOR (count-msg-placeset)"))
         (comminfo (+ (comminfo-msgs ret) 
                      (count-msg-placeset condition body-placeset))
                   (comminfo-placeset ret)

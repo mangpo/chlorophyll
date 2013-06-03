@@ -293,5 +293,5 @@
 
 
 ;(define t (current-seconds))
-;(result-msgs (optimize-comm "../tests/add.cll" #:cores 16 #:capacity 256 #:verbose #t))
+;(result-msgs (optimize-comm "../tests/run/if-debug.cll" #:cores 20 #:capacity 512 #:verbose #t))
 ;(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))

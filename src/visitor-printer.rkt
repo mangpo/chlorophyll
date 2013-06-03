@@ -20,7 +20,7 @@
     (define/public (visit ast)
       (cond
         [(is-a? ast VarDecl%)
-         (display (format "~a@~a ~a"
+         (display (format "~a@~a ~a;"
                                (get-field type ast)
                                (place-to-string (send ast get-place) out)
                                (list-to-string (get-field var-list ast))
@@ -28,7 +28,7 @@
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a[]@~a ~a[~a]"
+         (display (format "~a[]@~a ~a[~a];"
                                (get-field type ast)
                                (place-to-string (get-field place-list ast) out)
                                (get-field var ast)

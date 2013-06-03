@@ -3,27 +3,18 @@ TODO
   = set cluster info
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
 - run md5_4 again
+- to make pair work => need to do data type check before/while create symbolic variables
 
 - dependency analysis to do parallel loop
 - data type check (x[i] + y) when y is array
-- visitor-devider can't handle nested indexes (eg. +@place(x[i*n+j]))
+- visitor-divider can't handle nested indexes (eg. +@place(x[i*n+j]))
 
 - refactoring interpretor & flow & comminsert
 - master/slave block,function,array (tests/for-array2)
 - get rid of firstast
 
-- to make pair work => need to do data type check before/while create symbolic variables
-
-- known-type check across functions
 - topological sort
 - recursion
-- one function at multiple places
-
-- declaration inside block
-  for {
-    int x = 0;
-  }
-  (matrixmultiply caching)
 - general for?
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])

@@ -214,9 +214,9 @@
               (pretty-display (format "\nDIVIDE: Array ~a (known=~a)\n" 
                                       (send ast to-string) 
                                       (get-field known-type ast))))
-	;; only work for known type for now
-	;; (unless (get-field known-type ast)
-	;; 	(raise "We only handle known-type array for now. Sorry!"))
+	;; have yet supported clustered array
+	(when (get-field cluster ast)
+		(raise "We only support non-clustered array for now. Sorry!"))
 
 	(let ([place (get-field place-type ast)])
 	  (set-field! index ast (pop-stack place))
@@ -292,6 +292,7 @@
 			   [type (get-field type ast)]
 			   [known (get-field known ast)]
 			   [bound (- (get-field to p) (get-field from p))]
+			   [cluster (get-field cluster ast)]
 			   [place-list here]))))))]
        
        [(is-a? ast VarDecl%)

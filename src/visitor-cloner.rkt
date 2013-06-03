@@ -58,6 +58,7 @@
         (new Array% [name (get-field name ast)] 
              [index (send (get-field index ast) accept this)]
 	     [offset (cdr place-offset)] ;; need this to substract from the index
+	     [cluster (get-field cluster ast)]
              [place-type (car place-offset)] [known-type (get-known-type)])]
 
        [(is-a? ast Var%)
@@ -112,6 +113,7 @@
              [type (get-field type ast)]
              [known (get-field known ast)]
              [bound (get-field bound ast)]
+	     [cluster (get-field cluster ast)]
              [place-list (get-field place-list ast)])]
 
        [(is-a? ast For%)
