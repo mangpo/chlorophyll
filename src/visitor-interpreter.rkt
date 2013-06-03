@@ -7,17 +7,17 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #t)
+(define debug #f)
 (define debug-sym #f)
 
-(struct comminfo (msgs placeset firstast))
+(struct comminfo (msgs placeset))
 
 (define count-msg-interpreter%
   (class* object% (visitor<%>)
     (super-new)
     (init-field places
                 [env (make-hash)] ;; map varname -> place, arrayname -> (place cluster)
-		[known-stack (list #t)])
+		)
 
     
     ;; Declare IO function: in(), out(data)
@@ -30,7 +30,7 @@
 			        [type "int"] ;; TODO: make it generic
 				[place (new Place% [at "io"])]
 				[known #f])])
-	      (comminfo 0 (set) #f)))
+	      (comminfo 0 (set))))
 
     (declare env "out"
 	     (cons
@@ -47,7 +47,7 @@
 			        [type "void"]
 				[known #f]
 				[place (new Place% [at "io"])])])
-	      (comminfo 0 (set) #f)))
+	      (comminfo 0 (set))))
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
@@ -118,7 +118,11 @@
                 place
                 (cons place index)))))
 
-    ;; env dictionary map variable to (place . known-type)
+    ;; env dictionary map variable x to
+    ;; 1) place if x is not array
+    ;; 2) (place . cluster) if x is array
+    ;;    cluster is either true or false
+
     ;; place has 2 categories
     ;; 1) single place => integer
     ;; 2) place list   => (list_of_RangePlace%)
@@ -163,7 +167,8 @@
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg-place-type x y x-ast [y-ast #f])
-      ;(pretty-display `(count-msg-place-type ,x ,y))
+      (when debug
+	    (pretty-display `(count-msg-place-type ,x ,y)))
       ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
       ;; Return the place that a resides if a only lives in one place. 
@@ -188,8 +193,7 @@
              (for ([p (car x)])
                   (inc-space (get-field place p) est-comm))))
 
-      ;; Return 1 if it is absolutly in one place
-      ;;             or the index is known.
+      ;; Return 1 if it is in one place or it is a non-cluster array.
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p p-ast)
 	;(assert (place-type? p))
@@ -206,15 +210,11 @@
 	       1)]
           [else (raise (format "visiter-interpretor: count-comm: unimplemented for ~a" p))]))
       
-      ;; x and y in form (cons place-list known-type)
       (define x-comm (count-comm x x-ast))
       
       (define y-comm (count-comm y y-ast))
 
       (cond 
-        ;[(equal? x 0) 0] ;any
-        ;[(equal? y 0) 0] ;any
-
         ;; if x and y are the same place.
         [(same-place? x y) 0]
 
@@ -230,7 +230,7 @@
          (add-comm x)
          (add-comm y)
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
-         (+ x-comm y-comm)])) ;; TODO: not 1 if it's not an array of statically known
+         (+ x-comm y-comm)]))
 
     (define (count-msg x-ast y-ast)
       (when debug
@@ -257,8 +257,7 @@
              [ret  (cdr (dict-ref env name))])
             (dict-set! env name 
                        (cons func-ast (comminfo (evaluate-with-sol (comminfo-msgs ret))
-                                                (comminfo-placeset ret)
-                                                (comminfo-firstast ret))))))
+                                                (comminfo-placeset ret))))))
                  
     (define (push-scope)
       ;(pretty-display `(push-scope))
@@ -286,14 +285,14 @@
           (raise "visitor-interpreter: can't visit Const%")
           (define place (find-place ast #f)) ; don't modify
 	  (inc-space place est-num) ; increase space
-          (comminfo 0 (set place) ast)]
+          (comminfo 0 (set place))]
 
 
        [(is-a? ast Op%)
           (raise "visitor-interpreter: can't visit Op%")
           (define place (find-place ast #f)) ; don't modify
 	  (inc-space-with-op place (get-field op ast)) ; increase space
-	  (comminfo 0 (to-place-set place) ast)
+	  (comminfo 0 (to-place-set place))
           ]
 
        [(is-a? ast Num%)
@@ -305,7 +304,7 @@
 	  (set-field! place-type ast place-type)
 	  (inc-space place-type est-num) ; increase space
 
-          (comminfo 0 (to-place-set place-type) ast)]
+          (comminfo 0 (to-place-set place-type))]
        
        [(is-a? ast Array%)
           ;; lookup place from env
@@ -340,8 +339,7 @@
 
           (comminfo 
            (+ (comminfo-msgs index-ret) (count-msg index ast))
-           (set-union (comminfo-placeset index-ret) (to-place-set places))
-           (comminfo-firstast index-ret))
+           (set-union (comminfo-placeset index-ret) (to-place-set places)))
           ]
 
        [(is-a? ast Var%)
@@ -357,7 +355,7 @@
           ;; x[i] in loop => take no space, i can be on stack
           ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
 
-          (comminfo 0 (to-place-set place) ast)
+          (comminfo 0 (to-place-set place))
           ]
 
        [(is-a? ast UnaExp%)
@@ -367,10 +365,9 @@
           (define e1-ret (send e1 accept this))
 	  ;(define op-ret (send op accept this))
           
-          ;; set place-type known-type
+          ;; set place-type
           (define place-type (find-place-type ast op))
           (set-field! place-type ast place-type)
-          (set-field! known-type ast (get-field known-type e1))
 
 	  (inc-space place-type est-num) ; increase space
 
@@ -382,8 +379,7 @@
           
           (comminfo
            (+ (comminfo-msgs e1-ret) (count-msg ast e1))
-           (set-union (comminfo-placeset e1-ret) (to-place-set place-type))
-           (comminfo-firstast e1-ret))
+           (set-union (comminfo-placeset e1-ret) (to-place-set place-type)))
           ]
 
        [(is-a? ast BinExp%)
@@ -392,9 +388,9 @@
           (define e2 (get-field e2 ast))
           (define op (get-field op ast))
           
-          ;; set place-type known-type
+          ;; set place-type
           (define place-type (find-place-type ast op))
-          (set-field! place-type ast place-type)
+	  (set-field! place-type ast place-type)
 
           ;; Infer place-type for number.
           (when (is-a? e1 Num%) (send e1 infer-place place-type))
@@ -403,9 +399,6 @@
           (define e1-ret (send e1 accept this))
           (define e2-ret (send e2 accept this))
 	  ;(define op-ret (send op accept this))
-
-          (set-field! known-type ast (and (get-field known-type e1) (get-field known-type e2)))
-          ;; ^ problematic here (maybe not anymore)
           
 	  (inc-space place-type est-num) ; increase space
 
@@ -430,8 +423,7 @@
               (comminfo-msgs e2-ret)
               (count-msg ast e1)
               (count-msg ast e2))
-           (set-union (set-union (comminfo-placeset e1-ret) (comminfo-placeset e2-ret)) (to-place-set place-type))
-           (comminfo-firstast e1-ret))
+           (set-union (set-union (comminfo-placeset e1-ret) (comminfo-placeset e2-ret)) (to-place-set place-type)))
           ]
 
        [(is-a? ast FuncCall%)
@@ -445,7 +437,6 @@
 
           (define msgs (comminfo-msgs func-ret))
 	  (define placeset (comminfo-placeset func-ret))
-	  (define firstast (comminfo-firstast func-ret))
 
           ;; increase space
           (inc-space-placeset placeset est-funccall)
@@ -456,22 +447,19 @@
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
           
-	  ;; set place-type known-type
+	  ;; set place-type
 	  (let ([return (get-field return func-ast)])
-	    (set-field! place-type ast (get-field place return))
-	    (set-field! known-type ast (get-field known return)))
+	    (set-field! place-type ast (get-field place return)))
 		 
-	  (comminfo msgs placeset firstast)]
+	  (comminfo msgs placeset)]
                 
        [(is-a? ast VarDecl%) 
           (define place (find-place ast))
-	  (define known (get-field known ast))
           (define var-list (get-field var-list ast))
 
 	  ;; Param% only
 	  (when (is-a? ast Param%)
-		(set-field! place-type ast place)
-		(set-field! known-type ast known))
+		(set-field! place-type ast place))
           
           ;; put vars into env
           (for ([var var-list])
@@ -486,8 +474,7 @@
           (comminfo 0 
                     (if (equal? (get-field type ast) "void")
                         (set)
-                        (set place)) 
-                    ast)
+                        (set place)))
           ]
 
        [(is-a? ast ArrayDecl%)
@@ -523,7 +510,7 @@
           ;; put array into env
           (declare env (get-field var ast) (cons place-list cluster))
 
-          (comminfo 0 (to-place-set place-list) ast)
+          (comminfo 0 (to-place-set place-list))
           ]
 
        [(is-a? ast For%)
@@ -547,7 +534,7 @@
           ;; Add new scope for body.
           (push-scope)
 
-          ;; This "for" iterating pattern is satically known.
+          ;; Declare iterator
           (declare env 
                      (get-field name (get-field iter ast))
 		     place-list)
@@ -565,16 +552,12 @@
 
           (comminfo
            (* (comminfo-msgs body-ret) (- (get-field to ast) (get-field from ast)))
-           body-place-set
-           (comminfo-firstast body-ret))
+           body-place-set)
           ]
 
        [(is-a? ast If%)
         (define condition (get-field condition ast))
         (define condition-ret (send condition accept this))
-        
-	;; push to stack
-	(set! known-stack (cons (get-field known-type condition) known-stack))
 
         (push-scope)
         (define true-ret (send (get-field true-block ast) accept this))
@@ -585,14 +568,10 @@
           (comminfo
            (+ (comminfo-msgs condition-ret)
               (comminfo-msgs true-ret))
-           (set-union (comminfo-placeset condition-ret) (comminfo-placeset true-ret))
-           (comminfo-firstast condition-ret)))
+           (set-union (comminfo-placeset condition-ret) (comminfo-placeset true-ret))))
 
         ;; add to body-placeset
         (define body-placeset (comminfo-placeset true-ret))
-        
-	;; pop from stack
-	(set! known-stack (cdr known-stack))
         
         (define false-block (get-field false-block ast))
         (push-scope)
@@ -607,9 +586,8 @@
                       (comminfo
                        (+ (comminfo-msgs ret)
                           (comminfo-msgs false-ret))
-                       (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))
-                       (comminfo-firstast ret)))
-                    ret)))
+                       (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))))
+		    ret)))
         (pop-scope)
 
         ;; increase space
@@ -621,19 +599,14 @@
 	(when debug (pretty-display ">> FOR (count-msg-placeset)"))
         (comminfo (+ (comminfo-msgs ret) 
                      (count-msg-placeset condition body-placeset))
-                  (comminfo-placeset ret)
-                  (comminfo-firstast ret))
+                  (comminfo-placeset ret))
         ]
 
        [(is-a? ast While%)
           (define condition (get-field condition ast))
           (define condition-ret (send condition accept this))
           
-          ;; push to stack
-          (set! known-stack (cons (get-field known-type condition) known-stack))
           (define body-ret (send (get-field body ast) accept this))
-	  ;; pop from stack
-          (set! known-stack (cdr known-stack))
           
           ;; increase space
           (inc-space-placeset (comminfo-placeset body-ret) est-while)
@@ -646,8 +619,8 @@
                     (count-msg-placeset condition
                                         (comminfo-placeset body-ret))))
               (* (get-field bound ast) (comminfo-msgs body-ret)))
-           (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret))
-           (comminfo-firstast condition-ret))]
+           (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret)))
+	  ]
 
        [(is-a? ast Assign%) 
           (when debug (newline))
@@ -660,7 +633,6 @@
           (define lhs-ret (send lhs accept this))
 
           (define lhs-place-type (get-field place-type lhs))
-          (define lhs-known-type (get-field known-type lhs))
 	  (define lhs-name (get-field name lhs))
 
           (when debug
@@ -672,21 +644,13 @@
           ;; Visit rhs
           (define rhs-ret (send rhs accept this))
 
-          ;; Update dynamic known type
-          (define rhs-known-type (get-field known-type rhs))
-          (when (and (not rhs-known-type) lhs-known-type)
-                (set-field! known-type lhs #f)
-		(let ([old (lookup env lhs)])
-		  (update env lhs (cons (car old) #f))))
-
           (when debug
                 (pretty-display ">> Assign (connect)"))
 	  ;; Don't increase space
        
           (comminfo
            (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
-           (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret))
-           (comminfo-firstast rhs-ret))
+           (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
          ]
 
        [(is-a? ast Program%)
@@ -708,9 +672,8 @@
                         (let ([stmt-ret (send stmt accept this)])
                           (comminfo (+ (comminfo-msgs all) (comminfo-msgs stmt-ret))
                                     (set-union (comminfo-placeset all) 
-                                               (comminfo-placeset stmt-ret))
-                                    (or (comminfo-firstast all) (comminfo-firstast stmt-ret)))))
-                      (comminfo 0 (set) #f) (get-field stmts ast))])
+                                               (comminfo-placeset stmt-ret)))))
+                      (comminfo 0 (set)) (get-field stmts ast))])
           
           (when (and debug-sym (symbolic? (comminfo-msgs ret)))
                 (pretty-display `(BLOCK SYM num-msgs = ,(comminfo-msgs ret))))
@@ -733,12 +696,10 @@
           (set-field! body-placeset ast body-placeset)
 
 	  (let ([ret (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
-			       body-placeset
-			       (comminfo-firstast return-ret))])
+			       body-placeset)])
 	    ;; declare function
 	    (declare env (get-field name ast) (cons ast ret))
 	    ret)]
-
 		
-       [else (raise (format "Error: count-msg-interpreter unimplemented for ~a" ast))]))
+       [else (raise (format "visitor-interpreter: unimplemented for ~a" ast))]))
 ))

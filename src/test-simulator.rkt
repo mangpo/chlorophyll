@@ -12,11 +12,9 @@
   (pretty-display (if (equal? diff "") "PASSED" "FAILED"))
   )
 
-#|
 (test "if" "4_1")
 (test "add" "200")
 (test "function" "4_1")
 (test "function" "4_2")
-|#
 
-(test "cluster" "200")
+;(test "cluster" "200")
