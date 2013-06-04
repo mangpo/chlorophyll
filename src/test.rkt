@@ -9,7 +9,7 @@
                        #:cores [cores 4] [capacity 256] #:max-msgs [max-msgs 8]
                        [file (string-append testdir name ".cll")])
   (check-equal? 
-   (result-msgs (optimize-comm file #:cores cores #:capacity capacity #:max-msgs max-msgs))
+   (result-msgs (optimize-comm file #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #t))
    expected-msgs
    name)
   )
@@ -24,9 +24,9 @@
   (check-equal? (result-msgs res1) (result-msgs res2))
   (check-true (cores-equal? (result-cores res1) (result-cores res2)))))
 
-(test-num-msgs "array-known"   2)
+;(test-num-msgs "array-known"   2)
 (test-num-msgs "array-dynamic" 6)
-(test-num-msgs "for-array1"    0)
+#|(test-num-msgs "for-array1"    0)
 (test-num-msgs "for-array2"    560 #:max-msgs 600)
 (test-num-msgs "for-array3"    0)
 (test-num-msgs "for-array3-2"  0)
@@ -39,4 +39,4 @@
 (test-num-msgs "while"         300 #:max-msgs 400)
 
 (test-consistent "space")
-(test-consistent "if")
+(test-consistent "if")|#

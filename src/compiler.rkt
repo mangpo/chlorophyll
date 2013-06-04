@@ -3,15 +3,16 @@
 (require "partitioner.rkt" "layout-sa.rkt" "communication.rkt"
          "visitor-printer.rkt")
 
-(provide compile)
+(provide compile test-simulate)
 
 (define (compile file name)
   (define concise-printer (new printer% [out #t]))
   
   (define partition (optimize-comm file
                                    #:name name
-                                   #:cores 20 #:capacity 512 #:verbose #f))
-  
+                                   #:cores 20 #:capacity 256 #:verbose #t))
+  (result-msgs partition)
+  #|
   (define layout-res (layout (result-ast partition) 
                              20 5 4 name))
   
@@ -36,12 +37,24 @@
   (pretty-display "--- after insert communication ---")
   (send (result-ast partition) pretty-print)
 
-  (regenerate (result-ast partition) 5 4 name)
-  ;(define diff (simulate name "if.in"))
-  ;(if (equal? diff "")
-  ;    "PASSED"
-  ;    "FAILED")
+  (regenerate (result-ast partition) 5 4 name)|#
   )
 
-;(compile "examples/md5/md5_4-known.cll" "md5_4-known")
-;(compile "../tests/run/if.cll" "if")
+(define testdir "../tests/run")
+
+(define (test-simulate name input)
+  (compile (format "~a/~a.cll" testdir name) name)
+  (define diff (simulate name input))
+  
+  (display (format "~a_~a\t" name input))
+  (pretty-display (if (equal? diff "") "PASSED" "FAILED"))
+  )
+
+(define t (current-seconds))
+(compile "../tests/run/matrixmult_0.cll" "matrixmult_1")
+(pretty-display (format "matrixmult_0 = ~a" (- (current-seconds) t)))
+
+(set! t (current-seconds))
+(compile "../tests/run/matrixmult_1.cll" "matrixmult_1")
+(pretty-display (format "/matrixmult_1 = ~a" (- (current-seconds) t)))
+;(test-simulate "matrixmult_1" "72")

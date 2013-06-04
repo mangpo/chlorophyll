@@ -248,16 +248,17 @@
     (define (outter-loop)
       (with-handlers* ([exn:fail? (lambda (e) 
                                     (pretty-display `(solve-time ,(- (current-seconds) t)))
-                                    (if (or (equal? (exn-message e)
-                                                    "solve: no satisfying execution found")
-                                            (equal? (exn-message e)
-                                                    "assert: failed"))
-                                        (begin
-                                          (set! lowerbound (add1 middle))
-                                          (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-                                          (if (< lowerbound upperbound)
-                                              (outter-loop)
-                                              (update-global-sol)))
+                                    (if (and best-sol
+					     (or (equal? (exn-message e)
+							 "solve: no satisfying execution found")
+						 (equal? (exn-message e)
+							 "assert: failed")))
+					(begin
+					  (set! lowerbound (add1 middle))
+					  (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+					  (if (< lowerbound upperbound)
+					      (outter-loop)
+					      (update-global-sol)))
                                         (begin
                                           (pretty-display e)
                                           (raise e))))])
@@ -293,5 +294,5 @@
 
 
 ;(define t (current-seconds))
-;(result-msgs (optimize-comm "../tests/run/if-debug.cll" #:cores 20 #:capacity 512 #:verbose #t))
+(result-msgs (optimize-comm "../tests/array-dynamic.cll" #:cores 4 #:capacity 256 #:verbose #t))
 ;(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
