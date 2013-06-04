@@ -1,0 +1,63 @@
+void main() {
+  int[]@{[0:36]} A[36];
+  int[]@{[0:36]} B[36];
+  int[]@{[0:36]} C[36];
+  int cc;
+
+  for(i from 0 to 6) {
+    for(j from 0 to 6) {
+      cc = 6*i + j;
+      C[cc] = 0;
+      for(k from 0 to 6) {
+	      C[cc] = C[cc] + A[6*i+k] * B[6*k+j];
+      }
+    }
+  }
+
+}
+
+/*
+
+=== Final Solution ===
+void main() {
+  int[]@{[0:36]=16} A[36];
+  int[]@{[0:36]=18} B[36];
+  int[]@{[0:36]=18} C[36];
+  int@18 cc;
+  for(i from 0 to 6)@any {
+    for(j from 0 to 6)@any {
+      cc = ((6 *@18 i) +@18 j);
+      C[cc] = 0;
+      for(k from 0 to 6)@any {
+        C[cc] = (C[cc] +@18 (A[((6 *@16 i) +@16 k)] *@18 B[((6 *@18 k) +@18 j)]));
+      }
+
+    }
+
+  }
+
+}
+
+core = 0, space = 0, ops = #<set:>
+core = 1, space = 0, ops = #<set:>
+core = 2, space = 0, ops = #<set:>
+core = 3, space = 0, ops = #<set:>
+core = 4, space = 0, ops = #<set:>
+core = 5, space = 0, ops = #<set:>
+core = 6, space = 0, ops = #<set:>
+core = 7, space = 0, ops = #<set:>
+core = 8, space = 0, ops = #<set:>
+core = 9, space = 0, ops = #<set:>
+core = 10, space = 0, ops = #<set:>
+core = 11, space = 0, ops = #<set:>
+core = 12, space = 0, ops = #<set:>
+core = 13, space = 0, ops = #<set:>
+core = 14, space = 0, ops = #<set:>
+core = 15, space = 0, ops = #<set:>
+core = 16, space = 217, ops = #<set:>
+core = 17, space = 0, ops = #<set:>
+core = 18, space = 401, ops = #<set:>
+core = 19, space = 0, ops = #<set:>
+216
+partitioning time = 36
+*/

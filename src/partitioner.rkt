@@ -90,8 +90,8 @@
 ;;; (define concise-printer (new printer%))
 ;;; (send my-ast accept concise-printer)
 
-(define (optimize-comm file #:name [name "temp"]
-                        #:cores [best-num-cores 144] 
+(define (optimize-comm my-ast #:name [name "temp"]
+                        #:cores [num-core 144] 
                         #:capacity [capacity 256] 
                         #:max-msgs [max-msgs #f]
                         #:verbose [verbose #f])
@@ -102,10 +102,10 @@
   (define concise-printer (new printer% [out #t]))
   
   ;; Easy inference happens here
-  (define my-ast (ast-from-file file))
   (when verbose
     (pretty-display "=== Original AST ===")
-    (send my-ast pretty-print))
+    (send my-ast pretty-print)
+    )
   
   ;; Collect real physical places
   (define collector (new place-collector% 
@@ -117,14 +117,14 @@
   
   ;; Convert distinct abstract partitions into distinct numbers
   ;; and different symbolic vars for different holes
-  (define converter (new partition-to-number% [num-core 16] [real-place-set place-set]))
+  (define converter (new partition-to-number% [num-core num-core] [real-place-set place-set]))
   (send my-ast accept converter)
   (when verbose
     (pretty-display "\n=== After string -> number ===")
     (send my-ast pretty-print))
   
   ;; Count number of messages
-  (define cores (make-cores #:capacity capacity #:max-cores best-num-cores))
+  (define cores (make-cores #:capacity capacity #:max-cores num-core))
   (define interpreter (new count-msg-interpreter% [places cores]))
   
   ;; Place holder for solution
@@ -248,7 +248,7 @@
     (define (outter-loop)
       (with-handlers* ([exn:fail? (lambda (e) 
                                     (pretty-display `(solve-time ,(- (current-seconds) t)))
-                                    (if (and best-sol
+                                    (if (and upperbound
 					     (or (equal? (exn-message e)
 							 "solve: no satisfying execution found")
 						 (equal? (exn-message e)
@@ -294,5 +294,6 @@
 
 
 ;(define t (current-seconds))
-(result-msgs (optimize-comm "../tests/array-dynamic.cll" #:cores 4 #:capacity 256 #:verbose #t))
+;(result-msgs (optimize-comm "../tests/run/matrixmult_20.cll" #:cores 20 #:capacity 300 #:verbose #t))
 ;(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+

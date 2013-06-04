@@ -6,7 +6,7 @@
 
 (provide commcode-inserter%)
 
-(define debug #t)
+(define debug #f)
 
 ;; 1) Insert communication route to send-path field.
 ;; 2) Convert partition ID to actual core ID.

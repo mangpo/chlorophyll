@@ -169,7 +169,7 @@
         ]
 
        [(is-a? ast If%)
-        (pretty-display "UNROLL: If")
+        ;(pretty-display "UNROLL: If")
         (send (get-field condition ast) accept this)
         (send (get-field true-block ast) accept this)
         (when (get-field false-block ast)
@@ -182,7 +182,7 @@
         ast]
 
        [(is-a? ast Assign%)
-        (pretty-display "UNROLL: Assign")
+        ;(pretty-display "UNROLL: Assign")
         (send (get-field lhs ast) accept this)
         (send (get-field rhs ast) accept this)
         ast]

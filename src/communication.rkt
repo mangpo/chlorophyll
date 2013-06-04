@@ -25,7 +25,7 @@
 (define (regenerate ast w h name)
   (define divider (new ast-divider% [w w] [h h]))
   (define programs (send ast accept divider))
-  (define cprinter (new cprinter% [w w] [h h]))
+  (define cprinter (new cprinter% [thread #t] [w w] [h h]))
   (define n (add1 (* w h)))
 
   (define (print-main)
@@ -71,8 +71,33 @@
         (newline))
       (print-main)))
   )
+
+(define (generate-onecore-simulation ast file)
+  (with-output-to-file #:exists 'truncate file
+    (lambda ()
+      (define cprinter (new cprinter% [thread #f]))
+      (pretty-display "#include \"communication.cpp\"\n")
+      (send ast accept cprinter)))
+  )
+
+(define (simulate-onecore ast name input)
+  (define cpp    (format "~a/~a_seq.cpp" outdir name))
+  (define binary (format "~a/~a_seq" outdir name))
+  (define expect (format "~a/out/~a_~a.out" datadir name input))
+  
+  (generate-onecore-simulation ast cpp)
+  
+  (system (format "rm -f ~a ~a" binary expect))
+  (system (format "g++ -pthread -std=c++0x ~a -o ~a" 
+                  cpp
+                  binary))
+  (system (format "./~a < ~a/~a > ~a"
+                  binary
+                  datadir input  ;; input
+                  expect)) ;; output
+  )
        
-(define (simulate name input)
+(define (simulate-multicore name input)
   (define binary (format "~a/~a" outdir name))
   (define output (format "~a/out/~a_~a.tmp" datadir name input))
   (define expect (format "~a/out/~a_~a.out" datadir name input))

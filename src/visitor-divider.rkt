@@ -6,7 +6,7 @@
 
 (provide ast-divider%)
 
-(define debug #t)
+(define debug #f)
 
 (define ast-divider%
   (class* object% (visitor<%>)
@@ -272,7 +272,6 @@
 	       [type (get-field type (get-field return sig))])
           (for ([c (get-field body-placeset sig)])
 	       ;; body-placeset of IO function is empty
-	       (pretty-display `(core ,c))
                (if (or (equal? type "void") (not (= place c)))
 		   ;; if return place is not here, funcall is statement
                    (push-workspace c (new-funccall c))

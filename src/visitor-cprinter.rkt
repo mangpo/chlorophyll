@@ -7,7 +7,7 @@
 (define cprinter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field w h [core #f] [n (* w h)])
+    (init-field thread [w 0] [h 0] [core 0] [n (* w h)])
 
     (define indent "")
 
@@ -205,7 +205,9 @@
          ;; Print function signature
 	 (if (equal? name "main")
              ;; main
-	     (pretty-display (format "void *main_~a(void *dummy) {" core))
+             (if thread
+                 (pretty-display (format "void *main_~a(void *dummy) {" core))
+                 (pretty-display "int main() {"))
              ;; everything else
 	     (let* ([return (get-field return ast)]
 		    [type (get-field type return)]
@@ -235,7 +237,10 @@
          (send (get-field body ast) accept this)
 	 (when (equal? name "main")
 	       (display indent)
-	       (pretty-display "return NULL;"))
+               (if thread
+                   (pretty-display "return NULL;")
+                   (pretty-display "return 0;"))
+               )
          (dec-indent)
          (pretty-display "}")
          ]
