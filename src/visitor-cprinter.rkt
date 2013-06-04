@@ -43,10 +43,9 @@
     (define/public (visit ast)
       (cond
         [(is-a? ast VarDecl%)
-         (display (format "~a ~a_~a;"
+         (display (format "~a ~a;"
                                (get-field type ast)
-                               (list-to-string (get-field var-list ast))
-			       core
+                               (list-to-string (get-field var-list ast) core)
 			       ))
          ]
         

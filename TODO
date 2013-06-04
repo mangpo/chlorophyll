@@ -1,4 +1,5 @@
 TODO
+- add testdata/72, testdata/matrxmult.out
 - run test.rkt, why array-dynamic fails?
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
@@ -13,7 +14,6 @@ TODO
 
 - refactoring interpretor & flow & comminsert
 - master/slave block,function,array (tests/for-array2)
-- get rid of firstast
 
 - topological sort
 - recursion

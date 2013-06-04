@@ -32,11 +32,14 @@
   (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
 
 ;; list -> string
-(define (list-to-string items)
+(define (list-to-string items [core #f])
   (if (empty? items)
       ""
-      (foldl (lambda (item str) (format "~a, ~a" item str))
-	     (format "~a" (car items))
+      (foldl (lambda (item str) 
+	       (if core (format "~a, ~a_~a" str item core) (format "~a, ~a" str item)))
+	     (if core
+		 (format "~a_~a" (car items) core)
+		 (format "~a" (car items)))
 	     (cdr items))))
 
 ;; ast-list -> string
@@ -640,11 +643,13 @@
 
     (define/public (get-signature)
       ;(pretty-display `(get-signature ,name))
-      (new FuncDecl% [name name] 
-	   [args (send args copy)] 
-	   [body (new Block% [stmts (list)])]
-	   [return (send return copy)]
-	   [body-placeset body-placeset]))
+      (if (or (equal? name "in") (equal? name "out"))
+	  (new FuncDecl% [name name] 
+	       [args (send args copy)] 
+	       [body (new Block% [stmts (list)])]
+	       [return (send return copy)]
+	       [body-placeset body-placeset])
+	  this))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))

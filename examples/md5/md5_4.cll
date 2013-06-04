@@ -10,7 +10,7 @@ int sumrotate(int a, int b, int f, int k, int m, int r) {
 void main() {
   int[] k[64]; // full = 64 entries
   int[] r[64];
-  int[]@a message[32];
+  int[]@a message[16];
   
   int[] hash[4];
   int@b a, b, c, d, temp;

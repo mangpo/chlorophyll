@@ -59,5 +59,6 @@
   (if (equal? diff "") "PASSED" "FAILED")
   )
 
+;(compile "../examples/md5/md5_4.part" "md5_4" 512)
 ;(compile "../tests/run/matrixmult.cll" "matrixmult" 300)
 ;(test-simulate "matrixmult" "72" 300)
