@@ -1,4 +1,6 @@
 TODO
+- run test.rkt, why array-dynamic fails?
+- reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
   = set cluster info
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
