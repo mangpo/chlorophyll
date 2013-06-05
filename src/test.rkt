@@ -1,15 +1,21 @@
 #lang s-exp rosette
 
-(require "partitioner.rkt" "symbolic-dict.rkt" rackunit)
+(require "parser.rkt" "visitor-desugar.rkt"
+         "partitioner.rkt" "symbolic-dict.rkt" rackunit)
 
 (define testdir "../tests/")
+
+(define (optimize-file file cores capacity max-msgs)
+  (define my-ast (ast-from-file file))
+  ;(send my-ast accept (new desugar%))
+  (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #f))
 
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
                        #:cores [cores 4] [capacity 256] #:max-msgs [max-msgs 8]
                        [file (string-append testdir name ".cll")])
   (check-equal? 
-   (result-msgs (optimize-comm file #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #t))
+   (result-msgs (optimize-file file cores capacity max-msgs))
    expected-msgs
    name)
   )
@@ -19,8 +25,8 @@
                          [cores 4] [capacity 256] [max-msgs 8]
                          [file1 (string-append testdir name "_concrete.cll")]
                          [file2 (string-append testdir name "_symbolic.cll")])
-  (let ([res1 (optimize-comm file1 #:cores 4 #:capacity 256 #:max-msgs 8)]
-        [res2 (optimize-comm file2 #:cores 4 #:capacity 256 #:max-msgs 8)])
+  (let ([res1 (optimize-file file1 cores capacity max-msgs)]
+        [res2 (optimize-file file2 cores capacity max-msgs)])
   (check-equal? (result-msgs res1) (result-msgs res2))
   (check-true (cores-equal? (result-cores res1) (result-cores res2)))))
 

@@ -2,6 +2,7 @@
 
 (require "parser.rkt"
          "partitioner.rkt" "layout-sa.rkt" "communication.rkt"
+         "visitor-desugar.rkt"
          "visitor-printer.rkt")
 
 (provide compile test-simulate)
@@ -9,6 +10,7 @@
 (define (compile file name capacity [input #f] [w 5] [h 4] )
   (define n (* w h))
   (define my-ast (ast-from-file file))
+  (send my-ast accept (new desugar%))
   
   ;; generate sequantial simulation code
   (when input

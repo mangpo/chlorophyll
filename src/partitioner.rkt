@@ -106,7 +106,7 @@
     (pretty-display "=== Original AST ===")
     (send my-ast pretty-print)
     )
-  #|
+  
   ;; Collect real physical places
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
@@ -290,13 +290,12 @@
   
   (result (evaluate-with-sol num-msg) 
           cores 
-          my-ast)|#
-  void
+          my-ast)
 )
 
 
-(define t (current-seconds))
-(define my-ast (ast-from-file "../examples/pair.cll"))
-(result-msgs (optimize-comm my-ast #:cores 4 #:capacity 300 #:verbose #t))
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+;(define t (current-seconds))
+;(define my-ast (ast-from-file "../examples/pair.cll"))
+;(result-msgs (optimize-comm my-ast #:cores 4 #:capacity 300 #:verbose #t))
+;(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
 
