@@ -293,7 +293,8 @@
           my-ast))
 
 
-;(define t (current-seconds))
-;(result-msgs (optimize-comm "../tests/run/matrixmult_20.cll" #:cores 20 #:capacity 300 #:verbose #t))
-;(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+(define t (current-seconds))
+(define my-ast (ast-from-file "../examples/pair.cll"))
+(result-msgs (optimize-comm my-ast #:cores 4 #:capacity 300 #:verbose #t))
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
 

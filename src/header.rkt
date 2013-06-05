@@ -14,5 +14,8 @@
   ;(evaluate x))
   (evaluate x global-sol))
 
+(define max-bit 18)
+(define n-bit 16)
+
 (define outdir "../output")
 (define datadir "../testdata")

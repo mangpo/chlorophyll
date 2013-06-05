@@ -440,7 +440,7 @@
 (define Const%
   (class Livable%
     (super-new)
-    (inherit-field place)
+    (inherit-field place [known #t])
     (init-field n)
     (inherit get-place print-send-path)
 
@@ -487,6 +487,11 @@
       (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
                               indent type var-list place known))
       (print-send-path indent))
+
+    (define/public (partition-mismatch)
+      (raise-mismatch-error 'mismatch
+			    (format "number of data partitions and places at '~a'" var-list)
+			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
   ))
 
 (define Param%

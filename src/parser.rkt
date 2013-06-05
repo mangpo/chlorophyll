@@ -9,7 +9,7 @@
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
 (define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
-			       = SEMICOL COMMA COL
+			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
                                PLACE HERE ANY))
 
@@ -73,6 +73,7 @@
    ("[" (token-LSQBR))
    ("]" (token-RSQBR))
    (";" (token-SEMICOL))
+   ("::" (token-EXT))
    (":" (token-COL))
    ("," (token-COMMA))
    ("=" (token-=))
@@ -172,7 +173,7 @@
     (lit ((const)             (new Num% [n $1])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
-         ((VAR @ place-exp) (new Var% [name $1] [place $3] [pos $1-start-pos])))
+	 ((VAR EXT NUM)     (new Var% [name (format "~a::~a" $1 $3)] [pos $1-start-pos])))
 
     (ele ((id) $1)
 	 ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3])))
@@ -223,12 +224,23 @@
 
     (data-type
          ((INT) "int")
+         ((INT EXT NUM) (cons "int" $3))
          ((VOID) "void")
          )
 
+    (place-list
+	 ((place-exp) (list $1))
+	 ((place-exp COMMA place-list) (cons $1 $3)))
+
+    (place-tuple
+         ((LPAREN place-list RPAREN)) $2)
+
     (data-place-type
-         ((data-type) (cons $1 (get-sym))) ;; get symbolic place if there is no @ specified
-         ((data-type @ place-exp) (cons $1 $3)))
+	 ;; get symbolic place if there is no @ specified
+         ((data-type)                 (cons $1 (get-sym))) 
+         ((data-type @ place-exp)     (cons $1 $3))
+	 ((INT EXT NUM)               (cons (cons "int" $3)) #f)
+	 ((INT EXT NUM @ place-tuple) (cons (cons "int" $3)) $5))
 
     ;; a,b,c
     (var-list
