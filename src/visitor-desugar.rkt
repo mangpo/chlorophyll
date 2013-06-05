@@ -68,6 +68,7 @@
       [(is-a? ast Num%)
        (if (= entry 1)
 	   ast
+	   ;; this is not right, we need to divide number correctly
 	   (for/list ([i (in-range entry)])
 		     (send ast copy)))]
 
