@@ -440,7 +440,7 @@
 (define Const%
   (class Livable%
     (super-new)
-    (inherit-field place [known #t])
+    (inherit-field place)
     (init-field n)
     (inherit get-place print-send-path)
 
@@ -471,7 +471,7 @@
 (define VarDecl%
   (class Livable%
     (super-new)
-    (inherit-field place)
+    (inherit-field place pos)
     (init-field var-list type [known #f])
     (inherit get-place print-send-path)
 
@@ -541,6 +541,14 @@
       (format "[~a:~a]=~a" from to send-path))
     
     ))
+
+(define TypeExpansion%
+  (class Base%
+    (super-new)
+    (init-field place-list)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Place-type-expansion ~a)" place-list)))))
 
 (define For%
   (class Scope%

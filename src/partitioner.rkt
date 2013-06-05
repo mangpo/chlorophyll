@@ -106,7 +106,7 @@
     (pretty-display "=== Original AST ===")
     (send my-ast pretty-print)
     )
-  
+  #|
   ;; Collect real physical places
   (define collector (new place-collector% 
                          [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
@@ -290,7 +290,9 @@
   
   (result (evaluate-with-sol num-msg) 
           cores 
-          my-ast))
+          my-ast)|#
+  void
+)
 
 
 (define t (current-seconds))

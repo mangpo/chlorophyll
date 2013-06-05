@@ -160,23 +160,52 @@
          ((array-place-exp COMMA array-place) (append $1 (list $3)))
          )
 
+    ;; place-dist
     (place-dist
          ((place-exp) $1)
          ((LBRACK array-place-exp RBRACK) $2))
 
+    (place-dist-list
+         ((place-dist) (list $1))
+         ((place-dist COMMA place-dist-list) (cons $1 $3)))
+
+    (place-dist-tuple
+         ((LPAREN place-dist-list RPAREN) (new TypeExpansion% [place-list $2])))
+
+    (place-dist-expand
+         ((place-dist) $1)
+         ((place-dist-tuple) $1))
+
+    ;; place-type-dist
     (place-type-dist
          ((place-exp) $1)
          ((LBRACK array-place-exp SEMICOL ele RBRACK) (cons $2 $4)))
 
+    (place-type-dist-list
+         ((place-type-dist) (list $1))
+         ((place-type-dist COMMA place-type-dist-list) (cons $1 $3)))
+
+    (place-type-dist-tuple
+         ((LPAREN place-type-dist-list RPAREN) (new TypeExpansion% [place-list $2])))
+
+    (place-type-dist-expand
+         ((place-type-dist) $1)
+         ((place-type-dist-tuple) $1))
+         
     (const ((NUM)           (new Const% [n $1] [pos $1-start-pos])))
 
-    (lit ((const)             (new Num% [n $1])))
+    (lit ((const)           (new Num% [n $1])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
 	 ((VAR EXT NUM)     (new Var% [name (format "~a::~a" $1 $3)] [pos $1-start-pos])))
 
+    (array 
+         ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3]))
+         ((VAR EXT NUM LSQBR exp RSQBR) 
+          (new Array% [name (format "~a::~a" $1 $3)] [pos $1-start-pos] [index $5])))
+
     (ele ((id) $1)
-	 ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3])))
+	 ((array) $1))
 
     (funccall
          ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos])))
@@ -197,18 +226,18 @@
          ((exp AND exp)      (BinExp $1 "&&" $3 $2-start-pos))
          ((exp OR exp)       (BinExp $1 "||" $3 $2-start-pos))
          
-         ((BNOT @ place-type-dist exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
-         ((ARITHOP2 @ place-type-dist exp)     (prec BNOT) (UnaExp $1 $4 $3 $1-start-pos))
-         ((exp ARITHOP1 @ place-type-dist exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp ARITHOP2 @ place-type-dist exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp ARITHOP3 @ place-type-dist exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp RELOP @ place-type-dist exp)    (prec RELOP) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp EQOP @ place-type-dist exp)     (prec EQOP) (BinExp $1 $2 $5 $4 $2-start-pos))
-         ((exp BAND @ place-type-dist exp)     (prec BAND) (BinExp $1 "&" $5 $4 $2-start-pos))
-         ((exp BXOR @ place-type-dist exp)     (prec BXOR) (BinExp $1 "^" $5 $4 $2-start-pos))
-         ((exp BOR @ place-type-dist exp)      (prec BOR) (BinExp $1 "|" $5 $4 $2-start-pos))
-         ((exp AND @ place-type-dist exp)      (prec AND) (BinExp $1 "&&" $5 $4 $2-start-pos))
-         ((exp OR @ place-type-dist exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
+         ((BNOT @ place-type-dist-expand exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
+         ((ARITHOP2 @ place-type-dist-expand exp)     (prec BNOT) (UnaExp $1 $4 $3 $1-start-pos))
+         ((exp ARITHOP1 @ place-type-dist-expand exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp ARITHOP2 @ place-type-dist-expand exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp ARITHOP3 @ place-type-dist-expand exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp RELOP @ place-type-dist-expand exp)    (prec RELOP) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp EQOP @ place-type-dist-expand exp)     (prec EQOP) (BinExp $1 $2 $5 $4 $2-start-pos))
+         ((exp BAND @ place-type-dist-expand exp)     (prec BAND) (BinExp $1 "&" $5 $4 $2-start-pos))
+         ((exp BXOR @ place-type-dist-expand exp)     (prec BXOR) (BinExp $1 "^" $5 $4 $2-start-pos))
+         ((exp BOR @ place-type-dist-expand exp)      (prec BOR) (BinExp $1 "|" $5 $4 $2-start-pos))
+         ((exp AND @ place-type-dist-expand exp)      (prec AND) (BinExp $1 "&&" $5 $4 $2-start-pos))
+         ((exp OR @ place-type-dist-expand exp)       (prec OR) (BinExp $1 "||" $5 $4 $2-start-pos))
 
 	 ((LPAREN exp RPAREN) $2)
 	 ((funccall) $1)
@@ -233,14 +262,13 @@
 	 ((place-exp COMMA place-list) (cons $1 $3)))
 
     (place-tuple
-         ((LPAREN place-list RPAREN)) $2)
+         ((LPAREN place-list RPAREN) (new TypeExpansion% [place-list $2])))
 
     (data-place-type
 	 ;; get symbolic place if there is no @ specified
          ((data-type)                 (cons $1 (get-sym))) 
          ((data-type @ place-exp)     (cons $1 $3))
-	 ((INT EXT NUM)               (cons (cons "int" $3)) #f)
-	 ((INT EXT NUM @ place-tuple) (cons (cons "int" $3)) $5))
+	 ((data-type @ place-tuple)   (cons $1 $3)))
 
     ;; a,b,c
     (var-list
@@ -284,7 +312,7 @@
                  [pos $4-start-pos]))
 
          ; array declaration with placement
-         ((data-type LSQBR RSQBR @ place-dist 
+         ((data-type LSQBR RSQBR @ place-dist-expand
                       VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $6] [type $1] [cluster #f] [bound $8] 
                  [place-list (if (list? $5)
@@ -299,7 +327,7 @@
                  [pos $5-start-pos]))
 
          ; array declaration with placement
-         ((CLUSTER data-type LSQBR RSQBR @ place-dist 
+         ((CLUSTER data-type LSQBR RSQBR @ place-dist-expand
                       VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $7] [type $2] [cluster #t] [bound $9] 
                  [place-list (if (list? $6)
@@ -323,7 +351,7 @@
 
          ; for loop with placement
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN 
-               @ place-dist 
+               @ place-dist-expand
                LBRACK block RBRACK)
             (new For% [iter (new Var% [name $3] [known-type #t] [pos $3-start-pos])] 
                  [known #t] [from $5] [to $7] [place-list $10] 
