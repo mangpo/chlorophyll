@@ -1,0 +1,13 @@
+#lang racket
+
+(require "header.rkt"
+         "ast.rkt" 
+         "ast-util.rkt"
+         "parser.rkt"
+         "visitor-desugar.rkt")
+
+(define my-ast (ast-from-file "../examples/pair.cll"))
+(send my-ast pretty-print)
+(define desugar (new desugar%))
+(send my-ast accept desugar)
+(send my-ast pretty-print)

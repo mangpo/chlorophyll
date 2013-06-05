@@ -4,6 +4,33 @@
 
 (provide (all-defined-out))
 
+(define (ext-name name ext)
+  (format "~a::~a" name ext))
+
+(define stdin
+  (new FuncDecl% [name "in"] 
+		   [args (new Block% [stmts (list)])] 
+		   [body (set (new Place% [at "io"]))] 
+		   [return (new VarDecl% [var-list (list "#return")]
+			        [type "int"] ;; TODO: make it generic
+				[place (new Place% [at "io"])]
+				[known #f])]))
+
+(define stdout
+  (new FuncDecl% [name "out"] 
+		   [args (new Block% [stmts (list 
+					     (new Param% 
+						  [var-list (list "data")]
+						  [type "int"] ;; TODO: make it generic
+						  [known #f]
+						  [place (new Place% [at "io"])]
+						  [place-type (new Place% [at "io"])]))])]
+		   [body (set (new Place% [at "io"]))] 
+		   [return (new VarDecl% [var-list (list "#return")]
+			        [type "void"]
+				[known #f]
+				[place (new Place% [at "io"])])]))
+
 (define (same-place? a b)
   ;;(assert (and (place-type? a) (place-type? b)))
   

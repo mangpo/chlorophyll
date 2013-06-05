@@ -2,7 +2,7 @@
 (require parser-tools/lex
          (prefix-in re- parser-tools/lex-sre)
          parser-tools/yacc)
-(require "ast.rkt")
+(require "ast.rkt" "ast-util.rkt")
 
 (provide ast-from-string ast-from-file)
  
@@ -197,12 +197,12 @@
     (lit ((const)           (new Num% [n $1])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
-	 ((VAR EXT NUM)     (new Var% [name (format "~a::~a" $1 $3)] [pos $1-start-pos])))
+	 ((VAR EXT NUM)     (new Var% [name (ext-name $1 $3)] [pos $1-start-pos])))
 
     (array 
          ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3]))
          ((VAR EXT NUM LSQBR exp RSQBR) 
-          (new Array% [name (format "~a::~a" $1 $3)] [pos $1-start-pos] [index $5])))
+          (new Array% [name (ext-name $1 $3)] [pos $1-start-pos] [index $5])))
 
     (ele ((id) $1)
 	 ((array) $1))
@@ -315,7 +315,7 @@
          ((data-type LSQBR RSQBR @ place-dist-expand
                       VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $6] [type $1] [cluster #f] [bound $8] 
-                 [place-list (if (list? $5)
+                 [place-list (if (or (list? $5) (is-a? $5 TypeExpansion%))
                                  $5
                                  (list (new RangePlace% [from 0] [to $8] [place $5])))]
                  [pos $6-start-pos]))
@@ -330,7 +330,7 @@
          ((CLUSTER data-type LSQBR RSQBR @ place-dist-expand
                       VAR LSQBR NUM RSQBR SEMICOL)
             (new ArrayDecl% [var $7] [type $2] [cluster #t] [bound $9] 
-                 [place-list (if (list? $6)
+                 [place-list (if (or (list? $6) (is-a? $6 TypeExpansion%))
                                  $6
                                  (list (new RangePlace% [from 0] [to $9] [place $6])))]
                  [pos $7-start-pos])))

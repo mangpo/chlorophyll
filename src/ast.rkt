@@ -313,6 +313,13 @@
 				  (position-line pos) 
 				  (position-col pos))))
 
+    (define/public (partition-mismatch part expect)
+      (raise-mismatch-error 'data-partition
+			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
+				    name part expect)
+			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
+
+
     (define/public (clone)
       (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
     ))
@@ -415,8 +422,6 @@
            [place-type place-type]
            [signature signature]))
 
-
-
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
 			      indent name (evaluate-with-sol place-type) known-type))
@@ -434,6 +439,18 @@
 				  name
 				  (position-line pos) 
 				  (position-col pos))))
+
+    (define/public (type-mismatch type entry)
+      (raise-mismatch-error 'mismatch
+			    (format "expect ~a data partitions but function '~a' returns ~a\n"
+				    entry name type)
+			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
+  
+    (define/public (args-mismatch l)
+      (raise-mismatch-error 'mismatch
+			    (format "function ~a expects ~a arguments, but ~a arguments are given\n"
+				    name l (length args))
+			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
     ))
 
 
@@ -472,7 +489,7 @@
   (class Livable%
     (super-new)
     (inherit-field place pos)
-    (init-field var-list type [known #f])
+    (init-field var-list type [known #t])
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
@@ -484,12 +501,12 @@
       (new VarDecl% [var-list var-list] [type type] [known known] [place place]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @~a (known=~a))" 
+      (pretty-display (format "~a(VARDECL ~a ~a @~a (known=~a))" 
                               indent type var-list place known))
       (print-send-path indent))
 
     (define/public (partition-mismatch)
-      (raise-mismatch-error 'mismatch
+      (raise-mismatch-error 'data-partition
 			    (format "number of data partitions and places at '~a'" var-list)
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
   ))
@@ -497,8 +514,12 @@
 (define Param%
   (class VarDecl%
     (super-new)
-    (init-field [place-type #f] [known-type #f])
+    (init-field [place-type #f] [known-type #t])
     (inherit-field var-list type known place)
+
+    (define/public (set-known val)
+      (set! known val)
+      (set! known-type val))
 
     (define/override (infer-place [p place-type])
       (when (at-any? place-type)
@@ -573,14 +594,15 @@
   (class LivableGroup%
     (super-new)
     (inherit-field pos place-list)
-    (init-field var type bound cluster [known #f])
+    (init-field var type bound cluster [known #t])
     (inherit print-send-path)
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(DECL ~a ~a @{~a} (known=~a))" 
+      (pretty-display (format "~a(ARRAYDECL ~a ~a @{~a} (known=~a) (cluster=~a)" 
                               indent type var
-                              (place-to-string place-list)
-                              known))
+			      place-list
+                              ;(place-to-string place-list)
+                              known cluster))
       (print-send-path indent))
 
     (define/public (bound-error)

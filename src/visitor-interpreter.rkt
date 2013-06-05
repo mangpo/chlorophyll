@@ -21,33 +21,8 @@
 
     
     ;; Declare IO function: in(), out(data)
-    (declare env "in"
-	     (cons
-	      (new FuncDecl% [name "in"] 
-		   [args (new Block% [stmts (list)])] 
-		   [body (set (new Place% [at "io"]))] 
-		   [return (new VarDecl% [var-list (list "#return")]
-			        [type "int"] ;; TODO: make it generic
-				[place (new Place% [at "io"])]
-				[known #f])])
-	      (comminfo 0 (set))))
-
-    (declare env "out"
-	     (cons
-	      (new FuncDecl% [name "out"] 
-		   [args (new Block% [stmts (list 
-					     (new Param% 
-						  [var-list (list "data")]
-						  [type "int"] ;; TODO: make it generic
-						  [known #f]
-						  [place (new Place% [at "io"])]
-						  [place-type (new Place% [at "io"])]))])]
-		   [body (set (new Place% [at "io"]))] 
-		   [return (new VarDecl% [var-list (list "#return")]
-			        [type "void"]
-				[known #f]
-				[place (new Place% [at "io"])])])
-	      (comminfo 0 (set))))
+    (declare env "in" (cons stdin (comminfo 0 (set))))
+    (declare env "out" (cons stdout (comminfo 0 (set))))
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
