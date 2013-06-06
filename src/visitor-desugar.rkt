@@ -128,12 +128,6 @@
              ;; normal type
              ast)]
         
-        
-        [(is-a? ast FuncDecl%)
-         (pretty-display (format "DESUGAR: FuncDecl declare ~a" (get-field name ast)))
-         (declare env (get-field name ast) ast)
-         ]
-        
         [(is-a? ast Num%)
          (pretty-display (format "DESUGAR: Num ~a" (send ast to-string)))
          (if (= entry 1)
@@ -345,27 +339,44 @@
          (pretty-display "DESUGAR: Assign (after visit)")
          (if (= entry 1)
              ast
-           (for/list ([i-lhs lhs-ret]
-                      [i-rhs rhs-ret])
-             (new Assign% [lhs i-lhs] [rhs i-rhs])))
+	     (for/list ([i-lhs lhs-ret]
+			[i-rhs rhs-ret])
+		       (new Assign% [lhs i-lhs] [rhs i-rhs])))
          ]
         
         [(is-a? ast If%)
          (pretty-display "DESUGAR: If")
          (set! entry 1)
          (send (get-field condition ast) accept this)
+
+	 (push-scope)
+	 (send (get-field true-block ast) accept this)
+	 (pop-scope)
+
+	 (when (get-field false-block ast)
+	       (push-scope)
+	       (send (get-field false-block ast) accept this)
+	       (pop-scope))
+	 ast
          ]
         
         [(is-a? ast While%)
          (pretty-display "DESUGAR: While")
          (set! entry 1)
          (send (get-field condition ast) accept this)
+	 (push-scope)
          (send (get-field body ast) accept this)
+	 (pop-scope)
+	 ast
          ]
         
         [(is-a? ast For%)
          (pretty-display "DESUGAR: For")
+	 (push-scope)
+	 (declare env (get-field name (get-field iter ast)) (cons "int" #t))
          (send (get-field body ast) accept this)
+	 (pop-scope)
+	 ast
          ;; TODO
          ;; int::2[] a[10];
          ;; for i {
@@ -381,23 +392,30 @@
          
          ;; update env front to back
          (for ([stmt stmts])
-           (send stmt accept this))
+	      (if (is-a? stmt FuncDecl%)
+		  (declare env (get-field name stmt) stmt)
+		  (send stmt accept this)))
          
          ;; desugar back to front
          (for ([stmt (reverse stmts)])
-           (pretty-display (format "DESUGAR: Program ~a" stmt))
            (when (is-a? stmt FuncDecl%)
-             (pretty-display "DESUGAR: Body")
-             (send (get-field body stmt) accept this)))
+		 (send stmt accept this)))
          ]
         
         [(is-a? ast Block%)
          (pretty-display "DESUGAR: Block")
-         (push-scope)
          (set-field! stmts ast (flatten (for/list ([stmt (get-field stmts ast)])
                                           (set! entry #f)
                                           (send stmt accept this))))
-         (pop-scope)
+         ]
+        
+        
+        [(is-a? ast FuncDecl%)
+	 (push-scope)
+	 (send (get-field return ast) accept this)
+	 (send (get-field args ast) accept this)
+         (send (get-field body ast) accept this)
+	 (pop-scope)
          ]
         
         [else

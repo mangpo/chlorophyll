@@ -7,7 +7,7 @@
 
 (define (optimize-file file cores capacity max-msgs)
   (define my-ast (ast-from-file file))
-  ;(send my-ast accept (new desugar%))
+  (send my-ast accept (new desugar%))
   (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #f))
 
 ;; Check with expected number of messages
