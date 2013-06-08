@@ -238,7 +238,7 @@
 (define Exp%
   (class Base%
     (super-new)
-    (init-field [known-type #f] [place-type #f] [cluster #f])
+    (init-field [known-type #f] [place-type #f] [cluster #f] [expect 1] [expand 1] [type #f])
 
     (define/public (infer-place [p place-type])
       (when (at-any? place-type)
@@ -261,7 +261,7 @@
       (set! place-type (concrete-place place-type)))
 
     ;; This is used to construct place-type representation.
-    (abstract to-string)
+    (abstract to-string clone)
   ))
 
 (define Scope%
@@ -277,7 +277,7 @@
 (define Num%
   (class Exp%
     (inherit-field known-type place-type pos)
-    (super-new [known-type #t])
+    (super-new [known-type #t] [type "int"] [expand 1])
     (init-field n)
     (inherit print-send-path)
 
@@ -290,6 +290,9 @@
       (print-send-path indent))
 
     (define/override (to-string) (send n to-string))
+
+    (define/override (clone)
+      (new Num% [n (send n clone)] [known-type known-type] [pos pos]))
     ))
 
 (define Var%
@@ -299,6 +302,9 @@
     (init-field name)
     (inherit print-send-path)
     
+    (define/override (clone)
+      (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
+
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (known=~a))" 
 			      indent name (place-to-string place-type) known-type))
@@ -320,8 +326,6 @@
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
 
 
-    (define/public (clone)
-      (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
     ))
 
 (define Array%
@@ -345,6 +349,9 @@
 	  (format "~a[~a]" name (send index to-string)))
       )
 
+    (define/override (clone)
+      (new Array% [name name] [index (send index clone)] [offset offset] [known-type known-type] [place-type place-type] [pos pos]))
+
     (define/public (index-out-of-bound index)
       (raise-range-error 'array "error at src" "" index 
 			 (format "l:~a c:~a" (position-line pos) (position-col pos))
@@ -358,7 +365,11 @@
     (inherit-field known-type place-type)
     (init-field op e1 e2)
     (inherit print-send-path)
-    
+        
+    (define/override (clone)
+      (new BinExp% [op (send op clone)] [e1 (send e1 clone)] [e2 (send e2 clone)]
+	   [known-type known-type] [place-type place-type]))
+
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
 			      indent (place-to-string place-type) known-type))
@@ -376,7 +387,7 @@
 
     (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
-    
+
     ))
 
 ;; AST for Unary opteration. 
@@ -386,6 +397,9 @@
     (inherit-field known-type place-type)
     (init-field op e1)
     (inherit print-send-path)
+
+    (define/override (clone)
+      (new UnaExp% [op (send op clone)] [e1 (send op clone)] [known-type known-type] [place-type place-type]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
@@ -411,6 +425,9 @@
     (inherit-field known-type place-type pos)
     (init-field name args [signature #f])
     (inherit print-send-path)
+
+    (define/override (clone)
+      (raise (format "Funtion call '~a' cannot be cloned" name)))
 
     (define/public (copy-at core)
       (new FuncCall% [name name] 
@@ -457,9 +474,12 @@
 (define Const%
   (class Livable%
     (super-new)
-    (inherit-field place)
+    (inherit-field place pos)
     (init-field n)
     (inherit get-place print-send-path)
+
+    (define/public (clone)
+      (new Const% [n n] [place place] [pos pos]))
 
     (define/public (inter-place p)
       (set! place p))
@@ -469,13 +489,18 @@
       (print-send-path indent))
 
     (define/public (to-string) n)
+
 ))
 
 (define Op%
   (class Livable%
     (super-new)
     (init-field op)
+    (inherit-field pos)
     (inherit get-place print-send-path)
+
+    (define/public (clone)
+      (new Op% [op op] [pos pos]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Op:~a @~a)" indent op (get-place)))
@@ -720,6 +745,9 @@
   (class Exp%
     (super-new)
     (init-field port)
+
+    (define/override (clone)
+      (raise "clone is not supported for Recv%."))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(RECV from:~a)" indent port)))

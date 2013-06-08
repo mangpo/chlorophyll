@@ -9,12 +9,12 @@
                 (cons name (test-simulate name input capacity))
                 result)))
 
-(test "if"       "4_1" 512)
-(test "add"      "200" 512)
-(test "function" "4_1" 512)
-(test "function" "4_2" 512)
+;(test "if"       "4_1" 512)
+;(test "add"      "200" 512)
+;(test "function" "4_1" 512)
+;(test "function" "4_2" 512)
 (test "matrixmult" "72" 300)
 
-(reverse result)
+;(reverse result)
 
 ;(test-simulate "cluster" "200")

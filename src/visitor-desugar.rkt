@@ -1,4 +1,4 @@
-#lang s-exp rosette
+#lang racket
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
@@ -147,6 +147,8 @@
          (define old-entry entry)
          (set! entry 1)
          (define index (send (get-field index ast) accept this))
+	 (pretty-display `(index ,index))
+
          (unless (get-field known-type index)
 	   (pretty-display `(lookup ,(lookup array-map ast)))
            (set-field! cluster (lookup array-map ast) #t))
@@ -172,14 +174,14 @@
                   (for/list ([i (in-range (sub1 entry))])
                     (new Num% [n (new Const% [n 0])])))
                  (let ([to (cdr type)])
-                   (when (> to entry)
-                     (send ast partition-mismatch (cdr type) entry))
+		   ;; no cast down
+                   (when (> to entry) (send ast partition-mismatch (cdr type) entry))
+		   ;; allow cast up
                    (append
                     (for/list ([i (in-range to)])
 		      (let ([new-name (ext-name (get-field name ast) i)])
 			(new Array% [name new-name]
-			     ;; TODO: visit index, determine cluster
-			     [index (send index accept this)]
+			     [index (send index clone)]
 			     ;; set known-type
 			     [known-type (cdr (lookup-name env new-name))]
 			     [pos (get-field pos ast)])))
@@ -210,8 +212,9 @@
                   (for/list ([i (in-range (sub1 entry))])
                     (new Num% [n (new Const% [n 0])])))
                  (let ([to (cdr type)])
-                   (when (> to entry)
-                     (send ast partition-mismatch entry))
+		   ;; no cast down
+                   (when (> to entry) (send ast partition-mismatch entry))
+		   ;; allow cast up
                    (append
                     (for/list ([i (in-range to)])
 		      (let ([new-name (ext-name (get-field name ast) i)])
@@ -286,9 +289,6 @@
          
          (define args (get-field args ast))
          (define params (get-field stmts (get-field args func-ast)))
-         
-         (unless (= (length args) (length params))
-           (send ast args-mismatch (length params)))
          
          (define old-entry entry)
          (set-field! args
