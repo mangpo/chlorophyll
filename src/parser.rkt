@@ -197,12 +197,12 @@
     (lit ((const)           (new Num% [n $1])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
-	 ((VAR EXT NUM)     (new Var% [name (ext-name $1 $3)] [pos $1-start-pos])))
+	 ((VAR EXT NUM)     (new Var% [name $1] [sub $3] [pos $1-start-pos])))
 
     (array 
          ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3]))
          ((VAR EXT NUM LSQBR exp RSQBR) 
-          (new Array% [name (ext-name $1 $3)] [pos $1-start-pos] [index $5])))
+          (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5])))
 
     (ele ((id) $1)
 	 ((array) $1))

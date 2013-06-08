@@ -276,7 +276,7 @@
 
 (define Num%
   (class Exp%
-    (inherit-field known-type place-type pos)
+    (inherit-field known-type place-type pos expect)
     (super-new [known-type #t] [type "int"] [expand 1])
     (init-field n)
     (inherit print-send-path)
@@ -285,8 +285,11 @@
       (get-field n n))
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Num:~a @~a (known=~a))" 
-			      indent (get-field n n) (place-to-string place-type) known-type))
+      ;; (pretty-display (format "~a(Num:~a @~a (known=~a))" 
+      ;;   		      indent (get-field n n) (place-to-string place-type) known-type))
+      (pretty-display (format "~a(Num:~a @~a (expand=~a/~a))" 
+			      indent (get-field n n) (place-to-string place-type) 
+                              expand expect))
       (print-send-path indent))
 
     (define/override (to-string) (send n to-string))
@@ -298,16 +301,19 @@
 (define Var%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type pos)
-    (init-field name)
+    (inherit-field known-type place-type pos expand expect)
+    (init-field name [sub #f])
     (inherit print-send-path)
     
     (define/override (clone)
       (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Var:~a @~a (known=~a))" 
-			      indent name (place-to-string place-type) known-type))
+      ;; (pretty-display (format "~a(Var:~a @~a (known=~a))" 
+      ;;   		      indent name (place-to-string place-type) known-type))
+      (pretty-display (format "~a(Var:~a @~a (expand=~a/~a))" 
+                              indent name (place-to-string place-type)
+                              expand expect))
       (print-send-path indent))
 
     (define/override (to-string) name)
@@ -331,13 +337,16 @@
 (define Array%
   (class Var%
     (super-new)
-    (inherit-field known-type place-type pos name)
+    (inherit-field known-type place-type pos name expand expect)
     (init-field index [offset 0])
     (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Array:~a @~a (known=~a))" 
-			      indent name (place-to-string place-type) known-type))
+      ;; (pretty-display (format "~a(Array:~a @~a (known=~a))" 
+      ;;   		      indent name (place-to-string place-type) known-type))
+      (pretty-display (format "~a(Array:~a @~a (expand=~a/~a))" 
+			      indent name (place-to-string place-type)
+                              expand expect))
       (print-send-path indent)
       (when (> offset 0)
 	    (pretty-display (format "~a(offset: ~a)" (inc indent) offset)))
@@ -422,7 +431,7 @@
 (define FuncCall%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type pos)
+    (inherit-field known-type place-type pos expand expect)
     (init-field name args [signature #f])
     (inherit print-send-path)
 
@@ -440,8 +449,11 @@
            [signature signature]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
-			      indent name (evaluate-with-sol place-type) known-type))
+      ;; (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
+      ;;   		      indent name (evaluate-with-sol place-type) known-type))
+      (pretty-display (format "~a(FuncCall: ~a @~a (expand=~a/~a)" 
+			      indent name (evaluate-with-sol place-type)
+                              expand expect))
       (print-send-path indent)
       (for ([arg args])
 	   (send arg pretty-print (inc indent)))

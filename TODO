@@ -1,6 +1,12 @@
 TODO
-- check where cluster field should belong to
-- set func-signature only in tempinsert then reuse it.
+- temp inserter
+- clean up
+  = cluster
+  = where to interpret known
+  = known filed
+  = assert on funccall vs funcdecl
+  = when to attach signature to funccall
+  = clone signature or not?
 - add testdata/72, testdata/matrxmult.out
 - run test.rkt, why array-dynamic fails?
 - reset rosette when solving new problem (see compiler.rkt)
