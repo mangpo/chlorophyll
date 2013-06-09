@@ -262,6 +262,7 @@
 
     ;; This is used to construct place-type representation.
     (abstract to-string clone)
+
   ))
 
 (define Scope%
@@ -276,7 +277,7 @@
 
 (define Num%
   (class Exp%
-    (inherit-field known-type place-type pos expect)
+    (inherit-field known-type place-type pos expect expand)
     (super-new [known-type #t] [type "int"] [expand 1])
     (init-field n)
     (inherit print-send-path)
@@ -301,12 +302,13 @@
 (define Var%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type pos expand expect)
+    (inherit-field type known-type place-type pos expand expect)
     (init-field name [sub #f])
     (inherit print-send-path)
     
     (define/override (clone)
-      (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]))
+      (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]
+           [expand expand] [expect expect] [type type]))
 
     (define/override (pretty-print [indent ""])
       ;; (pretty-display (format "~a(Var:~a @~a (known=~a))" 
@@ -330,7 +332,6 @@
 			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
 				    name part expect)
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
-
 
     ))
 
@@ -432,7 +433,7 @@
   (class Exp%
     (super-new)
     (inherit-field known-type place-type pos expand expect)
-    (init-field name args [signature #f])
+    (init-field name args [signature #f] [is-stmt #f])
     (inherit print-send-path)
 
     (define/override (clone)
@@ -468,6 +469,12 @@
 				  name
 				  (position-line pos) 
 				  (position-col pos))))
+
+    (define/public (partition-mismatch part expect)
+      (raise-mismatch-error 'data-partition
+			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
+				    name part expect)
+			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
 
     (define/public (type-mismatch type entry)
       (raise-mismatch-error 'mismatch

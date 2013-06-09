@@ -12,7 +12,11 @@
 (define linker%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [env (make-hash)] [array-map (make-hash)] [non-native #f] [entry #f])
+    (init-field [env (make-hash)] 
+                [array-map (make-hash)] 
+                [non-native #f] 
+                [entry #f]
+                [stmt-level #f])
     ;; env maps
     ;; 1) var-name  -> (cons type known)
     ;; 2) func-name -> func-ast
@@ -152,6 +156,7 @@
 
          ;; set signature
          (set-field! signature ast func-ast)
+         (set-field! is-stmt ast stmt-level)
 
 	 ;; set type and expand
 	 (if (string? type)
@@ -168,8 +173,8 @@
 	     (set-field! expect ast (get-field expand ast)))
 
 	 ;; check expand against expect
-	 (when (> (get-field expand ast) (get-field expand ast))
-	       (send ast partition-mismatch (get-field expand ast)))
+	 (when (> (get-field expand ast) (get-field expect ast))
+	       (send ast partition-mismatch (get-field expand ast) (get-field expect ast)))
          
          (define args (get-field args ast))
          (define params (get-field stmts (get-field args func-ast)))
@@ -202,6 +207,7 @@
              (set! entry 1)
              (set! entry lhs-expand))
          
+         (set! stmt-level #f)
 	 (define lhs-known (send lhs accept this))
 	 (define rhs-known (send rhs accept this))
 
@@ -211,6 +217,7 @@
         [(is-a? ast If%)
          (pretty-display "LINKER: If")
          (set! entry 1)
+         (set! stmt-level #f)
          (send (get-field condition ast) accept this)
 
 	 (push-scope)
@@ -226,6 +233,7 @@
         [(is-a? ast While%)
          (pretty-display "LINKER: While")
          (set! entry 1)
+         (set! stmt-level #f)
          (send (get-field condition ast) accept this)
 	 (push-scope)
          (send (get-field body ast) accept this)
@@ -260,6 +268,7 @@
          (pretty-display "LINKER: Block")
          (for ([stmt (get-field stmts ast)])
 	      (set! entry #f)
+              (set! stmt-level #t)
 	      (send stmt accept this))
          ]
         
