@@ -12,12 +12,28 @@
 
     (struct entry (temp type expand))
 
-    (define (get-temp type expand expect place-type)
+    (define (get-temp type expand expect place-type [funccall #f])
       (let ([temp (format "_temp~a" count)])
         (set! count (add1 count))
-        (set! new-decls (cons (new VarDecl% [var-list (list temp)]
-                                   [type type] [place place-type])
+        (set! new-decls (cons
+                         (if (and funccall (> expand 1))
+                             ;; no expansion in desugar step
+                             (new VarDecl% [var-list (list temp)]
+                                  [type (cons type expand)] ; packed type
+                                  [place place-type] 
+                                  [expect expand]) 
+                             (new VarDecl% [var-list (list temp)]
+                                  [type type] ; native type
+                                  [place place-type] 
+                                  [expect expand]))
                               new-decls))
+        (pretty-display `(declare ,temp ,expand ,expect))
+        ;; temp for funccall:
+        ;; let func() -> int::2
+        ;; temp = func() 
+        ;; type(temp) = (cons int 2)
+        ;; expect(temp) = 1
+
         ;; don't set known-type
         (new Var% [name temp] [type type] [expand expand] [expect expect] [place-type place-type])
         ))
@@ -32,13 +48,15 @@
          (define e1-ret (send (get-field e1 ast) accept this))
          (set-field! e1 ast (cdr e1-ret))
          
-         (define temp (get-temp (get-field type ast) 
-                                (get-field expect ast)
-                                (get-field expect ast)
-                                (get-field place (get-field op ast))))
-         (cons (list (car e1-ret)
-                     (new Assign% [lhs temp] [rhs ast]))
-               (send temp clone))]
+         ;; (define temp (get-temp (get-field type ast) 
+         ;;                        (get-field expect ast)
+         ;;                        (get-field expect ast)
+         ;;                        (get-field place (get-field op ast))))
+         ;; (cons (list (car e1-ret)
+         ;;             (new Assign% [lhs temp] [rhs ast]))
+         ;;       (send temp clone))]
+
+         (cons (car e1-ret) ast)]
         
         [(is-a? ast BinExp%)
          (define e1-ret (send (get-field e1 ast) accept this))
@@ -46,13 +64,15 @@
          (set-field! e1 ast (cdr e1-ret))
          (set-field! e2 ast (cdr e2-ret))
          
-         (define temp (get-temp (get-field type ast) 
-                                (get-field expect ast)
-                                (get-field expect ast)
-                                (get-field place (get-field op ast))))
-         (cons (list (car e1-ret) (car e2-ret)
-                     (new Assign% [lhs temp] [rhs ast]))
-               (send temp clone))]
+         ;; (define temp (get-temp (get-field type ast) 
+         ;;                        (get-field expect ast)
+         ;;                        (get-field expect ast)
+         ;;                        (get-field place (get-field op ast))))
+         ;; (cons (list (car e1-ret) (car e2-ret)
+         ;;             (new Assign% [lhs temp] [rhs ast]))
+         ;;       (send temp clone))]
+
+         (cons (append (car e1-ret) (car e2-ret)) ast)]
         
         [(is-a? ast FuncCall%)
          (define args-ret  (map (lambda (x) (send x accept this)) 
@@ -61,13 +81,15 @@
          (define new-args  (map cdr args-ret))
          (set-field! args ast new-args)
          
-         (if (get-field is-stmt ast) ;; TODO is-stmt field
+         ;; only insert temp for function call for now
+         (if (get-field is-stmt ast)
              (list new-stmts ast)
              (let* ([temp (get-temp
                            (get-field type ast) 
                            (get-field expand ast)
                            (get-field expect ast)
-                           (get-field place (get-field return (get-field signature ast))))]
+                           (get-field place (get-field return (get-field signature ast)))
+                           #t)]
                     [temp-tight (send temp clone)])
                ;; send expect = 1 so that it doesn't get expanded in desugarin step
                (set-field! expect temp-tight 1) 

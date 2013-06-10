@@ -48,6 +48,20 @@
           ;; if one of them is @any
           (or (at-any? a) (at-any? b) (at-io? a) (at-io? b)))))
 
+(define (get-place-expansion ast place n)
+  (cond
+   [(is-a? place TypeExpansion%)
+    (unless (= (length (get-field place-list place)) n)
+            (send ast partition-mismatch))
+    (get-field place-list place)]
+   
+   [(symbolic? place)
+    ;; list of symbolic vars
+    (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
+   
+   [else
+    (raise (format "get-place-exapand: unimplemented for ~a" place))]))
+
 (define (lookup-name env name)
   (dict-ref env name
             (lambda () (lookup (dict-ref env "__up__" 

@@ -391,13 +391,13 @@
 			    [type (car $1)] [place (cdr $1)])]
                [pos $2-start-pos])))
 
-    (decl
-         ((var-decl) $1)
-         ((func-decl) $1))
+    ;; (decl
+    ;;      ((var-decl) $1)
+    ;;      ((func-decl) $1))
 
     (decls
-         ((decl) (list $1))
-         ((decl decls) (cons $1 $2)))
+         ((func-decl) (list $1))
+         ((func-decl decls) (cons $1 $2)))
          
     (program
          ((decls) (new Program% [stmts $1])))

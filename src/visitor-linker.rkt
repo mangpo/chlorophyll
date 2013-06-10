@@ -9,6 +9,7 @@
 ;; 2) Bind expect and expand.
 ;; 3) Interpret known/unknown type.
 ;; 4) Mark array is cluster or not cluster.
+;; 5) Expand place. int::2@?? -> int::2@(??,??)
 (define linker%
   (class* object% (visitor<%>)
     (super-new)
@@ -45,15 +46,53 @@
       (set! env (dict-ref env "__up__"))
       (set! array-map (dict-ref array-map "__up__")))
 
-
+    (define (expand-place place n)
+      (cond
+       [(is-a? place TypeExpansion%)
+        place]
+       
+       [(symbolic? place)
+        (new TypeExpansion% 
+             [place-list (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))])]
+       
+       [(and (is-a? place Place%) (not (is-a? (get-field at place) Var%)))
+        (define var (get-field at place))
+        (new TypeExpansion% 
+             [place-list 
+              (for/list ([i (in-range n)])
+                        (let ([new-var (send var clone)])
+                          (set-field! sub new-var i)
+                          (new Place% [at new-var])))])]
+       
+       [else
+        (new TypeExpansion%
+             [place-list (for/list ([i (in-range n)]) place)])]
+       
+       ;; [else
+       ;;  (raise (format "get-place-exapand: unimplemented for ~a" place))]))
+       ))
+    
+    
     (define/public (visit ast)
+    
+      (define (expand-place-livable n)
+        (set-field! place ast (expand-place (get-field place ast) n)))
+      
+      (define (expand-place-livablegroup n)
+        (set-field! place-list ast (expand-place (get-field place-list ast) n)))
+
       (cond
         [(is-a? ast VarDecl%)
          (pretty-display (format "LINKER: VarDecl ~a" (get-field var-list ast)))
          (define type (get-field type ast)) 
-	 (when (pair? type)
-	       (set! non-native #f))
-
+	 (if (pair? type)
+             (begin
+               (expand-place-livable (cdr type))
+               (set! non-native #f)
+               (set-field! type ast (car type))
+               (set-field! expect ast (cdr type)))
+             (set-field! expect ast 1))
+         
          (define known (get-field known ast))  
          (for ([name (get-field var-list ast)])
            ;; declare type
@@ -66,8 +105,13 @@
         [(is-a? ast ArrayDecl%)
          (pretty-display (format "LINKER: VarDecl ~a" (get-field var ast)))
          (define type (get-field type ast)) 
-	 (when (pair? type)
-	       (set! non-native #f))
+	 (if (pair? type)
+             (begin
+               (expand-place-livablegroup (cdr type))
+               (set! non-native #f)
+               (set-field! type ast (car type))
+               (set-field! expect ast (cdr type)))
+             (set-field! expect ast 1))
            
          ;; declare type
          (declare env (get-field var ast) 
@@ -127,6 +171,9 @@
 	 known-type]
 
 	[(is-a? ast Op%)
+         (set-field! expect ast entry)
+         (when (> entry 1)
+               (expand-place-livable entry))
 	 "int"]
         
         [(is-a? ast UnaExp%)
@@ -246,6 +293,13 @@
 	 (declare env (get-field name (get-field iter ast)) (val "int" 1 #t))
          (send (get-field body ast) accept this)
 	 (pop-scope)
+         ;; TODO
+         ;; int::2[] a[10];
+         ;; for i {
+         ;;   if(i % 2 == 0) {
+         ;;     a[i] = ..
+         ;;   } 
+         ;; }
          ]
         
         [(is-a? ast Program%)
@@ -275,7 +329,13 @@
         
         [(is-a? ast FuncDecl%)
 	 (push-scope)
-	 (send (get-field return ast) accept this)
+         (define return (get-field return ast))
+	 (send return accept this)
+         ;; reserve expanded type for return value
+         (define entry (get-field expect return))
+         (when (> entry 1)
+             (set-field! type return (cons (get-field type return) entry)))
+
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
 	 (pop-scope)

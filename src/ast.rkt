@@ -168,7 +168,7 @@
 (define Base%
   (class object%
     (super-new)
-    (init-field [pos #f] [send-path #f] [convert #f])   
+    (init-field [pos #f] [send-path #f] [convert #f] [expect 1])   
 
     (abstract pretty-print)
 
@@ -238,7 +238,7 @@
 (define Exp%
   (class Base%
     (super-new)
-    (init-field [known-type #f] [place-type #f] [cluster #f] [expect 1] [expand 1] [type #f])
+    (init-field [known-type #f] [place-type #f] [cluster #f] [expand 1] [type #f])
 
     (define/public (infer-place [p place-type])
       (when (at-any? place-type)
@@ -296,7 +296,7 @@
     (define/override (to-string) (send n to-string))
 
     (define/override (clone)
-      (new Num% [n (send n clone)] [known-type known-type] [pos pos]))
+      (new Num% [n (send n clone)] [pos pos]))
     ))
 
 (define Var%
