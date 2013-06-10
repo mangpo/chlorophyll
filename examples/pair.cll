@@ -7,7 +7,7 @@ int::2 func2(int::3 x) {
 }
 
 void main() {
-  int::2@(0,1) a, b, x;
+  /*int::2@(0,1) a, b, x;
   x = a +@(0,1) b;
   a = in();
   a::1 = in();
@@ -18,5 +18,9 @@ void main() {
 
   x = y[a::0];
 
-  x = func2(func(0));
+  x = func2(func(0));*/
+  int x;
+  for(i from 0 to 10) {
+    x = i;
+  }
 }

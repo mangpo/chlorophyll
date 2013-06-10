@@ -45,17 +45,19 @@
                ast))
          
          (pretty-display (format "DESUGAR: VarDecl ~a (after compute)" (get-field var-list ast)))
+
+         var-decls]
          
          ;; cons scenario only happens at return or temp variables
-         (if (string? type)
-             var-decls
-             ;; int::2 a; int a::0; int a::1;
-             (begin
-               (set-field! place ast
-                           (new TypeExpansion% 
-                                [place-list (map (lambda (x) (get-field place x)) var-decls)]))
-               (cons ast var-decls)))
-         ]
+         ;; (if (string? type)
+         ;;     var-decls
+         ;;     ;; int::2 a; int a::0; int a::1;
+         ;;     (begin
+         ;;       (set-field! place ast
+         ;;                   (new TypeExpansion% 
+         ;;                        [place-list (map (lambda (x) (get-field place x)) var-decls)]))
+         ;;       (cons ast var-decls)))
+         ;; ]
         
         [(is-a? ast ArrayDecl%)
          (pretty-display (format "DESUGAR: VarDecl ~a" (get-field var ast)))
@@ -257,17 +259,17 @@
         
         [(is-a? ast FuncDecl%)
          (pretty-display (format "DESUGAR: FuncDecl ~a (return)" (get-field name ast)))
-	 (define return-ret (send (get-field return ast) accept this))
+
+         (let* ([return (get-field return ast)]
+                [return-ret (send return accept this)])
+           (when (list? return-ret)
+                 (set-field! return ast (new Block% [stmts return-ret]))
+                 (set-field! return-print ast return)))
+
          (pretty-display (format "DESUGAR: FuncDecl ~a (args)" (get-field name ast)))
 	 (send (get-field args ast) accept this)
          (pretty-display (format "DESUGAR: FuncDecl ~a (body)" (get-field name ast)))
          (send (get-field body ast) accept this)
-
-         (when (list? return-ret)
-               (set-field! return ast (car return-ret))
-               (let ([args-block (get-field args ast)])
-                 (set-field! stmts args-block (append (cdr return-ret)
-                                                      (get-field stmts args-block)))))
          ast
          ]
         

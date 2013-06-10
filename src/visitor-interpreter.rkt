@@ -7,7 +7,7 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #f)
+(define debug #t)
 (define debug-sym #f)
 
 (struct comminfo (msgs placeset))
@@ -33,7 +33,11 @@
       (define place-exp (get-field place ast))
 
       (define (derive-place p)
+        ;(pretty-display `(derive-place ,p))
         (cond
+         [(or (equal? p "any") (equal? p "io"))
+          p]
+
          [(is-a? p Array%)
           (car (lookup env p))]
 
@@ -41,10 +45,8 @@
           (lookup env p)]
          
          [else
-          (raise-syntax-error 'unsupported (format "place(~a) at src: l: ~a c: ~a"
-                                                   (send p to-string)
-                                                   (send p get-line)
-                                                   (send p get-col)))]))
+          (pretty-display "raise error")
+          (raise (format "derive-place: unimplemented for ~a" p))]))
 
       (if (is-a? place-exp Place%)
           (let ([place (derive-place (get-field at place-exp))])
@@ -405,10 +407,8 @@
           (when debug
                 (pretty-display (format ">> FuncCall ~a" (send ast to-string))))
 
-	  (define func (lookup env ast))
-	  (define func-ast (car func))
-	  (define func-ret (cdr func))
-          (set-field! signature ast (send func-ast get-signature))
+	  (define func-ret (lookup env ast))
+          (define func-ast (get-field signature ast))
 
           (define msgs (comminfo-msgs func-ret))
 	  (define placeset (comminfo-placeset func-ret))
@@ -423,8 +423,8 @@
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
           
 	  ;; set place-type
-	  (let ([return (get-field return func-ast)])
-	    (set-field! place-type ast (get-field place return)))
+	  ;; (let ([return (get-field return func-ast)])
+	  ;;   (set-field! place-type ast (get-field place return)))
 		 
 	  (comminfo msgs placeset)]
                 
@@ -622,9 +622,14 @@
           (when debug
                 (pretty-display ">> Assign (connect)"))
 	  ;; Don't increase space
+
+          (define comm-lhs-rhs
+            (if (is-a? rhs FuncCall%)
+                0
+                (count-msg lhs rhs)))
        
           (comminfo
-           (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
+           (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) comm-lhs-rhs)
            (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
          ]
 
@@ -673,7 +678,7 @@
 	  (let ([ret (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
 			       body-placeset)])
 	    ;; declare function
-	    (declare env (get-field name ast) (cons ast ret))
+	    (declare env (get-field name ast) ret)
 	    ret)]
 		
        [else (raise (format "visitor-interpreter: unimplemented for ~a" ast))]))

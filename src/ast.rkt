@@ -70,6 +70,13 @@
             (place-list-to-string (car place) out) 
             (send (cdr place) to-string))]
 
+   [(is-a? place TypeExpansion%)
+    (let ([place-list (get-field place-list place)])
+      (format "(~a)"
+              (foldl (lambda (p str) (format "~a, ~a" str (place-to-string p)))
+                     (place-to-string (car place-list))
+                     (cdr place-list))))]
+
    [else
     (let ([p (evaluate-with-sol place)])
       (if (and out (symbolic? p)) "??" p))]
@@ -714,7 +721,7 @@
 (define FuncDecl%
   (class Scope%
     (super-new)
-    (init-field name args body return [temps (list)])
+    (init-field name args body return [temps (list)] [return-print #f])
     (inherit-field pos body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%
@@ -733,8 +740,7 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))
       (print-body-placeset indent)
-      (when return
-	    (send return pretty-print (inc indent)))
+      (send return pretty-print (inc indent))
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 

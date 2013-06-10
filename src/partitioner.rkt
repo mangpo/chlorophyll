@@ -134,7 +134,8 @@
   (define (solve-function func-ast)
     (define start (current-seconds))
     (set! num-msg (evaluate-with-sol (comminfo-msgs (send func-ast accept interpreter))))
-    
+    (send my-ast pretty-print)
+  
     (when verbose (pretty-display `(num-msg , num-msg)))
     #|
     (when (equal? (get-field name func-ast) "main")
@@ -293,9 +294,13 @@
           my-ast)
 )
 
-
+(require "visitor-linker.rkt" "visitor-tempinsert.rkt" "visitor-desugar.rkt")
+ 
 ;(define t (current-seconds))
-;(define my-ast (ast-from-file "../examples/pair.cll"))
-;(result-msgs (optimize-comm my-ast #:cores 4 #:capacity 300 #:verbose #t))
+(define my-ast (ast-from-file "../examples/pair.cll"))
+(send my-ast accept (new linker%))
+(send my-ast accept (new temp-inserter%))
+(send my-ast accept (new desugar%))
+(result-msgs (optimize-comm my-ast #:cores 16 #:capacity 300 #:verbose #t))
 ;(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
 
