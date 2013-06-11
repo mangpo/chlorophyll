@@ -27,7 +27,8 @@
                                   [place place-type] 
                                   [expect expand]))
                               new-decls))
-        (pretty-display `(declare ,temp ,expand ,expect))
+        ;(pretty-display `(declare ,temp ,expand ,expect))
+        
         ;; temp for funccall:
         ;; let func() -> int::2
         ;; temp = func() 
@@ -122,7 +123,7 @@
         
         [(is-a? ast While%)
          (define cond-ret (send (get-field condition ast) accept this))
-         (send (get-field body-block ast) accept this)
+         (send (get-field body ast) accept this)
          
          (set-field! condition ast (cdr cond-ret))
          (list (car cond-ret) ast)]

@@ -65,7 +65,7 @@
                                           val-space)))))
            (let* ([val-space (vector-ref space i)] 
                   [new-space (+ val-space add-space)]) ; <-- optimization
-             (pretty-display `(cores-inc-space ,i ,add-space))
+             ;(pretty-display `(cores-inc-space ,i ,add-space))
              (assert (<= new-space capacity) `(<= new-space capacity))
              (vector-set! space i new-space))))
   ;(assert (<= (cores-count cores) max-cores))

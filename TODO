@@ -1,12 +1,9 @@
 TODO
-- visitor-evaluator int::2@(1,2) func
-- temp inserter
+- test-simulator with pair.cll
+- visitor-evaluator int::2@(1,2) func?
 - clean up
   = cluster
-  = where to interpret known
   = known filed
-  = assert on funccall vs funcdecl
-  = when to attach signature to funccall
   = clone signature or not?
   = get rid of type-mismatch?
 - add testdata/72, testdata/matrxmult.out

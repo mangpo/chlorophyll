@@ -7,7 +7,7 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #t)
+(define debug #f)
 (define debug-sym #f)
 
 (struct comminfo (msgs placeset))
@@ -17,6 +17,7 @@
     (super-new)
     (init-field places
                 [env (make-hash)] ;; map varname -> place, arrayname -> (place cluster)
+                [has-func-temp #f]
 		)
 
     
@@ -436,8 +437,12 @@
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
           
 	  ;; set place-type
-	  ;; (let ([return (get-field return func-ast)])
-	  ;;   (set-field! place-type ast (get-field place return)))
+	  (let ([return (get-field return func-ast)])
+            ;; only set place-type when function returns non-expanded type
+            ;; when it returns non-expanded type, temp = func(), 
+            ;; and temp is already at the same place ast func()
+            (when (is-a? return VarDecl%)
+                  (set-field! place-type ast (get-field place return))))
 		 
 	  (comminfo msgs placeset)]
                 
@@ -647,7 +652,10 @@
 	  ;; Don't increase space
 
           (define comm-lhs-rhs
-            (if (is-a? rhs FuncCall%)
+            (if (and (is-a? rhs FuncCall%) 
+                     (is-a? (get-field return (get-field signature rhs)) Block%))
+                ;; always 0 when funcall return expanded type because we set temp = func()
+                ;; where temp is at the same place as func()
                 0
                 (count-msg lhs rhs)))
        

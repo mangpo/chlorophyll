@@ -1,13 +1,13 @@
 #lang s-exp rosette
 
-(require "parser.rkt" "visitor-desugar.rkt"
+(require "parser.rkt" 
+         "compiler.rkt"
          "partitioner.rkt" "symbolic-dict.rkt" rackunit)
 
 (define testdir "../tests/")
 
 (define (optimize-file file cores capacity max-msgs)
-  (define my-ast (ast-from-file file))
-  (send my-ast accept (new desugar%))
+  (define my-ast (parse file))
   (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #f))
 
 ;; Check with expected number of messages
@@ -29,6 +29,7 @@
         [res2 (optimize-file file2 cores capacity max-msgs)])
   (check-equal? (result-msgs res1) (result-msgs res2))
   (check-true (cores-equal? (result-cores res1) (result-cores res2)))))
+
 
 (test-num-msgs "array-known"   2)
 (test-num-msgs "array-dynamic" 6)

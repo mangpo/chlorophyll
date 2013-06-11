@@ -3,9 +3,20 @@
 (require "parser.rkt"
          "partitioner.rkt" "layout-sa.rkt" "communication.rkt"
          "visitor-desugar.rkt"
-         "visitor-printer.rkt")
+         "visitor-printer.rkt"
+         "visitor-linker.rkt" 
+         "visitor-tempinsert.rkt" 
+         "visitor-desugar.rkt")
 
-(provide compile test-simulate)
+(provide compile test-simulate parse)
+
+(define (parse file)
+  (define my-ast (ast-from-file file))
+  (define need-temp (send my-ast accept (new linker%)))
+  (when (send my-ast accept (new linker%))
+    (send my-ast accept (new temp-inserter%))
+    (send my-ast accept (new desugar%)))
+  my-ast)
 
 (define (compile file name capacity [input #f] [w 5] [h 4] )
   (define n (* w h))

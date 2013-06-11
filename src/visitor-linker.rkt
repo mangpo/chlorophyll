@@ -83,7 +83,7 @@
 
       (cond
         [(is-a? ast VarDecl%)
-         (pretty-display (format "LINKER: VarDecl ~a" (get-field var-list ast)))
+         ;(pretty-display (format "LINKER: VarDecl ~a" (get-field var-list ast)))
          (define type (get-field type ast)) 
 	 (if (pair? type)
              (begin
@@ -103,7 +103,7 @@
          ]
         
         [(is-a? ast ArrayDecl%)
-         (pretty-display (format "LINKER: VarDecl ~a" (get-field var ast)))
+         ;(pretty-display (format "LINKER: VarDecl ~a" (get-field var ast)))
          (define type (get-field type ast)) 
 	 (if (pair? type)
              (begin
@@ -121,12 +121,12 @@
          (declare array-map (get-field var ast) ast)]
         
         [(is-a? ast Num%)
-         (pretty-display (format "LINKER: Num ~a" (send ast to-string)))
+         ;(pretty-display (format "LINKER: Num ~a" (send ast to-string)))
          (set-field! expect ast entry)
          #t]
         
         [(is-a? ast Array%)
-         (pretty-display (format "LINKER: Array ~a" (send ast to-string)))
+         ;(pretty-display (format "LINKER: Array ~a" (send ast to-string)))
 	 (set-field! expect ast entry)
 
 	 (set! entry 1)
@@ -151,7 +151,7 @@
 	 (and known-type index-known)]
         
         [(is-a? ast Var%)
-         (pretty-display (format "LINKER: Var ~a" (send ast to-string)))
+         ;(pretty-display (format "LINKER: Var ~a" (send ast to-string)))
 	 (set-field! expect ast entry)
 
          (define pack (lookup env ast))
@@ -177,7 +177,7 @@
 	 "int"]
         
         [(is-a? ast UnaExp%)
-         (pretty-display (format "LINKER: UnaExp ~a" (send ast to-string)))
+         ;(pretty-display (format "LINKER: UnaExp ~a" (send ast to-string)))
 	 (set-field! expect ast entry)
 	 (define e1 (get-field e1 ast))
          (define e1-known (send e1 accept this))
@@ -186,7 +186,7 @@
 	 e1-known]
         
         [(is-a? ast BinExp%)
-         (pretty-display (format "LINKER: BinExp ~a" (send ast to-string)))
+         ;(pretty-display (format "LINKER: BinExp ~a" (send ast to-string)))
 	 (set-field! expect ast entry)
 	 (define e1 (get-field e1 ast))
 	 (define e2 (get-field e2 ast))
@@ -197,7 +197,7 @@
 	 (and e1-known e2-known)]
         
         [(is-a? ast FuncCall%)
-         (pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
+         ;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
          (define func-ast (lookup env ast))
          (define type (get-field type (get-field return func-ast)))
 
@@ -243,7 +243,7 @@
 	 #f]
         
         [(is-a? ast Assign%)
-         (pretty-display (format "LINKER: Assign ~a ~a" lhs rhs))
+         ;(pretty-display (format "LINKER: Assign ~a ~a" lhs rhs))
          (define lhs (get-field lhs ast))
          (define rhs (get-field rhs ast))
          (define lhs-pack (lookup env lhs))
@@ -262,7 +262,7 @@
                (set-val-known! (lookup env lhs) #f))]
         
         [(is-a? ast If%)
-         (pretty-display "LINKER: If")
+         ;(pretty-display "LINKER: If")
          (set! entry 1)
          (set! stmt-level #f)
          (send (get-field condition ast) accept this)
@@ -278,7 +278,7 @@
          ]
         
         [(is-a? ast While%)
-         (pretty-display "LINKER: While")
+         ;(pretty-display "LINKER: While")
          (set! entry 1)
          (set! stmt-level #f)
          (send (get-field condition ast) accept this)
@@ -288,7 +288,7 @@
          ]
         
         [(is-a? ast For%)
-         (pretty-display "LINKER: For")
+         ;(pretty-display "LINKER: For")
 	 (push-scope)
 	 (declare env (get-field name (get-field iter ast)) (val "int" 1 #t))
          (send (get-field body ast) accept this)
@@ -303,7 +303,7 @@
          ]
         
         [(is-a? ast Program%)
-         (pretty-display "LINKER: Program")
+         ;(pretty-display "LINKER: Program")
          (define stmts (get-field stmts ast))
          
          ;; update env front to back
@@ -316,10 +316,13 @@
          (for ([stmt (reverse stmts)])
            (when (is-a? stmt FuncDecl%)
 		 (send stmt accept this)))
+
+         ;; return non-native flag
+         non-native
          ]
         
         [(is-a? ast Block%)
-         (pretty-display "LINKER: Block")
+         ;(pretty-display "LINKER: Block")
          (for ([stmt (get-field stmts ast)])
 	      (set! entry #f)
               (set! stmt-level #t)

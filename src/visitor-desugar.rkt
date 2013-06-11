@@ -19,7 +19,7 @@
       
       (cond
         [(is-a? ast VarDecl%)
-         (pretty-display (format "DESUGAR: VarDecl ~a" (get-field var-list ast)))
+         ;(pretty-display (format "DESUGAR: VarDecl ~a" (get-field var-list ast)))
          (define type (get-field type ast))
          (define native-type
            (if (string? type)
@@ -29,27 +29,21 @@
          (define known (get-field known ast))
          (define entry (get-field expect ast))
          
-         (pretty-display (format "DESUGAR: VarDecl ~a (after declare)" (get-field var-list ast)))
-         (pretty-display `(entry ,entry))
-         (define var-decls
-           (if (> entry 1)
-               ;; int a::0: int a::1;
-               (let ([place-expand (get-place-expansion-ast (get-field place ast) entry)])
-                 (for/list ([i (in-range entry)]
-                            [p place-expand])
-                   (new (if (is-a? ast Param%)
-                            Param%
-                            VarDecl% )
-                        [type native-type]
-                        [var-list (decor-list (get-field var-list ast) i)]
+         (if (> entry 1)
+             ;; int a::0: int a::1;
+             (let ([place-expand (get-place-expansion-ast (get-field place ast) entry)])
+               (for/list ([i (in-range entry)]
+                          [p place-expand])
+                         (new (if (is-a? ast Param%)
+                                  Param%
+                                  VarDecl% )
+                              [type native-type]
+                              [var-list (decor-list (get-field var-list ast) i)]
                         [known known]
                         [place (if p p (get-sym))])))
-               ;; normal type
-               ast))
-         
-         (pretty-display (format "DESUGAR: VarDecl ~a (after compute)" (get-field var-list ast)))
-
-         var-decls]
+             ;; normal type
+             ast)
+         ]
          
          ;; cons scenario only happens at return or temp variables
          ;; (if (string? type)
@@ -63,7 +57,7 @@
          ;; ]
         
         [(is-a? ast ArrayDecl%)
-         (pretty-display (format "DESUGAR: VarDecl ~a" (get-field var ast)))
+         ;(pretty-display (format "DESUGAR: VarDecl ~a" (get-field var ast)))
          (define type (get-field type ast)) 
          (define known (get-field known ast))
          (define bound (get-field bound ast))
@@ -87,7 +81,7 @@
              ast)]
         
         [(is-a? ast Num%)
-         (pretty-display (format "DESUGAR: Num ~a" (send ast to-string)))
+         ;(pretty-display (format "DESUGAR: Num ~a" (send ast to-string)))
          (define entry (get-field expect ast))
          (if (= entry 1)
              ast
@@ -101,14 +95,13 @@
         
         
         [(is-a? ast Array%)
-         (pretty-display (format "DESUGAR: Array ~a" (send ast to-string)))
+         ;(pretty-display (format "DESUGAR: Array ~a" (send ast to-string)))
          
          (define index (send (get-field index ast) accept this))
          (define entry (get-field expect ast))
          (define expand (get-field expand ast))
          (define known-type (get-field known-type ast))
          
-         (pretty-display (format "DESUGAR: Array ~a (before compute)" (send ast to-string)))
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
                (when sub
@@ -139,7 +132,7 @@
          (define expand (get-field expand ast))
          (define known-type (get-field known-type ast))
          
-         (pretty-display (format "DESUGAR: Var ~a" (send ast to-string)))
+         ;(pretty-display (format "DESUGAR: Var ~a" (send ast to-string)))
          ;; no need to worry about place-type at this step
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
@@ -181,7 +174,7 @@
          (define entry (get-field expect ast))
          (define known-type (get-field known-type ast))
          
-         (pretty-display (format "DESUGAR: UnaExp ~a" (send ast to-string)))
+         ;(pretty-display (format "DESUGAR: UnaExp ~a" (send ast to-string)))
          (if (= entry 1)
              ast
              (for/list ([i-e1 e1-ret]
@@ -197,21 +190,18 @@
          (define entry (get-field expect ast))
          (define known-type (get-field known-type ast))
          
-         (pretty-display (format "DESUGAR: BinExp ~a" (send ast to-string)))
-         (define ret
+         ;(pretty-display (format "DESUGAR: BinExp ~a" (send ast to-string)))
          (if (= entry 1)
              ast
              (for/list ([i-e1 e1-ret]
                         [i-e2 e2-ret]
                         [i-op op-ret])
                (new BinExp% [op i-op] [e1 i-e1] [e2 i-e2] 
-                    [known-type known-type]))))
-         (pretty-display (format "DESUGAR: BinExp ~a (done)" (send ast to-string)))
-         ret
+                    [known-type known-type])))
          ]
         
         [(is-a? ast FuncCall%)
-         (pretty-display (format "DESUGAR: FuncCall ~a" (send ast to-string)))
+         ;(pretty-display (format "DESUGAR: FuncCall ~a" (send ast to-string)))
          (set-field! args ast (flatten 
                                (map (lambda (x) (send x accept this))
                                     (get-field args ast))))
@@ -221,16 +211,14 @@
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))
          (define rhs (get-field rhs ast))
-         (pretty-display (format "DESUGAR: Assign ~a ~a" lhs rhs))
+         ;(pretty-display (format "DESUGAR: Assign ~a ~a" lhs rhs))
          
-         (pretty-display "DESUGAR: Assign (before visit)")
          ;; visit lhs & rhs
          (define lhs-ret (send lhs accept this))
          (define rhs-ret (send rhs accept this))
 
          (define entry (get-field expect lhs))
-         
-         (pretty-display "DESUGAR: Assign (after visit)")
+
          (if (= entry 1)
              ast
 	     (for/list ([i-lhs lhs-ret]
@@ -239,7 +227,7 @@
          ]
         
         [(is-a? ast If%)
-         (pretty-display "DESUGAR: If")
+         ;(pretty-display "DESUGAR: If")
          (send (get-field condition ast) accept this)
 	 (send (get-field true-block ast) accept this)
 	 (when (get-field false-block ast)
@@ -248,20 +236,20 @@
          ]
         
         [(is-a? ast While%)
-         (pretty-display "DESUGAR: While")
+         ;(pretty-display "DESUGAR: While")
          (send (get-field condition ast) accept this)
          (send (get-field body ast) accept this)
 	 ast
          ]
         
         [(is-a? ast For%)
-         (pretty-display "DESUGAR: For")
+         ;(pretty-display "DESUGAR: For")
          (send (get-field body ast) accept this)
 	 ast
          ]
         
         [(is-a? ast FuncDecl%)
-         (pretty-display (format "DESUGAR: FuncDecl ~a (return)" (get-field name ast)))
+         ;(pretty-display (format "DESUGAR: FuncDecl ~a (return)" (get-field name ast)))
 
          (let* ([return (get-field return ast)]
                 [return-ret (send return accept this)])
@@ -269,15 +257,13 @@
                  (set-field! return ast (new Block% [stmts return-ret]))
                  (set-field! return-print ast return)))
 
-         (pretty-display (format "DESUGAR: FuncDecl ~a (args)" (get-field name ast)))
 	 (send (get-field args ast) accept this)
-         (pretty-display (format "DESUGAR: FuncDecl ~a (body)" (get-field name ast)))
          (send (get-field body ast) accept this)
          ast
          ]
         
         [(is-a? ast Block%)
-         (pretty-display "DESUGAR: Block")
+         ;(pretty-display "DESUGAR: Block")
          (set-field! stmts ast (flatten 
                                 (map (lambda (x) (send x accept this))
                                      (get-field stmts ast))))
