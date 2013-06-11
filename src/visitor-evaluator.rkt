@@ -83,12 +83,12 @@
 	;; infer
 	(define func-ast (get-field signature ast))
 	(for ([param (get-field stmts (get-field args func-ast))] ; signature
-		[arg   (get-field args ast)]) ; actual
-	       (send arg infer-place (get-field place-type param))
-	       (send param infer-place (get-field place-type arg)))
+              [arg   (get-field args ast)]) ; actual
+          (send arg infer-place (get-field place-type param))
+          (send param infer-place (get-field place-type arg)))
 	
-	(send (get-field return func-ast) infer-place (get-field place-type ast))
-	;; (send arg infer-place (get-field place-type param)))
+        ;; return can't be at any, so we don't need to infer return
+	;; (send (get-field return func-ast) infer-place (get-field place-type ast))
         ]
 
        [(is-a? ast Assign%)

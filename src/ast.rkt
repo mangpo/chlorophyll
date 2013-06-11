@@ -160,9 +160,9 @@
            (set) place)]
    [(pair? place)
     (to-place-set (car place))]
-   [(and (is-a? place Place%) (equal? (get-field at place) "any"))
+   [(or (at-any? place) (at-io? place))
     (set)]
-   [else (raise "Error: cannot handle this object type")]))
+   [else (raise (format "to-place-set: unimplemented for ~a" place))]))
 
 ;; number, place-list -> place-type
 (define (to-place-type ast place)
@@ -174,7 +174,7 @@
 
 (define Base%
   (class object%
-    (super-new)
+    (super-new)2
     (init-field [pos #f] [send-path #f] [convert #f] [expect 1])   
 
     (abstract pretty-print)
@@ -514,7 +514,7 @@
       (pretty-display (format "~a(Const:~a @~a)" indent n (get-place)))
       (print-send-path indent))
 
-    (define/public (to-string) n)
+    (define/public (to-string) (number->string n))
 
 ))
 
@@ -666,7 +666,7 @@
 (define Assign%
   (class Base%
     (super-new)
-    (init-field lhs rhs)
+    (init-field lhs rhs [ignore #f])
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN" indent))

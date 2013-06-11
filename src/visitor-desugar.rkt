@@ -37,7 +37,10 @@
                (let ([place-expand (get-place-expansion-ast (get-field place ast) entry)])
                  (for/list ([i (in-range entry)]
                             [p place-expand])
-                   (new VarDecl% [type native-type]
+                   (new (if (is-a? ast Param%)
+                            Param%
+                            VarDecl% )
+                        [type native-type]
                         [var-list (decor-list (get-field var-list ast) i)]
                         [known known]
                         [place (if p p (get-sym))])))

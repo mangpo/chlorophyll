@@ -10,7 +10,8 @@
 (define stdin
   (new FuncDecl% [name "in"] 
 		   [args (new Block% [stmts (list)])] 
-		   [body (set (new Place% [at "io"]))] 
+                   [body (new Block% [stmts (list)])]
+		   [body-placeset (set (new Place% [at "io"]))] 
 		   [return (new VarDecl% [var-list (list "#return")]
 			        [type "int"] ;; TODO: make it generic
 				[place (new Place% [at "io"])]
@@ -25,7 +26,8 @@
 						  [known #f]
 						  [place (new Place% [at "io"])]
 						  [place-type (new Place% [at "io"])]))])]
-		   [body (set (new Place% [at "io"]))] 
+		   [body (new Block% [stmts (list)])]
+                   [body-placeset (set (new Place% [at "io"]))] 
 		   [return (new VarDecl% [var-list (list "#return")]
 			        [type "void"]
 				[known #f]

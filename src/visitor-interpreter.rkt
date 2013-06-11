@@ -21,8 +21,8 @@
 
     
     ;; Declare IO function: in(), out(data)
-    (declare env "in" (cons stdin (comminfo 0 (set))))
-    (declare env "out" (cons stdout (comminfo 0 (set))))
+    (declare env "in" (comminfo 0 (set)))
+    (declare env "out" (comminfo 0 (set)))
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
@@ -48,11 +48,15 @@
           (pretty-display "raise error")
           (raise (format "derive-place: unimplemented for ~a" p))]))
 
-      (if (is-a? place-exp Place%)
-          (let ([place (derive-place (get-field at place-exp))])
-            (when modify (set-field! place ast place))
-            place)
-          place-exp))
+      (cond
+        [(at-io? place-exp)
+         place-exp]
+        [(is-a? place-exp Place%)
+         (let ([place (derive-place (get-field at place-exp))])
+           (when modify (set-field! place ast place))
+           place)]
+        [else
+         place-exp]))
     
     ;; find index of @place(x[i]) if x is distributed.
     (define (find-index place)
@@ -111,12 +115,18 @@
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
       ;(assert (or (number? place) (list? place)))
-      (if (number? place)
-          (cores-inc-space places place add-space)
-          (let ([place-list 
-                 (if (place-type-dist? place) (car place) place)])
-            (for ([p place-list])
-                 (cores-inc-space places (get-field place p) add-space)))))
+      (cond
+        [(number? place)
+         (cores-inc-space places place add-space)]
+        
+        [(at-io? place)
+         void]
+        
+        [else
+         (let ([place-list 
+                (if (place-type-dist? place) (car place) place)])
+           (for ([p place-list])
+             (cores-inc-space places (get-field place p) add-space)))]))
     
     ;;; Increase the used space of "place" with op.
     (define (inc-space-with-op place op)
@@ -320,19 +330,22 @@
           ]
 
        [(is-a? ast Var%)
+        (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
+            
+        ;; if expend < expand then it is temp in temp = func()
+        ;; we don't need to find place for such temp
+        (if (<= (get-field expand ast) (get-field expect ast))
           ;; lookup place from env
-          (define place (lookup env ast))
-          ;; place can be list if var is iterator
-          ;; need to call to-place-type to turn place-list into (place-list . index)
-          (set-field! place-type ast (to-place-type ast place))
-
-          (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
-
-          ;; no space taken for now
-          ;; x[i] in loop => take no space, i can be on stack
-          ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
-
-          (comminfo 0 (to-place-set place))
+          (let ([place (lookup env ast)])
+            ;; place can be list if var is iterator
+            ;; need to call to-place-type to turn place-list into (place-list . index)
+            (set-field! place-type ast (to-place-type ast place))
+            
+            ;; no space taken for now
+            ;; x[i] in loop => take no space, i can be on stack
+            ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
+            (comminfo 0 (to-place-set place)))
+          (comminfo 0 (set)))
           ]
 
        [(is-a? ast UnaExp%)
@@ -346,7 +359,7 @@
           (define place-type (find-place-type ast op))
           (set-field! place-type ast place-type)
 
-	  (inc-space place-type est-num) ; increase space
+	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
 
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
@@ -377,7 +390,7 @@
           (define e2-ret (send e2 accept this))
 	  ;(define op-ret (send op accept this))
           
-	  (inc-space place-type est-num) ; increase space
+	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
 
           (when debug
                 (pretty-display (format ">> BinOp ~a" (send ast to-string))))
@@ -446,6 +459,10 @@
 	  ;; increase space for variable if it is the return variable
 	  (when (not (equal? (car var-list) "#return"))
 		(inc-space place (* (length var-list) est-data))) ; increase space
+          
+          (when debug
+                (pretty-display (format ">> VarDecl ~a (after)" var-list)))
+          
           (comminfo 0 
                     (if (equal? (get-field type ast) "void")
                         (set)
@@ -611,13 +628,19 @@
 	  (define lhs-name (get-field name lhs))
 
           (when debug
-                (pretty-display ">> Assign (rhs)"))
+                (pretty-display ">> Assign (rhs1)"))
 
           ;; If rhs is a number, set place to be equal to lhs
           (when (is-a? rhs Num%) (send rhs infer-place lhs-place-type))
 
+          (when debug
+                (pretty-display ">> Assign (rhs2)"))
+
           ;; Visit rhs
           (define rhs-ret (send rhs accept this))
+
+          (when debug
+                (pretty-display ">> Assign (rhs3)"))
 
           (when debug
                 (pretty-display ">> Assign (connect)"))

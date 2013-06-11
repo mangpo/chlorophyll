@@ -1,19 +1,5 @@
 TODO
-  (ASSIGN
-    (Var:a::0 @#f (expand=1/1))
-    (Var:_temp1 @place(io) (expand=1/2))
-  (ASSIGN
-    (Var:a::1 @#f (expand=1/1))
-    (Num:0 @#f (expand=1/1))
-  (ASSIGN
-    (Var:_temp2 @place(io) (expand=1/1))
-    (FuncCall: in @#f (expand=1/1)
-    )
-  (ASSIGN
-    (Var:a @#f (expand=1/1))
-    (Var:_temp2 @place(io) (expand=1/1))
-- fix a
-
+- visitor-evaluator int::2@(1,2) func
 - temp inserter
 - clean up
   = cluster

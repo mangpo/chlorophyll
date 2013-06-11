@@ -92,7 +92,7 @@
                            #t)]
                     [temp-tight (send temp clone)])
                ;; send expect = 1 so that it doesn't get expanded in desugarin step
-               (set-field! expect temp-tight 1) 
+               (set-field! expect temp-tight 1)
                (cons (list new-stmts (new Assign% [lhs temp-tight] [rhs ast]))
                      temp)))]
         
