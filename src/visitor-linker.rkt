@@ -88,7 +88,7 @@
 	 (if (pair? type)
              (begin
                (expand-place-livable (cdr type))
-               (set! non-native #f)
+               (set! non-native #t)
                (set-field! type ast (car type))
                (set-field! expect ast (cdr type)))
              (set-field! expect ast 1))
@@ -108,7 +108,7 @@
 	 (if (pair? type)
              (begin
                (expand-place-livablegroup (cdr type))
-               (set! non-native #f)
+               (set! non-native #t)
                (set-field! type ast (car type))
                (set-field! expect ast (cdr type)))
              (set-field! expect ast 1))

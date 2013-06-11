@@ -295,11 +295,16 @@
 
 (require "visitor-linker.rkt" "visitor-tempinsert.rkt" "visitor-desugar.rkt")
  
-#|(define t (current-seconds))
-(define my-ast (ast-from-file "../tests/function2.cll"))
-(send my-ast accept (new linker%))
-(send my-ast accept (new temp-inserter%))
-(send my-ast accept (new desugar%))
+(define (parse file)
+  (define my-ast (ast-from-file file))
+  (define need-temp (send my-ast accept (new linker%)))
+  (when need-temp
+    (send my-ast accept (new temp-inserter%))
+    (send my-ast accept (new desugar%)))
+  my-ast)
+
+(define t (current-seconds))
+(define my-ast (parse "../tests//add-pair.cll"))
 (result-msgs (optimize-comm my-ast #:cores 16 #:capacity 300 #:verbose #t))
 (pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
-|#
+

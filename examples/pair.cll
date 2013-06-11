@@ -2,8 +2,11 @@ int::2@(2,2) func(int::2@(2,2) x) {
   return 10;
 }
 
-int::2@(2,2) func2(int::3@(2,2,2) x) {
-  return 10000;
+int::2@(2,2) func2(int z, int::3@(2,2,2) x) {
+  int::2 a;
+  a::0 = x::0;
+  a::1 = z;
+  return a;
 }
 
 void main() {
@@ -18,5 +21,5 @@ void main() {
 
   x = y[a::0];
 
-  x = func2(func(0));
+  x = func2(1, func(0));
 }

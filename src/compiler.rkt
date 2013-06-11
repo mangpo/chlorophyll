@@ -13,7 +13,7 @@
 (define (parse file)
   (define my-ast (ast-from-file file))
   (define need-temp (send my-ast accept (new linker%)))
-  (when (send my-ast accept (new linker%))
+  (when need-temp
     (send my-ast accept (new temp-inserter%))
     (send my-ast accept (new desugar%)))
   my-ast)
