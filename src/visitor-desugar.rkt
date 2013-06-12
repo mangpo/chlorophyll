@@ -12,11 +12,46 @@
     (define (decor-list l dec)
       (map (lambda (x) (ext-name x dec)) l))
 
+    (define (expand-place place n)
+      (define (different place)
+	(map (lambda (x) (new RangePlace% 
+			      [place (get-sym)] 
+			      [from (get-field from x)]
+			      [to (get-field to x)]))
+		   place))
 
+      (if (= n 1)
+	  (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
+		(send (get-field at place) accept this))
+	  (cond
+	   [(is-a? place TypeExpansion%)
+	    (get-field place-list place)]
+	   
+	   [(symbolic? place)
+	    (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
+	   
+	   [(is-a? place Place%)
+	    (let* ([at (get-field at place)]
+		   [at-list
+		    (if (is-a? at Exp%)
+			(send at accept this)
+			(for/list ([i (in-range n)]) at))])
+	      (map (lambda (x) (new Place% [at x])) at-list))]
+	   
+	   [(place-type-dist? place)
+	    (cons place 
+		  (for/list ([i (in-range (sub1 n))]) 
+			    (cons (different (car place)) (cdr place))))]
+	   
+	   [(list? place)
+	    (cons place 
+		  (for/list ([i (in-range (sub1 n))]) 
+			    (different place)))]
+	   
+	   [else
+	    (raise (format "visitor-desugar: expand-place: unimplemented for ~a" place))])))
+    
     (define/public (visit ast)
-      (define (get-place-expansion-ast place n)
-        (get-place-expansion ast place n))
-      
       (cond
         [(is-a? ast VarDecl%)
          ;(pretty-display (format "DESUGAR: VarDecl ~a" (get-field var-list ast)))
@@ -29,9 +64,9 @@
          (define known (get-field known ast))
          (define entry (get-field expect ast))
          
-         (if (> entry 1)
-             ;; int a::0: int a::1;
-             (let ([place-expand (get-place-expansion-ast (get-field place ast) entry)])
+	 (let ([place-expand (expand-place (get-field place ast) entry)])
+	   (if (> entry 1)
+	       ;; int a::0: int a::1;
                (for/list ([i (in-range entry)]
                           [p place-expand])
                          (new (if (is-a? ast Param%)
@@ -39,10 +74,10 @@
                                   VarDecl% )
                               [type native-type]
                               [var-list (decor-list (get-field var-list ast) i)]
-                        [known known]
-                        [place (if p p (get-sym))])))
-             ;; normal type
-             ast)
+			      [known known]
+			      [place (if p p (get-sym))]))
+	       ;; normal type
+	       ast))
          ]
          
          ;; cons scenario only happens at return or temp variables
@@ -64,21 +99,21 @@
          (define cluster (get-field cluster ast))
          (define entry (get-field expect ast))
          
-         (if (> entry 1)
-             ;; expanded type
-             (let ([place-expand (get-place-expansion-ast (get-field place-list ast) entry)])
-               ;; expanded type return
+	 (let ([place-expand (expand-place (get-field place-list ast) entry)])
+	   (if (> entry 1)
+	       ;; expanded type
                (for/list ([i (in-range entry)]
                           [p place-expand])
-		 (let ([new-name (ext-name (get-field var ast) i)])
-                   (new ArrayDecl% [type type]
-				       [var new-name]
-				       [known known]
-				       [place-list p]
-				       [bound bound]
-				       [cluster cluster]))))
-             ;; normal type
-             ast)]
+			 (let ([new-name (ext-name (get-field var ast) i)])
+			   (new ArrayDecl% [type type]
+				[var new-name]
+				[known known]
+				[place-list p]
+				[bound bound]
+				[cluster cluster])))
+	       ;; normal type
+	       ast))
+	 ]
         
         [(is-a? ast Num%)
          ;(pretty-display (format "DESUGAR: Num ~a" (send ast to-string)))
@@ -160,12 +195,14 @@
          ]
         
         [(is-a? ast Op%)
+         ;(pretty-display (format "DESUGAR: Op ~a" (get-field op ast)))
          (define entry (get-field expect ast))
-         (if (= entry 1)
-             ast
-             (for/list ([i (in-range entry)]
-                        [place-expand (get-place-expansion-ast (get-field place ast) entry)])
-                     (new Op% [op (get-field op ast)] [place place-expand])))]
+	 (let ([place-expand (expand-place (get-field place ast) entry)])
+	   (if (= entry 1)
+	       ast
+	       (for/list ([i (in-range entry)]
+			  [place place-expand])
+			 (new Op% [op (get-field op ast)] [place place]))))]
         
         
         [(is-a? ast UnaExp%)

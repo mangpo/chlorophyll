@@ -46,48 +46,18 @@
       (set! env (dict-ref env "__up__"))
       (set! array-map (dict-ref array-map "__up__")))
 
-    (define (expand-place place n)
-      (cond
-       [(is-a? place TypeExpansion%)
-        place]
-       
-       [(symbolic? place)
-        (new TypeExpansion% 
-             [place-list (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))])]
-       
-       [(and (is-a? place Place%) (not (is-a? (get-field at place) Var%)))
-        (define var (get-field at place))
-        (new TypeExpansion% 
-             [place-list 
-              (for/list ([i (in-range n)])
-                        (let ([new-var (send var clone)])
-                          (set-field! sub new-var i)
-                          (new Place% [at new-var])))])]
-       
-       [else
-        (new TypeExpansion%
-             [place-list (for/list ([i (in-range n)]) place)])]
-       
-       ;; [else
-       ;;  (raise (format "get-place-exapand: unimplemented for ~a" place))]))
-       ))
-    
+    (define (visit-place place n)
+      (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
+	      (send (get-field at place) accept this)))
     
     (define/public (visit ast)
-    
-      (define (expand-place-livable n)
-        (set-field! place ast (expand-place (get-field place ast) n)))
-      
-      (define (expand-place-livablegroup n)
-        (set-field! place-list ast (expand-place (get-field place-list ast) n)))
-
       (cond
         [(is-a? ast VarDecl%)
          ;(pretty-display (format "LINKER: VarDecl ~a" (get-field var-list ast)))
          (define type (get-field type ast)) 
 	 (if (pair? type)
              (begin
-               (expand-place-livable (cdr type))
+               (visit-place (get-field place ast) (cdr type))
                (set! non-native #t)
                (set-field! type ast (car type))
                (set-field! expect ast (cdr type)))
@@ -107,7 +77,7 @@
          (define type (get-field type ast)) 
 	 (if (pair? type)
              (begin
-               (expand-place-livablegroup (cdr type))
+               (visit-place (get-field place-list ast) (cdr type))
                (set! non-native #t)
                (set-field! type ast (car type))
                (set-field! expect ast (cdr type)))
@@ -173,7 +143,7 @@
 	[(is-a? ast Op%)
          (set-field! expect ast entry)
          (when (> entry 1)
-               (expand-place-livable entry))
+	       (visit-place (get-field place ast) entry))
 	 "int"]
         
         [(is-a? ast UnaExp%)

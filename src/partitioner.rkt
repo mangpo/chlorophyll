@@ -121,7 +121,8 @@
   (send my-ast accept converter)
   (when verbose
     (pretty-display "\n=== After string -> number ===")
-    (send my-ast pretty-print))
+    (send my-ast pretty-print)
+    (send my-ast accept concise-printer))
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))
@@ -296,15 +297,28 @@
 (require "visitor-linker.rkt" "visitor-tempinsert.rkt" "visitor-desugar.rkt")
  
 (define (parse file)
+  (define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
+  (pretty-display "--------------- ast ------------------")
+  (send my-ast pretty-print)
+  
   (define need-temp (send my-ast accept (new linker%)))
+  (pretty-display "--------------- linker ------------------")
+  (send my-ast pretty-print)
+  
   (when need-temp
     (send my-ast accept (new temp-inserter%))
-    (send my-ast accept (new desugar%)))
+    (pretty-display "--------------- temp ------------------")
+    (send my-ast pretty-print)
+    
+    (send my-ast accept (new desugar%))
+    (pretty-display "--------------- desugar ------------------")
+    (send my-ast pretty-print))
   my-ast)
 
+#|
 (define t (current-seconds))
-(define my-ast (parse "../tests//add-pair.cll"))
+(define my-ast (parse "../tests/add-pair.cll"))
 (result-msgs (optimize-comm my-ast #:cores 16 #:capacity 300 #:verbose #t))
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#
 

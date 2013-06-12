@@ -30,6 +30,10 @@
   (check-equal? (result-msgs res1) (result-msgs res2))
   (check-true (cores-equal? (result-cores res1) (result-cores res2)))))
 
+;; No error test
+(define (no-error name [cores 4] [capacity 256] [max-msgs #f]
+                  [file (string-append testdir name ".cll")])
+  (optimize-file file cores capacity max-msgs))
 
 (test-num-msgs "array-known"   2)
 (test-num-msgs "array-dynamic" 6)
@@ -41,9 +45,12 @@
 (test-num-msgs "for-array5"    720 #:max-msgs 800)
 (test-num-msgs "for-array6"    0)
 (test-num-msgs "add"           100 #:cores 8 #:max-msgs 200)
+(test-num-msgs "add-pair"      100 #:cores 8 #:max-msgs 200)
 (test-num-msgs "function"      2)
 (test-num-msgs "function2"     2)
 (test-num-msgs "while"         300 #:max-msgs 400)
 
 (test-consistent "space")
 (test-consistent "if")
+
+(no-error "pair")
