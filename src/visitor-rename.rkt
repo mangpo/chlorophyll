@@ -41,30 +41,31 @@
            num)]))
 
     (define/public (visit ast)
+      (define (check-base p)
+        (cond 
+         [(string? p)
+          (convert-to-num p)]
+         [(list? p)
+          (for ([i p])
+               (send i accept this))
+          p]
+         [(pair? p)
+          (for ([i (car p)])
+               (send i accept this))
+          p]
+
+         [(is-a? p TypeExpansion%)
+          (set-field! place-list p
+                      (map (lambda (x) (check-base x)) (get-field place-list p)))
+          p]
+
+         [else p]))
+
       (define (check-place)
-        (let ([p (get-field place ast)])
-          (cond 
-	   [(string? p)
-	    (set-field! place ast (convert-to-num p))]
-	   [(list? p)
-	    (for ([i p])
-		 (send i accept this))]
-	   [(pair? p)
-	    (for ([i (car p)])
-		 (send i accept this))])))
+        (set-field! place ast (check-base (get-field place ast))))
 
       (define (check-place-type)
-	(let ([p (get-field place-type ast)])
-	  (cond 
-	   [(string? p)
-	    (set-field! place-type ast (convert-to-num p))]
-	   [(list? p)
-	    (for ([i p])
-		 (send i accept this))]
-	   [(pair? p)
-	    (for ([i (car p)])
-		 (send i accept this))])))
-	
+        (set-field! place-type ast (check-base (get-field place-type ast))))
 
       (cond
        [(is-a? ast Livable%)
@@ -134,8 +135,7 @@
         (send (get-field body ast) accept this)]
 
        [else (raise (format "Error: in partition-to-number, ~a unimplemented!" ast))]
-       ))
-    ))
+       ))))
             
         
                 

@@ -566,6 +566,10 @@
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
   ))
 
+(define TempDecl%
+  (class VarDecl%
+    (super-new)))
+
 (define Param%
   (class VarDecl%
     (super-new)

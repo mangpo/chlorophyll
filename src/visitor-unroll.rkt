@@ -61,7 +61,7 @@
 
     (define (lookup ast)
       (define (lookup-name env name)
-        ;(pretty-display `(lookup-name ,name ,env))
+        (pretty-display `(lookup-name ,env ,name))
         (dict-ref env name
                   (lambda () (lookup-name (dict-ref env "__up__"
                                                     (lambda () #f))

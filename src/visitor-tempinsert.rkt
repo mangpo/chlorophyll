@@ -18,11 +18,11 @@
         (set! new-decls (cons
                          (if (and funccall (> expand 1))
                              ;; no expansion in desugar step
-                             (new VarDecl% [var-list (list temp)]
+                             (new TempDecl% [var-list (list temp)]
                                   [type (cons type expand)] ; packed type
                                   [place place-type] 
                                   [expect expand]) 
-                             (new VarDecl% [var-list (list temp)]
+                             (new TempDecl% [var-list (list temp)]
                                   [type type] ; native type
                                   [place place-type] 
                                   [expect expand]))

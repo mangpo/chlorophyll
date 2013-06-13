@@ -33,6 +33,9 @@
                 (set) x))
 
       (cond
+        [(is-a? ast TempDecl%)
+         (set)]
+
         [(is-a? ast Livable%)
          (place-set (get-field place ast))
          ]

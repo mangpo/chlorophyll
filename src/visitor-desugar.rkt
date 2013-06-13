@@ -11,48 +11,12 @@
 
     (define (decor-list l dec)
       (map (lambda (x) (ext-name x dec)) l))
-
-    (define (expand-place place n)
-      (define (different place)
-	(map (lambda (x) (new RangePlace% 
-			      [place (get-sym)] 
-			      [from (get-field from x)]
-			      [to (get-field to x)]))
-		   place))
-
-      (if (= n 1)
-	  (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
-		(send (get-field at place) accept this))
-	  (cond
-	   [(is-a? place TypeExpansion%)
-	    (get-field place-list place)]
-	   
-	   [(symbolic? place)
-	    (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
-	   
-	   [(is-a? place Place%)
-	    (let* ([at (get-field at place)]
-		   [at-list
-		    (if (is-a? at Exp%)
-			(send at accept this)
-			(for/list ([i (in-range n)]) at))])
-	      (map (lambda (x) (new Place% [at x])) at-list))]
-	   
-	   [(place-type-dist? place)
-	    (cons place 
-		  (for/list ([i (in-range (sub1 n))]) 
-			    (cons (different (car place)) (cdr place))))]
-	   
-	   [(list? place)
-	    (cons place 
-		  (for/list ([i (in-range (sub1 n))]) 
-			    (different place)))]
-	   
-	   [else
-	    (raise (format "visitor-desugar: expand-place: unimplemented for ~a" place))])))
     
     (define/public (visit ast)
       (cond
+        [(is-a? ast TempDecl%)
+         ast]
+
         [(is-a? ast VarDecl%)
          ;(pretty-display (format "DESUGAR: VarDecl ~a" (get-field var-list ast)))
          (define type (get-field type ast))
@@ -311,4 +275,42 @@
         
         ))))
   
-  
+(define desugarer (new desugar%))
+    (define (expand-place place n)
+      (define (different place)
+        (map (lambda (x) (new RangePlace% 
+                              [place (get-sym)] 
+                              [from (get-field from x)]
+                              [to (get-field to x)]))
+             place))
+      
+      (if (= n 1)
+          (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
+                (send (get-field at place) accept desugarer))
+          (cond
+           [(is-a? place TypeExpansion%)
+            (get-field place-list place)]
+           
+           [(symbolic? place)
+            (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
+           
+           [(is-a? place Place%)
+            (let* ([at (get-field at place)]
+		   [at-list
+		    (if (is-a? at Exp%)
+			(send at accept desugarer)
+			(for/list ([i (in-range n)]) at))])
+              (map (lambda (x) (new Place% [at x])) at-list))]
+           
+           [(place-type-dist? place)
+            (cons place 
+                  (for/list ([i (in-range (sub1 n))]) 
+			    (cons (different (car place)) (cdr place))))]
+           
+           [(list? place)
+            (cons place 
+                  (for/list ([i (in-range (sub1 n))]) 
+                            (different place)))]
+           
+           [else
+            (raise (format "visitor-desugar: expand-place: unimplemented for ~a" place))])))

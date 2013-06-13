@@ -135,6 +135,8 @@
          [(and (is-a? p Place%) (equal? (get-field at p) "any"))
           p]
          [(is-a? p TypeExpansion%)
+          (set-field! place-list p
+                      (map (lambda (x) (convert-base x)) (get-field place-list p)))
           p]
          [else
           (raise (format "convert-place-type: unimplemented for ~a" p))]))

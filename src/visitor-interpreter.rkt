@@ -1,8 +1,12 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "ast.rkt" "ast-util.rkt"
-         "parser.rkt" "visitor-interface.rkt" "space-estimator.rkt" 
+         "ast.rkt" 
+         "ast-util.rkt"
+         "parser.rkt" 
+         "visitor-interface.rkt" 
+         "visitor-desugar.rkt"
+         "space-estimator.rkt" 
          "symbolic-dict.rkt")
 
 (provide count-msg-interpreter% (struct-out comminfo))
@@ -445,6 +449,24 @@
                   (set-field! place-type ast (get-field place return))))
 		 
 	  (comminfo msgs placeset)]
+
+       [(is-a? ast TempDecl%)
+        (define type (get-field type ast))
+        (define temp (car (get-field var-list ast)))
+        (define place (find-place ast))
+        (when debug
+              (pretty-display (format ">> TempDecl ~a" temp)))
+
+        (if (string? type)
+            (declare env temp place)
+            (let* ([entry (cdr type)]
+                   [actual-type (car type)]
+                   [place-expand (expand-place place entry)])
+              (for ([i (in-range entry)]
+                    [p place-expand])
+                   (declare env (ext-name temp i) p))))
+
+        (comminfo 0 (set))]
                 
        [(is-a? ast VarDecl%) 
           (define place (find-place ast))
@@ -459,7 +481,8 @@
                (declare env var place))
 
           (when debug
-                (pretty-display (format ">> VarDecl ~a" var-list)))
+                (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
+          (send ast pretty-print)
 
 	  ;; increase space for variable if it is the return variable
 	  (when (not (equal? (car var-list) "#return"))
