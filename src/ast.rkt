@@ -147,7 +147,11 @@
     (let ([ret (concrete-place (car place))])
       (if (number? ret)
 	  ret
-	  (cons ret (cdr place))))]))
+	  (cons ret (cdr place))))]
+
+   [else
+    place]
+   ))
     
       
 ;; number, place-list, place-type -> set

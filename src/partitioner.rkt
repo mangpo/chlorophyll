@@ -320,5 +320,5 @@
 (define t (current-seconds))
 (define my-ast (parse "../tests/add-pair.cll"))
 (result-msgs (optimize-comm my-ast #:cores 16 #:capacity 300 #:verbose #t))
-(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))|#
-
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+|#

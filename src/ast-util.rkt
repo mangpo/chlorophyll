@@ -112,6 +112,9 @@
      [(set? p)
       p]
 
+     [(is-a? p TypeExpansion%)
+      (set)]
+
      [else (raise (format "ast-util:place-set unimplemented for ~a" p))]))
     
   (cond

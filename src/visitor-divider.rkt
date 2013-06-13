@@ -404,11 +404,26 @@
 
         (define (func-return-at ast core)
           (let ([return (get-field return ast)])
-            (if (and (not (equal? (get-field type return) "void")) 
+            (cond
+             [(list? return)
+              (let ([l (length (filter (lambda (x) (= (get-field place x) core)) return))])
+                (new VarDecl% 
+                     [var-list (list "#return")]
+                     [type (if (= l 0)
+                               "void"
+                               (cons (get-field type (car return)) l))]
+                     [place core]
+                     [known (get-field known (car return))]))
+              ]
+
+             [(and (not (equal? (get-field type return) "void")) 
                      (= (get-field place return) core))
-                return
-                (new VarDecl% [var-list (list "#return")]
-                     [type "void"] [place core] [known (get-field known return)]))))
+              return]
+
+             [else
+              (new VarDecl% 
+                   [var-list (list "#return")]
+                   [type "void"] [place core] [known (get-field known return)])])))
                        
         (scope-pattern 
          (lambda (c)

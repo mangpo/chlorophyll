@@ -20,8 +20,7 @@
 
 (define (compile file name capacity [input #f] [w 5] [h 4] )
   (define n (* w h))
-  (define my-ast (ast-from-file file))
-  (send my-ast accept (new desugar%))
+  (define my-ast (parse file))
   
   ;; generate sequantial simulation code
   (when input
@@ -29,12 +28,17 @@
   
   (define concise-printer (new printer% [out #t]))
   
+  (send my-ast pretty-print)
+  (pretty-display "---------------------------------------")
+  
   ;; partition
   (define partition (optimize-comm my-ast
                                    #:name name
                                    #:cores 20 
                                    #:capacity capacity 
                                    #:verbose #f))
+  
+  (send my-ast pretty-print)
   
   ;; layout
   (define layout-res (layout my-ast
@@ -72,6 +76,4 @@
   (if (equal? diff "") "PASSED" "FAILED")
   )
 
-;(compile "../examples/md5/md5_4.part" "md5_4" 512)
-;(compile "../tests/run/matrixmult.cll" "matrixmult" 300)
-;(test-simulate "matrixmult" "72" 300)
+(compile "../tests/pair.cll" "pair" 256)

@@ -7,13 +7,10 @@ TODO
   = clone signature or not?
   = get rid of type-mismatch?
 - add testdata/72, testdata/matrxmult.out
-- run test.rkt, why array-dynamic fails?
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
-  = set cluster info
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
 - run md5_4 again
-- to make pair work => need to do data type check before/while create symbolic variables
 
 - dependency analysis to do parallel loop
 - data type check (x[i] + y) when y is array
@@ -37,7 +34,6 @@ TODO
    int[]@{split=4} x; 
 - should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
-- precise abstract interpret?
 
 ISSUE ABOUT RACKET
 - branch master

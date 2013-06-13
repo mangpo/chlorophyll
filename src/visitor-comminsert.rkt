@@ -56,6 +56,7 @@
       (set-field! send-path x-ast
         (cond
          [(same-place? x y) #f]
+         [(and (is-a? x TypeExpansion%) (is-a? y TypeExpansion%)) #f]
          
          [(and (number? x) (number? y))
           (vector-2d-ref routing-table x y)]
@@ -117,41 +118,32 @@
         ))
 
     (define/public (visit ast)
+      (define (convert-base p)
+        (cond
+         [(number? p)
+          (vector-ref part2core p)]
+         [(list? p)
+          (for ([i p])
+               (send i accept this))
+          p]
+         [(pair? p)
+          (for ([i (car p)])
+               (send i accept this))
+          p]
+         [(at-io? p)
+          n]
+         [(and (is-a? p Place%) (equal? (get-field at p) "any"))
+          p]
+         [(is-a? p TypeExpansion%)
+          p]
+         [else
+          (raise (format "convert-place-type: unimplemented for ~a" p))]))
+
       (define (convert-place)
-        (let ([p (get-field place ast)])
-          (cond
-           [(number? p)
-            (set-field! place ast (vector-ref part2core p))]
-           [(list? p)
-            (for ([i p])
-                 (send i accept this))]
-           [(pair? p)
-            (for ([i (car p)])
-                 (send i accept this))]
-           [(at-io? p)
-            (set-field! place ast n)]
-	   [(at-any? p)
-	    void]
-           [else
-            (raise (format "convert-place: unimplemented for ~a" p))])))
-    
+        (set-field! place ast (convert-base (get-field place ast))))
+
       (define (convert-place-type)
-        (let ([p (get-field place-type ast)])
-          (cond
-           [(number? p)
-            (set-field! place-type ast (vector-ref part2core p))]
-           [(list? p)
-            (for ([i p])
-                 (send i accept this))]
-           [(pair? p)
-            (for ([i (car p)])
-                 (send i accept this))]
-           [(at-io? p)
-            (set-field! place-type ast n)]
-           [(and (is-a? p Place%) (equal? (get-field at p) "any"))
-            void]
-           [else
-            (raise (format "convert-place-type: unimplemented for ~a" p))])))
+        (set-field! place-type ast (convert-base (get-field place-type ast))))
 
       (define (convert)
         (unless (get-field convert ast)
@@ -179,6 +171,9 @@
 
 	 [(at-any? place)
 	  (set)]
+
+         [(is-a? place TypeExpansion%)
+          (set)]
 
          [else
           (raise (format "visitor-comminsert: all-place-from: unimplemented for ~a" place))]))

@@ -11,6 +11,7 @@
     (super-new)
 
     (define (cross-product-raw x y)
+      ;; (pretty-display `(cross-product-raw ,x ,y))
       (define pair-set (flow x y))
       (define x-set (car pair-set))
       (define y-set (cdr pair-set))
@@ -18,11 +19,11 @@
       (for* ([x x-set]
              [y y-set])
             (unless (same-place? x y)
-                  (set! edges (cons (edge x y 1) edges))))
+                    (set! edges (cons (edge x y 1) edges))))
       edges)
     
-    
     (define (cross-product x-ast y-ast)
+      ;; (pretty-display `(cross-product ,x-ast ,y-ast))
       (cross-product-raw (get-field place-type x-ast) (get-field place-type y-ast)))
       
         
