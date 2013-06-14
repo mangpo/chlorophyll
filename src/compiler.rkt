@@ -48,20 +48,20 @@
   (pretty-display `(part2core ,(layoutinfo-part2core layout-res)))
 
   ;; unroll
-  ;pretty-display "--- before unroll ---")
+  (pretty-display "--- before unroll ---")
   ;(send my-ast pretty-print)
   (unroll my-ast)
-  ;(pretty-display "--- after unroll ---")
-  ;(send my-ast pretty-print)
+  (pretty-display "--- after unroll ---")
+  (send my-ast pretty-print)
   
   ;; insert communication code
-  ;(pretty-display "--- before insert communication ---")
+  (pretty-display "--- before insert communication ---")
   (insert-comm my-ast
                (layoutinfo-routes layout-res)
                (layoutinfo-part2core layout-res)
                w h)
-  ;(pretty-display "--- after insert communication ---")
-  ;(send my-ast pretty-print)
+  (pretty-display "--- after insert communication ---")
+  (send my-ast pretty-print)
 
   ;; generate multicore ASTs and simuation code
   (regenerate my-ast w h name)
@@ -76,4 +76,4 @@
   (if (equal? diff "") "PASSED" "FAILED")
   )
 
-(compile "../tests/pair.cll" "pair" 256)
+(compile "../tests/pair3.cll" "pair3" 256)

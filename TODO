@@ -1,5 +1,16 @@
 TODO
-- funcdecl-return in visitor-divider
+void *main_12(void *dummy) {
+  int _tmp_12;
+  func2_12(0);
+  return NULL;
+}
+
+- visitor-cprinter
+  = pair2.cll
+  _temp2_3 = func_3(0);
+  _temp3_3 = func2_3(_temp2::0_3);
+  c::0_3 = _temp3::0_3;
+
 - test-simulator with pair.cll
 - visitor-evaluator int::2@(1,2) func?
 - clean up

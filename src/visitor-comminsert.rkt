@@ -135,8 +135,10 @@
          [(and (is-a? p Place%) (equal? (get-field at p) "any"))
           p]
          [(is-a? p TypeExpansion%)
-          (set-field! place-list p
-                      (map (lambda (x) (convert-base x)) (get-field place-list p)))
+          (unless (get-field convert p)
+                  (set-field! convert p #t)
+                  (set-field! place-list p
+                              (map (lambda (x) (convert-base x)) (get-field place-list p))))
           p]
          [else
           (raise (format "convert-place-type: unimplemented for ~a" p))]))
@@ -362,8 +364,8 @@
        [(is-a? ast Assign%) 
         (let ([rhs (get-field rhs ast)]
               [lhs (get-field lhs ast)])
-          (define rhs-ret (send rhs accept this))
           (define lhs-ret (send lhs accept this))
+          (define rhs-ret (send rhs accept this))
           (when debug 
                 (pretty-display (format "COMMINSERT: Assign")))
           (gen-path rhs lhs)

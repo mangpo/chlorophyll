@@ -1,0 +1,8 @@
+int::3@(1,1,2) func(int::3@(1,2,2) x) {
+  return x;
+}
+
+void main() {
+  int::3 x;
+  x = func(10);
+}

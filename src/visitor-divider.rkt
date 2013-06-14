@@ -6,7 +6,7 @@
 
 (provide ast-divider%)
 
-(define debug #f)
+(define debug #t)
 
 (define ast-divider%
   (class* object% (visitor<%>)
@@ -54,6 +54,7 @@
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
              [stack (core-stack id)])
+	(when debug (pretty-display `(pop-stack ,i)))
 	(when debug (pretty-display `(pop-stack ,i -> ,(send (car stack) to-string))))
         (set-core-stack! id (cdr stack))
         (car stack)))
@@ -122,9 +123,10 @@
 		     [to (cadr path)]
 		     [temp (get-temp to)])
 		(push-workspace to (new Assign%
-					[lhs (new Var% [name temp] [place-type to])]
+					[lhs (new Var% [name temp] [place-type to]
+                                                  [type "int"])]
 					[rhs (gen-recv to from)]))
-                (push-stack to (new Var% [name temp] [place-type to])))))
+                (push-stack to (new Var% [name temp] [place-type to] [type "int"])))))
         
         (let ([from (car path)]
               [to (cadr path)])
@@ -158,9 +160,10 @@
                 (push-workspace from (gen-send from x (new Var% [name "_tmp"] [place-type from])))
                 (push-workspace x (new Assign% 
                                    ;; special variable
-                                   [lhs (new Var% [name "_tmp"] [place-type x])]
+                                   [lhs (new Var% [name "_tmp"] [place-type x] 
+                                             [type "int"])]
                                    [rhs (gen-recv x from)]))
-                (push-stack x (new Var% [name "_tmp"] [place-type x]))))
+                (push-stack x (new Var% [name "_tmp"] [place-type x] [type "int"]))))
             (when (> (length path) 2)
                     (gen-condition-path (cdr path))))
 
@@ -169,10 +172,12 @@
 		;(pretty-display `(gen-comm-condition:push-workspace))
                 (push-workspace place (new Assign% 
                                            ;; special variable
-                                           [lhs (new Var% [name "_tmp"] [place-type place])]
+                                           [lhs (new Var% [name "_tmp"] 
+                                                     [place-type place] 
+                                                     [type "int"])]
                                            [rhs (pop-stack place)]))
 		;(pretty-display `(gen-comm-condition:push-stack))
-                (push-stack place (new Var% [name "_tmp"] [place-type place]))
+                (push-stack place (new Var% [name "_tmp"] [place-type place] [type "int"]))
                 (for ([p path])
                      (gen-condition-path p)))
         ))
@@ -225,7 +230,19 @@
 
        [(is-a? ast Var%)
 	(when debug (pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string))))
-        (push-stack (get-field place-type ast) ast)
+        (define place (get-field place-type ast))
+        (if (number? place)
+            (push-stack (get-field place-type ast) ast)
+            ;; TypeExpansion
+            (let ([place-list (get-field place-list place)])
+              (for ([p (list->set place-list)])
+                   (define occur (count (lambda (x) (= x p)) place-list))
+                   (define type (get-field type ast))
+                   (push-stack
+                    p
+                    (new Var% [name (get-field name ast)]
+                         [place-type p]
+                         [type (if (= occur 1) type (cons type occur))])))))
         (gen-comm)]
 
        [(is-a? ast BinExp%)
@@ -265,6 +282,15 @@
         (for ([arg (get-field args ast)])
              (send arg accept this))
 
+        (define (not-void? place type core)
+          (cond
+           [(equal? type "void")
+            #f]
+           [(is-a? place TypeExpansion%)
+            (member core (get-field place-list place))]
+           [else
+            (= place core)]))
+
 	(when debug 
               (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
         (let* ([place (get-field place-type ast)]
@@ -272,11 +298,11 @@
 	       [type (get-field type (get-field return sig))])
           (for ([c (get-field body-placeset sig)])
 	       ;; body-placeset of IO function is empty
-               (if (or (equal? type "void") (not (= place c)))
-		   ;; if return place is not here, funcall is statement
-                   (push-workspace c (new-funccall c))
+               (if (not-void? place type c)
 		   ;; if it is here, funccall is exp
-                   (push-stack c (new-funccall c))))
+                   (push-stack c (new-funccall c))
+		   ;; if return place is not here, funcall is statement
+                   (push-workspace c (new-funccall c))))
           (gen-comm))]
 
        [(is-a? ast ArrayDecl%)
@@ -316,18 +342,15 @@
 
 	 [(is-a? place TypeExpansion%)
 	  (define place-list (get-field place-list place))
-	  (define visit (set))
-	  (for ([p place-list])
-	       (unless (set-member? visit p)
-		       (set! visit (set-add visit p))
-		       (define occur (count (lambda (x) (= x p)) place-list))
-		       (define type (car (get-field type ast)))
-		       (push-workspace
-			p
-		        (new VarDecl% [var-list (get-field var-list ast)]
-			     [type (if (= occur 1) type (cons type occur))]
-			     [known (get-field known ast)]
-			     [place p]))))
+	  (for ([p (list->set place-list)])
+               (define occur (count (lambda (x) (= x p)) place-list))
+               (define type (car (get-field type ast)))
+               (push-workspace
+                p
+                (new VarDecl% [var-list (get-field var-list ast)]
+                     [type (if (= occur 1) type (cons type occur))]
+                     [known (get-field known ast)]
+                     [place p])))
 	  ])]
 
        [(is-a? ast Assign%) 
@@ -335,9 +358,16 @@
         (send (get-field rhs ast) accept this)
 	(when debug (pretty-display (format "\nDIVIDE: Assign\n")))
         (let ([place (get-field place-type (get-field lhs ast))])
-          (set-field! rhs ast (pop-stack place))
-          (set-field! lhs ast (pop-stack place))
-          (push-workspace place ast))]
+          (if (number? place)
+              (begin
+                (set-field! rhs ast (pop-stack place))
+                (set-field! lhs ast (pop-stack place))
+                (push-workspace place ast))
+              (for ([p (list->set (get-field place-list place))])
+                   (push-workspace p (new Assign% 
+                                          ;; pop rhs before lhs!
+                                          [rhs (pop-stack p)] 
+                                          [lhs (pop-stack p)])))))]
 
        [(is-a? ast If%)
 	(when debug (pretty-display (format "\nDIVIDE: If (condition)\n")))
@@ -405,7 +435,8 @@
          (lambda (c)
            (let ([iter (get-field iter ast)])
              (new For% 
-                  [iter (new Var% [name (get-field name (get-field iter ast))])] ;; not clone!
+                  [iter (new Var% [name (get-field name (get-field iter ast))]
+                             [type "int"])] ;; not clone!
                   [body (new Block% [stmts (list)])]
                   [known #t]
                   [from (get-field from ast)]
@@ -433,6 +464,19 @@
                                (cons (get-field type (car return)) l))]
                      [place core]
                      [known (get-field known (car return))]))
+              ]
+
+             [(is-a? (get-field place return) TypeExpansion%)
+              (define place-list (get-field place-list (get-field place return)))
+              (define occur (count (lambda (x) (= x core)) place-list))
+              (define type (car (get-field type return)))
+              (if (> occur 0)
+                  (new VarDecl% [var-list (list "#return")]
+                       [type (if (= occur 1) type (cons type occur))]
+                       [place core])
+                  (new VarDecl% 
+                   [var-list (list "#return")]
+                   [type "void"] [place core] [known (get-field known return)]))
               ]
 
              [(and (not (equal? (get-field type return) "void")) 
@@ -475,4 +519,4 @@
 
        [else (raise (format "visitor-divider: unimplemented for ~a" ast))]
 
-       )))) 
+       ))))
