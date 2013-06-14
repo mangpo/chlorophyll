@@ -183,6 +183,8 @@
         ))
 
       (define (scope-pattern gen-ast)
+	(when (is-a? ast FuncDecl%)
+	      (pretty-display `(scope-pattern ,(get-field name ast) ,(get-field body-placeset ast))))
         (for ([c (get-field body-placeset ast)])
              (let ([new-ast (gen-ast c)])
                (clear-stack c)     
@@ -201,7 +203,8 @@
                (set-workspace c old-workspace)
 
 	       ;; remove new-ast if its body is empty
-	       (when (empty? (get-field stmts body))
+	       (when (and (not (is-a? ast FuncDecl%))
+			  (empty? (get-field stmts body)))
 		     (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))
 	       )))
 

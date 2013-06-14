@@ -188,7 +188,7 @@
       ;; Return 1 if it is in one place or it is a non-cluster array.
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p p-ast)
-	(pretty-display `(count-comm ,p ,(send p-ast to-string)))
+	;(pretty-display `(count-comm ,p ,(send p-ast to-string)))
 	;(assert (place-type? p))
         (cond
           [(number? p) 1]

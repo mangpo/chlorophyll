@@ -1,9 +1,4 @@
 TODO
-void *main_12(void *dummy) {
-  int _tmp_12;
-  func2_12(0);
-  return NULL;
-}
 
 - visitor-cprinter
   = pair2.cll
