@@ -387,7 +387,7 @@
     (func-decl
          ((data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
           (new FuncDecl% [name $2] [args (new Block% [stmts $4])] [body $7] 
-               [return (new VarDecl% [var-list (list "#return")] 
+               [return (new ReturnDecl% [var-list (list "#return")] 
 			    [type (car $1)] [place (cdr $1)])]
                [pos $2-start-pos])))
 

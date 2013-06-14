@@ -295,21 +295,40 @@
 			   [place-list here]))))))]
        
        [(is-a? ast VarDecl%)
-	(let ([place (get-field place ast)])
-	  (when debug 
-                (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" 
-                                        (get-field var-list ast) place)))
-	  (if (number? place)
-	      (push-workspace place ast)
-	      (for ([p place])
+	(define place (get-field place ast))
+	(when debug 
+	      (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" 
+				      (get-field var-list ast) place)))
+
+	(cond
+	 [(number? place)
+	  (push-workspace place ast)]
+
+	 [(list? place)
+	  (for ([p place])
 		   (let ([here (get-field place p)])
 		     (push-workspace 
 		      here
 		      (new VarDecl% [var-list (get-field var-list ast)]
 			   [type (get-field type ast)]
 			   [known (get-field known ast)]
-			   [place here]))))))
-	  ]
+			   [place here]))))]
+
+	 [(is-a? place TypeExpansion%)
+	  (define place-list (get-field place-list place))
+	  (define visit (set))
+	  (for ([p place-list])
+	       (unless (set-member? visit p)
+		       (set! visit (set-add visit p))
+		       (define occur (count (lambda (x) (= x p)) place-list))
+		       (define type (car (get-field type ast)))
+		       (push-workspace
+			p
+		        (new VarDecl% [var-list (get-field var-list ast)]
+			     [type (if (= occur 1) type (cons type occur))]
+			     [known (get-field known ast)]
+			     [place p]))))
+	  ])]
 
        [(is-a? ast Assign%) 
         (send (get-field lhs ast) accept this)

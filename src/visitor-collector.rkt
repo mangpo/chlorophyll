@@ -23,6 +23,11 @@
 
        [(pair? place)
 	(place-set (car place))]
+       
+       [(is-a? place TypeExpansion%)
+	(foldl (lambda (x placeset) (set-union placeset (place-set x)))
+	       (set)
+	       (get-field place-list place))]
 
        [else (create-set place)]))
     
@@ -33,9 +38,6 @@
                 (set) x))
 
       (cond
-        [(is-a? ast TempDecl%)
-         (set)]
-
         [(is-a? ast Livable%)
          (place-set (get-field place ast))
          ]

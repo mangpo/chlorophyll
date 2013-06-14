@@ -188,6 +188,7 @@
       ;; Return 1 if it is in one place or it is a non-cluster array.
       ;; Return number of cores p resides in otherwise.
       (define (count-comm p p-ast)
+	(pretty-display `(count-comm ,p ,(send p-ast to-string)))
 	;(assert (place-type? p))
         (cond
           [(number? p) 1]
@@ -450,23 +451,26 @@
 		 
 	  (comminfo msgs placeset)]
 
-       [(is-a? ast TempDecl%)
+       [(or (is-a? ast TempDecl%)
+	    (is-a? ast ReturnDecl%))
         (define type (get-field type ast))
         (define temp (car (get-field var-list ast)))
         (define place (find-place ast))
         (when debug
               (pretty-display (format ">> TempDecl ~a" temp)))
 
-        (if (string? type)
-            (declare env temp place)
-            (let* ([entry (cdr type)]
-                   [actual-type (car type)]
-                   [place-expand (expand-place place entry)])
-              (for ([i (in-range entry)]
-                    [p place-expand])
-                   (declare env (ext-name temp i) p))))
+	(if (string? type)
+	    (declare env temp place)
+	    (let* ([entry (cdr type)]
+		   [actual-type (car type)]
+		   [place-expand (expand-place place entry)])
+	      (for ([i (in-range entry)]
+		    [p place-expand])
+		   (declare env (ext-name temp i) p))))
 
-        (comminfo 0 (set))]
+	;; no inc-space & return empty
+	(comminfo 0 (set))
+	]
                 
        [(is-a? ast VarDecl%) 
           (define place (find-place ast))
@@ -484,17 +488,12 @@
                 (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
           (send ast pretty-print)
 
-	  ;; increase space for variable if it is the return variable
-	  (when (not (equal? (car var-list) "#return"))
-		(inc-space place (* (length var-list) est-data))) ; increase space
+	  (inc-space place (* (length var-list) est-data)) ; increase space
           
-          (when debug
+	  (when debug
                 (pretty-display (format ">> VarDecl ~a (after)" var-list)))
           
-          (comminfo 0 
-                    (if (equal? (get-field type ast) "void")
-                        (set)
-                        (set place)))
+          (comminfo 0 (set place))
           ]
 
        [(is-a? ast ArrayDecl%)
@@ -675,10 +674,8 @@
 	  ;; Don't increase space
 
           (define comm-lhs-rhs
-            (if (and (is-a? rhs FuncCall%) 
-                     (is-a? (get-field return (get-field signature rhs)) Block%))
-                ;; always 0 when funcall return expanded type because we set temp = func()
-                ;; where temp is at the same place as func()
+            (if (is-a? rhs FuncCall%) 
+                ;; always 0 when funcall
                 0
                 (count-msg lhs rhs)))
        

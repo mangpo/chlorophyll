@@ -1,4 +1,5 @@
 TODO
+- funcdecl-return in visitor-divider
 - test-simulator with pair.cll
 - visitor-evaluator int::2@(1,2) func?
 - clean up

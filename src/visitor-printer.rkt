@@ -173,20 +173,17 @@
                            (car (get-field var-list arg)))))
 
          ;; Print function signature
-         (let ([return (get-field return ast)]
-               [name (get-field name ast)])
-           (if (is-a? return Block%)
-               (let* ([return-print (get-field return-print ast)]
-                      [type (get-field type  return-print)])
-                 (display (format "~a::~a@~a ~a(" 
-                                  (car type) (cdr type)
-                                  (place-to-string (get-field place return-print))
-                                  name)))
-               (let ([type (get-field type return)]
-                     [place (send return get-place)])
-                 (if (equal? type "void")
-                     (display (format "~a ~a(" type name))
-                     (display (format "~a@~a ~a(" type place name))))))
+         (let* ([return (get-field return ast)]
+		[name (get-field name ast)]
+		[type (get-field type return)])
+           (if (pair? type)
+               (display (format "~a::~a@~a ~a(" 
+				(car type) (cdr type)
+				(place-to-string (get-field place return))
+				name))
+	       (if (equal? type "void")
+		   (display (format "~a ~a(" type name))
+		   (display (format "~a@~a ~a(" type (send return get-place) name)))))
 
          ;; Print arguments
          (let ([arg-list (get-field stmts (get-field args ast))])

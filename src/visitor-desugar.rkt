@@ -252,11 +252,13 @@
         [(is-a? ast FuncDecl%)
          ;(pretty-display (format "DESUGAR: FuncDecl ~a (return)" (get-field name ast)))
 
-         (let* ([return (get-field return ast)]
-                [return-ret (send return accept this)])
-           (when (list? return-ret)
-                 (set-field! return ast (new Block% [stmts return-ret]))
-                 (set-field! return-print ast return)))
+         ;; (let* ([return (get-field return ast)]
+         ;;        [return-ret (send return accept this)])
+         ;;   (when (list? return-ret)
+         ;;         (set-field! return ast (new Block% [stmts return-ret]))
+         ;;         (set-field! return-print ast return)))
+
+	 ;; don't expand return
 
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
@@ -276,41 +278,41 @@
         ))))
   
 (define desugarer (new desugar%))
-    (define (expand-place place n)
-      (define (different place)
-        (map (lambda (x) (new RangePlace% 
-                              [place (get-sym)] 
-                              [from (get-field from x)]
-                              [to (get-field to x)]))
-             place))
-      
-      (if (= n 1)
-          (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
-                (send (get-field at place) accept desugarer))
-          (cond
-           [(is-a? place TypeExpansion%)
-            (get-field place-list place)]
-           
-           [(symbolic? place)
-            (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
-           
-           [(is-a? place Place%)
-            (let* ([at (get-field at place)]
-		   [at-list
-		    (if (is-a? at Exp%)
-			(send at accept desugarer)
-			(for/list ([i (in-range n)]) at))])
-              (map (lambda (x) (new Place% [at x])) at-list))]
-           
-           [(place-type-dist? place)
-            (cons place 
-                  (for/list ([i (in-range (sub1 n))]) 
-			    (cons (different (car place)) (cdr place))))]
-           
-           [(list? place)
-            (cons place 
-                  (for/list ([i (in-range (sub1 n))]) 
-                            (different place)))]
-           
-           [else
-            (raise (format "visitor-desugar: expand-place: unimplemented for ~a" place))])))
+(define (expand-place place n)
+  (define (different place)
+    (map (lambda (x) (new RangePlace% 
+			  [place (get-sym)] 
+			  [from (get-field from x)]
+			  [to (get-field to x)]))
+	 place))
+  
+  (if (= n 1)
+      (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
+	    (send (get-field at place) accept desugarer))
+      (cond
+       [(is-a? place TypeExpansion%)
+	(get-field place-list place)]
+       
+       [(symbolic? place)
+	(cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
+       
+       [(is-a? place Place%)
+	(let* ([at (get-field at place)]
+	       [at-list
+		(if (is-a? at Exp%)
+		    (send at accept desugarer)
+		    (for/list ([i (in-range n)]) at))])
+	  (map (lambda (x) (new Place% [at x])) at-list))]
+       
+       [(place-type-dist? place)
+	(cons place 
+	      (for/list ([i (in-range (sub1 n))]) 
+			(cons (different (car place)) (cdr place))))]
+       
+       [(list? place)
+	(cons place 
+	      (for/list ([i (in-range (sub1 n))]) 
+			(different place)))]
+       
+       [else
+	(raise (format "visitor-desugar: expand-place: unimplemented for ~a" place))])))
