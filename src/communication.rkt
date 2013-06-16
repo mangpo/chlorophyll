@@ -69,7 +69,8 @@
         (send cprinter set-core i)
         (send (vector-ref programs i) accept cprinter)
         (newline))
-      (print-main)))
+      (print-main)
+      ))
   )
 
 (define (generate-onecore-simulation ast file)

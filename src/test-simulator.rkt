@@ -13,8 +13,9 @@
 ;(test "add"      "200" 512)
 ;(test "function" "4_1" 512)
 ;(test "function" "4_2" 512)
-(test "matrixmult" "72" 300)
+;(test "matrixmult" "72" 300)
+(test "pair3" "null" 256)
 
-;(reverse result)
+(reverse result)
 
 ;(test-simulate "cluster" "200")

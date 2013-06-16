@@ -76,4 +76,4 @@
   (if (equal? diff "") "PASSED" "FAILED")
   )
 
-(compile "../tests/pair2.cll" "pair2" 256)
+;(compile "../tests/run/pair3.cll" "pair3" 256)

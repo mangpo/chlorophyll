@@ -7,7 +7,7 @@
 (define cprinter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field thread [w 0] [h 0] [core 0] [n (* w h)])
+    (init-field thread [w 0] [h 0] [core 0] [n (* w h)] [expand #f] [print-return #f])
 
     (define indent "")
 
@@ -37,6 +37,19 @@
        [(number? port)
         (+ (* 2 n) port)]))
 
+    (define (print-type type)
+      (if (string? type)
+	  type
+	  (format "~a~a" (car type) (cdr type))))
+
+    (define (print-name name)
+      (regexp-replace* #rx"#" (regexp-replace* #rx"::" name "_") "_"))
+
+    (define print-sub (vector "fst" "snd" "thd" "frth" "ffth"))
+
+    (define (is-return? ast)
+      (and (equal? (get-field name ast) "#return") (not (get-field sub ast))))
+
     (define/public (set-core c)
       (set! core c))
     
@@ -44,15 +57,15 @@
       (cond
         [(is-a? ast VarDecl%)
          (display (format "~a ~a;"
-                               (get-field type ast)
-                               (list-to-string (get-field var-list ast) core)
+                               (print-type (get-field type ast))
+                               (list-to-string (map print-name (get-field var-list ast)) core)
 			       ))
          ]
         
         [(is-a? ast ArrayDecl%)
          (display (format "~a ~a_~a[~a];"
                                (get-field type ast)
-                               (get-field var ast)
+                               (print-name (get-field var ast))
 			       core
 			       (get-field bound ast)))
          ]
@@ -72,7 +85,7 @@
          ]
       
         [(is-a? ast Array%)
-         (display (format "~a_~a[" (get-field name ast) core))
+         (display (format "~a_~a[" (print-name (get-field name ast)) core))
 	 (send (get-field index ast) accept this)
 	 (let ([offset (get-field offset ast)])
 	   (when (> offset 0)
@@ -81,10 +94,31 @@
          ]
       
         [(is-a? ast Var%)
-	 (let ([name (get-field name ast)])
-	   (if (equal? name "#return")
-	       (display "return ")
-	       (display (format "~a_~a" (get-field name ast) core))))
+	 (define name (get-field name ast))
+	 (define sub (get-field sub ast))
+
+	 (when (not thread)
+	       ;; this renaming is only relavent for sequential version
+	       (set! sub #f)
+	       (when (or (regexp-match #rx"_temp" name) (regexp-match #rx"#return" name))
+		     (let ([full-name (regexp-match #rx"(.+)::(.+)" name)])
+		       (when full-name
+			     ;; "a::0" -> ("a::0" "a" "0")
+			     (let* ([actual-name (cadr full-name)]
+				    [expand (string->number (caddr full-name))])
+			       (set! name actual-name)
+			       (set! sub expand))))))
+
+	 (when (and (equal? name "#return")
+	 	    sub (= (add1 sub) expand))
+	       (set! print-return #t))
+
+	 (if (is-return? ast)
+	     (display "return ")
+	     (begin
+	       (display (format "~a_~a" (print-name name) core))
+	       (when sub
+		     (display (format ".~a" (vector-ref print-sub sub))))))
          ]
         
         [(is-a? ast UnaExp%)
@@ -134,18 +168,17 @@
         [(is-a? ast Assign%)
 	 (let ([lhs (get-field lhs ast)]
 	       [rhs (get-field rhs ast)])
-	   ;; (if (and (is-a? rhs FuncCall%) (equal? (get-field name rhs) "in"))
-	   ;;     (begin
-	   ;;       (display "scanf(\"%d\", &")
-	   ;;       (send lhs accept this)
-	   ;;       (display ")"))
-	   ;;     (begin
            (send lhs accept this)
-           (unless (equal? (get-field name lhs) "#return")
+           (unless (is-return? lhs)
                    (display " = "))
-           (send (get-field rhs ast) accept this))
-	   ;; ))
-         (display ";")
+           (send (get-field rhs ast) accept this)
+	   (display ";"))
+
+	 (when print-return
+	       (set! print-return #f)
+	       (newline)
+	       (display indent)
+	       (display (format "return _return_~a;" core)))
          ]
 
         [(is-a? ast If%)
@@ -197,10 +230,12 @@
          (define (print-arg arg pre)
            (display (format "~a~a ~a_~a" pre
                            (get-field type arg) 
-                           (car (get-field var-list arg))
+                           (print-name (car (get-field var-list arg)))
 			   core)))
 
 	 (define name (get-field name ast))
+	 (define type (get-field type (get-field return ast)))
+	 (set! expand #f)
          ;; Print function signature
 	 (if (equal? name "main")
              ;; main
@@ -208,10 +243,8 @@
                  (pretty-display (format "void *main_~a(void *dummy) {" core))
                  (pretty-display "int main() {"))
              ;; everything else
-	     (let* ([return (get-field return ast)]
-		    [type (get-field type return)]
-		    [place (send return get-place)])
-	       (display (format "~a ~a_~a(" type name core))
+	     (begin
+	       (display (format "~a ~a_~a(" (print-type type) name core))
 	     
                ;; Print arguments
                (let ([arg-list (get-field stmts (get-field args ast))])
@@ -220,11 +253,20 @@
                        (for ([arg (cdr arg-list)])
                             (print-arg arg ","))))
 
-               (pretty-display ") {")))
+               (pretty-display ") {")
+	       (inc-indent)
+	       
+	       ;; Declare return variable
+	       (when (pair? type)
+		     (set! expand (cdr type))
+		     (display indent)
+		     (pretty-display (format "~a _return_~a;" (print-type type) core)))
 
-         ;; Print Body
+	       (dec-indent)
+	       ))
+
          (inc-indent)
-         
+
          ;; Declare temps
          (display indent)
          (display (format "int _tmp_~a" core))
@@ -240,6 +282,9 @@
                    (pretty-display "return NULL;")
                    (pretty-display "return 0;"))
                )
+	 ;; (when (pair? type)
+	 ;;       (display indent)
+	 ;;       (pretty-display (format "return _return_~a;" core)))
          (dec-indent)
          (pretty-display "}")
          ]

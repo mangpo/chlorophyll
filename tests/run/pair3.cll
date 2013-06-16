@@ -4,5 +4,8 @@ int::3@(1,1,2) func(int::3@(1,2,2) x) {
 
 void main() {
   int::3 x;
-  x = func(10);
+  x = func(100000);
+  out(x::0);
+  out(x::1);
+  out(x::2);
 }

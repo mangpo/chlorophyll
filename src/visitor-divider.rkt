@@ -13,7 +13,7 @@
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
-    (init-field w h [n (add1 (* w h))] [cores (make-vector n)])
+    (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -109,6 +109,13 @@
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
+
+    ;; (define (rename name)
+    ;;   (define full-name (regexp-match #rx"(.+)::(.+)" name)
+    ;; 	(when full-name
+    ;; 	      (let ([new-name (cadr full-name)]
+    ;; 		    [expand (caddr full-name)])
+    ;; 	      (set-field! name ast (format "~a::~a" new-name expand))))))
 
     (define/public (visit ast)
       (define (gen-comm-path path)    
@@ -208,6 +215,23 @@
 		     (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))
 	       )))
 
+      (define (gen-index-vec place-list)
+	(define index-vec (make-vector n #f))
+	(define count-vec (make-vector n 0))
+	(for ([i (in-range (length place-list))]
+	      [p place-list])
+	     (let ([count (vector-ref count-vec p)])
+	       (vector-set! index-vec i count)
+	       (vector-set! count-vec p (add1 count))))
+	
+	(for ([i (in-range (length place-list))]
+	      [p place-list])
+	     ;; not expand type on that core
+	     (when (= (vector-ref count-vec p) 1)
+		   (vector-set! index-vec i #f)))
+
+	index-vec)
+	
       (cond
        [(is-a? ast Num%)
 	(when debug (pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string))))
@@ -226,6 +250,12 @@
 	(when (get-field cluster ast)
 		(raise "We only support non-clustered array for now. Sorry!"))
 
+        (define full-name (regexp-match #rx"(.+)::(.+)" (get-field name ast)))
+	(when full-name
+	      (let ([name (cadr full-name)]
+		    [expand (caddr full-name)])
+	      (set-field! name ast (format "~a__~a" name expand))))
+
 	(let ([place (get-field place-type ast)])
 	  (set-field! index ast (pop-stack place))
 	  (push-stack place ast)
@@ -234,18 +264,37 @@
        [(is-a? ast Var%)
 	(when debug (pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string))))
         (define place (get-field place-type ast))
+
+	
+	(define old-name (get-field name ast))
+	;; clean up residual sub
+        (set-field! sub ast #f)
+	(when (or (regexp-match #rx"_temp" old-name) (regexp-match #rx"#return" old-name))
+	      (let ([full-name (regexp-match #rx"(.+)::(.+)" old-name)])
+		(when full-name
+		      ;; "a::0" -> ("a::0" "a" "0")
+		      (let* ([actual-name (cadr full-name)]
+			     [expand (string->number (caddr full-name))]
+			     [index-vec (dict-ref expand-map actual-name)])
+			(set-field! name ast actual-name)
+			(set-field! sub ast (vector-ref index-vec expand))))))
+	
         (if (number? place)
+	    ;; native type
             (push-stack (get-field place-type ast) ast)
             ;; TypeExpansion
             (let ([place-list (get-field place-list place)])
               (for ([p (list->set place-list)])
-                   (define occur (count (lambda (x) (= x p)) place-list))
-                   (define type (get-field type ast))
-                   (push-stack
-                    p
-                    (new Var% [name (get-field name ast)]
-                         [place-type p]
-                         [type (if (= occur 1) type (cons type occur))])))))
+                (define occur (count (lambda (x) (= x p)) place-list))
+                (define type (get-field type ast))
+
+                ;; push
+                (push-stack
+                 p
+                 (new Var% [name (get-field name ast)] [sub (get-field sub ast)]
+                      [place-type p]
+                      [type (if (= occur 1) type (cons type occur))])))))
+
         (gen-comm)]
 
        [(is-a? ast BinExp%)
@@ -309,6 +358,9 @@
           (gen-comm))]
 
        [(is-a? ast ArrayDecl%)
+	(when debug 
+	      (pretty-display (format "\nDIVIDE: ArrayDecl\n")))
+
 	(let ([place (get-field place-list ast)])
 	  (if (number? place)
 	      (push-workspace place ast)
@@ -328,7 +380,6 @@
 	(when debug 
 	      (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" 
 				      (get-field var-list ast) place)))
-
 	(cond
 	 [(number? place)
 	  (push-workspace place ast)]
@@ -353,7 +404,13 @@
                 (new VarDecl% [var-list (get-field var-list ast)]
                      [type (if (= occur 1) type (cons type occur))]
                      [known (get-field known ast)]
-                     [place p])))
+                     [place p]))
+	       )
+
+	  ;; update expand-map
+	  (let ([index-vec (gen-index-vec place-list)])
+	    (for ([name (get-field var-list ast)])
+		 (dict-set! expand-map name index-vec)))
 	  ])]
 
        [(is-a? ast Assign%) 
@@ -458,19 +515,23 @@
         (define (func-return-at ast core)
           (let ([return (get-field return ast)])
             (cond
-             [(list? return)
-              (let ([l (length (filter (lambda (x) (= (get-field place x) core)) return))])
-                (new VarDecl% 
-                     [var-list (list "#return")]
-                     [type (if (= l 0)
-                               "void"
-                               (cons (get-field type (car return)) l))]
-                     [place core]
-                     [known (get-field known (car return))]))
-              ]
+             ;; [(list? return)
+             ;;  (let ([l (length (filter (lambda (x) (= (get-field place x) core)) return))])
+             ;;    (new VarDecl% 
+             ;;         [var-list (list "#return")]
+             ;;         [type (if (= l 0)
+             ;;                   "void"
+             ;;                   (cons (get-field type (car return)) l))]
+             ;;         [place core]
+             ;;         [known (get-field known (car return))]))
+             ;;  ]
 
              [(is-a? (get-field place return) TypeExpansion%)
               (define place-list (get-field place-list (get-field place return)))
+
+	      ;; update expand-map
+	      (dict-set! expand-map "#return" (gen-index-vec place-list))
+
               (define occur (count (lambda (x) (= x core)) place-list))
               (define type (car (get-field type return)))
               (if (> occur 0)

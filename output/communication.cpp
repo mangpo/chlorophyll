@@ -5,6 +5,22 @@
 
 #define N 300
 
+typedef struct int2 {
+  int fst,snd;
+}int2;
+
+typedef struct int3 {
+  int fst,snd,thd;
+}int3;
+
+typedef struct int4 {
+  int fst,snd,thd,frth;
+}int4;
+
+typedef struct int5 {
+  int fst,snd,thd,frth,ffth;
+}int5;
+
 int channel[N];
 bool empty[N];
 std::mutex wlock[N];
