@@ -486,7 +486,6 @@
 
           (when debug
                 (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
-          (send ast pretty-print)
 
 	  (inc-space place (* (length var-list) est-data)) ; increase space
           

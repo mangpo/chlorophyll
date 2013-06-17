@@ -1,5 +1,8 @@
-*~
 compiled/*
+output/*
+src/qap/sa_qap
+
+*~
 */compiled/*
 *.bestsofar
 *.block
@@ -9,3 +12,5 @@ compiled/*
 *.layout
 *.part
 *.tmp
+
+!output/communication.cpp 

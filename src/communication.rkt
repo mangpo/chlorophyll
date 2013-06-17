@@ -89,9 +89,11 @@
   (generate-onecore-simulation ast cpp)
   
   (system (format "rm -f ~a ~a" binary expect))
-  (system (format "g++ -pthread -std=c++0x ~a -o ~a" 
-                  cpp
-                  binary))
+  (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a -o ~a" 
+					 cpp
+					 binary)))
+	;; error
+	(raise "compilation error at sequantial simulation file."))
   (system (format "./~a < ~a/~a > ~a"
                   binary
                   datadir input  ;; input
@@ -104,15 +106,19 @@
   (define expect (format "~a/out/~a_~a.out" datadir name input))
   
   (system (format "rm -f ~a ~a" binary output))
-  (system (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a" 
-                  outdir name 
-                  binary))
+  (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a" 
+					 outdir name 
+					 binary)))
+	  ;; error
+	(raise "compilation error at multicore simulation file."))
   (system (format "./~a < ~a/~a > ~a"
                   binary
                   datadir input  ;; input
                   output)) ;; output
+
+  (system/exit-code (format "diff ~a ~a" output expect)))
   
-  (with-output-to-string 
-    (lambda () (system (format "diff ~a ~a" output expect)))))
+  ;; (with-output-to-string 
+  ;;   (lambda () (system (format "diff ~a ~a" output expect)))))
       
   

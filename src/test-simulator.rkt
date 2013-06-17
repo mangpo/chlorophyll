@@ -9,13 +9,14 @@
                 (cons name (test-simulate name input capacity))
                 result)))
 
-;(test "if"       "4_1" 512)
-;(test "add"      "200" 512)
-;(test "function" "4_1" 512)
-;(test "function" "4_2" 512)
-;(test "matrixmult" "72" 300)
+(test "if"       "4_1" 512)
+(test "add"      "200" 512)
+(test "function" "4_1" 512)
+(test "function" "4_2" 512)
+(test "matrixmult" "72" 300)
+(test "pair1" "null" 256)
+(test "pair2" "null" 256)
 (test "pair3" "null" 256)
+(test "cluster" "200" 256) ;; syntax error at CLUSTER
 
 (reverse result)
-
-;(test-simulate "cluster" "200")

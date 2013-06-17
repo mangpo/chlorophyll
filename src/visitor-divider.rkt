@@ -6,7 +6,7 @@
 
 (provide ast-divider%)
 
-(define debug #t)
+(define debug #f)
 
 (define ast-divider%
   (class* object% (visitor<%>)
@@ -190,8 +190,6 @@
         ))
 
       (define (scope-pattern gen-ast)
-	(when (is-a? ast FuncDecl%)
-	      (pretty-display `(scope-pattern ,(get-field name ast) ,(get-field body-placeset ast))))
         (for ([c (get-field body-placeset ast)])
              (let ([new-ast (gen-ast c)])
                (clear-stack c)     
@@ -249,12 +247,6 @@
 	;; have yet supported clustered array
 	(when (get-field cluster ast)
 		(raise "We only support non-clustered array for now. Sorry!"))
-
-        (define full-name (regexp-match #rx"(.+)::(.+)" (get-field name ast)))
-	(when full-name
-	      (let ([name (cadr full-name)]
-		    [expand (caddr full-name)])
-	      (set-field! name ast (format "~a__~a" name expand))))
 
 	(let ([place (get-field place-type ast)])
 	  (set-field! index ast (pop-stack place))

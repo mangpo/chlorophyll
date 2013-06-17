@@ -183,17 +183,14 @@
           (raise (format "visitor-comminsert: all-place-from: unimplemented for ~a" place))]))
       
       (define (all-place)
-        (send ast pretty-print)
         ;(pretty-display `(all-place ,(get-field place ast)))
         (all-place-from (get-field place ast)))
 
       (define (all-place-list)
-        (send ast pretty-print)
         ;(pretty-display `(all-place-type ,(get-field place-list ast)))
         (all-place-from (get-field place-list ast)))
 
       (define (all-place-type)
-        (send ast pretty-print)
         ;(pretty-display `(all-place-type ,(get-field place-type ast)))
         (all-place-from (get-field place-type ast)))
 
@@ -251,7 +248,6 @@
        [(is-a? ast LivableGroup%)
         (when debug (pretty-display (format "COMMINSERT: ArrayDecl")))
 
-        (send ast pretty-print)
         (let ([place (get-field place-list ast)])
           (if (list? place)
               (for ([p (get-field place-list ast)])

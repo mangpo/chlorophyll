@@ -174,6 +174,14 @@
       place
       (cons place ast)))
 
+;; (define (clone-place place)
+;;   (cond
+;;    [(number? place)          place]
+;;    [(list? place)            (map (lambda (x) (send x clone)) place)]
+;;    [(place-type-dist? place) (cons (clone-place (car place)) (clone-place (cdr place)))]
+;;    [(is-a? place Base%)      (send place clone)]
+;;    [else                     (raise (format "clone-place: unimplemented for ~a" place))]))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; AST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define Base%
@@ -203,6 +211,9 @@
     (super-new)
     (init-field at)
     (inherit-field pos)
+
+    ;; (define/public (clone)
+    ;;   (new Place% [at (if (is-a? at Base%) (send at clone) at)]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Place:~a)" indent (if (is-a? at Base%)
@@ -551,9 +562,13 @@
       (when (at-any? place)
             (set! place p)))
 
-    (define/public (copy)
-      ;(pretty-display `(copy vardecl ,var-list ,type))
-      (new VarDecl% [var-list var-list] [type type] [known known] [place place]))
+    ;; (define/public (copy)
+    ;;   ;(pretty-display `(copy vardecl ,var-list ,type))
+    ;;   (new VarDecl% [var-list var-list] [type type] [known known] [place place]))
+
+    ;; (define/public (clone)
+    ;;   (new VarDecl% [var-list var-list] [type type] [known known] 
+    ;; 	   [place (clone-place place)]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(VARDECL ~a ~a @~a (known=~a))" 
@@ -589,9 +604,13 @@
             (set! place p)
             (set! place-type p)))
     
-    (define/override (copy)
-      (new Param% [var-list var-list] [type type] [known known] [place place] 
-	   [known-type known-type] [place-type place-type]))
+    ;; (define/override (copy)
+    ;;   (new Param% [var-list var-list] [type type] [known known] [place place] 
+    ;; 	   [known-type known-type] [place-type place-type]))
+
+    ;; (define/override (clone)
+    ;;   (new Param% [var-list var-list] [type type] [known known] 
+    ;; 	   [place (clone-place place)]))
 
     (define/public (to-string)
       (format "param:~a" (car var-list)))
@@ -607,6 +626,9 @@
     (inherit-field place send-path)
     (init-field from to)
     (inherit get-place)
+
+    ;; (define/public (clone)
+    ;;   (new RangePlace% [from from] [to to] [place (if (is-a? place Base%) (send place clone) place)]))
 
     (define/override (pretty-print)
       (pretty-display (to-string)))
@@ -721,8 +743,8 @@
      (super-new)
      (init-field stmts [parent #f])
 
-     (define/public (copy)
-       (new Block% [stmts (map (lambda (x) (send x copy)) stmts)]))
+     ;; (define/public (copy)
+     ;;   (new Block% [stmts (map (lambda (x) (send x copy)) stmts)]))
 
      (define/override (pretty-print [indent ""])
        (for ([stmt stmts])
@@ -739,15 +761,13 @@
     ;; args = list of VarDecl%
     ;; return = VarDecl%
 
-    (define/public (get-signature)
-      ;(pretty-display `(get-signature ,name))
-      (if (or (equal? name "in") (equal? name "out"))
-	  (new FuncDecl% [name name] 
-	       [args (send args copy)] 
-	       [body (new Block% [stmts (list)])]
-	       [return (send return copy)]
-	       [body-placeset body-placeset])
-	  this))
+    ;; clone everything but body is empty
+    ;; (define/public (clone)
+    ;;   (new FuncDecl% [name name] 
+    ;; 	   [args (send args clone)] 
+    ;; 	   [body (new Block% [stmts (list)])]
+    ;; 	   [body-placeset body-placeset]
+    ;; 	   [return (send return clone)]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))

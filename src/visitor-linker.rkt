@@ -27,8 +27,8 @@
     ;; 2) (cons data-type entry)
 
     ;; Declare IO function: in(), out(data)
-    (declare env "in" stdin)
-    (declare env "out" stdout)
+    (declare env "in" (get-stdin))
+    (declare env "out" (get-stdout))
 
     (struct val (type expand known) #:mutable)
 
