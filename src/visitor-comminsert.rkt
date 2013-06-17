@@ -236,12 +236,8 @@
        [(is-a? ast Livable%)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Livable")))
-        (when  (is-a? ast RangePlace%)
-              (pretty-display (format "COMMINSERT: RangePlace before ~a" (send ast to-string))))
         (convert)
 
-        (when  (is-a? ast RangePlace%)
-              (pretty-display (format "COMMINSERT: RangePlace after ~a" (send ast to-string))))
         (all-place)
         ]
 

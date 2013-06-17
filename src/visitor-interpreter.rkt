@@ -11,7 +11,7 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #f)
+(define debug #t)
 (define debug-sym #f)
 
 (struct comminfo (msgs placeset))
@@ -673,8 +673,8 @@
 	  ;; Don't increase space
 
           (define comm-lhs-rhs
-            (if (is-a? rhs FuncCall%) 
-                ;; always 0 when funcall
+            (if (and (is-a? rhs FuncCall%) (regexp-match #rx"_temp" (get-field name lhs)))
+                ;; always 0 when _tempX = func()
                 0
                 (count-msg lhs rhs)))
        
