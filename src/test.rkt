@@ -35,8 +35,8 @@
                   [file (string-append testdir name ".cll")])
   (optimize-file file cores capacity max-msgs))
 
-;(test-num-msgs "array-known"   2)
-;(test-num-msgs "array-dynamic" 6)
+(test-num-msgs "array-known"   2)
+(test-num-msgs "array-dynamic" 6)
 ;(test-num-msgs "for-array1"    0)
 ;(test-num-msgs "for-array2"    560 #:max-msgs 600)
 ;(test-num-msgs "for-array3"    0)
@@ -47,8 +47,8 @@
 ;(test-num-msgs "add"           100 #:cores 8 #:max-msgs 200)
 ;(test-num-msgs "add-pair"      100 #:cores 8 #:max-msgs 200)
 ;(test-num-msgs "function"      2)
-;(test-num-msgs "function3"     2)
-(test-num-msgs "while"         300 #:max-msgs 400)
+;(test-num-msgs "function2"     2)
+;(test-num-msgs "while"         300 #:max-msgs 400)
 
-(test-consistent "space")
-(test-consistent "if")
+;(test-consistent "space")
+;(test-consistent "if")

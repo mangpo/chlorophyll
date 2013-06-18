@@ -56,7 +56,7 @@
 
 (define (lookup-name env name)
   (dict-ref env name
-            (lambda () (lookup (dict-ref env "__up__" 
+            (lambda () (lookup-name (dict-ref env "__up__" 
                                          (lambda () (raise (format "undefined ~a" name))))
                                name))))
 
