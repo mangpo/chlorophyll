@@ -72,6 +72,7 @@
       (set-core-func! (vector-ref cores i) func))
 
     (define (get-temp i)
+      (when debug (pretty-display `(get-temp ,i)))
       (let* ([id (vector-ref cores i)]
 	     [n (core-temp id)])
 	(set-core-temp! id (add1 n))
@@ -369,10 +370,10 @@
        
        [(is-a? ast VarDecl%)
 	(define place (get-field place ast))
-	;(when debug 
+	(when debug 
 	      (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" 
 				      (get-field var-list ast) place))
-	      ;)
+	      )
 	(cond
 	 [(number? place)
 	  (push-workspace place ast)]
@@ -422,6 +423,25 @@
                                           ;; pop rhs before lhs!
                                           [rhs (pop-stack p)] 
                                           [lhs (pop-stack p)])))))]
+
+       [(is-a? ast Return%)
+        (define val (get-field val ast))
+        (if (list? val)
+            ;; list
+            (let ([placeset (list->set (map (lambda (x) (get-field place-type x)) val))])
+              (for ([p val])
+                   (send p accept this))
+              (for ([p placeset])
+                   (let* ([occur (count (lambda (x) (= p (get-field place-type x))) val)]
+                          [p-val (reverse (for/list ([i (in-range occur)])
+                                                    (pop-stack p)))])
+                     (push-workspace 
+                      p 
+                      (new Return% [val (if (= 1 (length p-val)) (car p-val) p-val)])))))
+            ;; exp
+            (let ([place (get-field place-type val)])
+              (send val accept this)
+              (push-workspace place (pop-stack place))))]
 
        [(is-a? ast If%)
 	(when debug (pretty-display (format "\nDIVIDE: If (condition)\n")))

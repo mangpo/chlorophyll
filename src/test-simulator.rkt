@@ -1,4 +1,4 @@
-#lang s-exp rosette
+#lang racket
 
 (require "compiler.rkt" "communication.rkt")
 
@@ -8,7 +8,7 @@
   (set! result (cons 
                 (cons name (test-simulate name input capacity))
                 result)))
-;(test "if"       "4_1" 512)
+(test "if"       "4_1" 512)
 ;(test "add"      "200" 512)
 ;(test "function" "4_1" 512)
 ;(test "function" "4_2" 512)
@@ -19,7 +19,7 @@
 ;(test "cluster" "null" 256)
 
 ;(test "md5-pair-concrete" "null" 512)
-(test "debug" "null" 512)
+;(test "debug" "null" 512)
 
 (for ([res (reverse result)])
   (pretty-display res))

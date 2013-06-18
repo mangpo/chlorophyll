@@ -66,7 +66,7 @@
 	 (if (> entry 1)
 	     ;; expanded type
 	     (for/list ([i (in-range entry)]
-			[p (get-field place-list (get-field place ast))])
+			[p (get-field place-list (get-field place-list ast))])
 		       (let ([new-name (ext-name (get-field var ast) i)])
 			 (new ArrayDecl% [type type]
 			      [var new-name]
@@ -227,25 +227,30 @@
          ]
 
 	[(is-a? ast Return%)
-	 (define val-ret (send val accept this))
+	 (define val-ret (send (get-field val ast) accept this))
 	 (define pos (get-field pos ast))
-	 (define type (get-field type ast))
+         (define entry (get-field expect ast))
 
 	 (if (= entry 1)
-	     (list
-	      (new Assign% [lhs (new Var% [name "#return"] [type type] [pos pos])] [rhs va-ret])
-	      (begin (set-field! val ast (new Var% [name "#return"] [type type] [pos pos]))
-		     ast))
-	     (list
-	      (for/list ([i (in-range entry)]
-			 [i-val val-ret])
-	        (new Assign% [lhs (new Var% [name (ext-name "#return" i)] [type type] [pos pos])]
-		     [rhs i-val]))
-	      (begin (set-field! val ast (for/list ([i (in-range entry)])
-						   (new Var% [name (ext-name "#return" i)]
-							[type type] [pos pos])))
-		     ast)))
-	 ]
+             (list
+              (new Assign% [lhs (new Var% [name "#return"] [pos pos])] [rhs val-ret])
+              (begin (set-field! val ast (new Var% [name "#return"] [pos pos]))
+                     ast))
+             (list
+              (for/list ([i (in-range entry)]
+                         [i-val val-ret])
+                        (new Assign% [lhs (new Var% 
+                                               [name (ext-name "#return" i)] 
+                                               [pos pos])]
+                             [rhs i-val]))
+              (begin 
+                (set-field! val ast 
+                            (for/list ([i (in-range entry)])
+                                      (new Var% 
+                                           [name (ext-name "#return" i)]
+                                           [pos pos])))
+                     ast)))
+         ]
         
         [(is-a? ast If%)
          ;(pretty-display "DESUGAR: If")

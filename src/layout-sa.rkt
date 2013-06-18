@@ -49,6 +49,12 @@
   
   ;; Mapping pair of partitions to route
   (define core2route (make-vector n #f))
+  (for ([i (in-range n-1)])
+    (vector-set! core2route i (make-vector n #f))
+    (for ([j (in-range n-1)])
+      (unless (= i j)
+        (vector-2d-set! core2route n i j (route i j w)))))
+  #|
   (for ([comm flow-graph])
     (let* ([a-core (vector-ref part2core (edge-x comm))]
            [b-core (vector-ref part2core (edge-y comm))]
@@ -59,7 +65,7 @@
         (vector-set! core2route b-core (make-vector n #f)))
       
       (vector-2d-set! core2route n a-core b-core path)
-      (vector-2d-set! core2route n b-core a-core (reverse path))))
+      (vector-2d-set! core2route n b-core a-core (reverse path))))|#
 
   (vector-set! core2route n-1 (make-vector n #f))
   (for ([i (in-range n)])

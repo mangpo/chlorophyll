@@ -175,15 +175,30 @@
            (send lhs accept this)
            ;; (unless (is-return? lhs)
            ;;         (display " = "))
+           (display " = ")
            (send (get-field rhs ast) accept this)
 	   (display ";"))
 
-	 (when print-return
-	       (set! print-return #f)
-	       (newline)
-	       (display indent)
-	       (display (format "return _return_~a;" core)))
+	 ;; (when print-return
+	 ;;       (set! print-return #f)
+	 ;;       (newline)
+	 ;;       (display indent)
+	 ;;       (display (format "return _return_~a;" core)))
          ]
+
+        [(is-a? ast Return%)
+         (display "return ")
+         (let ([val (get-field val ast)])
+           (if (list? val)
+               (begin
+                 (display (format "int~a(" (length val)))
+                 (send (car val) accept this)
+                 (for ([x (cdr val)])
+                      (display ", ")
+                      (send x accept this))
+                 (display ")"))
+               (send val accept this)))
+         (display ";")]
 
         [(is-a? ast If%)
          (display "if(")
@@ -289,16 +304,9 @@
                    (pretty-display "return NULL;")
                    (pretty-display "return 0;"))
                )
-	 ;; (when (pair? type)
-	 ;;       (display indent)
-	 ;;       (pretty-display (format "return _return_~a;" core)))
          (dec-indent)
          (pretty-display "}")
          ]
-
-	[(is-a? ast Return%)
-	 ;; TODO
-	 ]
         
         [else (raise "Error: printer unimplemented!")]
         

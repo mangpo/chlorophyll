@@ -11,7 +11,7 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #t)
+(define debug #f)
 (define debug-sym #f)
 
 (struct comminfo (msgs placeset))

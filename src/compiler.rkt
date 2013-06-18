@@ -14,11 +14,13 @@
 (provide compile test-simulate parse)
 
 (define (parse file)
+  ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
   (define need-temp (send my-ast accept (new linker%)))
-  (when need-temp
+  ;(when need-temp
     (send my-ast accept (new temp-inserter%))
-    (send my-ast accept (new desugar%)))
+    (send my-ast accept (new desugar%))
+    ;)
   my-ast)
 
 (define (compile file name capacity [input #f] [w 5] [h 4] #:verbose [verbose #t])
@@ -49,10 +51,6 @@
   ;; layout
   (define layout-res (layout my-ast
                              n w h name))
-  
-  (when verbose
-    (pretty-display `(routing-table ,(layoutinfo-routes layout-res)))
-    (pretty-display `(part2core ,(layoutinfo-part2core layout-res))))
 
   ;; unroll
   (unroll my-ast)

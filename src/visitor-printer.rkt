@@ -67,9 +67,9 @@
       
         [(is-a? ast Var%)
 	 (let ([name (get-field name ast)])
-	   (if (equal? name "#return")
-	       (display "return ")
-	       (display (format "~a" (get-field name ast)))))
+	   ;; (if (equal? name "#return")
+	   ;;     (display "return ")
+	       (display (format "~a" (get-field name ast))))
          ]
         
         [(is-a? ast UnaExp%)
@@ -113,12 +113,24 @@
         
         [(is-a? ast Assign%)
 	 (let ([lhs (get-field lhs ast)])
-	   (send lhs accept this)
-	   (unless (equal? (get-field name lhs) "#return")
-		   (display " = ")))
+	   (send lhs accept this))
+	   ;; (unless (equal? (get-field name lhs) "#return")
+	   ;;         (display " = ")))
          (send (get-field rhs ast) accept this)
          (display ";")
          ]
+
+        [(is-a? ast Return%)
+         (display "return ")
+         (let ([val (get-field val ast)])
+           (if (list? val)
+               (begin
+                 (display (format "int~a(~a" (length val) (send (car val) accept this)))
+                 (for ([x (cdr val)])
+                      (display (format ", ~a" (send x accept this))))
+                 (display ")"))
+               (send val accept this)))
+         (display ";")]
 
         [(is-a? ast If%)
          (display "if(")

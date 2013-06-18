@@ -7,19 +7,45 @@
 
 typedef struct int2 {
   int fst,snd;
+  int2() {
+    fst = 0;
+    snd = 0;
+  }
+  int2(int x, int y) {
+    fst = x;
+    snd = y;
+  }
 }int2;
 
 typedef struct int3 {
-  int fst,snd,thd;
+  int fst,snd,thd;  
+  int3() {
+    fst = 0;
+    snd = 0;
+    thd = 0;
+  }
+  int3(int x, int y, int z) {
+    fst = x;
+    snd = y;
+    thd = z;
+  }
 }int3;
 
 typedef struct int4 {
   int fst,snd,thd,frth;
+  int4() {
+    fst = 0;
+    snd = 0;
+    thd = 0;
+    frth = 0;
+  }
+  int4(int w, int x, int y, int z) {
+    fst = w;
+    snd = x;
+    thd = y;
+    frth = z;
+  }
 }int4;
-
-typedef struct int5 {
-  int fst,snd,thd,frth,ffth;
-}int5;
 
 int channel[N];
 bool empty[N];

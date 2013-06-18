@@ -84,7 +84,7 @@
          
          ;; only insert temp for function call for now
          (if (get-field is-stmt ast)
-             (list new-stmts ast)
+             (cons new-stmts ast)
              (let* ([temp (get-temp
                            (get-field type ast) 
                            (get-field expand ast)
