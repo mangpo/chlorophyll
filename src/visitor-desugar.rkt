@@ -15,7 +15,7 @@
     (define/public (visit ast)
       (cond
         [(is-a? ast TempDecl%)
-         ast]
+	 ast]
 
         [(is-a? ast VarDecl%)
          ;(pretty-display (format "DESUGAR: VarDecl ~a" (get-field var-list ast)))
@@ -28,20 +28,20 @@
          (define known (get-field known ast))
          (define entry (get-field expect ast))
          
-	 (let ([place-expand (expand-place (get-field place ast) entry)])
-	   (if (> entry 1)
-	       ;; int a::0: int a::1;
-               (for/list ([i (in-range entry)]
-                          [p place-expand])
-                         (new (if (is-a? ast Param%)
-                                  Param%
-                                  VarDecl% )
-                              [type native-type]
-                              [var-list (decor-list (get-field var-list ast) i)]
-			      [known known]
-			      [place (if p p (get-sym))]))
-	       ;; normal type
-	       ast))
+	 (if (> entry 1)
+	     ;; int a::0: int a::1;
+	     (for/list ([i (in-range entry)]
+			[p (get-field place-list (get-field place ast))])
+		       (new (if (is-a? ast Param%)
+				Param%
+				VarDecl% )
+			    [type native-type]
+			    [var-list (decor-list (get-field var-list ast) i)]
+			    [known known]
+			    [place (if p p (get-sym))]
+			    [pos (get-field pos ast)]))
+	     ;; normal type
+	     ast)
          ]
          
          ;; cons scenario only happens at return or temp variables
@@ -63,20 +63,20 @@
          (define cluster (get-field cluster ast))
          (define entry (get-field expect ast))
          
-	 (let ([place-expand (expand-place (get-field place-list ast) entry)])
-	   (if (> entry 1)
-	       ;; expanded type
-               (for/list ([i (in-range entry)]
-                          [p place-expand])
-			 (let ([new-name (ext-name (get-field var ast) i)])
-			   (new ArrayDecl% [type type]
-				[var new-name]
-				[known known]
-				[place-list p]
-				[bound bound]
-				[cluster cluster])))
-	       ;; normal type
-	       ast))
+	 (if (> entry 1)
+	     ;; expanded type
+	     (for/list ([i (in-range entry)]
+			[p (get-field place-list (get-field place ast))])
+		       (let ([new-name (ext-name (get-field var ast) i)])
+			 (new ArrayDecl% [type type]
+			      [var new-name]
+			      [known known]
+			      [place-list p]
+			      [bound bound]
+			      [cluster cluster]
+			      [pos (get-field pos ast)])))
+	     ;; normal type
+	     ast)
 	 ]
         
         [(is-a? ast Num%)
@@ -90,7 +90,7 @@
                  (let ([n (modulo x max-num)])
                    (set! x (arithmetic-shift x (- 0 n-bit)))
                    ;; num known-type is already default to true
-                   (new Num% [n (new Const% [n n])])))))]
+                   (new Num% [n (new Const% [n n])] [pos (get-field pos ast)])))))]
         
         
         [(is-a? ast Array%)
@@ -113,7 +113,7 @@
                  (cons
                   ast
                   (for/list ([i (in-range (sub1 entry))])
-                    (new Num% [n (new Const% [n 0])])))
+                    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))
                  (append
                   (for/list ([i (in-range expand)])
                     (let ([new-name (ext-name (get-field name ast) i)])
@@ -121,9 +121,9 @@
                            [index (send index clone)]
                            ;; set known-type
                            [known-type known-type]
-			     [pos (get-field pos ast)])))
+			   [pos (get-field pos ast)])))
                   (for/list ([i (in-range (- entry expand))])
-                    (new Num% [n (new Const% [n 0])])))))
+                    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
          ]
         
         [(is-a? ast Var%)
@@ -145,7 +145,7 @@
                  (cons
                   ast
                   (for/list ([i (in-range (sub1 entry))])
-                    (new Num% [n (new Const% [n 0])])))
+                    (new Num% [n (new Const% [n 0] [pos (get-field pos ast)])])))
                  ;; allow cast up
                  (append
                   (for/list ([i (in-range expand)])
@@ -155,18 +155,17 @@
                            [known-type known-type]
                            [pos (get-field pos ast)])))
                   (for/list ([i (in-range (- entry expand))])
-                    (new Num% [n (new Const% [n 0])])))))
+                    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
          ]
         
         [(is-a? ast Op%)
          ;(pretty-display (format "DESUGAR: Op ~a" (get-field op ast)))
          (define entry (get-field expect ast))
-	 (let ([place-expand (expand-place (get-field place ast) entry)])
-	   (if (= entry 1)
-	       ast
-	       (for/list ([i (in-range entry)]
-			  [place place-expand])
-			 (new Op% [op (get-field op ast)] [place place]))))]
+	 (if (= entry 1)
+	     ast
+	     (for/list ([i (in-range entry)]
+			[place (get-field place-list (get-field place ast))])
+		       (new Op% [op (get-field op ast)] [place place] [pos (get-field pos ast)])))]
         
         
         [(is-a? ast UnaExp%)
@@ -181,7 +180,7 @@
              (for/list ([i-e1 e1-ret]
                         [i-op op-ret])
                (new UnaExp% [op i-op] [e1 i-e1] 
-                    [known-type known-type])))
+                    [known-type known-type] [pos (get-field pos ast)])))
          ]
         
         [(is-a? ast BinExp%)
@@ -198,7 +197,7 @@
                         [i-e2 e2-ret]
                         [i-op op-ret])
                (new BinExp% [op i-op] [e1 i-e1] [e2 i-e2] 
-                    [known-type known-type])))
+                    [known-type known-type] [pos (get-field pos ast)])))
          ]
         
         [(is-a? ast FuncCall%)
@@ -224,7 +223,7 @@
              ast
 	     (for/list ([i-lhs lhs-ret]
 			[i-rhs rhs-ret])
-		       (new Assign% [lhs i-lhs] [rhs i-rhs])))
+		       (new Assign% [lhs i-lhs] [rhs i-rhs] [pos (get-field pos ast)])))
          ]
         
         [(is-a? ast If%)
@@ -258,8 +257,7 @@
          ;;         (set-field! return ast (new Block% [stmts return-ret]))
          ;;         (set-field! return-print ast return)))
 
-	 ;; don't expand return
-
+	 (send (get-field return ast) accept this)
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
          ast
@@ -278,41 +276,3 @@
         ))))
   
 (define desugarer (new desugar%))
-(define (expand-place place n)
-  (define (different place)
-    (map (lambda (x) (new RangePlace% 
-			  [place (get-sym)] 
-			  [from (get-field from x)]
-			  [to (get-field to x)]))
-	 place))
-  
-  (if (= n 1)
-      (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
-	    (send (get-field at place) accept desugarer))
-      (cond
-       [(is-a? place TypeExpansion%)
-	(get-field place-list place)]
-       
-       [(symbolic? place)
-	(cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
-       
-       [(is-a? place Place%)
-	(let* ([at (get-field at place)]
-	       [at-list
-		(if (is-a? at Exp%)
-		    (send at accept desugarer)
-		    (for/list ([i (in-range n)]) at))])
-	  (map (lambda (x) (new Place% [at x])) at-list))]
-       
-       [(place-type-dist? place)
-	(cons place 
-	      (for/list ([i (in-range (sub1 n))]) 
-			(cons (different (car place)) (cdr place))))]
-       
-       [(list? place)
-	(cons place 
-	      (for/list ([i (in-range (sub1 n))]) 
-			(different place)))]
-       
-       [else
-	(raise (format "visitor-desugar: expand-place: unimplemented for ~a" place))])))

@@ -463,7 +463,7 @@
 	    (declare env temp place)
 	    (let* ([entry (cdr type)]
 		   [actual-type (car type)]
-		   [place-expand (expand-place place entry)])
+		   [place-expand (get-field place-list (get-field place ast))])
 	      (for ([i (in-range entry)]
 		    [p place-expand])
 		   (declare env (ext-name temp i) p))))
@@ -673,8 +673,9 @@
 	  ;; Don't increase space
 
           (define comm-lhs-rhs
-            (if (and (is-a? rhs FuncCall%) (regexp-match #rx"_temp" (get-field name lhs)))
+            (if ;;(and (is-a? rhs FuncCall%) (regexp-match #rx"_temp" (get-field name lhs)))
                 ;; always 0 when _tempX = func()
+	        (get-field nocomm ast)
                 0
                 (count-msg lhs rhs)))
        

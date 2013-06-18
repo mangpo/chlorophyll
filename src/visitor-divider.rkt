@@ -369,9 +369,10 @@
        
        [(is-a? ast VarDecl%)
 	(define place (get-field place ast))
-	(when debug 
+	;(when debug 
 	      (pretty-display (format "\nDIVIDE: VarDecl ~a@~a\n" 
-				      (get-field var-list ast) place)))
+				      (get-field var-list ast) place))
+	      ;)
 	(cond
 	 [(number? place)
 	  (push-workspace place ast)]
@@ -402,6 +403,7 @@
 	  ;; update expand-map
 	  (let ([index-vec (gen-index-vec place-list)])
 	    (for ([name (get-field var-list ast)])
+		 (pretty-display `(expand-map ,name))
 		 (dict-set! expand-map name index-vec)))
 	  ])]
 

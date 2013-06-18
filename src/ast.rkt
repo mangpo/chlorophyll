@@ -149,6 +149,11 @@
 	  ret
 	  (cons ret (cdr place))))]
 
+   [(is-a? place TypeExpansion%)
+    (set-field! place-list place 
+		(map (lambda (x) (concrete-place x)) (get-field place-list place)))
+    place]
+
    [else
     place]
    ))
@@ -166,6 +171,8 @@
     (to-place-set (car place))]
    [(or (at-any? place) (at-io? place))
     (set)]
+   [(is-a? place TypeExpansion%)
+    place]
    [else (raise (format "to-place-set: unimplemented for ~a" place))]))
 
 ;; number, place-list -> place-type
@@ -700,7 +707,7 @@
 (define Assign%
   (class Base%
     (super-new)
-    (init-field lhs rhs [ignore #f])
+    (init-field lhs rhs [ignore #f] [nocomm #f])
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN" indent))

@@ -6,7 +6,7 @@
 
 (provide commcode-inserter%)
 
-(define debug #f)
+(define debug #t)
 
 ;; 1) Insert communication route to send-path field.
 ;; 2) Convert partition ID to actual core ID.
@@ -315,7 +315,7 @@
         (define e1-ret (send e1 accept this))
         (define op-ret (send op accept this))
 	(convert)
-        (when debug 
+        (when debug
               (pretty-display (format "COMMINSERT: UnaExp ~a" (send ast to-string))))
         (gen-path e1 ast)
         (set-union e1-ret op-ret (all-place-type) (all-path e1))
@@ -356,11 +356,14 @@
        [(is-a? ast Assign%) 
         (let ([rhs (get-field rhs ast)]
               [lhs (get-field lhs ast)])
+          (when debug 
+                (pretty-display (format "COMMINSERT: Assign (before visit)")))
           (define lhs-ret (send lhs accept this))
           (define rhs-ret (send rhs accept this))
           (when debug 
-                (pretty-display (format "COMMINSERT: Assign")))
-          (gen-path rhs lhs)
+                (pretty-display (format "COMMINSERT: Assign (after visit)")))
+	  (unless (get-field nocomm ast)
+		  (gen-path rhs lhs))
           (set-union rhs-ret lhs-ret (all-path rhs))
           )
         ]

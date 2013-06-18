@@ -1,7 +1,7 @@
 #lang racket
 
 (require "header.rkt"
-         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
+         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-desugar.rkt")
 
 (provide (all-defined-out))
 
@@ -49,6 +49,45 @@
     (define (visit-place place n)
       (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
 	      (send (get-field at place) accept this)))
+
+    (define (expand-place place n)
+      (define (different place)
+	(map (lambda (x) (new RangePlace% 
+			      [place (get-sym)] 
+			      [from (get-field from x)]
+			      [to (get-field to x)]))
+	     place))
+      
+      (if (= n 1)
+	  (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
+		(send (get-field at place) accept desugarer))
+	  (cond
+	   [(is-a? place TypeExpansion%)
+	    (get-field place-list place)]
+	   
+	   [(symbolic? place)
+	    (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
+	   
+	   [(is-a? place Place%)
+	    (let* ([at (get-field at place)]
+		   [at-list
+		    (if (is-a? at Exp%)
+			(send at accept desugarer)
+			(for/list ([i (in-range n)]) at))])
+	      (map (lambda (x) (new Place% [at x])) at-list))]
+	   
+	   [(place-type-dist? place)
+	    (cons place 
+		  (for/list ([i (in-range (sub1 n))]) 
+			    (cons (different (car place)) (cdr place))))]
+	   
+	   [(list? place)
+	    (cons place 
+		  (for/list ([i (in-range (sub1 n))]) 
+			    (different place)))]
+	   
+	   [else
+	    (raise (format "visitor-linker: expand-place: unimplemented for ~a" place))])))
     
     (define/public (visit ast)
       (cond
@@ -70,6 +109,11 @@
 		    (if (string? type)
 			(val type 1 known)
 			(val (car type) (cdr type) known))))
+
+	 (define expect (get-field expect ast))
+	 (define place (get-field place ast))
+	 (when (and (> expect 1) (not (is-a? place TypeExpansion%)))
+	       (set-field! place ast (new TypeExpansion% [place-list (expand-place place expect)])))
          ]
         
         [(is-a? ast ArrayDecl%)
@@ -88,7 +132,13 @@
 		  (if (string? type)
 		      (val type 1 #t)
 		      (val (car type) (cdr type) #t)))
-         (declare array-map (get-field var ast) ast)]
+         (declare array-map (get-field var ast) ast)
+
+	 (define expect (get-field expect ast))
+	 (define place (get-field place-list ast))
+	 (when (and (> expect 1) (not (is-a? place TypeExpansion%)))
+	       (set-field! place-list ast (new TypeExpansion% [place-list (expand-place place expect)])))
+	 ]
         
         [(is-a? ast Num%)
          ;(pretty-display (format "LINKER: Num ~a" (send ast to-string)))
@@ -143,7 +193,12 @@
 	[(is-a? ast Op%)
          (set-field! expect ast entry)
          (when (> entry 1)
-	       (visit-place (get-field place ast) entry))
+	       (visit-place (get-field place ast) entry)
+	       (define place (get-field place ast))
+	       (when (not (is-a? place TypeExpansion%))
+		     (set-field! place ast 
+				 (new TypeExpansion% [place-list (expand-place place entry)])))
+	       )
 	 "int"]
         
         [(is-a? ast UnaExp%)
@@ -304,6 +359,7 @@
 	 (push-scope)
          (define return (get-field return ast))
 	 (send return accept this)
+
          ;; reserve expanded type for return value
          (define entry (get-field expect return))
          (when (> entry 1)
@@ -319,4 +375,4 @@
         
         ))))
   
-  
+

@@ -1,7 +1,7 @@
 TODO
-- test-simulator with pair, pair2
-- all regression test
-- visitor-evaluator int::2@(1,2) func?
+- temp type is not right when return type is not annotated
+- when sumrotate is at (0,7)
+- deadlock (md5-pair-deadlock)
 - clean up
   = cluster
   = known filed

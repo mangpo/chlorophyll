@@ -21,7 +21,7 @@
     (send my-ast accept (new desugar%)))
   my-ast)
 
-(define (compile file name capacity [input #f] [w 5] [h 4] #:verbose [verbose #f])
+(define (compile file name capacity [input #f] [w 5] [h 4] #:verbose [verbose #t])
   
   (define n (* w h))
   (define my-ast (parse file))

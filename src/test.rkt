@@ -8,7 +8,7 @@
 
 (define (optimize-file file cores capacity max-msgs)
   (define my-ast (parse file))
-  (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #t))
+  (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #f))
 
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
