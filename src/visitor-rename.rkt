@@ -113,7 +113,11 @@
 	     (send arg accept this))]
 
        [(is-a? ast Assign%) 
+	(send (get-field lhs ast) accept this)
         (send (get-field rhs ast) accept this)]
+
+       [(is-a? ast Return%) 
+	void]
 
        [(is-a? ast If%)
         (send (get-field condition ast) accept this)

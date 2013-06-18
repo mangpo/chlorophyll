@@ -1,7 +1,6 @@
 TODO
-- temp type is not right when return type is not annotated
-- when sumrotate is at (0,7)
-- deadlock (md5-pair-deadlock)
+- support return at visit-divider, cprinter, printer
+- why? sumrotate is at (0,7)
 - clean up
   = cluster
   = known filed

@@ -717,6 +717,15 @@
 
   ))
 
+(define Return%
+  (class Base%
+    (super-new)
+    (init-field val)
+
+    (define/override (pretty-print [[indent ""])
+      (pretty-display (format "~a(RETURN" indent))
+      (send val pretty-print (inc indent))))))
+
 (define If%
   (class Scope%
     (super-new)

@@ -368,6 +368,9 @@
           )
         ]
 
+       [(is-a? ast Return%)
+	(set)]
+
        [(is-a? ast If%)
         (define cond-ret (send (get-field condition ast) accept this))
         (define true-ret (send (get-field true-block ast) accept this))

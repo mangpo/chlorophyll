@@ -371,8 +371,9 @@
 
          ; return
          ((RETURN exp SEMICOL)
-            (new Assign% [lhs (new Var% [name "#return"] [pos $1-start-pos])] 
-                 [rhs $2] [pos $1-start-pos]))
+            ;; (new Assign% [lhs (new Var% [name "#return"] [pos $1-start-pos])] 
+            ;;      [rhs $2] [pos $1-start-pos]))
+	    (new Return% [val $2] [pos $1-start-pos]))
 
          ; function call
          ((funccall SEMICOL) $1)

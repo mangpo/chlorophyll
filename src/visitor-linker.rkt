@@ -285,6 +285,20 @@
 
 	 (when (and lhs-known (not rhs-known))
                (set-val-known! (lookup env lhs) #f))]
+
+	[(is-a? ast Return%)
+	 (define pack (lookup-name env "#return"))
+         (define type (val-type pack))
+	 (define expand (val-expand pack))
+         (define known-type (val-known pack))
+	 
+	 (set! entry expand)
+	 (set-field! expect ast entry)
+	 (set-field! expand ast entry)
+	 (set-field! type ast type)
+
+	 (send (get-field val ast) accept this)
+	 ]
         
         [(is-a? ast If%)
          ;(pretty-display "LINKER: If")

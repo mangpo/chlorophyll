@@ -109,16 +109,20 @@
 			       (set! name actual-name)
 			       (set! sub expand))))))
 
-	 (when (and (equal? name "#return")
-	 	    sub (= (add1 sub) expand))
-	       (set! print-return #t))
+	 ;; (when (and (equal? name "#return")
+	 ;; 	    sub (= (add1 sub) expand))
+	 ;;       (set! print-return #t))
 
-	 (if (is-return? ast)
-	     (display "return ")
-	     (begin
-	       (display (format "~a_~a" (print-name name) core))
-	       (when sub
-		     (display (format ".~a" (vector-ref print-sub sub))))))
+	 ;; (if (is-return? ast)
+	 ;;     (display "return ")
+	 ;;     (begin
+	 ;;       (display (format "~a_~a" (print-name name) core))
+	 ;;       (when sub
+	 ;; 	     (display (format ".~a" (vector-ref print-sub sub))))))
+
+	 (display (format "~a_~a" (print-name name) core))
+	 (when sub
+	       (display (format ".~a" (vector-ref print-sub sub))))
          ]
         
         [(is-a? ast UnaExp%)
@@ -169,8 +173,8 @@
 	 (let ([lhs (get-field lhs ast)]
 	       [rhs (get-field rhs ast)])
            (send lhs accept this)
-           (unless (is-return? lhs)
-                   (display " = "))
+           ;; (unless (is-return? lhs)
+           ;;         (display " = "))
            (send (get-field rhs ast) accept this)
 	   (display ";"))
 
@@ -257,10 +261,13 @@
 	       (inc-indent)
 	       
 	       ;; Declare return variable
-	       (when (pair? type)
-		     (set! expand (cdr type))
-		     (display indent)
-		     (pretty-display (format "~a _return_~a;" (print-type type) core)))
+	       (display indent)
+	       (cond 
+		[(pair? type)
+		 (set! expand (cdr type)) ;; TODO: get rid of this
+		 (pretty-display (format "~a _return_~a;" (print-type type) core))]
+		[(not (equal? type "void"))
+		 (pretty-display (format "~a _return_~a;" type core))])
 
 	       (dec-indent)
 	       ))
@@ -288,6 +295,10 @@
          (dec-indent)
          (pretty-display "}")
          ]
+
+	[(is-a? ast Return%)
+	 ;; TODO
+	 ]
         
         [else (raise "Error: printer unimplemented!")]
         

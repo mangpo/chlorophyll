@@ -187,6 +187,9 @@
         (send (get-field rhs ast) accept this)
         ast]
 
+       [(is-a? ast Return%)
+        ast]
+
        [(is-a? ast Program%)
         (for ([decl (get-field stmts ast)])
              (send decl accept this))]

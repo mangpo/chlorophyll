@@ -684,6 +684,14 @@
            (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
          ]
 
+       [(is-a? ast Return%)
+	(define val (get-field val ast))
+	(if (list? val)
+	    (for ([x val])
+		 (send x accept this))
+	    (send val accept this))
+	(comminfo 0 (set))]
+
        [(is-a? ast Program%)
 
 	(define ret #f)

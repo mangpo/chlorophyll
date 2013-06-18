@@ -146,6 +146,16 @@
              [lhs (send (get-field lhs ast) accept this)]
              [rhs (send (get-field rhs ast) accept this)])]
 
+       [(is-a? ast Return%)
+	(define val (get-field val ast))
+        (new Return%
+             [val (if (list? val) 
+		      (map (lambda (x) (send x accept this)) val)
+		      val)]
+	     [type (get-field type ast)]
+	     [expect (get-field expect ast)]
+	     [expand (get-field expand ast)])]
+
        [(is-a? ast Block%)
         (new Block%
              [stmts (map (lambda (x) (send x accept this)) (get-field stmts ast))])]

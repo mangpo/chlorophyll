@@ -109,6 +109,11 @@
          (set-field! rhs ast (cdr rhs-ret))
          
          (list (car lhs-ret) (car rhs-ret) ast)]
+
+	[(is-a? ast Return%)
+         (define val-ret (send (get-field val ast) accept this))
+         (set-field! val ast (cdr val-ret))
+         (list (car val-ret) ast)]
         
         [(is-a? ast If%)
          (define cond-ret (send (get-field condition ast) accept this))

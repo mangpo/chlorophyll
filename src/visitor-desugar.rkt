@@ -225,6 +225,27 @@
 			[i-rhs rhs-ret])
 		       (new Assign% [lhs i-lhs] [rhs i-rhs] [pos (get-field pos ast)])))
          ]
+
+	[(is-a? ast Return%)
+	 (define val-ret (send val accept this))
+	 (define pos (get-field pos ast))
+	 (define type (get-field type ast))
+
+	 (if (= entry 1)
+	     (list
+	      (new Assign% [lhs (new Var% [name "#return"] [type type] [pos pos])] [rhs va-ret])
+	      (begin (set-field! val ast (new Var% [name "#return"] [type type] [pos pos]))
+		     ast))
+	     (list
+	      (for/list ([i (in-range entry)]
+			 [i-val val-ret])
+	        (new Assign% [lhs (new Var% [name (ext-name "#return" i)] [type type] [pos pos])]
+		     [rhs i-val]))
+	      (begin (set-field! val ast (for/list ([i (in-range entry)])
+						   (new Var% [name (ext-name "#return" i)]
+							[type type] [pos pos])))
+		     ast)))
+	 ]
         
         [(is-a? ast If%)
          ;(pretty-display "DESUGAR: If")

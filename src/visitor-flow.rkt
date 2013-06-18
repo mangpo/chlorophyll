@@ -98,6 +98,10 @@
                   (send lhs accept this)
                   (send rhs accept this)))
         ]
+
+       [(is-a? ast Return%)
+	(list)
+        ]
        
        [(is-a? ast Block%)
         (foldl (lambda (stmt edges) (append (send stmt accept this) edges))

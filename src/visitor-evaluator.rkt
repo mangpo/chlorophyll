@@ -100,6 +100,13 @@
         (send rhs infer-place (get-field place-type lhs))
         ]
 
+       [(is-a? ast Return%)
+	(define val (get-field val ast))
+        (if (list? val)
+	    (for ([x val])
+		 (send x accept this))
+	    (send val accept this))]
+
        [(is-a? ast If%)
         (send (get-field condition ast) accept this)
         (send (get-field true-block ast) accept this)

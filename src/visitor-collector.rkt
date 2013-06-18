@@ -70,8 +70,12 @@
          ]
         
         [(is-a? ast Assign%)
-         (send (get-field rhs ast) accept this)
+	 (set-union (send (get-field lhs ast) accept this)
+		    (send (get-field rhs ast) accept this))
          ]
+
+	[(is-a? ast Return%)
+	 (set)]
 
 	[(is-a? ast FuncCall%)
 	 (union-set-from-list (get-field args ast))]
