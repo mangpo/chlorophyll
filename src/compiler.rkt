@@ -29,8 +29,7 @@
   (define my-ast (parse file))
   
   ;; generate sequantial simulation code
-  (when input
-    (simulate-onecore my-ast name input))
+  (when input (simulate-onecore my-ast name input))
   
   (define concise-printer (new printer% [out #t]))
   
@@ -43,7 +42,7 @@
                                    #:name name
                                    #:cores 20 
                                    #:capacity capacity 
-                                   #:verbose verbose))
+                                   #:verbose #f))
   (when verbose
     (pretty-display "--- after partition ---")
     (send my-ast pretty-print))
@@ -51,6 +50,9 @@
   ;; layout
   (define layout-res (layout my-ast
                              n w h name))
+  
+  (when verbose
+    (pretty-display "--- after layout ---"))
 
   ;; unroll
   (unroll my-ast)
@@ -77,6 +79,7 @@
 
 (define (test-simulate name input capacity)
   (compile (format "~a/~a.cll" testdir name) name capacity input)
+  (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))
   
   (cond

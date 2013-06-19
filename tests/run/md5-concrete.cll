@@ -1,8 +1,8 @@
-int::2@(0,1) leftrotate(int::2@(0,1) x, int@6 r) {
+int::2@(17,17) leftrotate(int::2@(17,17) x, int@6 r) {
   // haven't handle the case that r > 16  
-  int::2@(0,1) out;
-  out::0 = (x::1 >>@0 (16 -@0 r)) ||@0 (x::0 <<@0 r);
-  out::1 = (x::1 <<@1 r) ||@1 (x::0 >>@0 (16 -@0 r));
+  int::2@(17,17) out;
+  out::0 = (x::1 >>@17 (16 -@6 r)) ||@17 (x::0 <<@17 r);
+  out::1 = (x::1 <<@17 r) ||@17 (x::0 >>@17 (16 -@17 r));
   return out;
 }
 
@@ -28,7 +28,7 @@ void main() {
   int[]@6 r[32];
   
   int::2@(0,1) a, b, c, d, temp;
-  int::2[]@({[0:4]=0},{[0:4]=1}) hash[4];
+  int::2[]@({[0:4]=10},{[0:4]=9}) hash[4];
 
   // int g;
 
@@ -63,10 +63,10 @@ void main() {
 	    c = b;
 	    b = temp;
     }
-    hash[0] = hash[0] + a;
-    hash[1] = hash[1] + b;
-    hash[2] = hash[2] + c;
-    hash[3] = hash[3] + d;
+    hash[0] = hash[0] +@(10,9) a;
+    hash[1] = hash[1] +@(10,9) b;
+    hash[2] = hash[2] +@(10,9) c;
+    hash[3] = hash[3] +@(10,9) d;
   } 
 
   for(i from 0 to 4) {

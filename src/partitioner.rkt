@@ -288,14 +288,14 @@
   (pretty-display "--------------- linker ------------------")
   (send my-ast pretty-print)
   
-  (when need-temp
-    (send my-ast accept (new temp-inserter%))
-    (pretty-display "--------------- temp ------------------")
-    (send my-ast pretty-print)
-    
-    (send my-ast accept (new desugar%))
-    (pretty-display "--------------- desugar ------------------")
-    (send my-ast pretty-print))
+  (send my-ast accept (new temp-inserter%))
+  (pretty-display "--------------- temp ------------------")
+  (send my-ast pretty-print)
+  
+  (send my-ast accept (new desugar%))
+  (pretty-display "--------------- desugar ------------------")
+  (send my-ast pretty-print)
+  
   my-ast)
 
 #|

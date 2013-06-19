@@ -152,9 +152,7 @@
              [val (if (list? val) 
 		      (map (lambda (x) (send x accept this)) val)
 		      val)]
-	     [type (get-field type ast)]
-	     [expect (get-field expect ast)]
-	     [expand (get-field expand ast)])]
+	     [expect (get-field expect ast)])]
 
        [(is-a? ast Block%)
         (new Block%

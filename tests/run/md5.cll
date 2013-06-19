@@ -74,3 +74,26 @@ void main() {
     out(hash::0[i]);
   }
 }
+
+/*
+core = 0, space = 241, ops = #<set:>
+core = 1, space = 237, ops = #<set:>
+core = 2, space = 196, ops = #<set:>
+core = 3, space = 196, ops = #<set:>
+core = 4, space = 132, ops = #<set:>
+core = 5, space = 132, ops = #<set:>
+core = 6, space = 243, ops = #<set:>
+core = 7, space = 0, ops = #<set:>
+core = 8, space = 0, ops = #<set:>
+core = 9, space = 224, ops = #<set:>
+core = 10, space = 224, ops = #<set:>
+core = 11, space = 0, ops = #<set:>
+core = 12, space = 0, ops = #<set:>
+core = 13, space = 0, ops = #<set:>
+core = 14, space = 0, ops = #<set:>
+core = 15, space = 0, ops = #<set:>
+core = 16, space = 0, ops = #<set:>
+core = 17, space = 171, ops = #<set:>
+core = 18, space = 0, ops = #<set:>
+core = 19, space = 0, ops = #<set:>
+*/
