@@ -13,7 +13,8 @@
 (define est-funccall 4)
 
 (define space-map 
-  #hash(("!" . 1)
+  #hash(("~" . 1)
+	("!" . 1)
         ("*" . 7) ; @p 17 for +* unext
         ("/" . 52) ; estimate from chuck's blog
         ("%" . 52) ; estimate from chuck's blog

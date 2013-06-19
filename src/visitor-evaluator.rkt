@@ -77,7 +77,7 @@
        [(is-a? ast FuncCall%)
         (for ([arg (get-field args ast)])
 	     (send arg accept this))
-	(send (get-field signature ast) accept this)
+	;(send (get-field signature ast) accept this)
         (send ast to-concrete)
 
 	;; infer

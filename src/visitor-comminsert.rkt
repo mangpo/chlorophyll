@@ -322,8 +322,16 @@
         ]
 
        [(is-a? ast FuncCall%)
+	(when debug 
+	      (pretty-display (format "COMMINSERT: FuncCall ~a" (get-field name ast))))
 	;; recurse on signature
-        (define args-ret (send (get-field signature ast) accept this))
+        ;(define args-ret (send (get-field signature ast) accept this))
+	(define func-sig (get-field signature ast))
+	(define name (get-field name ast))
+	(define args-ret 
+	  (if (or (equal? name "in") (equal? name "out"))
+	      (send func-sig accept this)
+	      (get-field body-placeset func-sig)))
 
 	;; recurse on arguments
 	(for ([arg (get-field args ast)])
@@ -333,21 +341,20 @@
 	(convert)
         
         (define path-ret (set))
-        (let ([func-sig (get-field signature ast)])
-	  ;; Body-placeset of IO function is empty. Add funccall's place-type to it.
-	  ;; (cond 
-          ;;  [(equal? (get-field name func-sig) "in")
-          ;;   (set-field! body-placeset func-sig (set (get-field place-type ast)))]
-          ;;  [(equal? (get-field name func-sig) "out")
-          ;;   (let ([arg (car (get-field stmts (get-field args func-sig)))])
-          ;;     (set-field! body-placeset func-sig (set (get-field place-type arg))))]
-          ;;  )
-
-	  ;; Generate path for argument to parameter.
-          (for ([param (get-field stmts (get-field args func-sig))]
-                [arg (get-field args ast)])
-               (gen-path arg param)
-               (set! path-ret (all-path arg))))
+	;; Body-placeset of IO function is empty. Add funccall's place-type to it.
+	;; (cond 
+	;;  [(equal? (get-field name func-sig) "in")
+	;;   (set-field! body-placeset func-sig (set (get-field place-type ast)))]
+	;;  [(equal? (get-field name func-sig) "out")
+	;;   (let ([arg (car (get-field stmts (get-field args func-sig)))])
+	;;     (set-field! body-placeset func-sig (set (get-field place-type arg))))]
+	;;  )
+	
+	;; Generate path for argument to parameter.
+	(for ([param (get-field stmts (get-field args func-sig))]
+	      [arg (get-field args ast)])
+	     (gen-path arg param)
+	     (set! path-ret (set-union path-ret (all-path arg))))
 
         (set-union path-ret args-ret 
 		   (get-field body-placeset (get-field signature ast)) (all-place-type))
@@ -419,6 +426,7 @@
 
        [(is-a? ast FuncDecl%)
         (when debug 
+	      (pretty-display "\n--------------------------------------------")
               (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
         (define return-ret (send (get-field return ast) accept this))
         (define args-ret (send (get-field args ast) accept this))

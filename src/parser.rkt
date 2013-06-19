@@ -7,7 +7,7 @@
 (provide ast-from-string ast-from-file)
  
 (define-tokens a (NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
-(define-empty-tokens b (@ BNOT BAND BXOR BOR AND OR EOF 
+(define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
@@ -29,7 +29,7 @@
   (digit10 (char-range "0" "9"))
   (number10 (number digit10))
   (arith-op1 (re-or "*" "/" "%"))
-  (arith-op2 (re-or "+" "-"))
+  (arith-op2 (re-or "+" "-" "~"))
   (arith-op3 (re-or "<<" ">>"))
   (rel-op (re-or "<" "<=" ">=" ">"))
   (eq-op (re-or "==" "!="))
@@ -55,7 +55,6 @@
    ("here"  (token-HERE))
    ("any"   (token-ANY))
    ("@" (token-@))
-   ("!" (token-BNOT))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -64,6 +63,7 @@
    ("&" (token-BAND))
    ("^" (token-BXOR))
    ("|" (token-BOR))
+   ("!" (token-NOT))
    ("&&" (token-AND))
    ("||" (token-OR))
    ("(" (token-LPAREN))
@@ -139,7 +139,7 @@
     (left ARITHOP3)
     (left ARITHOP2)
     (left ARITHOP1)
-    (left BNOT))
+    (left NOT))
    (src-pos)
    (grammar
     (place-exp
@@ -213,8 +213,8 @@
     (exp ((lit) $1)
 	 ((ele) $1)
 
-         ((BNOT exp)         (UnaExp "!" $2 $1-start-pos))
-         ((ARITHOP2 exp)     (prec BNOT) (UnaExp $1 $2 $1-start-pos))
+         ((NOT exp)         (UnaExp "!" $2 $1-start-pos))
+         ((ARITHOP2 exp)     (prec NOT) (UnaExp $1 $2 $1-start-pos))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP2 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP3 exp) (BinExp $1 $2 $3 $2-start-pos))
@@ -226,8 +226,8 @@
          ((exp AND exp)      (BinExp $1 "&&" $3 $2-start-pos))
          ((exp OR exp)       (BinExp $1 "||" $3 $2-start-pos))
          
-         ((BNOT @ place-type-dist-expand exp)         (prec BNOT) (UnaExp "!" $4 $3 $1-start-pos))
-         ((ARITHOP2 @ place-type-dist-expand exp)     (prec BNOT) (UnaExp $1 $4 $3 $1-start-pos))
+         ((NOT @ place-type-dist-expand exp)         (prec NOT) (UnaExp "!" $4 $3 $1-start-pos))
+         ((ARITHOP2 @ place-type-dist-expand exp)     (prec NOT) (UnaExp $1 $4 $3 $1-start-pos))
          ((exp ARITHOP1 @ place-type-dist-expand exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp ARITHOP2 @ place-type-dist-expand exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp ARITHOP3 @ place-type-dist-expand exp) (prec ARITHOP3) (BinExp $1 $2 $5 $4 $2-start-pos))

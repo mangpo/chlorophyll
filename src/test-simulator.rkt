@@ -18,8 +18,9 @@
 ;(test "pair3" "null" 256)
 ;(test "cluster" "null" 256)
 
-(test "md5-full1" "232" 350)
-(test "md5-full2" "232" 400)
+;(test "debug" "4_1" 256)
+(test "md5-full1" "232" 400)
+;(test "md5-full2" "232" 400)
 ;(test "debug" "null" 512)
 
 (for ([res (reverse result)])

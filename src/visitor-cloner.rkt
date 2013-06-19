@@ -87,7 +87,8 @@
         (new FuncCall%
              [name (get-field name ast)]
              [args (map (lambda (x) (send x accept this)) (get-field args ast))]
-             [signature (send (get-field signature ast) accept this)]
+             ;[signature (send (get-field signature ast) accept this)]
+             [signature (get-field signature ast)]
              [known-type (get-known-type)]
              [place-type (get-place-type)])]
 

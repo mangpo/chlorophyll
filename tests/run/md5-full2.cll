@@ -1,13 +1,9 @@
 int::2@(17,17) leftrotate(int::2@(17,17) x, int@6 r) {
   // haven't handle the case that r > 16  
   int::2@(17,17) out;
-  out::0 = (x::1 >>@17 (16 -@6 r)) ||@17 (x::0 <<@17 r);
-  out::1 = (x::1 <<@17 r) ||@17 (x::0 >>@17 (16 -@17 r));
+  out::0 = (x::1 >>@17 (16 -@6 r)) |@17 (x::0 <<@17 r);
+  out::1 = (x::1 <<@17 r) |@17 (x::0 >>@17 (16 -@17 r));
   return out;
-}
-
-int::2@(0,1) func_f(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
-  return (b &&@(0,1) c) ||@(0,1) (!@(0,1) b &&@(0,1) d);
 }
 
 int::2@(0,1) csum(int::2@(0,1) x, int::2@(0,1) y) {
@@ -60,44 +56,44 @@ void main() {
     c = hash[2];
     d = hash[3];
     for(i from 0 to 16) { 
-      temp = (b &&@(0,1) c) ||@(0,1) (!@(0,1) b &&@(0,1) d);
+      temp = (b &@(0,1) c) |@(0,1) (~@(0,1) b &@(0,1) d);
       temp = sumrotate(a,b,temp,k[i],message::0[i],message::1[i],r[i]);
-	    a = d;
-	    d = c;
-	    c = b;
-	    b = temp;
+      a = d;
+      d = c;
+      c = b;
+      b = temp;
     }
-    g = 0;
+    g = 1;
     for(i from 16 to 32) { 
-      temp = (d &&@(0,1) b) ||@(0,1) (!@(0,1) d &&@(0,1) c);
+      temp = (d &@(0,1) b) |@(0,1) (~@(0,1) d &@(0,1) c);
       temp = sumrotate(a,b,temp,k[i],message::0[g::0],message::1[g::1],r[i]);
-	    a = d;
-	    d = c;
-	    c = b;
-	    b = temp;
+      a = d;
+      d = c;
+      c = b;
+      b = temp;
       g::0 = g::0 +@4 5 &@4 15;
       g::1 = g::1 +@5 5 &@5 15;
       
     }
-    g = 0;
+    g = 5;
     for(i from 32 to 48) { 
       temp = b ^@(0,1) c ^@(0,1) d;
       temp = sumrotate(a,b,temp,k[i],message::0[g::0],message::1[g::1],r[i]);
-	    a = d;
-	    d = c;
-	    c = b;
-	    b = temp;
+      a = d;
+      d = c;
+      c = b;
+      b = temp;
       g::0 = g::0 +@4 3 &@4 15;
       g::1 = g::1 +@5 3 &@5 15;
     }
     g = 0;
     for(i from 48 to 64) { 
-      temp = c ^@(0,1) (b ||@(0,1) !@(0,1) d);
+      temp = c ^@(0,1) (b |@(0,1) ~@(0,1) d);
       temp = sumrotate(a,b,temp,k[i],message::0[g::0],message::1[g::1],r[i]);
-	    a = d;
-	    d = c;
-	    c = b;
-	    b = temp;
+      a = d;
+      d = c;
+      c = b;
+      b = temp;
       g::0 = g::0 +@4 7 &@4 15;
       g::1 = g::1 +@5 7 &@5 15;
     }
@@ -114,8 +110,8 @@ void main() {
 }
 
 /*
-core = 0, space = 359, ops = #<set:>
-core = 1, space = 355, ops = #<set:>
+core = 0, space = 289, ops = #<set:>
+core = 1, space = 285, ops = #<set:>
 core = 2, space = 326, ops = #<set:>
 core = 3, space = 326, ops = #<set:>
 core = 4, space = 260, ops = #<set:>
@@ -131,7 +127,7 @@ core = 13, space = 266, ops = #<set:>
 core = 14, space = 0, ops = #<set:>
 core = 15, space = 0, ops = #<set:>
 core = 16, space = 0, ops = #<set:>
-core = 17, space = 231, ops = #<set:>
+core = 17, space = 209, ops = #<set:>
 core = 18, space = 0, ops = #<set:>
 core = 19, space = 0, ops = #<set:>
 */

@@ -23,7 +23,7 @@
     ;)
   my-ast)
 
-(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #t])
+(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #f])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -59,7 +59,9 @@
   
   (when verbose
     (pretty-display "--- after unroll ---")
-    (send my-ast pretty-print))
+    (send my-ast accept concise-printer)
+    ;(send my-ast pretty-print)
+    )
   
   ;; insert communication code
   (insert-comm my-ast
@@ -67,7 +69,7 @@
                (layoutinfo-part2core layout-res)
                w h)
   
-  (when verbose
+  (when #t
     (pretty-display "--- after insert communication ---")
     (send my-ast pretty-print))
 
