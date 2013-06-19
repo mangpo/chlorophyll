@@ -114,8 +114,7 @@
         [(is-a? ast Assign%)
 	 (let ([lhs (get-field lhs ast)])
 	   (send lhs accept this))
-	   ;; (unless (equal? (get-field name lhs) "#return")
-	   ;;         (display " = ")))
+	 (display " = ")
          (send (get-field rhs ast) accept this)
          (display ";")
          ]
@@ -125,9 +124,11 @@
          (let ([val (get-field val ast)])
            (if (list? val)
                (begin
-                 (display (format "int~a(~a" (length val) (send (car val) accept this)))
+		 (display (format "int~a(" (length val)))
+		 (send (car val) accept this)
                  (for ([x (cdr val)])
-                      (display (format ", ~a" (send x accept this))))
+		      (display ", ")
+                      (send x accept this))
                  (display ")"))
                (send val accept this)))
          (display ";")]

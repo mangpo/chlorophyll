@@ -404,7 +404,6 @@
 	  ;; update expand-map
 	  (let ([index-vec (gen-index-vec place-list)])
 	    (for ([name (get-field var-list ast)])
-		 (pretty-display `(expand-map ,name))
 		 (dict-set! expand-map name index-vec)))
 	  ])]
 

@@ -137,24 +137,6 @@
     (set! num-msg (evaluate-with-sol (comminfo-msgs (send func-ast accept interpreter))))
 
     (when verbose (pretty-display `(num-msg , num-msg)))
-    #|
-    (when (equal? (get-field name func-ast) "main")
-      (define stmts (get-field stmts (get-field body func-ast)))
-      (define r (get-field place-list (cadr stmts)))
-      (define r-0 (get-field place (car r)))
-      (define r-1 (get-field place (cadr r)))
-      
-      (define m (get-field place (car (get-field place-list(caddr stmts)))))
-      
-      (define vars (get-field place (cadddr stmts)))
-      (define g (get-field place (cadddr (cdr stmts))))
-      
-      (define plus (caar (solution->list global-sol)))
-      ;(set-global-sol (sat (hash r-0 3 r-1 5 m 3 vars 1 g 3 plus 1)))
-      (pretty-display global-sol)
-      (display-cores cores)
-      (pretty-display `(num-msgs ,(evaluate-with-sol num-msg)))
-      )|#
     
     (define num-cores (evaluate-with-sol (cores-count cores)))  
     (define lowerbound 0)
