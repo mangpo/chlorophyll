@@ -10,7 +10,7 @@ int::2@(0,1) func_f(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
   return (b &&@(0,1) c) ||@(0,1) (!@(0,1) b &&@(0,1) d);
 }
 
-int::2 csum(int::2@(0,1) x, int::2 y) {
+int::2 csum(int::2 x, int::2 y) {
   int::2 z;
   z::0 = x::0 + y::0;
   z::1 = x::1 + y::1 + (z::0 << 16);
@@ -28,11 +28,49 @@ void main() {
   int[]@6 r[32];
   
   int::2@(0,1) a, b, c, d, temp;
-  //int g;
+  int::2[] hash[4];
+
+  // int g;
+
+  for(i from 0 to 32) {
+    k::1[i] = in();
+    k::0[i] = in();
+  }
   
-  for(t from 0 to 16) {
+  for(i from 0 to 32) {
+    r[i] = in();
+  }
+
+  for(i from 0 to 4) {
+    hash::1[i] = in();
+    hash::0[i] = in();
+  }
+
+  for(i from 0 to 16) {
+    message::1[i] = in();
+    message::0[i] = in();
+  }
+  
+  for(t from 0 to 16) { 
+    a = hash[0];
+    b = hash[1];
+    c = hash[2];
+    d = hash[3];
     for(i from 0 to 32) { 
       temp = sumrotate(a,b,func_f(b,c,d),k[i],message[i],r[i]);
+	    a = d;
+	    d = c;
+	    c = b;
+	    b = temp;
     }
+    hash[0] = hash[0] + a;
+    hash[1] = hash[1] + b;
+    hash[2] = hash[2] + c;
+    hash[3] = hash[3] + d;
   } 
+
+  for(i from 0 to 4) {
+    out(hash::1[i]);
+    out(hash::0[i]);
+  }
 }

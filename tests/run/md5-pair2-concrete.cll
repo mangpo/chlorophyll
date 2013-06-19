@@ -1,8 +1,8 @@
-int::2 leftrotate(int::2 x, int@6 r) {
+int::2@(0,1) leftrotate(int::2@(0,1) x, int@6 r) {
   // haven't handle the case that r > 16  
-  int::2 out;
-  out::0 = (x::1 >> (16 - r)) || (x::0 << r);
-  out::1 = (x::1 << r) || (x::0 >> (16 - r));
+  int::2@(0,1) out;
+  out::0 = (x::1 >>@0 (16 -@0 r)) ||@0 (x::0 <<@0 r);
+  out::1 = (x::1 <<@1 r) ||@1 (x::0 >>@0 (16 -@0 r));
   return out;
 }
 
@@ -10,16 +10,16 @@ int::2@(0,1) func_f(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
   return (b &&@(0,1) c) ||@(0,1) (!@(0,1) b &&@(0,1) d);
 }
 
-int::2 csum(int::2 x, int::2 y) {
-  int::2 z;
-  z::0 = x::0 + y::0;
-  z::1 = x::1 + y::1 + (z::0 <<@0 16);
+int::2@(0,1) csum(int::2@(0,1) x, int::2@(0,1) y) {
+  int::2@(0,1) z;
+  z::0 = x::0 +@0 y::0;
+  z::1 = x::1 +@1 y::1 +@1 (z::0 <<@0 16);
   return z;
 }
 
 
-int::2 sumrotate(int::2@(0,1) a, int::2@(0,1) b, int::2@(0,1) f, int::2@(2,3) k, int::2@(4,5) m, int@6 r) {
-  return csum(b, leftrotate(csum(a +@(0,1) f + k, m), r));
+int::2@(0,1) sumrotate(int::2@(0,1) a, int::2@(0,1) b, int::2@(0,1) f, int::2@(2,3) k, int::2@(4,5) m, int@6 r) {
+  return csum(b, leftrotate(csum(a +@(0,1) f +@(0,1) k, m), r));
 }
 
 void main() {
@@ -28,7 +28,7 @@ void main() {
   int[]@6 r[32];
   
   int::2@(0,1) a, b, c, d, temp;
-  int::2[] hash[4];
+  int::2[]@({[0:4]=0},{[0:4]=1}) hash[4];
 
   // int g;
 
