@@ -229,8 +229,23 @@
     
     ;void
     (define (outter-loop)
-      (with-handlers* ([exn:fail? (lambda (e) void)
-                      (inner-loop)))))
+      (with-handlers* ([exn:fail? (lambda (e) 
+                                    (pretty-display `(solve-time ,(- (current-seconds) t)))
+                                    (if (and upperbound
+					     (or (equal? (exn-message e)
+							 "solve: no satisfying execution found")
+						 (equal? (exn-message e)
+							 "assert: failed")))
+					(begin
+					  (set! lowerbound (add1 middle))
+					  (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+					  (if (< lowerbound upperbound)
+					      (outter-loop)
+					      (update-global-sol)))
+                                        (begin
+                                          (pretty-display e)
+                                          (raise e))))])
+                      (inner-loop)))
     
     (outter-loop)
     )
@@ -282,3 +297,10 @@
   (send my-ast pretty-print)
   
   my-ast)
+
+#|
+(define t (current-seconds))
+(define my-ast (parse "../tests/add-pair.cll"))
+(result-msgs (optimize-comm my-ast #:cores 16 #:capacity 300 #:verbose #t))
+(pretty-display (format "partitioning time = ~a" (- (current-seconds) t)))
+|#
