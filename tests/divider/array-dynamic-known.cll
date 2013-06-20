@@ -1,0 +1,7 @@
+int i, j;   
+
+void main() {
+  known int[]@{[0:5]=2,[5:10]=1} x[10];
+  known int[] y[10];
+  i = x[0] + y[i];
+}

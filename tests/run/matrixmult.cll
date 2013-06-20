@@ -1,0 +1,65 @@
+void main() {
+  int[]@{[0:36]=5} A[36];
+  int[]@{[0:36]=13} B[36];
+  int[]@{[0:36]=16} C[36];
+  int@13 sum;
+
+  for(i from 0 to 36)@any {
+    A[i] = in();
+  }
+
+  for(i from 0 to 36)@any {
+    B[i] = in();
+  }
+
+  for(i from 0 to 6)@any {
+    for(j from 0 to 6)@any {
+      sum = 0;
+      for(k from 0 to 6)@any {
+        sum = (sum +@13 (A[((6 *@5 i) +@5 k)] *@13 B[((6 *@13 k) +@13 j)]));
+      }
+
+      C[((6 *@16 i) +@16 j)] = sum;
+    }
+
+  }
+
+  for(i from 0 to 36)@any {
+    out(C[i]);
+  }
+
+}
+
+/*
+void main() {
+  int[]@{[0:36]=5} A[36];
+  int[]@{[0:36]=13} B[36];
+  int[]@{[0:36]=16} C[36];
+  int@16 sum;
+
+  for(i from 0 to 36)@any {
+    A[i] = in();
+  }
+
+  for(i from 0 to 36)@any {
+    B[i] = in();
+  }
+
+  for(i from 0 to 6)@any {
+    for(j from 0 to 6)@any {
+      sum = 0;
+      for(k from 0 to 6)@any {
+        sum = (sum +@16 (A[((6 *@5 i) +@5 k)] *@13 B[((6 *@13 k) +@13 j)]));
+      }
+
+      C[((6 *@16 i) +@16 j)] = sum;
+    }
+
+  }
+
+  for(i from 0 to 36)@any {
+    out(C[i]);
+  }
+
+}
+*/

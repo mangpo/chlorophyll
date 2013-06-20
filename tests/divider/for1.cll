@@ -1,0 +1,14 @@
+known int[] a[40];
+known int[] b[40];
+
+void main() {
+  for(i from 0 to 40) {
+    for(j from 0 to 40) {
+      if((i +@place(a[i]) j) %@place(a[i]) 2 == 0) {
+        a[i] = a[i] +@place(a[i]) b[j];
+      } else {
+        a[i] = a[i] -@place(a[i]) b[j];
+      }
+    }
+  }
+}

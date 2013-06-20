@@ -1,20 +1,25 @@
 TODO
-- fix add1 error!
-- time md5_2
-- test partial evaluate again
-- to make pair work => need to do data type check before/while create symbolic variables
+- test ~ !
+- fix md5
+  = ~ not !
+  = overflow
+- clean up
+  = cluster
+  = known field
+  = get rid of type-mismatch?
+- reset rosette when solving new problem (see compiler.rkt)
+- known type interpreter
+  = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
 
-- known-type check across functions
-- master/slave block,function,(array)
+- dependency analysis to do parallel loop
+- data type check (x[i] + y) when y is array
+- visitor-divider can't handle nested indexes (eg. +@place(x[i*n+j]))
+
+- refactoring interpretor & flow & comminsert
+- master/slave block,function,array (tests/for-array2)
+
 - topological sort
 - recursion
-- one function at multiple places
-
-- declaration inside block
-  for {
-    int x = 0;
-  }
-  (matrixmultiply caching)
 - general for?
 - for-array-fancy.cll
 - @h inside for (x[i] +@h y[i])
@@ -28,8 +33,11 @@ TODO
    int[]@{split=4} x; 
 - should we allow a == b? Right now, no.
    int[]@{[0:30]=a,[30:50]=b}
-- precise abstract interpret?
 
+ISSUE ABOUT RACKET
+- branch master
+- email emina about smaller example
+- after the error is gone, do perf test again (partial vs no partial)
 
 SYMBOLIC DICT
 - symbolic set or lower space to 4

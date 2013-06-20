@@ -1,0 +1,20 @@
+void main() {
+  int@0 x;
+  int y;
+  int z;
+  int j;
+  
+  x = in();
+  y = in();
+  z = in();
+  j = in();
+  
+  if(j % 2 == 0) {
+    x = x +@1 y;
+  } else {
+    z = y +@2 z;
+  }
+
+  out(x);
+  out(z);
+}
