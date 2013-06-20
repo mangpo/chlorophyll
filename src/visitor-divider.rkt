@@ -6,7 +6,7 @@
 
 (provide ast-divider%)
 
-(define debug #t)
+(define debug #f)
 
 (define ast-divider%
   (class* object% (visitor<%>)
@@ -341,7 +341,6 @@
         (let* ([place (get-field place-type ast)]
 	       [sig (get-field signature ast)]
 	       [type (get-field type (get-field return sig))])
-	  (pretty-display `(!!!!!!!!!! body-placeset ,(get-field body-placeset sig)))
           (for ([c (get-field body-placeset sig)])
 	       ;; body-placeset of IO function is empty
                (if (not-void? place type c)
@@ -520,7 +519,6 @@
 
        [(is-a? ast FuncDecl%)
 	(when debug (pretty-display (format "\nDIVIDE: FuncDecl ~a\n" (get-field name ast))))
-	(pretty-display `(body-placeset ,(get-field body-placeset ast)))
         (define (func-args-at ast core)
           (new Block% 
                [stmts
@@ -593,6 +591,14 @@
 	      (define programs (make-vector n))
 	      (for ([i (in-range n)])
 		   (vector-set! programs i (get-workspace i)))
+
+	      (for ([i (in-range n)])
+		   (let* ([program (vector-ref programs i)]
+			  [stmts (get-field stmts program)])
+		     (unless (or (empty? stmts)
+				 (equal? (get-field name (last stmts)) "main"))
+			   (set-field! stmts program (list)))))
+				     
 	      programs
 	      )
 	]
