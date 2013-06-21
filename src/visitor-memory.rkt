@@ -115,7 +115,7 @@
        [(is-a? ast Program%)
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))
-	mem-map]
+	(cons mem-p max-iter)]
 
        [else 
 	(raise (format "visitor-memory: unimplemented for ~a" ast))]
