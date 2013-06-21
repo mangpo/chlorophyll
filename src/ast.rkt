@@ -332,7 +332,7 @@
   (class Exp%
     (super-new)
     (inherit-field type known-type place-type pos expand expect)
-    (init-field name [sub #f])
+    (init-field name [sub #f] [address #f])
     (inherit print-send-path)
     
     (define/override (clone)
@@ -666,7 +666,7 @@
 (define For%
   (class Scope%
     (super-new)
-    (init-field iter from to body place-list known)
+    (init-field iter from to body place-list known [address #f])
     (inherit print-send-path print-body-placeset)
 
     (define/public (to-concrete)
