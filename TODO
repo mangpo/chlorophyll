@@ -1,8 +1,6 @@
 TODO
+- run test-sim, codegen
 - test ~ !
-- fix md5
-  = ~ not !
-  = overflow
 - clean up
   = cluster
   = known field

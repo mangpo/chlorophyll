@@ -361,8 +361,20 @@
 			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
 				    name part expect)
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
-
     ))
+
+(define Temp%
+  (class Var%
+    (super-new)
+    (inherit-field place-type)
+    (init-field signature link)
+
+    (define/override (infer-place [p [place-type])
+      (when (at-any? place-type)
+	    (set! place-type p)
+	    (send infer-place signature p)
+	    (when link
+		  (send infer-place link p)))))))
 
 (define Array%
   (class Var%
@@ -566,7 +578,7 @@
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
-      (when (at-any? place)
+      (when (or (at-any? place) (not place))
             (set! place p)))
 
     ;; (define/public (copy)

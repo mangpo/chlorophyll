@@ -12,21 +12,21 @@
 
     (struct entry (temp type expand))
 
-    (define (get-temp type expand expect place-type [funccall #f])
-      (let ([temp (format "_temp~a" count)])
+    (define (get-temp type expand expect place-type [link #f])
+      (let* ([temp (format "_temp~a" count)]
+	     [temp-decl (if (> expand 1)
+			    ;; no expansion in desugar step
+			    (new TempDecl% [var-list (list temp)]
+				 [type (cons type expand)] ; packed type
+				 [place place-type] 
+				 [expect expand]) 
+			    (new TempDecl% [var-list (list temp)]
+				 [type type] ; native type
+				 [place place-type] 
+				 [expect expand]))])
+	
         (set! count (add1 count))
-        (set! new-decls (cons
-                         (if (and funccall (> expand 1))
-                             ;; no expansion in desugar step
-                             (new TempDecl% [var-list (list temp)]
-                                  [type (cons type expand)] ; packed type
-                                  [place place-type] 
-                                  [expect expand]) 
-                             (new TempDecl% [var-list (list temp)]
-                                  [type type] ; native type
-                                  [place place-type] 
-                                  [expect expand]))
-                              new-decls))
+        (set! new-decls (cons temp-decl new-decls))
         ;(pretty-display `(declare ,temp ,expand ,expect))
         
         ;; temp for funccall:
@@ -36,8 +36,22 @@
         ;; expect(temp) = 1
 
         ;; don't set known-type
-        (new Var% [name temp] [type type] [expand expand] [expect expect] [place-type place-type])
+        (new Temp% [name temp] [type type] [expand expand] [expect expect] [place-type place-type]
+	     [signature temp-decl] [link #f])
         ))
+
+    (define (tempify x)
+      (define stmt)
+      (define exp)
+      (if (and (is-a? exp Var%) (regexp-match #rx"_temp" (get-field name exp)))
+	  x
+	  (let* ([temp (get-temp
+			(get-field type exp)
+			(get-field expand ast)
+			(get-field expect ast)
+			#f exp)])
+	    (cons (list stmt (new Assign% [lhs temp] [rhs exp] [nocomm #t]))
+		  temp))))
 
     (define/public (visit ast)
       (cond
@@ -78,19 +92,21 @@
         [(is-a? ast FuncCall%)
          (define args-ret  (map (lambda (x) (send x accept this)) 
                                 (get-field args ast)))
-         (define new-stmts (map car args-ret))
-         (define new-args  (map cdr args-ret))
+	 (define tempified (map tempify args-ret))
+         (define new-stmts (map car tempified))
+         (define new-args  (map cdr tempfieid))
          (set-field! args ast new-args)
          
          ;; only insert temp for function call for now
          (if (get-field is-stmt ast)
-             (cons new-stmts ast)
+	     ;; return list of stmts
+             (list new-stmts ast)
+	     ;; return (list of stmts . ast)
              (let* ([temp (get-temp
                            (get-field type ast) 
                            (get-field expand ast)
                            (get-field expect ast)
-                           (get-field place (get-field return (get-field signature ast)))
-                           #t)]
+                           (get-field place (get-field return (get-field signature ast))))]
                     [temp-tight (send temp clone)])
                ;; send expect = 1 so that it doesn't get expanded in desugarin step
                (set-field! expect temp-tight 1)

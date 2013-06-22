@@ -337,6 +337,10 @@
 
        [(is-a? ast Var%)
         (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
+
+
+	(unless (is-a? ast Temp%)
+		(inc-space (get-field place ast) est-var))
             
         ;; if expend < expand then it is temp in temp = func()
         ;; we don't need to find place for such temp
@@ -346,10 +350,6 @@
             ;; place can be list if var is iterator
             ;; need to call to-place-type to turn place-list into (place-list . index)
             (set-field! place-type ast (to-place-type ast place))
-            
-            ;; no space taken for now
-            ;; x[i] in loop => take no space, i can be on stack
-            ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
             (comminfo 0 (to-place-set place)))
           (comminfo 0 (set)))
           ]
@@ -437,6 +437,8 @@
 
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
+	       (when (or (is-a? arg Num%) (is-a? arg Temp%))
+		     (send arg infer-place (get-field place-type param)))
 	       (let ([arg-ret (send arg accept this)])
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
@@ -487,7 +489,11 @@
           (when debug
                 (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
 
-	  (inc-space place (* (length var-list) est-data)) ; increase space
+	  (unless (is-a? ast TempDecl%)
+		  (inc-space place (* (length var-list) 
+				      (if (is-a? ast Param%)
+					  (add1 est-data)
+					  est-data)))) ; increase space
           
 	  (when debug
                 (pretty-display (format ">> VarDecl ~a (after)" var-list)))
@@ -653,23 +659,14 @@
           (define lhs-place-type (get-field place-type lhs))
 	  (define lhs-name (get-field name lhs))
 
-          (when debug
-                (pretty-display ">> Assign (rhs1)"))
-
           ;; If rhs is a number, set place to be equal to lhs
           (when (is-a? rhs Num%) (send rhs infer-place lhs-place-type))
 
-          (when debug
-                (pretty-display ">> Assign (rhs2)"))
-
           ;; Visit rhs
           (define rhs-ret (send rhs accept this))
+	  (define rhs-place-type (get-field place-type rhs))
+	  (when (is-a? lhs Temp%) (send lhs infer-place rhs-place-type))
 
-          (when debug
-                (pretty-display ">> Assign (rhs3)"))
-
-          (when debug
-                (pretty-display ">> Assign (connect)"))
 	  ;; Don't increase space
 
           (define comm-lhs-rhs

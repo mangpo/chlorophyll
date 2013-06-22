@@ -19,7 +19,7 @@
         ("/" . 52) ; estimate from chuck's blog
         ("%" . 52) ; estimate from chuck's blog
         ("+" . 2)  ; . +
-        ("-" . 10) ; - @p . + num . +
+        ("-" . 10) ; - @p . + 1 . +
         (">>" . 1)
         ("<<" . 1)
         ("<" . 11) ; a < b --> a - b < 0       - @p . + num . + -if

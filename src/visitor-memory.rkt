@@ -24,14 +24,21 @@
       (when (>= p max-iter)
 	  (set! max-iter (add1 p)))
       (cons p #f))
+
+    (define (need-mem? name)
+      (or (regexp-match #rx"_temp" name)
+	  (regexp-match #rx"_tmp" name)
+	  (regexp-match #rx"#return" name)))
     
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
 	(for ([var (get-field var-list ast)])
-	     ;; TODO: if not temp or return
-	     (dict-set! mem-map var (mem mem-p))
-	     (set! mem-p (add1 mem-p)))]
+	     (when (need-mem? var)
+		   (dict-set! mem-map var (mem mem-p))
+		   (set-field! address ast (mem mem-p))
+		   (set! mem-p (add1 mem-p))))
+	]
 
        [(is-a? ast ArrayDecl%)
 	(dict-set! mem-map (get-field var ast) (mem mem-p))
@@ -45,8 +52,8 @@
 	(set-field! address ast (lookup mem-map ast))]
         
        [(is-a? ast Var%)
-	;; TODO: if not temp or return
-	(set-field! address ast (lookup mem-map ast))]
+	(when (neem-mem? (get-field name ast))
+	      (set-field! address ast (lookup mem-map ast)))]
         
        [(is-a? ast UnaExp%)
 	(send (get-field e1 ast) accept this)]
@@ -71,8 +78,7 @@
 	(send (get-field rhs ast) accept this)]
 
        [(is-a? ast Return%)
-	;; (send (get-field val ast) accept this)
-	void
+	(send (get-field val ast) accept this)
 	]
 
        [(is-a? ast If%)
@@ -103,19 +109,20 @@
        [(is-a? ast FuncDecl%)
 	;; no memory for return
 	(push-scope)
-	(send (get-field args ast) accept this)
+	(for ([arg (reverse (get-field stmts (get-field args ast)))])
+	     (send arg accept this))
 	(send (get-field body ast) accept this)
 	(pop-scope)
 	]
-
-       [(is-a? ast Block%)
-	(for ([stmt (get-field stmts ast)])
-	     (send stmt accept this))]
 	
        [(is-a? ast Program%)
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))
 	(cons mem-p max-iter)]
+
+       [(is-a? ast Block%)
+	(for ([stmt (get-field stmts ast)])
+	     (send stmt accept this))]
 
        [else 
 	(raise (format "visitor-memory: unimplemented for ~a" ast))]
