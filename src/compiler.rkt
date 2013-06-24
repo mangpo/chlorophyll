@@ -9,7 +9,9 @@
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
          "visitor-tempinsert.rkt" 
-         "visitor-desugar.rkt")
+         "visitor-desugar.rkt"
+         "visitor-memory.rkt"
+         "visitor-codegen.rkt")
 
 (provide compile test-simulate parse)
 
@@ -76,8 +78,23 @@
     (send my-ast pretty-print))
 
   ;; generate multicore ASTs and simuation code
-  (regenerate my-ast w h name)
+  (define programs (regenerate my-ast w h name))
+  
+  (generate-code programs w h)
   )
+
+(define (generate-code programs w h)
+  (for ([i (in-range (add1 (* w h)))])
+    (let* ([program (vector-ref programs i)]
+           [data-iter (send program accept (new memory-mapper%))]
+           [code-gen (new code-generator% [data-size (car data-iter)]
+                          [iter-size (cdr data-iter)]
+                          [core i] [w w] [h h])])
+      (pretty-display `(-------------------- ,i -----------------------))
+      (define res (send program accept code-gen))
+      (pretty-display `(-------------------- ,i -----------------------))
+      (codegen-print res))))
+    
 
 (define testdir "../tests/run")
 

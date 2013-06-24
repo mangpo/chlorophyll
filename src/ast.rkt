@@ -278,9 +278,8 @@
     (init-field [known-type #f] [place-type #f] [cluster #f] [expand 1] [type #f])
 
     (define/public (infer-place [p place-type])
-      (pretty-display `(infer-place ,p ,place-type))
+      ;(pretty-display `(infer-place ,p ,place-type))
       (when (at-any? place-type)
-	    (pretty-display `(set!!!))
             (set! place-type p)))
 
     (define/public (get-place-known)

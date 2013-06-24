@@ -9,7 +9,7 @@
                 (cons name (test-simulate name input capacity))
                 result)))
 
-;(test "simple" "null" 256)
+(test "simple" "null" 256)
 
 ;(test "if"       "4_1" 512)
 ;(test "add"      "200" 512)

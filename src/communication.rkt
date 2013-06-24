@@ -71,6 +71,8 @@
         (newline))
       (print-main)
       ))
+  
+  programs
   )
 
 (define (generate-onecore-simulation ast file)

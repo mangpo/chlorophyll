@@ -9,6 +9,8 @@
     (super-new)
     (init-field [mem-map (make-hash)] [mem-p 0] [iter-p 0] [max-iter 0])
 
+    (define debug #t)
+
     (define (push-scope)
       (let ([new-env (make-hash)])
         (dict-set! new-env "__up__" mem-map)
@@ -26,9 +28,9 @@
       (cons p #f))
 
     (define (need-mem? name)
-      (or (regexp-match #rx"_temp" name)
-	  (regexp-match #rx"_tmp" name)
-	  (regexp-match #rx"#return" name)))
+      (not (or (regexp-match #rx"_temp" name)
+	       (regexp-match #rx"_tmp" name)
+	       (regexp-match #rx"#return" name))))
     
     (define/public (visit ast)
       (cond
@@ -36,7 +38,7 @@
 	(for ([var (get-field var-list ast)])
 	     (when (need-mem? var)
 		   (dict-set! mem-map var (mem mem-p))
-		   (set-field! address ast (mem mem-p))
+		   ;(set-field! address ast (mem mem-p))
 		   (set! mem-p (add1 mem-p))))
 	]
 
@@ -52,7 +54,10 @@
 	(set-field! address ast (lookup mem-map ast))]
         
        [(is-a? ast Var%)
-	(when (neem-mem? (get-field name ast))
+        ;; (when debug 
+        ;;       (pretty-display (format "\nMEMORY: Var ~a" (send ast to-string))))
+	;; (pretty-display `(need-mem? ,(need-mem? (get-field name ast))))
+	(when (need-mem? (get-field name ast))
 	      (set-field! address ast (lookup mem-map ast)))]
         
        [(is-a? ast UnaExp%)
