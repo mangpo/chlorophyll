@@ -6,7 +6,7 @@
 
 (provide ast-divider%)
 
-(define debug #f)
+(define debug #t)
 
 (define ast-divider%
   (class* object% (visitor<%>)

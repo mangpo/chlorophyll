@@ -135,6 +135,11 @@
   (define (solve-function func-ast)
     (define start (current-seconds))
     (set! num-msg (evaluate-with-sol (comminfo-msgs (send func-ast accept interpreter))))
+    
+    (when verbose
+      (pretty-display "\n=== After interpreter ===")
+      (send my-ast pretty-print))
+      ;(send my-ast accept concise-printer))
 
     (when verbose (pretty-display `(num-msg , num-msg)))
     
@@ -270,6 +275,10 @@
     (send my-ast accept evaluator)
     ;(send my-ast pretty-print)
     )
+  
+   (when verbose
+    (pretty-display "\n=== After evalute ===")
+     (send my-ast pretty-print))
   
   (result (evaluate-with-sol num-msg) 
           cores 

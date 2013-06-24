@@ -23,7 +23,7 @@
     ;)
   my-ast)
 
-(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #f])
+(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #t])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -37,12 +37,14 @@
     (pretty-display "--- before partition ---")
     (send my-ast pretty-print))
   
+  (pretty-display "??????????????????")
+  
   ;; partition
   (define partition (optimize-comm my-ast
                                    #:name name
                                    #:cores 20 
                                    #:capacity capacity 
-                                   #:verbose #f))
+                                   #:verbose #t))
   (when verbose
     (pretty-display "--- after partition ---")
     (send my-ast pretty-print))

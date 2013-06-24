@@ -12,7 +12,7 @@
 
     (struct entry (temp type expand))
 
-    (define (get-temp type expand expect place-type [link #f])
+    (define (get-temp type expand expect place-type)
       (let* ([temp (format "_temp~a" count)]
 	     [temp-decl (if (> expand 1)
 			    ;; no expansion in desugar step
@@ -27,7 +27,7 @@
 	
         (set! count (add1 count))
         (set! new-decls (cons temp-decl new-decls))
-        ;(pretty-display `(declare ,temp ,expand ,expect))
+        (pretty-display `(declare ,temp ,place-type))
         
         ;; temp for funccall:
         ;; let func() -> int::2
@@ -36,22 +36,23 @@
         ;; expect(temp) = 1
 
         ;; don't set known-type
-        (new Temp% [name temp] [type type] [expand expand] [expect expect] [place-type place-type]
-	     [signature temp-decl] [link #f])
+        (new Temp% [name temp] [type type] [expand expand] [expect expect] [place-type place-type])
         ))
 
-    (define (tempify x)
-      (define stmt)
-      (define exp)
+    (define (tempify arg param)
+      (define x (send arg accept this))
+      (define stmt (car x))
+      (define exp (cdr x))
       (if (and (is-a? exp Var%) (regexp-match #rx"_temp" (get-field name exp)))
 	  x
-	  (let* ([temp (get-temp
-			(get-field type exp)
-			(get-field expand ast)
-			(get-field expect ast)
-			#f exp)])
-	    (cons (list stmt (new Assign% [lhs temp] [rhs exp] [nocomm #t]))
-		  temp))))
+	  (let* ([new-temp (get-temp
+			(get-field type param)
+			(get-field expect param)
+			(get-field expect param)
+			(get-field place param))]
+		 [arg-temp (send new-temp clone)])
+	    (cons (list stmt (new Assign% [lhs new-temp] [rhs exp] [nocomm #f]))
+		  arg-temp))))
 
     (define/public (visit ast)
       (cond
@@ -90,11 +91,13 @@
          (cons (append (car e1-ret) (car e2-ret)) ast)]
         
         [(is-a? ast FuncCall%)
-         (define args-ret  (map (lambda (x) (send x accept this)) 
-                                (get-field args ast)))
-	 (define tempified (map tempify args-ret))
+         ;; (define args-ret  (map (lambda (x) (send x accept this)) 
+         ;;                        (get-field args ast)))
+	 ;; (define tempified (map tempify args-ret))
+	 (define params (get-field stmts (get-field args (get-field signature ast))))
+	 (define tempified (map tempify (get-field args ast) params))
          (define new-stmts (map car tempified))
-         (define new-args  (map cdr tempfieid))
+         (define new-args  (map cdr tempified))
          (set-field! args ast new-args)
          
          ;; only insert temp for function call for now

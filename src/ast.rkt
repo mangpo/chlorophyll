@@ -177,9 +177,17 @@
 
 ;; number, place-list -> place-type
 (define (to-place-type ast place)
-  (if (or (number? place) (is-a? place Place%))
-      place
-      (cons place ast)))
+  (cond
+   [(or 
+     (number? place) 
+     (is-a? place Place%)
+     (equal? place #f))
+    place]
+
+   [(list? place)
+    (cons place ast)]
+   
+   [else (raise (format "to-place-type: unimplemented for ~a" place))]))
 
 ;; (define (clone-place place)
 ;;   (cond
@@ -270,7 +278,9 @@
     (init-field [known-type #f] [place-type #f] [cluster #f] [expand 1] [type #f])
 
     (define/public (infer-place [p place-type])
+      (pretty-display `(infer-place ,p ,place-type))
       (when (at-any? place-type)
+	    (pretty-display `(set!!!))
             (set! place-type p)))
 
     (define/public (get-place-known)
@@ -365,16 +375,7 @@
 
 (define Temp%
   (class Var%
-    (super-new)
-    (inherit-field place-type)
-    (init-field signature link)
-
-    (define/override (infer-place [p [place-type])
-      (when (at-any? place-type)
-	    (set! place-type p)
-	    (send infer-place signature p)
-	    (when link
-		  (send infer-place link p)))))))
+    (super-new)))
 
 (define Array%
   (class Var%
@@ -578,7 +579,7 @@
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
-      (when (or (at-any? place) (not place))
+      (when (at-any? place)
             (set! place p)))
 
     ;; (define/public (copy)
