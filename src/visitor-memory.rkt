@@ -38,7 +38,8 @@
 	(for ([var (get-field var-list ast)])
 	     (when (need-mem? var)
 		   (dict-set! mem-map var (mem mem-p))
-		   ;(set-field! address ast (mem mem-p))
+		   (when (is-a? ast Param%)
+			 (set-field! address ast (mem mem-p)))
 		   (set! mem-p (add1 mem-p))))
 	]
 

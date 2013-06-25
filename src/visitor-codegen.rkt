@@ -22,7 +22,7 @@
   (cond
    [(list? x)
     (for ([i x])
-	 (codegen-print i))]
+	 (codegen-print i indent))]
    [(block? x)
     (display (format "~a(block: " indent))
     (for ([i (block-body x)])
@@ -82,6 +82,7 @@
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
     (define (gen-port port)
+      (pretty-display `(gen-port ,port))
       (cond
        [(equal? port `N)
 	(if (= (modulo x 2) 0) "up" "down")]
@@ -134,7 +135,7 @@
               (pretty-display (format "\nCODEGEN: Array ~a" (send ast to-string))))
 	(define index-ret (send (get-field index ast) accept this))
 	(define address (get-field address ast))
-	(define array-ret (gen-block (number->string (car address)) "." "+" "a!" "@" 1 1))
+	(define array-ret (list (gen-block (number->string (car address)) "." "+" "a!" "@" 1 1)))
 	(prog-append index-ret array-ret)]
 
        [(is-a? ast Var%)
@@ -219,7 +220,7 @@
        [(is-a? ast Return%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Return")))
-	(send (get-field data ast) accept this)]
+	(send (get-field val ast) accept this)]
 
        [(is-a? ast If%)
 	;; TODO

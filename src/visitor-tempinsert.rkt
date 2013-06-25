@@ -27,7 +27,6 @@
 	
         (set! count (add1 count))
         (set! new-decls (cons temp-decl new-decls))
-        (pretty-display `(declare ,temp ,place-type))
         
         ;; temp for funccall:
         ;; let func() -> int::2
@@ -115,6 +114,14 @@
                (set-field! expect temp-tight 1)
                (cons (list new-stmts (new Assign% [lhs temp-tight] [rhs ast] [nocomm #t]))
                      temp)))]
+
+	[(is-a? ast Recv%)
+	 (cons (list) ast)]
+
+	[(is-a? ast Send%)
+	 (define data-ret (send (get-field data ast) accept this))
+	 (set-field! data ast (cdr data-ret))
+	 (list (car data-ret) ast)]
         
         [(or (is-a? ast VarDecl%)
              (is-a? ast ArrayDecl%))

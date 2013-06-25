@@ -266,6 +266,13 @@
 	        
 	 (set! entry old-entry)
 	 #f]
+
+	[(is-a? ast Send%)
+	 (set! entry 1)
+	 (send (get-field data ast) accept this)]
+
+	[(is-a? ast Recv%)
+	 #f]
         
         [(is-a? ast Assign%)
          ;(pretty-display (format "LINKER: Assign ~a ~a" lhs rhs))

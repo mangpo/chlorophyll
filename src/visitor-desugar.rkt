@@ -205,8 +205,10 @@
          (set-field! args ast (flatten 
                                (map (lambda (x) (send x accept this))
                                     (get-field args ast))))
-         ast
-         ]
+         ast]
+
+	[(or (is-a? ast Recv%) (is-a? ast Send%))
+	 ast]
         
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))

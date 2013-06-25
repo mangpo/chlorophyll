@@ -611,7 +611,7 @@
 (define Param%
   (class VarDecl%
     (super-new)
-    (init-field [place-type #f] [known-type #t])
+    (init-field [place-type #f] [known-type #t] [address #f])
     (inherit-field var-list type known place)
 
     (define/public (set-known val)

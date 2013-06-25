@@ -15,6 +15,7 @@
 
 (provide compile test-simulate parse)
 
+;; Parse HLP from file to AST
 (define (parse file)
   ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
@@ -25,6 +26,31 @@
     ;)
   my-ast)
 
+;; Compile IR to machine code.
+(define (generate-code program i w h)
+  (pretty-display `(-------------------- ,i (compiling) -----------------------))
+  (let* ([data-iter (send program accept (new memory-mapper%))]
+         [code-gen (new code-generator% [data-size (car data-iter)]
+                        [iter-size (cdr data-iter)]
+                        [core i] [w w] [h h])])
+    (define res (send program accept code-gen))
+    (pretty-display `(-------------------- ,i (result) -----------------------))
+    (codegen-print res)))
+
+;; Compile per-core IRs to per-core machine codes.
+(define (generate-codes programs w h)
+  (for ([i (in-range (add1 (* w h)))])
+    (let ([program (vector-ref programs i)])
+      (generate-code program i w h))))
+
+;; Compile per-core HLP read from file to machine code.
+(define (compile-percore file core w h)
+  (define my-ast (parse file))
+  (generate-code my-ast core w h))
+
+(compile-percore "../examples/test.cll" 0 2 4)
+
+;; Compile HLP read from file to per-core machine codes.
 (define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #t])
   
   (define n (* w h))
@@ -38,8 +64,6 @@
   (when verbose
     (pretty-display "--- before partition ---")
     (send my-ast pretty-print))
-  
-  (pretty-display "??????????????????")
   
   ;; partition
   (define partition (optimize-comm my-ast
@@ -80,21 +104,8 @@
   ;; generate multicore ASTs and simuation code
   (define programs (regenerate my-ast w h name))
   
-  (generate-code programs w h)
+  (generate-codes programs w h)
   )
-
-(define (generate-code programs w h)
-  (for ([i (in-range (add1 (* w h)))])
-    (let* ([program (vector-ref programs i)]
-           [data-iter (send program accept (new memory-mapper%))]
-           [code-gen (new code-generator% [data-size (car data-iter)]
-                          [iter-size (cdr data-iter)]
-                          [core i] [w w] [h h])])
-      (pretty-display `(-------------------- ,i -----------------------))
-      (define res (send program accept code-gen))
-      (pretty-display `(-------------------- ,i -----------------------))
-      (codegen-print res))))
-    
 
 (define testdir "../tests/run")
 
@@ -107,5 +118,3 @@
     [(= diff 0) "PASSED"]
     [(= diff 1) "FAILED"]
     [(= diff 2) "NOT-FOUND"]))
-
-;(compile "../tests/run/pair3.cll" "pair3" 256)
