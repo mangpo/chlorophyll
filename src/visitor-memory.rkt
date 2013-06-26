@@ -35,6 +35,8 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
+        (when debug 
+              (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast))))
 	(for ([var (get-field var-list ast)])
 	     (when (need-mem? var)
 		   (dict-set! mem-map var (mem mem-p))
@@ -44,6 +46,7 @@
 	]
 
        [(is-a? ast ArrayDecl%)
+        (when debug (pretty-display (format "\nMEMORY: ArrayDecl ~a" (get-field var ast))))
 	(dict-set! mem-map (get-field var ast) (mem mem-p))
 	(set! mem-p (+ mem-p (get-field bound ast)))]
 
@@ -51,25 +54,33 @@
 	void]
         
        [(is-a? ast Array%)
+        (when debug 
+              (pretty-display (format "\nMEMORY: Array ~a" (send ast to-string))))
 	(send (get-field index ast) accept this)
 	(set-field! address ast (lookup mem-map ast))]
         
        [(is-a? ast Var%)
-        ;; (when debug 
-        ;;       (pretty-display (format "\nMEMORY: Var ~a" (send ast to-string))))
+        (when debug 
+              (pretty-display (format "\nMEMORY: Var ~a" (send ast to-string))))
 	;; (pretty-display `(need-mem? ,(need-mem? (get-field name ast))))
 	(when (need-mem? (get-field name ast))
 	      (set-field! address ast (lookup mem-map ast)))]
         
        [(is-a? ast UnaExp%)
+        (when debug 
+              (pretty-display (format "\nMEMORY: UnaExp ~a" (send ast to-string))))
 	(send (get-field e1 ast) accept this)]
         
        [(is-a? ast BinExp%)
+        (when debug 
+              (pretty-display (format "\nMEMORY: BinExp ~a" (send ast to-string))))
 	(send (get-field e1 ast) accept this)
 	(send (get-field e2 ast) accept this)
 	]
         
        [(is-a? ast FuncCall%)
+        (when debug 
+              (pretty-display (format "\nMEMORY: FuncCall ~a" (send ast to-string))))
 	(for ([arg (get-field args ast)])
 	     (send arg accept this))]
 
@@ -77,17 +88,29 @@
 	void]
 
        [(is-a? ast Send%)
+        (when debug 
+              (pretty-display (format "\nMEMORY: Send ~a" (get-field port ast))))
 	(send (get-field data ast) accept this)]
         
        [(is-a? ast Assign%)
+        (when debug 
+              (pretty-display (format "\nAssign")))
 	(send (get-field lhs ast) accept this)
 	(send (get-field rhs ast) accept this)]
 
        [(is-a? ast Return%)
-	(send (get-field val ast) accept this)
+        (when debug 
+              (pretty-display (format "\nReturn")))
+
+        (define val (get-field val ast))
+        (if (list? val)
+            (for ([v val])
+                 (send v accept this))
+            (send (get-field val ast) accept this))
 	]
 
        [(is-a? ast If%)
+        (send (get-field condition ast) accept this)
 	(push-scope)
 	(send (get-field true-block ast) accept this)
 	(pop-scope)
@@ -103,8 +126,9 @@
 	]
 
        [(is-a? ast For%)
+        (when debug (pretty-display (format "MEMORY: For")))
 	(push-scope)
-	(dict-set! mem-map (get-field iter ast) (iter iter-p))
+	(dict-set! mem-map (get-field name (get-field iter ast)) (iter iter-p))
 	(set-field! address ast (iter iter-p)) ; set for itself
 	(set! iter-p (add1 iter-p))
 	(send (get-field body ast) accept this)
@@ -122,6 +146,7 @@
 	]
 	
        [(is-a? ast Program%)
+        (when debug (pretty-display (format "MEMORY: Program")))
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))
 	(cons mem-p max-iter)]

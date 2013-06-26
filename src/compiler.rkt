@@ -28,13 +28,14 @@
 
 ;; Compile IR to machine code.
 (define (generate-code program i w h)
-  (pretty-display `(-------------------- ,i (compiling) -----------------------))
+  (pretty-display `(-------------------- ,i -----------------------))
   (let* ([data-iter (send program accept (new memory-mapper%))]
          [code-gen (new code-generator% [data-size (car data-iter)]
                         [iter-size (cdr data-iter)]
                         [core i] [w w] [h h])])
+    (pretty-display ">>> code gen")
     (define res (send program accept code-gen))
-    (pretty-display `(-------------------- ,i (result) -----------------------))
+    (pretty-display ">>> result")
     (codegen-print res)))
 
 ;; Compile per-core IRs to per-core machine codes.
@@ -46,9 +47,10 @@
 ;; Compile per-core HLP read from file to machine code.
 (define (compile-percore file core w h)
   (define my-ast (parse file))
+  ;(send my-ast pretty-print)
   (generate-code my-ast core w h))
 
-(compile-percore "../examples/test.cll" 0 2 4)
+(compile-percore "../tests/if_symbolic.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #t])

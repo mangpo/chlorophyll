@@ -207,8 +207,13 @@
                                     (get-field args ast))))
          ast]
 
-	[(or (is-a? ast Recv%) (is-a? ast Send%))
+	[(is-a? ast Recv%)
 	 ast]
+
+        [(is-a? ast Send%)
+         (define data-ret (send (get-field data ast) accept this))
+         (set-field! data ast data-ret)
+         ast]
         
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))

@@ -11,7 +11,11 @@
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body))
-(struct forloop (body))
+(struct forloop (init body))
+(struct ift (t))
+(struct iftf (t f))
+(struct -ift (t))
+(struct -iftf (t f))
 
 (define (codegen-print x [indent ""])
   (define (inc indent)
@@ -23,29 +27,55 @@
    [(list? x)
     (for ([i x])
 	 (codegen-print i indent))]
+   
    [(block? x)
     (display (format "~a(block: " indent))
     (for ([i (block-body x)])
 	 (display i)
 	 (display " "))
     (pretty-display (format ", in:~a out:~a)" (block-in x) (block-out x)))]
+   
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
+   
    [(funccall? x)
     (pretty-display (format "~a(funccall: ~a)"  indent (funccall-name x)))]
+   
    [(forloop? x)
     (pretty-display (format "~a(for:"  indent))
+    (codegen-print (forloop-init x) (inc indent))
     (codegen-print (forloop-body x) (inc indent))]
+   
+   [(ift? x)
+    (pretty-display (format "~a(if:"  indent))
+    (codegen-print (ift-t x) (inc indent))]
+   
+   [(iftf? x)
+    (pretty-display (format "~a(if:"  indent))
+    (codegen-print (iftf-t x) (inc indent))
+    (codegen-print (iftf-f x) (inc indent))]
+   
+   [(-ift? x)
+    (pretty-display (format "~a(-if:"  indent))
+    (codegen-print (-ift-t x) (inc indent))]
+   
+   [(-iftf? x)
+    (pretty-display (format "~a(-if:"  indent))
+    (codegen-print (-iftf-t x) (inc indent))
+    (codegen-print (-iftf-f x) (inc indent))]
+    
    [(funcdecl? x)
     (pretty-display (format "~a(funcdecl: ~a"  indent (funcdecl-name x)))
     (codegen-print (funcdecl-body x) (inc indent))]
+   
    [else (raise (format "visitor-codegen: print: unimplemented for ~a" x))]))
 
 (define code-generator%
   (class* object% (visitor<%>)
     (super-new)
     (init-field data-size iter-size core w h 
-		[x (floor (/ core w))] [y (modulo core w)])
+		[x (floor (/ core w))] [y (modulo core w)]
+                [helper-funcs (list)] [if-count 0])
 
     (define debug #t)
 
@@ -91,7 +121,9 @@
        [(equal? port `E)
 	(if (= (modulo y 2) 0) "right" "left")]
        [(equal? port `W)
-	(if (= (modulo y 2) 0) "left" "right")]))
+	(if (= (modulo y 2) 0) "left" "right")]
+       [(equal? port `IO)
+        "io"]))
 	   
     (define (program-append a-list b-list)
       ;; merge b-block into a-block
@@ -118,6 +150,31 @@
 	      (merge-into a-last b-first)
 	      (append a-list (cdr b-list)))
 	    (append a-list b-list))]))
+
+    (define (get-if)
+      (set! if-count (add1 if-count))
+      (format "~aif" if-count))
+
+    (define (define-if body)
+      (define name (get-if))
+      (define new-if (funcdecl name body))
+      (set! helper-funcs (cons new-if helper-funcs))
+      (list (funccall name)))
+
+    (define (get-op exp)
+      (get-field op (get-field op exp)))
+
+    (define (get-e1 exp)
+      (get-field e1 exp))
+
+    (define (get-e2 exp)
+      (get-field e2 exp))
+
+    (define (binop-equal? exp str)
+      (and (is-a? exp BinExp%) (equal? (get-op exp) str)))
+    
+    (define (minus e1 e2)
+      (new BinExp% [op (new Op% [op "-"])] [e1 e1] [e2 e2]))
 
     (define/public (visit ast)
       (cond
@@ -220,18 +277,96 @@
        [(is-a? ast Return%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Return")))
-	(send (get-field val ast) accept this)]
+        (define val (get-field val ast))
+        (if (list? val)
+            (foldl (lambda (v all) (prog-append all (send v accept this)))
+	       (list) val)
+            (send (get-field val ast) accept this))]
 
        [(is-a? ast If%)
-	;; TODO
-	]
+        (when debug 
+              (pretty-display (format "\nCODEGEN: If")))
+	;; not yet support && ||
+        (define exp (get-field condition ast))
+        (define true-ret (send (get-field true-block ast) accept this))
+        (define false-ret 
+          (if (get-field false-block ast)
+              (send (get-field false-block ast) accept this)
+              #f))
+
+        (cond
+         [(binop-equal? exp "!=")
+          (define condition (minus (get-e1 exp) (get-e2 exp)))
+          (define cond-ret (send condition accept this))
+          (if false-ret
+              (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
+              (prog-append cond-ret (list (ift true-ret))))
+          ]
+         
+         [(binop-equal? exp "==")
+          (define condition (minus (get-e1 exp) (get-e2 exp)))
+          (define cond-ret (send condition accept this))
+          (if false-ret
+              (define-if (prog-append cond-ret (list (iftf false-ret true-ret))))
+              (define-if (prog-append cond-ret (list (iftf (list) true-ret)))))
+          ]
+
+         [(binop-equal? exp "<")
+          (define condition (minus (get-e1 exp) (get-e2 exp))) ;; e1-e2 < 0
+          (define cond-ret (send condition accept this))
+          (if false-ret
+              (define-if (prog-append cond-ret (list (-iftf true-ret false-ret))))
+              (prog-append cond-ret (list (-ift true-ret))))
+          ]
+
+         [(binop-equal? exp ">")
+          (define condition (minus (get-e2 exp) (get-e1 exp))) ;; 0 > e2-e1
+          (define cond-ret (send condition accept this))
+          (if false-ret
+              (define-if (prog-append cond-ret (list (-iftf true-ret false-ret))))
+              (prog-append cond-ret (list (-ift true-ret))))
+          ]
+         
+         [(binop-equal? exp ">=")
+          (define condition (minus (get-e1 exp) (get-e2 exp))) ;; e1-e2 >= 0
+          (define cond-ret (send condition accept this))
+          (if false-ret
+              (define-if (prog-append cond-ret (list (-iftf false-ret true-ret))))
+              (define-if (prog-append cond-ret (list (-iftf (list) true-ret)))))
+          ]
+         
+         [(binop-equal? exp "<=")
+          (define condition (minus (get-e2 exp) (get-e1 exp))) ;; 0 <= e2-e1
+          (define cond-ret (send condition accept this))
+          (if false-ret
+              (define-if (prog-append cond-ret (list (-iftf false-ret true-ret))))
+              (define-if (prog-append cond-ret (list (-iftf (list) true-ret)))))
+          ]
+
+         [else
+          (define cond-ret (send exp accept this))
+          ;(codegen-print cond-ret)
+          (if false-ret
+              (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
+              (prog-append cond-ret (list (ift true-ret))))])]
        
        [(is-a? ast While%)
 	;; TODO
 	]
 
        [(is-a? ast For%)
-	;; TODO
+        (define from (get-field from ast))
+        (define to (get-field to ast))
+        (define address (+ data-size (car (get-field address ast))))
+        (define address-str (number->string address))
+        
+        (define init-ret (gen-block (number->string from) address-str "a!" "!" 
+                                    (number->string (- to from 1)) 0 0)) ;; loop bound
+        
+        (define body-ret (send (get-field body ast) accept this))
+        (define body-decor (list (gen-block address-str "a!" "@" "1" "." "+" "!" 0 0)))
+
+        (list (forloop init-ret (prog-append body-ret body-decor)))
 	]
 
        [(is-a? ast FuncDecl%)
@@ -250,8 +385,12 @@
 
        [(is-a? ast Program%)
 	;; return list of function list
-	(for/list ([decl (get-field stmts ast)])
-		  (send decl accept this))]
+        (define main-funcs
+          (for/list ([decl (get-field stmts ast)])
+            (send decl accept this)))
+        
+        (append helper-funcs main-funcs)
+        ]
 
        [(is-a? ast Block%)
 	(foldl (lambda (stmt all) (prog-append all (send stmt accept this)))

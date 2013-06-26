@@ -369,11 +369,16 @@
 
          ; if
          ((IF LPAREN exp RPAREN LBRACK block RBRACK)
-            (new If% [condition $3] [true-block $6] [pos $1-start-pos]))
+            (new If% [condition $3] 
+                 [true-block $6] 
+                 [pos $1-start-pos]))
 
          ; if-else
          ((IF LPAREN exp RPAREN LBRACK block RBRACK ELSE LBRACK block RBRACK)
-            (new If% [condition $3] [true-block $6] [false-block $10] [pos $1-start-pos]))
+            (new If% [condition $3] 
+                 [true-block $6] 
+                 [false-block $10] 
+                 [pos $1-start-pos]))
 
          ; return
          ((RETURN exp SEMICOL)

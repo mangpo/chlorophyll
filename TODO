@@ -1,4 +1,7 @@
 TODO
+- if
+  = optimize for (minus x 0)
+  = test more: (exp != exp), nested if, etc.
 - test codegen more
 - test ~ !
 - clean up
