@@ -44,7 +44,7 @@
 		    [count 0])
 		(for ([p (car place-type)])
 		     (when (and (<= (get-field to p) (get-field from range))
-				(= (get-field place p) here))
+				(not (= (get-field place p) here)))
 			   (set! count (+ count (- (get-field to p) (get-field from p))))))
 		(cons here count))
               (cons place-type 0))))
