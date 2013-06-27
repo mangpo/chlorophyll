@@ -6,8 +6,6 @@
 
 (provide commcode-inserter%)
 
-(define debug #t)
-
 ;; 1) Insert communication route to send-path field.
 ;; 2) Convert partition ID to actual core ID.
 ;; Note: this visitor mutates AST.
@@ -15,6 +13,8 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field routing-table part2core n)
+
+    (define debug #f)
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))

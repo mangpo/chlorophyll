@@ -11,9 +11,6 @@
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
-(define debug #t)
-(define debug-sym #f)
-
 (struct comminfo (msgs placeset))
 
 (define count-msg-interpreter%
@@ -24,6 +21,8 @@
                 [has-func-temp #f]
 		)
 
+    (define debug #f)
+    (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
     (declare env "in" (comminfo 0 (set)))
@@ -87,8 +86,6 @@
     (define (find-place-type ast native)
       (when (not (is-a? native Livable%))
         (raise "find-place-type: native is not Livable%"))
-      
-      ;(pretty-display (format "find-place-type ~a" (send ast to-string)))
       
       (define place-type (get-field place-type ast))
       (if (or (number? place-type) (pair? place-type))
@@ -160,7 +157,7 @@
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg-place-type x y x-ast [y-ast #f])
       (when debug
-	    (pretty-display `(count-msg-place-type ,x ,y)))
+      	    (pretty-display `(count-msg-place-type ,x ,y)))
       ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
       ;; Return the place that a resides if a only lives in one place. 
@@ -321,7 +318,6 @@
 
           ;; Infer place
           (send index infer-place (get-field place-type ast))
-	  (pretty-display `(place-type ,(get-field place-type index)))
 	  (define index-ret (send index accept this))
 
           (inc-space places est-acc-arr) ; not accurate
@@ -350,7 +346,6 @@
 				 (to-place-type ast place))])
             ;; place can be list if var is iterator
             ;; need to call to-place-type to turn place-list into (place-list . index)
-	    (pretty-display `(place ,place ,place-type))
             (set-field! place-type ast place-type)
             (unless (is-a? ast Temp%)
               (inc-space place-type est-var))
@@ -405,7 +400,7 @@
 	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
 
           (when debug
-                (pretty-display (format ">> BinOp ~a" (send ast to-string))))
+                (pretty-display (format ">> BinOp ~a ~a" (send ast to-string) place-type)))
 
           (when (and debug-sym
                  (symbolic? (+ (comminfo-msgs e1-ret) 

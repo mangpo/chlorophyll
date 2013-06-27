@@ -10,7 +10,7 @@
 (struct block (body in out) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
-(struct funcdecl (name body))
+(struct funcdecl (name body) #:mutable)
 (struct forloop (init body))
 (struct ift (t))
 (struct iftf (t f))
@@ -48,20 +48,26 @@
    
    [(ift? x)
     (pretty-display (format "~a(if:"  indent))
+    (pretty-display (format "~a>> true"  indent))
     (codegen-print (ift-t x) (inc indent))]
    
    [(iftf? x)
     (pretty-display (format "~a(if:"  indent))
+    (pretty-display (format "~a>> true"  indent))
     (codegen-print (iftf-t x) (inc indent))
+    (pretty-display (format "~a>> false"  indent))
     (codegen-print (iftf-f x) (inc indent))]
    
    [(-ift? x)
     (pretty-display (format "~a(-if:"  indent))
+    (pretty-display (format "~a>> true"  indent))
     (codegen-print (-ift-t x) (inc indent))]
    
    [(-iftf? x)
     (pretty-display (format "~a(-if:"  indent))
+    (pretty-display (format "~a>> true"  indent))
     (codegen-print (-iftf-t x) (inc indent))
+    (pretty-display (format "~a>> false"  indent))
     (codegen-print (-iftf-f x) (inc indent))]
     
    [(funcdecl? x)
@@ -75,9 +81,9 @@
     (super-new)
     (init-field data-size iter-size core w h 
 		[x (floor (/ core w))] [y (modulo core w)]
-                [helper-funcs (list)] [if-count 0])
+                [helper-funcs (list)] [if-count 0] [while-count 0])
 
-    (define debug #t)
+    (define debug #f)
 
     (define-syntax gen-block
       (syntax-rules ()
@@ -151,12 +157,16 @@
 	      (append a-list (cdr b-list)))
 	    (append a-list b-list))]))
 
-    (define (get-if)
+    (define (get-if-name)
       (set! if-count (add1 if-count))
       (format "~aif" if-count))
 
+    (define (get-while-name)
+      (set! while-count (add1 while-count))
+      (format "~awhile" while-count))
+
     (define (define-if body)
-      (define name (get-if))
+      (define name (get-if-name))
       (define new-if (funcdecl name body))
       (set! helper-funcs (cons new-if helper-funcs))
       (list (funccall name)))
@@ -174,7 +184,9 @@
       (and (is-a? exp BinExp%) (equal? (get-op exp) str)))
     
     (define (minus e1 e2)
-      (new BinExp% [op (new Op% [op "-"])] [e1 e1] [e2 e2]))
+      (if (and (is-a? e2 Num%) (= 0 (get-field n (get-field n e2))))
+	  e1
+	  (new BinExp% [op (new Op% [op "-"])] [e1 e1] [e2 e2])))
 
     (define/public (visit ast)
       (cond
@@ -254,7 +266,7 @@
               (pretty-display (format "\nCODEGEN: Assign ~a = ~a" 
 				      (send lhs to-string) (send rhs to-string))))
 	(define address (get-field address lhs))
-	(pretty-display `(address ,address))
+	;(pretty-display `(address ,address))
 	(if (is-a? lhs Array%)
 	    (let ([index-ret (send (get-field index lhs) accept this)]
 		  [rhs-ret (send rhs accept this)])
@@ -314,6 +326,7 @@
          [(binop-equal? exp "<")
           (define condition (minus (get-e1 exp) (get-e2 exp))) ;; e1-e2 < 0
           (define cond-ret (send condition accept this))
+	  
           (if false-ret
               (define-if (prog-append cond-ret (list (-iftf true-ret false-ret))))
               (prog-append cond-ret (list (-ift true-ret))))
@@ -345,13 +358,42 @@
 
          [else
           (define cond-ret (send exp accept this))
-          ;(codegen-print cond-ret)
           (if false-ret
               (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
               (prog-append cond-ret (list (ift true-ret))))])]
        
        [(is-a? ast While%)
-	;; TODO
+	(define exp (get-field condition ast))
+	(define body (get-field body ast))
+	(define stmts (get-field stmts body))
+	(define name (get-while-name))
+
+	;; desugar into if construct
+	;; set name = while-name
+	(define if-rep
+	  (new If% 
+	       [condition exp] 
+	       [true-block 
+		(new Block% [stmts (append stmts 
+					   (list (new FuncCall% [name name] [args (list)])))])
+				   ]))
+	
+	(define if-ret (send if-rep accept this))
+	;; (pretty-display "~~~~~~~~~~~~~~~~~~~~~~")
+	;; (pretty-display "AST")
+	;; (send if-rep pretty-print)
+
+	;; (pretty-display "RESULT")
+	;; (codegen-print if-ret)
+	;; (pretty-display "~~~~~~~~~~~~~~~~~~~~~~")
+
+	(unless (funccall? (car if-ret))
+		(define-if if-ret))
+
+        ;; rename last function declaration to while-name
+        (set-funcdecl-name! (car helper-funcs) name)
+
+	(list (funccall name))
 	]
 
        [(is-a? ast For%)
@@ -389,7 +431,7 @@
           (for/list ([decl (get-field stmts ast)])
             (send decl accept this)))
         
-        (append helper-funcs main-funcs)
+        (append (reverse helper-funcs) main-funcs)
         ]
 
        [(is-a? ast Block%)

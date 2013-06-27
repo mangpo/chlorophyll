@@ -206,7 +206,11 @@
 	 (set-field! expect ast entry)
 	 (define e1 (get-field e1 ast))
          (define e1-known (send e1 accept this))
-         (define op-type (send (get-field op ast) accept this))
+	 
+	 (define op (get-field op ast))
+	 (set-field! place-type ast (get-field place op))
+
+         (define op-type (send op accept this))
 	 (set-field! type ast op-type)
 	 e1-known]
         
@@ -217,7 +221,11 @@
 	 (define e2 (get-field e2 ast))
          (define e1-known (send e1 accept this))
          (define e2-known (send e2 accept this))
-         (define op-type (send (get-field op ast) accept this))
+	 
+	 (define op (get-field op ast))
+	 (set-field! place-type ast (get-field place op))
+
+         (define op-type (send op accept this))
 	 (set-field! type ast op-type)
 	 (and e1-known e2-known)]
         

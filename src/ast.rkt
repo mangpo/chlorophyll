@@ -432,9 +432,9 @@
 
     (define/override (infer-place [p place-type])
       (when (at-any? place-type)
-            (set! place-type p))
-      (send e1 infer-place p)
-      (send e2 infer-place p))
+            (set! place-type p)
+	    (send e1 infer-place p)
+	    (send e2 infer-place p)))
 
     (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
@@ -462,8 +462,8 @@
 
     (define/override (infer-place [p place-type])
       (when (at-any? place-type)
-            (set! place-type p))
-      (send e1 infer-place p))
+            (set! place-type p)
+	    (send e1 infer-place p)))
 
     (define/override (to-string)
       (format "(~a ~a)" (send op to-string) (send e1 to-string)))

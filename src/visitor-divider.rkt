@@ -6,14 +6,14 @@
 
 (provide ast-divider%)
 
-(define debug #t)
-
 (define ast-divider%
   (class* object% (visitor<%>)
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
+
+    (define debug #f)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])

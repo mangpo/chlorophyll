@@ -9,7 +9,7 @@
     (super-new)
     (init-field [mem-map (make-hash)] [mem-p 0] [iter-p 0] [max-iter 0])
 
-    (define debug #t)
+    (define debug #f)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -120,6 +120,7 @@
 	      (pop-scope))]
 
        [(is-a? ast While%)
+        (send (get-field condition ast) accept this)
 	(push-scope)
 	(send (get-field body ast) accept this)
 	(pop-scope)

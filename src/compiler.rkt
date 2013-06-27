@@ -50,7 +50,7 @@
   ;(send my-ast pretty-print)
   (generate-code my-ast core w h))
 
-(compile-percore "../tests/if_symbolic.cll" 0 2 4)
+;(compile-percore "../tests/while.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #t])
