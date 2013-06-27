@@ -2,31 +2,22 @@
 #define K 16
 #define W 3
 
-class SSD: Filter {
-  
+int->int filter ssd {
   int[] l[W*N];
   int[] r[W*N];
-  int row;
+  int row = 0;
 
-  void init() {
-    setInput(int);
-    setOutput(int);
-    setPop(2*N);
-    setPush(N-K-W+1);
-    row = 0;
-  }
-  
-  void main() {
+  work pop 2*N push N-K-W+1 {
     // N (width) = 40, M (height) = 3
     // W = 1, K = 16
     /* int N, M; */
     /* N = 40; */
     
     for(i from 0 to W) {
-      l[row][i] = input.pop();
+      l[row][i] = pop();
     }
     for(i from 0 to W) {
-      l[row][i] = input.pop();
+      l[row][i] = pop();
     }
 
     row = row + 1;
@@ -63,11 +54,13 @@ class SSD: Filter {
           }
         }
       }
-      output.push(index);
+      push(index);
     }
   }
 
 }
 
-SSD task = new SSD();
-task.run();
+int->int pipeline main {
+  add ssd();
+}
+

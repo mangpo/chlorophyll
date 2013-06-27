@@ -10,8 +10,8 @@
                 result)))
 ;(test "if"       "4_1" 512)
 ;(test "add"      "200" 512)
-(test "function" "4_1" 512)
-(test "function" "4_2" 512)
+;(test "function" "4_1" 512)
+;(test "function" "4_2" 512)
 ;(test "matrixmult" "72" 300)
 ;(test "pair1" "null" 256)
 ;(test "pair2" "null" 256)
@@ -19,6 +19,8 @@
 ;(test "cluster" "null" 256)
 
 ;(test "md5-full" "md5" 400)
+
+(test "add_stream" "300" 512)
 
 (for ([res (reverse result)])
   (pretty-display res))
