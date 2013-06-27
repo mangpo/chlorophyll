@@ -2,7 +2,9 @@
 
 (require "parser.rkt" 
          "compiler.rkt"
-         "partitioner.rkt" "symbolic-dict.rkt" rackunit)
+         "partitioner.rkt" 
+	 "partition-storage.rkt" 
+	 rackunit)
 
 (define testdir "../tests/")
 

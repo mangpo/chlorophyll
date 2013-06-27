@@ -532,12 +532,6 @@
 			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
 				    name part expect)
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
-
-    (define/public (type-mismatch type entry)
-      (raise-mismatch-error 'mismatch
-			    (format "expect ~a data partitions but function '~a' returns ~a\n"
-				    entry name type)
-			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
   
     (define/public (args-mismatch l)
       (raise-mismatch-error 'mismatch

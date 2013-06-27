@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "partitioner.rkt" "symbolic-dict.rkt")
+(require "partitioner.rkt" "partition-storage.rkt")
 
 (define t 0)
 

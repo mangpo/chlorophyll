@@ -11,8 +11,8 @@
 
 ;(test "simple" "null" 256)
 
-;(test "if"       "4_1" 512)
-(test "add"       "200" 1024)
+(test "if"       "4_1" 512)
+;(test "add"       "200" 1024)
 ;(test "add2"       "200" 1024)
 ;(test "function" "4_1" 512)
 ;(test "function" "4_2" 512)

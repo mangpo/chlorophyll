@@ -1,10 +1,7 @@
 TODO
-- test & test-sim
-- test ~ !
 - clean up
   = cluster
   = known field
-  = get rid of type-mismatch?
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array

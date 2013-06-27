@@ -4,10 +4,10 @@
          "ast.rkt" 
          "ast-util.rkt"
          "parser.rkt" 
+	 "partition-storage.rkt"
+         "space-estimator.rkt"
          "visitor-interface.rkt" 
-         "visitor-desugar.rkt"
-         "space-estimator.rkt" 
-         "symbolic-dict.rkt")
+         "visitor-desugar.rkt")
 
 (provide count-msg-interpreter% (struct-out comminfo))
 

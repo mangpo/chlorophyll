@@ -3,7 +3,7 @@
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt"
          "parser.rkt" 
-         "symbolic-dict.rkt"
+         "partition-storage.rkt"
          "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
          "visitor-rename.rkt"
