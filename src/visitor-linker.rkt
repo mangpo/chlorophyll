@@ -24,7 +24,7 @@
 
     ;; type
     ;; 1) data-type
-    ;; 2) (cons data-type entry)
+    ;; 2) (cons data-type entry) for int::2
 
     ;; Declare IO function: in(), out(data)
     (declare env "in" (get-stdin))
@@ -50,6 +50,7 @@
       (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
 	      (send (get-field at place) accept this)))
 
+    ;; Return list of n places
     (define (expand-place place n)
       (define (different place)
 	(map (lambda (x) (new RangePlace% 
@@ -66,13 +67,16 @@
 	    (get-field place-list place)]
 	   
 	   [(symbolic? place)
+            ;; if symbolic, create n different symbolic variables.
 	    (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
 	   
 	   [(is-a? place Place%)
 	    (let* ([at (get-field at place)]
 		   [at-list
 		    (if (is-a? at Exp%)
+                        ;; desugarer will expand according to 'expect' field
 			(send at accept desugarer)
+                        ;; if not, expand munually
 			(for/list ([i (in-range n)]) at))])
 	      (map (lambda (x) (new Place% [at x])) at-list))]
 	   
@@ -206,7 +210,11 @@
 	 (set-field! expect ast entry)
 	 (define e1 (get-field e1 ast))
          (define e1-known (send e1 accept this))
-         (define op-type (send (get-field op ast) accept this))
+	 
+	 (define op (get-field op ast))
+	 (set-field! place-type ast (get-field place op))
+
+         (define op-type (send op accept this))
 	 (set-field! type ast op-type)
 	 e1-known]
         
@@ -217,7 +225,11 @@
 	 (define e2 (get-field e2 ast))
          (define e1-known (send e1 accept this))
          (define e2-known (send e2 accept this))
-         (define op-type (send (get-field op ast) accept this))
+	 
+	 (define op (get-field op ast))
+	 (set-field! place-type ast (get-field place op))
+
+         (define op-type (send op accept this))
 	 (set-field! type ast op-type)
 	 (and e1-known e2-known)]
         
@@ -265,6 +277,13 @@
 		  (set-field! known-type param (and (get-field known-type param) arg-known)))))
 	        
 	 (set! entry old-entry)
+	 #f]
+
+	[(is-a? ast Send%)
+	 (set! entry 1)
+	 (send (get-field data ast) accept this)]
+
+	[(is-a? ast Recv%)
 	 #f]
         
         [(is-a? ast Assign%)

@@ -1,8 +1,0 @@
-void main() {
-  int@0 x;
-  int@1 y;
-  x = in();
-  y = in();
-  out(x);
-  out(y);
-}

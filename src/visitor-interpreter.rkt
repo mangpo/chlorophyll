@@ -4,15 +4,12 @@
          "ast.rkt" 
          "ast-util.rkt"
          "parser.rkt" 
+	 "partition-storage.rkt"
+         "space-estimator.rkt"
          "visitor-interface.rkt" 
-         "visitor-desugar.rkt"
-         "space-estimator.rkt" 
-         "symbolic-dict.rkt")
+         "visitor-desugar.rkt")
 
 (provide count-msg-interpreter% (struct-out comminfo))
-
-(define debug #f)
-(define debug-sym #f)
 
 (struct comminfo (msgs placeset))
 
@@ -24,6 +21,8 @@
                 [has-func-temp #f]
 		)
 
+    (define debug #f)
+    (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
     (declare env "in" (comminfo 0 (set)))
@@ -88,8 +87,6 @@
       (when (not (is-a? native Livable%))
         (raise "find-place-type: native is not Livable%"))
       
-      ;(pretty-display (format "find-place-type ~a" (send ast to-string)))
-      
       (define place-type (get-field place-type ast))
       (if (or (number? place-type) (pair? place-type))
           ; place-type is infered during abstract interpretation
@@ -131,7 +128,7 @@
          (let ([place-list 
                 (if (place-type-dist? place) (car place) place)])
            (for ([p place-list])
-             (cores-inc-space places (get-field place p) add-space)))]))
+		(cores-inc-space places (get-field place p) add-space)))]))
     
     ;;; Increase the used space of "place" with op.
     (define (inc-space-with-op place op)
@@ -160,7 +157,7 @@
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg-place-type x y x-ast [y-ast #f])
       (when debug
-	    (pretty-display `(count-msg-place-type ,x ,y)))
+      	    (pretty-display `(count-msg-place-type ,x ,y)))
       ;(assert (and (is-a? x-ast Base%) (is-a? y-ast Base%)))
 
       ;; Return the place that a resides if a only lives in one place. 
@@ -191,7 +188,7 @@
 	;(pretty-display `(count-comm ,p ,(send p-ast to-string)))
 	;(assert (place-type? p))
         (cond
-          [(number? p) 1]
+          [(or (number? p) (equal? p #f)) 1]
           [(is-a? p Place%)
            (let ([at (get-field at p)])
              (if (or (equal? at "any") (equal? at "io"))
@@ -319,8 +316,8 @@
 		  ;; Pair of list of possible places and index
 		  (set-field! place-type ast (cons places index))))
 
-          ;; Infer place for number
-          (when (is-a? index Num%) (send index infer-place (get-field place-type ast)))
+          ;; Infer place
+          (send index infer-place (get-field place-type ast))
 	  (define index-ret (send index accept this))
 
           (inc-space places est-acc-arr) ; not accurate
@@ -342,14 +339,16 @@
         ;; we don't need to find place for such temp
         (if (<= (get-field expand ast) (get-field expect ast))
           ;; lookup place from env
-          (let ([place (lookup env ast)])
+          (let* ([place (lookup env ast)]
+		 [inferred-place (get-field place-type ast)]
+                 [place-type (if (and (at-any? place) inferred-place)
+				 inferred-place
+				 (to-place-type ast place))])
             ;; place can be list if var is iterator
             ;; need to call to-place-type to turn place-list into (place-list . index)
-            (set-field! place-type ast (to-place-type ast place))
-            
-            ;; no space taken for now
-            ;; x[i] in loop => take no space, i can be on stack
-            ;(inc-space (get-field place ast) est-var) ; doesn't work with place-list
+            (set-field! place-type ast place-type)
+            (unless (is-a? ast Temp%)
+              (inc-space place-type est-var))
             (comminfo 0 (to-place-set place)))
           (comminfo 0 (set)))
           ]
@@ -358,12 +357,15 @@
           (when debug (newline))
           (define e1 (get-field e1 ast))
           (define op (get-field op ast))
-          (define e1-ret (send e1 accept this))
-	  ;(define op-ret (send op accept this))
-          
+
           ;; set place-type
           (define place-type (find-place-type ast op))
           (set-field! place-type ast place-type)
+
+          ;; Infer place-type
+          (send e1 infer-place place-type)
+
+          (define e1-ret (send e1 accept this))
 
 	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
 
@@ -388,18 +390,17 @@
           (define place-type (find-place-type ast op))
 	  (set-field! place-type ast place-type)
 
-          ;; Infer place-type for number.
-          (when (is-a? e1 Num%) (send e1 infer-place place-type))
-          (when (is-a? e2 Num%) (send e2 infer-place place-type))
+          ;; Infer place-type
+          (send e1 infer-place place-type)
+          (send e2 infer-place place-type)
 
           (define e1-ret (send e1 accept this))
           (define e2-ret (send e2 accept this))
-	  ;(define op-ret (send op accept this))
           
 	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
 
           (when debug
-                (pretty-display (format ">> BinOp ~a" (send ast to-string))))
+                (pretty-display (format ">> BinOp ~a ~a" (send ast to-string) place-type)))
 
           (when (and debug-sym
                  (symbolic? (+ (comminfo-msgs e1-ret) 
@@ -437,7 +438,11 @@
 
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
+	       ;; infer place-type
+	       (send arg infer-place (get-field place-type param))
 	       (let ([arg-ret (send arg accept this)])
+		 ;; infer place-type
+		 (send param infer-place (get-field place-type arg))
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
           
@@ -487,7 +492,11 @@
           (when debug
                 (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
 
-	  (inc-space place (* (length var-list) est-data)) ; increase space
+	  (unless (is-a? ast TempDecl%)
+		  (inc-space place (* (length var-list) 
+				      (if (is-a? ast Param%)
+					  (add1 est-data)
+					  est-data)))) ; increase space
           
 	  (when debug
                 (pretty-display (format ">> VarDecl ~a (after)" var-list)))
@@ -653,23 +662,16 @@
           (define lhs-place-type (get-field place-type lhs))
 	  (define lhs-name (get-field name lhs))
 
-          (when debug
-                (pretty-display ">> Assign (rhs1)"))
-
-          ;; If rhs is a number, set place to be equal to lhs
-          (when (is-a? rhs Num%) (send rhs infer-place lhs-place-type))
-
-          (when debug
-                (pretty-display ">> Assign (rhs2)"))
+          ;; infer type
+          (send rhs infer-place lhs-place-type)
 
           ;; Visit rhs
           (define rhs-ret (send rhs accept this))
+          (define rhs-place-type (get-field place-type rhs))
 
-          (when debug
-                (pretty-display ">> Assign (rhs3)"))
+          ;; infer type
+          (send lhs infer-place rhs-place-type)
 
-          (when debug
-                (pretty-display ">> Assign (connect)"))
 	  ;; Don't increase space
 
           (define comm-lhs-rhs

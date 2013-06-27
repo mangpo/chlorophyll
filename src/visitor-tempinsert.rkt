@@ -12,22 +12,21 @@
 
     (struct entry (temp type expand))
 
-    (define (get-temp type expand expect place-type [funccall #f])
-      (let ([temp (format "_temp~a" count)])
+    (define (get-temp type expand expect place-type)
+      (let* ([temp (format "_temp~a" count)]
+	     [temp-decl (if (> expand 1)
+			    ;; no expansion in desugar step
+			    (new TempDecl% [var-list (list temp)]
+				 [type (cons type expand)] ; packed type
+				 [place place-type] 
+				 [expect expand]) 
+			    (new TempDecl% [var-list (list temp)]
+				 [type type] ; native type
+				 [place place-type] 
+				 [expect expand]))])
+	
         (set! count (add1 count))
-        (set! new-decls (cons
-                         (if (and funccall (> expand 1))
-                             ;; no expansion in desugar step
-                             (new TempDecl% [var-list (list temp)]
-                                  [type (cons type expand)] ; packed type
-                                  [place place-type] 
-                                  [expect expand]) 
-                             (new TempDecl% [var-list (list temp)]
-                                  [type type] ; native type
-                                  [place place-type] 
-                                  [expect expand]))
-                              new-decls))
-        ;(pretty-display `(declare ,temp ,expand ,expect))
+        (set! new-decls (cons temp-decl new-decls))
         
         ;; temp for funccall:
         ;; let func() -> int::2
@@ -36,8 +35,23 @@
         ;; expect(temp) = 1
 
         ;; don't set known-type
-        (new Var% [name temp] [type type] [expand expand] [expect expect] [place-type place-type])
+        (new Temp% [name temp] [type type] [expand expand] [expect expect] [place-type place-type])
         ))
+
+    (define (tempify arg param)
+      (define x (send arg accept this))
+      (define stmt (car x))
+      (define exp (cdr x))
+      (if (and (is-a? exp Var%) (regexp-match #rx"_temp" (get-field name exp)))
+	  x
+	  (let* ([new-temp (get-temp
+			(get-field type param)
+			(get-field expect param)
+			(get-field expect param)
+			(get-field place param))]
+		 [arg-temp (send new-temp clone)])
+	    (cons (list stmt (new Assign% [lhs new-temp] [rhs exp] [nocomm #f]))
+		  arg-temp))))
 
     (define/public (visit ast)
       (cond
@@ -76,26 +90,38 @@
          (cons (append (car e1-ret) (car e2-ret)) ast)]
         
         [(is-a? ast FuncCall%)
-         (define args-ret  (map (lambda (x) (send x accept this)) 
-                                (get-field args ast)))
-         (define new-stmts (map car args-ret))
-         (define new-args  (map cdr args-ret))
+         ;; (define args-ret  (map (lambda (x) (send x accept this)) 
+         ;;                        (get-field args ast)))
+	 ;; (define tempified (map tempify args-ret))
+	 (define params (get-field stmts (get-field args (get-field signature ast))))
+	 (define tempified (map tempify (get-field args ast) params))
+         (define new-stmts (map car tempified))
+         (define new-args  (map cdr tempified))
          (set-field! args ast new-args)
          
          ;; only insert temp for function call for now
          (if (get-field is-stmt ast)
-             (cons new-stmts ast)
+	     ;; return list of stmts
+             (list new-stmts ast)
+	     ;; return (list of stmts . ast)
              (let* ([temp (get-temp
                            (get-field type ast) 
                            (get-field expand ast)
                            (get-field expect ast)
-                           (get-field place (get-field return (get-field signature ast)))
-                           #t)]
+                           (get-field place (get-field return (get-field signature ast))))]
                     [temp-tight (send temp clone)])
                ;; send expect = 1 so that it doesn't get expanded in desugarin step
                (set-field! expect temp-tight 1)
                (cons (list new-stmts (new Assign% [lhs temp-tight] [rhs ast] [nocomm #t]))
                      temp)))]
+
+	[(is-a? ast Recv%)
+	 (cons (list) ast)]
+
+	[(is-a? ast Send%)
+	 (define data-ret (send (get-field data ast) accept this))
+	 (set-field! data ast (cdr data-ret))
+	 (list (car data-ret) ast)]
         
         [(or (is-a? ast VarDecl%)
              (is-a? ast ArrayDecl%))

@@ -177,9 +177,17 @@
 
 ;; number, place-list -> place-type
 (define (to-place-type ast place)
-  (if (or (number? place) (is-a? place Place%))
-      place
-      (cons place ast)))
+  (cond
+   [(or 
+     (number? place) 
+     (is-a? place Place%)
+     (equal? place #f))
+    place]
+
+   [(list? place)
+    (cons place ast)]
+   
+   [else (raise (format "to-place-type: unimplemented for ~a" place))]))
 
 ;; (define (clone-place place)
 ;;   (cond
@@ -188,6 +196,22 @@
 ;;    [(place-type-dist? place) (cons (clone-place (car place)) (clone-place (cdr place)))]
 ;;    [(is-a? place Base%)      (send place clone)]
 ;;    [else                     (raise (format "clone-place: unimplemented for ~a" place))]))
+
+(define (get-new-if ast c t f body-placeset [parent #f])
+  (let ([constructor (cond
+		      [(is-a? ast If!=0%) If!=0%]
+		      [(is-a? ast If<0%)  If<0%]
+		      [else If%])])
+    (new constructor [condition c] [true-block t] [false-block f] [parent parent])))
+
+(define (get-new-while ast c t bound body-placeset [parent #f])
+  (let ([constructor (cond
+		      [(is-a? ast While!=0%) While!=0%]
+		      [(is-a? ast While==0%) While==0%]
+		      [(is-a? ast While<0%)  While<0%]
+		      [(is-a? ast While>=0%) While>=0%]
+		      [else While%])])
+    (new constructor [condition c] [body t] [parent #f])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; AST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -213,6 +237,8 @@
       (position-col pos))
     ))
 
+;; Place is a representation of place of the form @place(x).
+;; Example, @place(any), @place(io), @place(x[i]), @place(valid-expr-in-the-program)
 (define Place%
   (class Base%
     (super-new)
@@ -253,8 +279,6 @@
       (set! place (concrete-place place)))
     ))
 
-
-
 (define LivableGroup%
   (class Base%
     (super-new)
@@ -270,6 +294,7 @@
     (init-field [known-type #f] [place-type #f] [cluster #f] [expand 1] [type #f])
 
     (define/public (infer-place [p place-type])
+      ;(pretty-display `(infer-place ,p ,place-type))
       (when (at-any? place-type)
             (set! place-type p)))
 
@@ -332,7 +357,7 @@
   (class Exp%
     (super-new)
     (inherit-field type known-type place-type pos expand expect)
-    (init-field name [sub #f])
+    (init-field name [sub #f] [address #f])
     (inherit print-send-path)
     
     (define/override (clone)
@@ -361,8 +386,11 @@
 			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
 				    name part expect)
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
-
     ))
+
+(define Temp%
+  (class Var%
+    (super-new)))
 
 (define Array%
   (class Var%
@@ -420,9 +448,9 @@
 
     (define/override (infer-place [p place-type])
       (when (at-any? place-type)
-            (set! place-type p))
-      (send e1 infer-place p)
-      (send e2 infer-place p))
+            (set! place-type p)
+	    (send e1 infer-place p)
+	    (send e2 infer-place p)))
 
     (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
@@ -450,8 +478,8 @@
 
     (define/override (infer-place [p place-type])
       (when (at-any? place-type)
-            (set! place-type p))
-      (send e1 infer-place p))
+            (set! place-type p)
+	    (send e1 infer-place p)))
 
     (define/override (to-string)
       (format "(~a ~a)" (send op to-string) (send e1 to-string)))
@@ -503,12 +531,6 @@
       (raise-mismatch-error 'data-partition
 			    (format "number of data partitions at '~a' is ~a, expect <= ~a" 
 				    name part expect)
-			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
-
-    (define/public (type-mismatch type entry)
-      (raise-mismatch-error 'mismatch
-			    (format "expect ~a data partitions but function '~a' returns ~a\n"
-				    entry name type)
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
   
     (define/public (args-mismatch l)
@@ -599,7 +621,7 @@
 (define Param%
   (class VarDecl%
     (super-new)
-    (init-field [place-type #f] [known-type #t])
+    (init-field [place-type #f] [known-type #t] [address #f])
     (inherit-field var-list type known place)
 
     (define/public (set-known val)
@@ -655,6 +677,12 @@
     
     ))
 
+;; TypeExpansion represents place of packed variables.
+;; For example place of int::2@(0,1) x; int::3[] y[10];
+;; Element in place-list can be
+;; 1) number/symbolic
+;; 2) list of RangePlace%
+;; 3) (cons list of RangPlace% . exp) 
 (define TypeExpansion%
   (class Base%
     (super-new)
@@ -666,7 +694,7 @@
 (define For%
   (class Scope%
     (super-new)
-    (init-field iter from to body place-list known)
+    (init-field iter from to body place-list known [address #f])
     (inherit print-send-path print-body-placeset)
 
     (define/public (to-concrete)
@@ -736,26 +764,99 @@
     (init-field condition true-block [false-block #f])
     (inherit print-send-path)
 
-    (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(IF" indent))
+    (define/public (pretty-print-content indent)
       (print-send-path indent)
       (send condition pretty-print (inc indent))
       (send true-block pretty-print (inc indent))
       (when false-block (send false-block pretty-print (inc indent))))
+      
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF" indent))
+      (pretty-print-content indent))
+))
+
+;; Corresponds to 'if' in arrayforth.
+(define If!=0%
+  (class If%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF!=0" indent))
+      (pretty-print-content indent))
+))
+
+;; Correspond to '-if' in arrayforth.
+(define If<0%
+  (class If%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF<0" indent))
+      (pretty-print-content indent))
 ))
 
 (define While%
   (class Scope%
     (super-new)
-    (init-field condition body bound)
+    (init-field condition body [bound 100])
     (inherit print-send-path)
 
-    (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(WHILE" indent))
+    (define/public (pretty-print-content indent)
       (print-send-path indent)
       (send condition pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(WHILE" indent))
+      (pretty-print-content indent))
+
+))
+
+;; Correspond to recursion with 'if'.
+(define While!=0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While!=0" indent))
+      (pretty-print-content indent))
+))
+
+;; Correspond to recursion with reversed-true-false 'if'.
+(define While==0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While==0" indent))
+      (pretty-print-content indent))
+))
+
+;; Correspond to recursion with '-if'.
+(define While<0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While<0" indent))
+      (pretty-print-content indent))
+))
+
+;; Correspond to recursion with reversed-true-false 'iif'.
+(define While>=0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While>=0" indent))
+      (pretty-print-content indent))
 ))
 
 (define Block%

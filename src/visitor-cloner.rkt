@@ -36,14 +36,19 @@
         (let ([place-type (get-field place-type ast)])
           (if (and (place-type-dist? place-type) 
                    (equal? (get-field name (cdr place-type)) index))
-              (ormap (lambda (x) 
-                       ;; return x that covers the given range
-                       (and (and (<= (get-field from x) (get-field from range))
-                                (>= (get-field to x) (get-field to range)))
-			    (cons (get-field place x) (get-field from x)))) 
-                     (car place-type))
+	      (let ([here (ormap (lambda (x) 
+				   (and (<= (get-field from x) (get-field from range))
+					(>= (get-field to x) (get-field to range))
+					(get-field place x)))
+				 (car place-type))]
+		    [count 0])
+		(for ([p (car place-type)])
+		     (when (and (<= (get-field to p) (get-field from range))
+				(not (= (get-field place p) here)))
+			   (set! count (+ count (- (get-field to p) (get-field from p))))))
+		(cons here count))
               (cons place-type 0))))
-
+        
       (cond
        [(is-a? ast Const%)
         (new Const% [n (get-field n ast)] [place (get-field place ast)])]
@@ -127,20 +132,20 @@
              [place-list (get-field place-list ast)]
              [body-placeset (get-field body-placeset ast)])] ;; not copy
 
-       [(is-a? ast If%)
-        (let ([false-block (get-field false-block ast)])
-          (new If%
-               [condition (send (get-field condition ast) accept this)]
-               [true-block (send (get-field true-block ast) accept this)]
-               [false-block (and false-block (send false-block accept this))]
-               [body-placeset (get-field body-placeset ast)]))] ;; not copy
+       [(is-a? ast If%)   
+	(let ([false-block (get-field false-block ast)])
+	  (get-new-if ast
+		      (send (get-field condition ast) accept this)
+		      (send (get-field true-block ast) accept this)
+		      (and false-block (send false-block accept this))
+		      (get-field body-placeset ast)))]
 
        [(is-a? ast While%)
-        (new While%
-             [condition (send (get-field condition ast) accept this)]
-             [body (send (get-field body ast) accept this)]
-             [bound (get-field bound ast)]
-             [body-placeset (get-field body-placeset ast)])] ;; not copy
+	(get-new-while ast
+		       (send (get-field condition ast) accept this)
+		       (send (get-field body ast) accept this)
+		       (get-field bound ast)
+		       (get-field body-placeset ast))]
 
        [(is-a? ast Assign%)
         (new Assign%

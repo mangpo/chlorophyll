@@ -11,6 +11,7 @@
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
+			       READ WRITE
                                PLACE HERE ANY))
 
 (define-lex-trans number
@@ -45,6 +46,8 @@
    ("return" (token-RETURN))
    ;; ("known" (token-KNOWN))
    ("cluster" (token-CLUSTER))
+   ("#read"  (token-READ))
+   ("#write" (token-WRITE))
    ("for"   (token-FOR))
    ("while" (token-WHILE))
    ("if"    (token-IF))
@@ -208,7 +211,10 @@
 	 ((array) $1))
 
     (funccall
-         ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos])))
+         ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos]))
+	 ((READ LPAREN VAR RPAREN)   (new Recv% [port (string->symbol $3)]))
+	 ((WRITE LPAREN VAR COMMA exp RPAREN)  
+	  (new Send% [port (string->symbol $3)] [data $5])))
 
     (exp ((lit) $1)
 	 ((ele) $1)
@@ -363,11 +369,16 @@
 
          ; if
          ((IF LPAREN exp RPAREN LBRACK block RBRACK)
-            (new If% [condition $3] [true-block $6] [pos $1-start-pos]))
+            (new If% [condition $3] 
+                 [true-block $6] 
+                 [pos $1-start-pos]))
 
          ; if-else
          ((IF LPAREN exp RPAREN LBRACK block RBRACK ELSE LBRACK block RBRACK)
-            (new If% [condition $3] [true-block $6] [false-block $10] [pos $1-start-pos]))
+            (new If% [condition $3] 
+                 [true-block $6] 
+                 [false-block $10] 
+                 [pos $1-start-pos]))
 
          ; return
          ((RETURN exp SEMICOL)

@@ -1,28 +1,39 @@
 #lang racket
 
-(require "header.rkt" "visitor-comminsert.rkt" "visitor-unroll.rkt" "visitor-divider.rkt" "visitor-cprinter.rkt")
+(require "header.rkt" 
+         "visitor-comminsert.rkt" 
+         "visitor-unroll.rkt" 
+         "visitor-divider.rkt" 
+         "visitor-printer.rkt"
+         "visitor-cprinter.rkt")
 
 (provide (all-defined-out))
 
-;; Unroll for loop according to array distributions of variables inside its body.
-;; Note: given AST is mutated.
-(define (unroll ast)
+(define (sep-and-insertcomm name ast w h routing-table part2core #:verbose [verbose #f])
+  (define concise-printer (new printer% [out #t]))
+  
+  ;; Unroll for loop according to array distributions of variables inside its body.
+  ;; Note: given AST is mutated.
   (define for-unroller (new loop-unroller%))
-  (send ast accept for-unroller)
-  )
+  (send ast accept for-unroller)  
+  (when verbose
+        (pretty-display "--- after unroll ---")
+        (send ast accept concise-printer)
+        ;;(send my-ast pretty-print)
+        )
 
-;; 1) Insert communication route to send-path field.
-;; 2) Convert partition ID to actual core ID.
-;; Note: given AST is mutate.
-(define (insert-comm ast routing-table part2core w h)
+  ;; 1) Insert communication route to send-path field.
+  ;; 2) Convert partition ID to actual core ID.
+  ;; Note: given AST is mutate.
   (define commcode-inserter (new commcode-inserter% 
                                  [routing-table routing-table]
                                  [part2core part2core]
                                  [n (* w h)]))
+  (send ast accept commcode-inserter)
+  (when verbose
+        (pretty-display "--- after insert communication ---")
+        (send ast pretty-print))
 
-  (send ast accept commcode-inserter))
-
-(define (regenerate ast w h name)
   (define divider (new ast-divider% [w w] [h h]))
   (define programs (send ast accept divider))
   (define cprinter (new cprinter% [thread #t] [w w] [h h]))
@@ -71,6 +82,8 @@
         (newline))
       (print-main)
       ))
+  
+  programs
   )
 
 (define (generate-onecore-simulation ast file)

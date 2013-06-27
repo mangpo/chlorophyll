@@ -9,7 +9,7 @@ void main() {
   z = in();
   j = in();
   
-  if(j % 2 == 0) {
+  if(j == 0) {
     x = x +@1 y;
   } else {
     z = y +@2 z;

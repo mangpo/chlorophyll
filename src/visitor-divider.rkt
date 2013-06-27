@@ -6,14 +6,14 @@
 
 (provide ast-divider%)
 
-(define debug #f)
-
 (define ast-divider%
   (class* object% (visitor<%>)
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
+
+    (define debug #f)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -31,9 +31,14 @@
       (set-core-workspace! (vector-ref cores i) x))
 
     (define (push-workspace i x)
-      (let ([block (core-workspace (vector-ref cores i))])
+      (let* ([block (core-workspace (vector-ref cores i))]
+	     [stmts (get-field stmts block)]
+	     [last-stmt (if (empty? stmts) #f (car stmts))])
 	(when debug (pretty-display `(push-workspace ,i ,x)))
-        (set-field! stmts block (cons x (get-field stmts block)))
+	(if (and (is-a? x ArrayDecl%) (is-a? last-stmt ArrayDecl%)
+		 (equal? (get-field var x) (get-field var last-stmt)))
+	    (set-field! bound last-stmt (+ (get-field bound last-stmt) (get-field bound x)))
+	    (set-field! stmts block (cons x (get-field stmts block))))
 	))
 
     (define (reverse-workspace i)
@@ -110,13 +115,6 @@
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
-
-    ;; (define (rename name)
-    ;;   (define full-name (regexp-match #rx"(.+)::(.+)" name)
-    ;; 	(when full-name
-    ;; 	      (let ([new-name (cadr full-name)]
-    ;; 		    [expand (caddr full-name)])
-    ;; 	      (set-field! name ast (format "~a::~a" new-name expand))))))
 
     (define/public (visit ast)
       (define (gen-comm-path path)    
@@ -359,6 +357,9 @@
 	      (push-workspace place ast)
 	      (for ([p place])
 		   (let ([here (get-field place p)])
+		     (pretty-display `(array ,(get-field var ast) ,here 
+					     ,(get-field from p)
+					     ,(get-field to p)))
 		     (push-workspace 
 		      here
 		      (new ArrayDecl% [var (get-field var ast)]
@@ -453,10 +454,12 @@
         (for ([c (get-field body-placeset ast)])
              (let* ([old-space (get-workspace c)]
                     ;; pop stack and put in in if condition
-                    [new-if (new If% [condition (pop-stack c)]
-                                [true-block (new Block% [stmts (list)])]
-                                [false-block (new Block% [stmts (list)])]
-                                [parent old-space])])
+		    [new-if (get-new-if ast
+					(pop-stack c) ;; condition
+					(new Block% [stmts (list)]) ;; t
+					(new Block% [stmts (list)]) ;; f
+					#f ;; body-placeset
+					old-space)]) ;; parent
                (clear-stack c)     
                (set-field! parent (get-field true-block new-if) new-if)
                (set-field! parent (get-field false-block new-if) new-if)
@@ -499,9 +502,11 @@
         (gen-comm-condition)
         (scope-pattern 
          (lambda (c) 
-           (new While% [condition (pop-stack c)]
-                [body (new Block% [stmts (list)])]
-                [parent (get-workspace c)])))]
+	   (get-new-while ast
+			  (pop-stack c) ;; condition
+			  (new Block% [stmts (list)]) ;; body
+			  #f #f ;; bound, body-placeset
+			  (get-workspace c))))] ;; parent
 
        [(is-a? ast For%)
         (scope-pattern 

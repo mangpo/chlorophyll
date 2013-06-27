@@ -66,7 +66,7 @@
            (let* ([val-space (vector-ref space i)] 
                   [new-space (+ val-space add-space)]) ; <-- optimization
              ;(pretty-display `(cores-inc-space ,i ,add-space))
-             (assert (<= new-space capacity) `(<= new-space capacity))
+             (assert (<= new-space capacity) `(<= new-space capacity ,new-space))
              (vector-set! space i new-space))))
   ;(assert (<= (cores-count cores) max-cores))
   )
@@ -97,7 +97,7 @@
                       [val-ops (vector-ref costly-op i)]
                       [more-space (if (set-member? val-ops op) 4 add-space)]
                       [new-space (+ val-space more-space)])  ; <-- optimization
-                 (assert (<= new-space capacity) `(<= new-space capacity))
+                 (assert (<= new-space capacity) `(<= new-space capacity ,new-space))
                  (vector-set! space i new-space)
                  (vector-set! costly-op i (set-add val-ops op))
                  ))
