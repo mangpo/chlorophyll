@@ -197,6 +197,22 @@
 ;;    [(is-a? place Base%)      (send place clone)]
 ;;    [else                     (raise (format "clone-place: unimplemented for ~a" place))]))
 
+(define (get-new-if ast c t f body-placeset [parent #f])
+  (let ([constructor (cond
+		      [(is-a? ast If!=0%) If!=0%]
+		      [(is-a? ast If<0%)  If<0%]
+		      [else If%])])
+    (new constructor [condition c] [true-block t] [false-block f] [parent parent])))
+
+(define (get-new-while ast c t bound body-placeset [parent #f])
+  (let ([constructor (cond
+		      [(is-a? ast While!=0%) While!=0%]
+		      [(is-a? ast While==0%) While==0%]
+		      [(is-a? ast While<0%)  While<0%]
+		      [(is-a? ast While>=0%) While>=0%]
+		      [else While%])])
+    (new constructor [condition c] [body t] [parent #f])))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; AST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define Base%
@@ -748,26 +764,93 @@
     (init-field condition true-block [false-block #f])
     (inherit print-send-path)
 
-    (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(IF" indent))
+    (define/public (pretty-print-content indent)
       (print-send-path indent)
       (send condition pretty-print (inc indent))
       (send true-block pretty-print (inc indent))
       (when false-block (send false-block pretty-print (inc indent))))
+      
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF" indent))
+      (pretty-print-content indent))
+))
+
+(define If!=0%
+  (class If%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF!=0" indent))
+      (pretty-print-content indent))
+))
+
+(define If<0%
+  (class If%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(IF<0" indent))
+      (pretty-print-content indent))
 ))
 
 (define While%
   (class Scope%
     (super-new)
-    (init-field condition body bound)
+    (init-field condition body [bound 100])
     (inherit print-send-path)
 
-    (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(WHILE" indent))
+    (define/public (pretty-print-content indent)
       (print-send-path indent)
       (send condition pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(WHILE" indent))
+      (pretty-print-content indent))
+
+))
+
+(define While!=0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While!=0" indent))
+      (pretty-print-content indent))
+))
+
+(define While==0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While==0" indent))
+      (pretty-print-content indent))
+))
+
+(define While<0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While<0" indent))
+      (pretty-print-content indent))
+))
+
+(define While>=0%
+  (class While%
+   (super-new)
+   (inherit pretty-print-content)
+
+   (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(While>=0" indent))
+      (pretty-print-content indent))
 ))
 
 (define Block%

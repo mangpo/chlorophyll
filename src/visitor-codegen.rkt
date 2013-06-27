@@ -108,9 +108,11 @@
        [(equal? op "*") (list (mult))]
        [(equal? op "-") (list (gen-block "-" "1" "." "+" "." "+" 2 1))]
        [(equal? op "+") (list (gen-block "." "+" 2 1))]
-       [(equal? op ">>") (list (gen-block "dup" "dup" "or" "-" "." "+" 1 1) (forloop (list "2/")))] 
+       [(equal? op ">>") (list (gen-block "dup" "dup" "or" "-" "." "+" 1 1) 
+			       (forloop (gen-block) (list (gen-block "2/" 1 1))))] 
        ;; x-1 for 2/ unext
-       [(equal? op "<<") (list (gen-block "dup" "dup" "or" "-" "." "+" 1 1) (forloop (list "2*")))] 
+       [(equal? op "<<") (list (gen-block "dup" "dup" "or" "-" "." "+" 1 1) 
+			       (forloop (gen-block) (list (gen-block "2*" 1 1))))] 
        ;; x-1 for 2* unext
        [(equal? op "&") (list (gen-block "and" 2 1))]
        [(equal? op "^") (list (gen-block "or" 2 1))]
@@ -118,7 +120,7 @@
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
     (define (gen-port port)
-      (pretty-display `(gen-port ,port))
+      ;(pretty-display `(gen-port ,port))
       (cond
        [(equal? port `N)
 	(if (= (modulo x 2) 0) "up" "down")]
@@ -299,7 +301,7 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: If")))
 	;; not yet support && ||
-        (define exp (get-field condition ast))
+        (define cond-ret (send (get-field condition ast) accept this))
         (define true-ret (send (get-field true-block ast) accept this))
         (define false-ret 
           (if (get-field false-block ast)
@@ -307,76 +309,52 @@
               #f))
 
         (cond
-         [(binop-equal? exp "!=")
-          (define condition (minus (get-e1 exp) (get-e2 exp)))
-          (define cond-ret (send condition accept this))
+         [(is-a? ast If!=0%)
           (if false-ret
               (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
               (prog-append cond-ret (list (ift true-ret))))
           ]
-         
-         [(binop-equal? exp "==")
-          (define condition (minus (get-e1 exp) (get-e2 exp)))
-          (define cond-ret (send condition accept this))
-          (if false-ret
-              (define-if (prog-append cond-ret (list (iftf false-ret true-ret))))
-              (define-if (prog-append cond-ret (list (iftf (list) true-ret)))))
-          ]
 
-         [(binop-equal? exp "<")
-          (define condition (minus (get-e1 exp) (get-e2 exp))) ;; e1-e2 < 0
-          (define cond-ret (send condition accept this))
-	  
+         [(is-a? ast If<0%)
           (if false-ret
               (define-if (prog-append cond-ret (list (-iftf true-ret false-ret))))
               (prog-append cond-ret (list (-ift true-ret))))
-          ]
-
-         [(binop-equal? exp ">")
-          (define condition (minus (get-e2 exp) (get-e1 exp))) ;; 0 > e2-e1
-          (define cond-ret (send condition accept this))
-          (if false-ret
-              (define-if (prog-append cond-ret (list (-iftf true-ret false-ret))))
-              (prog-append cond-ret (list (-ift true-ret))))
-          ]
-         
-         [(binop-equal? exp ">=")
-          (define condition (minus (get-e1 exp) (get-e2 exp))) ;; e1-e2 >= 0
-          (define cond-ret (send condition accept this))
-          (if false-ret
-              (define-if (prog-append cond-ret (list (-iftf false-ret true-ret))))
-              (define-if (prog-append cond-ret (list (-iftf (list) true-ret)))))
-          ]
-         
-         [(binop-equal? exp "<=")
-          (define condition (minus (get-e2 exp) (get-e1 exp))) ;; 0 <= e2-e1
-          (define cond-ret (send condition accept this))
-          (if false-ret
-              (define-if (prog-append cond-ret (list (-iftf false-ret true-ret))))
-              (define-if (prog-append cond-ret (list (-iftf (list) true-ret)))))
           ]
 
          [else
-          (define cond-ret (send exp accept this))
           (if false-ret
               (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
               (prog-append cond-ret (list (ift true-ret))))])]
        
        [(is-a? ast While%)
 	(define exp (get-field condition ast))
-	(define body (get-field body ast))
-	(define stmts (get-field stmts body))
 	(define name (get-while-name))
+	(define body (get-field body ast))
+	(define block (new Block% [stmts (append (get-field stmts body)
+						 (list (new FuncCall% [name name] [args (list)])))]))
 
 	;; desugar into if construct
 	;; set name = while-name
 	(define if-rep
-	  (new If% 
-	       [condition exp] 
-	       [true-block 
-		(new Block% [stmts (append stmts 
-					   (list (new FuncCall% [name name] [args (list)])))])
-				   ]))
+	  (cond
+	   [(is-a? ast While!=0%) 
+	    (new If!=0% [condition exp] [true-block block])]
+
+	   [(is-a? ast While==0%)
+	    (new If!=0% [condition exp] 
+		 [true-block (new Block% [stmts (list)])]
+		 [false-block block])]
+
+	   [(is-a? ast While<0%)
+	    (new If<0% [condition exp] [true-block block])]
+	    
+	   [(is-a? ast While>=0%) 
+	    (new If<0% [condition exp] 
+		 [true-block (new Block% [stmts (list)])]
+		 [false-block block])]
+
+	   [else
+	    (new If% [condition exp] [true-block block])]))
 	
 	(define if-ret (send if-rep accept this))
 	;; (pretty-display "~~~~~~~~~~~~~~~~~~~~~~")

@@ -153,3 +153,26 @@ core = 17, space = 284, ops = #<set:>
 core = 18, space = 202, ops = #<set:>
 core = 19, space = 202, ops = #<set:>
 */
+
+/* new estimate
+core = 0, space = 1338, ops = #<set:>
+core = 1, space = 1315, ops = #<set:>
+core = 2, space = 459, ops = #<set:>
+core = 3, space = 459, ops = #<set:>
+core = 4, space = 513, ops = #<set:>
+core = 5, space = 513, ops = #<set:>
+core = 6, space = 427, ops = #<set:>
+core = 7, space = 326, ops = #<set:>
+core = 8, space = 326, ops = #<set:>
+core = 9, space = 684, ops = #<set:>
+core = 10, space = 707, ops = #<set:>
+core = 11, space = 482, ops = #<set:>
+core = 12, space = 390, ops = #<set:>
+core = 13, space = 390, ops = #<set:>
+core = 14, space = 0, ops = #<set:>
+core = 15, space = 0, ops = #<set:>
+core = 16, space = 326, ops = #<set:>
+core = 17, space = 526, ops = #<set:>
+core = 18, space = 326, ops = #<set:>
+core = 19, space = 326, ops = #<set:>
+*/

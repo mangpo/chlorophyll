@@ -53,7 +53,7 @@
 ;(compile-percore "../tests/while.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
-(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #t])
+(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #f])
   
   (define n (* w h))
   (define my-ast (parse file))

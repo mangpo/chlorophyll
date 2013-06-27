@@ -277,7 +277,7 @@
     )
   
    (when verbose
-    (pretty-display "\n=== After evalute ===")
+    (pretty-display "\n=== After evaluate ===")
      (send my-ast pretty-print))
   
   (result (evaluate-with-sol num-msg) 
