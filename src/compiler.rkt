@@ -4,7 +4,7 @@
          "ast-util.rkt"
          "partitioner.rkt" 
          "layout-sa.rkt" 
-         "communication.rkt"
+         "separator.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
@@ -57,11 +57,10 @@
   
   (define n (* w h))
   (define my-ast (parse file))
+  (define concise-printer (new printer% [out #t]))
   
   ;; generate sequantial simulation code
   (when input (simulate-onecore my-ast name input))
-  
-  (define concise-printer (new printer% [out #t]))
   
   (when verbose
     (pretty-display "--- before partition ---")
@@ -72,7 +71,7 @@
                                    #:name name
                                    #:cores 20 
                                    #:capacity capacity 
-                                   #:verbose #t))
+                                   #:verbose #f))
   (when verbose
     (pretty-display "--- after partition ---")
     (send my-ast pretty-print))
@@ -84,28 +83,12 @@
   (when verbose
     (pretty-display "--- after layout ---"))
 
-  ;; unroll
-  (unroll my-ast)
-  
-  (when verbose
-    (pretty-display "--- after unroll ---")
-    (send my-ast accept concise-printer)
-    ;(send my-ast pretty-print)
-    )
-  
-  ;; insert communication code
-  (insert-comm my-ast
-               (layoutinfo-routes layout-res)
-               (layoutinfo-part2core layout-res)
-               w h)
-  
-  (when #t
-    (pretty-display "--- after insert communication ---")
-    (send my-ast pretty-print))
-
-  ;; generate multicore ASTs and simuation code
-  (define programs (regenerate my-ast w h name))
-  
+  ;; generate multicore ASTs and output equivalent cpp simuation code to file
+  (define programs (sep-and-insertcomm name my-ast w h 
+                                       (layoutinfo-routes layout-res)
+                                       (layoutinfo-part2core layout-res)
+                                       #:verbose #f))
+  ;; generate machine code for each core
   (generate-codes programs w h)
   )
 

@@ -24,7 +24,7 @@
 
     ;; type
     ;; 1) data-type
-    ;; 2) (cons data-type entry)
+    ;; 2) (cons data-type entry) for int::2
 
     ;; Declare IO function: in(), out(data)
     (declare env "in" (get-stdin))
@@ -50,6 +50,7 @@
       (when (and (is-a? place Place%) (is-a? (get-field at place) Exp%))
 	      (send (get-field at place) accept this)))
 
+    ;; Return list of n places
     (define (expand-place place n)
       (define (different place)
 	(map (lambda (x) (new RangePlace% 
@@ -66,13 +67,16 @@
 	    (get-field place-list place)]
 	   
 	   [(symbolic? place)
+            ;; if symbolic, create n different symbolic variables.
 	    (cons place (for/list ([i (in-range (sub1 n))]) (get-sym)))]
 	   
 	   [(is-a? place Place%)
 	    (let* ([at (get-field at place)]
 		   [at-list
 		    (if (is-a? at Exp%)
+                        ;; desugarer will expand according to 'expect' field
 			(send at accept desugarer)
+                        ;; if not, expand munually
 			(for/list ([i (in-range n)]) at))])
 	      (map (lambda (x) (new Place% [at x])) at-list))]
 	   

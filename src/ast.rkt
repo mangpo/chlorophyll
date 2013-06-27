@@ -237,6 +237,8 @@
       (position-col pos))
     ))
 
+;; Place is a representation of place of the form @place(x).
+;; Example, @place(any), @place(io), @place(x[i]), @place(valid-expr-in-the-program)
 (define Place%
   (class Base%
     (super-new)
@@ -276,8 +278,6 @@
     (define/public (to-concrete)
       (set! place (concrete-place place)))
     ))
-
-
 
 (define LivableGroup%
   (class Base%
@@ -683,6 +683,12 @@
     
     ))
 
+;; TypeExpansion represents place of packed variables.
+;; For example place of int::2@(0,1) x; int::3[] y[10];
+;; Element in place-list can be
+;; 1) number/symbolic
+;; 2) list of RangePlace%
+;; 3) (cons list of RangPlace% . exp) 
 (define TypeExpansion%
   (class Base%
     (super-new)
@@ -776,6 +782,7 @@
       (pretty-print-content indent))
 ))
 
+;; Corresponds to 'if' in arrayforth.
 (define If!=0%
   (class If%
    (super-new)
@@ -786,6 +793,7 @@
       (pretty-print-content indent))
 ))
 
+;; Correspond to '-if' in arrayforth.
 (define If<0%
   (class If%
    (super-new)
@@ -813,6 +821,7 @@
 
 ))
 
+;; Correspond to recursion with 'if'.
 (define While!=0%
   (class While%
    (super-new)
@@ -823,6 +832,7 @@
       (pretty-print-content indent))
 ))
 
+;; Correspond to recursion with reversed-true-false 'if'.
 (define While==0%
   (class While%
    (super-new)
@@ -833,6 +843,7 @@
       (pretty-print-content indent))
 ))
 
+;; Correspond to recursion with '-if'.
 (define While<0%
   (class While%
    (super-new)
@@ -843,6 +854,7 @@
       (pretty-print-content indent))
 ))
 
+;; Correspond to recursion with reversed-true-false 'iif'.
 (define While>=0%
   (class While%
    (super-new)
