@@ -1,0 +1,13 @@
+int->int filter RunningSum() {
+  int x;
+  x = 0;
+  work {
+    x = x + in();
+    out(x);
+  }
+}
+
+int->int pipeline Main() {
+  add RunningSum();
+}
+

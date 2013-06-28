@@ -1,0 +1,16 @@
+int->int filter MultiplyBy(int N) {
+  work {
+    out(N * in());
+  }
+}
+
+int->int pipeline MultiplyByPower(int N, int P) {
+  for(i from 0 to P) {
+    add MultiplyBy(N);
+  }
+}
+
+int->int pipeline Main() {
+  add MultiplyByPower(10, 3);
+}
+
