@@ -11,6 +11,7 @@
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
+                               -> FILTER WORK PIPELINE ADD
 			       READ WRITE
                                PLACE HERE ANY))
 
@@ -39,7 +40,7 @@
   (identifier (re-seq identifier-characters
                       (re-* identifier-characters-ext))))
   
-(define simple-math-lexer
+(define greensyn-lexer
   (lexer-src-pos
    ("int"   (token-INT))
    ("void"  (token-VOID))
@@ -58,6 +59,11 @@
    ("here"  (token-HERE))
    ("any"   (token-ANY))
    ("@" (token-@))
+   ("->" (token-->))
+   ("filter" (token-FILTER))
+   ("work" (token-WORK))
+   ("pipeline" (token-PIPELINE))
+   ("add" (token-ADD))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -85,9 +91,9 @@
 
 
    ;; recursively calls the lexer which effectively skips whitespace
-   (whitespace   (position-token-token (simple-math-lexer input-port)))
-   (line-comment (position-token-token (simple-math-lexer input-port)))
-   (comment (position-token-token (simple-math-lexer input-port)))
+   (whitespace   (position-token-token (greensyn-lexer input-port)))
+   (line-comment (position-token-token (greensyn-lexer input-port)))
+   (comment (position-token-token (greensyn-lexer input-port)))
 
    ((eof) (token-EOF))))
 
@@ -119,7 +125,7 @@
         (list (new RangePlace% [from begin] [to end]))
         (cons (new RangePlace% [from begin] [to to]) (default-array-place to end)))))
 
-(define simple-math-parser
+(define greensyn-parser
   (parser
    (start program)
    (end EOF)
@@ -390,11 +396,44 @@
          ((funccall SEMICOL) $1)
          )
 
+    (filter-stmt
+         ((stmt) ($1))
+         ((WORK LBRACK block RBRACK) (new Work% [block $3])))
+    (pipeline-stmt
+         ((stmt) ($1))
+         ((ADD funccall SEMICOL) (new Add% [call $2])))
+    
     (stmts
          ((stmt)       (list $1))
          ((stmt stmts) (cons $1 $2)))
-
+    (filter-stmts
+         ((filter-stmt)       (list $1))
+         ((filter-stmt filter-stmts) (cons $1 $2)))
+    (pipeline-stmts
+         ((pipeline-stmt)       (list $1))
+         ((pipeline-stmt pipeline-stmts) (cons $1 $2)))
+    
+    (filter-decl
+        ((data-place-type -> data-place-type FILTER VAR LPAREN params RPAREN LBRACK filter-block RBRACK)
+         (new FilterDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
+              [input  (new InputDecl% [var-list (list "#input")] 
+                           [type (car $1)] [place (cdr $1)])]
+              [output (new OutputDecl% [var-list (list "#output")] 
+                           [type (car $1)] [place (cdr $1)])]
+              )))
+    
+    (pipeline-decl
+        ((data-place-type -> data-place-type PIPELINE VAR LPAREN params RPAREN LBRACK pipeline-block RBRACK)
+         (new PipelineDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
+              [input  (new InputDecl% [var-list (list "#input")] 
+                           [type (car $1)] [place (cdr $1)])]
+              [output (new OutputDecl% [var-list (list "#output")] 
+                           [type (car $1)] [place (cdr $1)])]
+              )))
+    
     (block ((stmts) (new Block% [stmts $1])))
+    (filter-block ((filter-stmts) (new Block% [stmts $1])))
+    (pipeline-block ((pipeline-stmts) (new Block% [stmts $1])))
 
     (func-decl
          ((data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
@@ -403,13 +442,15 @@
 			    [type (car $1)] [place (cdr $1)])]
                [pos $2-start-pos])))
 
-    ;; (decl
-    ;;      ((var-decl) $1)
-    ;;      ((func-decl) $1))
+     (decl
+          ;((var-decl) $1)
+          ((func-decl) $1)
+          ((filter-decl) $1)
+          ((pipeline-decl) $1))
 
     (decls
-         ((func-decl) (list $1))
-         ((func-decl decls) (cons $1 $2)))
+         ((decl) (list $1))
+         ((decl decls) (cons $1 $2)))
          
     (program
          ((decls) (new Program% [stmts $1])))
@@ -432,5 +473,5 @@
     (ast input)))
 
 (define (ast input)
-  (simple-math-parser (lex-this simple-math-lexer input)))
+  (greensyn-parser (lex-this greensyn-lexer input)))
 

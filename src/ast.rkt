@@ -905,6 +905,62 @@
 				  (position-col pos))))
     ))
 
+(define InputDecl%
+  (class VarDecl%
+    (super-new)))
+
+(define OutputDecl%
+  (class VarDecl%
+    (super-new)))
+
+(define FilterDecl%
+  (class Scope%
+    (super-new)
+    (init-field input output name args body)
+    (inherit-field body-placeset)
+    (inherit print-body-placeset)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "(FILTER ~a" name))
+      (print-body-placeset indent)
+      (send input pretty-print (inc indent))
+      (send output pretty-print (inc indent))
+      (send args pretty-print (inc indent))
+      (send body pretty-print (inc indent)))))
+
+(define PipelineDecl%
+  (class Scope%
+    (super-new)
+    (init-field name args body input output)
+    (inherit-field body-placeset)
+    (inherit print-body-placeset)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "(PIPELINE ~a" name))
+      (print-body-placeset indent)
+      (send input pretty-print (inc indent))
+      (send output pretty-print (inc indent))
+      (send args pretty-print (inc indent))
+      (send body pretty-print (inc indent)))))
+
+(define Work%
+  (class Base% ;; TODO Maybe Scope%
+    (super-new)
+    (init-field block)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(WORK" indent))
+      (send block pretty-print (inc indent)))))
+
+(define Add%
+  (class Base%
+    (super-new)
+    (init-field call)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(ADD" indent))
+      (send call pretty-print (inc indent)))))
+
 (define Program%
   (class Block%
     (super-new)
