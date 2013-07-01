@@ -16,7 +16,7 @@
                 [helper-funcs (list)] [if-count 0] [while-count 0]
                 [max 1])
 
-    (define debug #f)
+    (define debug #t)
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -189,10 +189,18 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Return")))
         (define val (get-field val ast))
-        (if (list? val)
-            (foldl (lambda (v all) (prog-append all (send v accept this)))
-	       (list) val)
-            (send (get-field val ast) accept this))]
+	(define ret
+	  (if (list? val)
+	      (foldl (lambda (v all) (prog-append all (send v accept this)))
+		     (list) val)
+	      (send (get-field val ast) accept this)))
+
+	(if (empty? ret)
+	    (list (gen-block #f))
+	    (begin
+	      (set-block-mem! (last ret) #f)
+	      ret))
+	]
 
        [(is-a? ast If%)
         (when debug 

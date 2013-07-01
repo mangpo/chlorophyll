@@ -6,7 +6,7 @@
 
 (provide (all-defined-out))
 
-(struct block (body in out) #:mutable)
+(struct block (body in out mem) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body) #:mutable)
@@ -20,9 +20,11 @@
 (define-syntax gen-block
   (syntax-rules ()
     [(gen-block)
-     (block (list) 0 0)]
+     (block (list) 0 0 #t)]
+    [(gen-block mem)
+     (block (list) 0 0 mem)]
     [(gen-block a ... in out)
-     (block (list a ...) in out)]))
+     (block (list a ...) in out #t)]))
 
 (define-syntax prog-append
   (syntax-rules ()
@@ -34,6 +36,7 @@
       ;; merge b-block into a-block
       (define (merge-into a-block b-block)
 	(set-block-body! a-block (append (block-body a-block) (block-body b-block)))
+	(set-block-mem! a-block (and (block-mem a-block) (block-mem b-block)))
 	(define a-in  (block-in a-block))
 	(define a-out (block-out a-block))
 	(define b-in  (block-in  b-block))
@@ -74,7 +77,7 @@
           (display i)
           (display " "))
         (display (block-body x)))
-    (pretty-display (format ", in:~a out:~a)" (block-in x) (block-out x)))]
+    (pretty-display (format ", in:~a out:~a mem:~a)" (block-in x) (block-out x) (block-mem x)))]
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
@@ -139,7 +142,7 @@
                      #:num-bits bit #:name name
                      #:constraint out-space
                      #:mem mem-size #:start mem-size)
-           (block-in ast) out)]
+           (block-in ast) out (block-mem ast))]
 
    [(list? ast)
     (for/list ([x ast])
@@ -176,21 +179,27 @@
    [else
     (raise (format "arrayforth: superoptimize: unimplemented for ~a" ast))]))
 
+(define (superoptimize-program program name)
+  (define bit (if (< (aforth-bit program) 9) 9 (aforth-bit program)))
+  (define result (superoptimize (aforth-code program) 
+				name (aforth-memsize program) bit))
+  (pretty-display `(-------------------- result -----------------------))
+  (codegen-print result)
+  (aforth result (aforth-memsize program) bit))
+
 ;; optimize many-core programs
-(define (superoptimize-programs programs name w h)
-  (define n (* w h))
+(define (superoptimize-programs programs name)
+  (define n (vector-length programs))
   (define output-programs (make-vector n))
   
-  (for ([i (in-range n)])
+  (for ([i (in-range (sub1 n))])
     (pretty-display `(-------------------- ,i -----------------------))
     (let* ([program (vector-ref programs i)]
-           ;; need at least 9 bits to handle communication
-           [bit (if (< (aforth-bit program) 9) 9 (aforth-bit program))]
-           [result (superoptimize (aforth-code program) 
-                                  name (aforth-memsize program) bit)])
-      (pretty-display `(-------------------- ,i -----------------------))
-      (codegen-print result)
+	   [result (superoptimize-program program name)])
       (vector-set! output-programs i result)))
+
+  (vector-set! output-programs (sub1 n) (vector-ref programs (sub1 n)))
+
   output-programs)
 
 ;(superoptimize (gen-block "up" "b!" "!b" "325" "b!" "!b" 0 0) "comm" 0 9)

@@ -1,6 +1,7 @@
 TODO
 - test more
 - connect to rohin's interpreter
+- try running GA MD5 in the simulator
 - how to measure time & energy on their MD5 code
 - code length instead of runtime?
 - clean up

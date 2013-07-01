@@ -1,11 +1,13 @@
 #lang racket
 
-(require "parser.rkt"
+(require "header.rkt"
+         "parser.rkt"
          "ast-util.rkt"
          "partitioner.rkt" 
          "layout-sa.rkt" 
          "separator.rkt"
          "arrayforth.rkt"
+         "arrayforth-print.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
@@ -95,13 +97,28 @@
   ;; generate machine code for each core
   (generate-codes programs w h)
   )
+
+;; compile HLP to optimized one-core machine code.
+;; for testing only.
+(define (compile-and-optimize-percore file core w h)
+  (define program (compile-percore file core w h))
+  (superoptimize-program program "name"))
   
 ;; compile HLP to optimized many-core machine code
 (define (compile-and-optimize file name capacity input [w 5] [h 4] #:verbose [verbose #f])
   (define programs (compile file name capacity input w h #:verbose verbose))
-  (superoptimize-programs programs name w h))
+  
+  (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
+    (lambda () (aforth-struct-print programs)))
+    
+  (define opts (superoptimize-programs programs name))
+  
+  (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
+    (lambda () (aforth-struct-print opts)))
+  )
 
-(compile-and-optimize "../tests/run/if.cll" "if" 256 "null")
+(compile-and-optimize "../tests/run/simple.cll" "simple" 256 "null")
+;(compile-and-optimize-percore "../tests/run/function.cll" 0 2 2)
 
 (define testdir "../tests/run")
 
