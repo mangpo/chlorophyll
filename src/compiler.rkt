@@ -5,6 +5,7 @@
          "partitioner.rkt" 
          "layout-sa.rkt" 
          "separator.rkt"
+         "arrayforth.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
@@ -36,13 +37,16 @@
     (pretty-display ">>> code gen")
     (define res (send program accept code-gen))
     (pretty-display ">>> result")
-    (codegen-print res)))
+    (codegen-print (aforth-code res))
+    res))
 
 ;; Compile per-core IRs to per-core machine codes.
 (define (generate-codes programs w h)
+  (define machine-codes (make-vector (add1 (* w h))))
   (for ([i (in-range (add1 (* w h)))])
     (let ([program (vector-ref programs i)])
-      (generate-code program i w h))))
+      (vector-set! machine-codes i (generate-code program i w h))))
+  machine-codes)
 
 ;; Compile per-core HLP read from file to machine code.
 (define (compile-percore file core w h)
@@ -91,6 +95,13 @@
   ;; generate machine code for each core
   (generate-codes programs w h)
   )
+  
+;; compile HLP to optimized many-core machine code
+(define (compile-and-optimize file name capacity input [w 5] [h 4] #:verbose [verbose #f])
+  (define programs (compile file name capacity input w h #:verbose verbose))
+  (superoptimize-programs programs name w h))
+
+(compile-and-optimize "../tests/run/if.cll" "if" 256 "null")
 
 (define testdir "../tests/run")
 

@@ -3,100 +3,20 @@
 (require "header.rkt"
          "ast.rkt" 
 	 "ast-util.rkt"
-	 "visitor-interface.rkt")
+	 "visitor-interface.rkt"
+         "arrayforth.rkt")
 
 (provide (all-defined-out))
-
-(struct block (body in out) #:mutable)
-(struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
-(struct funccall (name))
-(struct funcdecl (name body) #:mutable)
-(struct forloop (init body))
-(struct ift (t))
-(struct iftf (t f))
-(struct -ift (t))
-(struct -iftf (t f))
-
-(define (codegen-print x [indent ""])
-  (define (inc indent)
-    (string-append indent "  "))
-  (define (dec indent)
-    (substring indent 2))
-
-  (cond
-   [(list? x)
-    (for ([i x])
-	 (codegen-print i indent))]
-   
-   [(block? x)
-    (display (format "~a(block: " indent))
-    (for ([i (block-body x)])
-	 (display i)
-	 (display " "))
-    (pretty-display (format ", in:~a out:~a)" (block-in x) (block-out x)))]
-   
-   [(mult? x)
-    (pretty-display (format "~a(mult)" indent))]
-   
-   [(funccall? x)
-    (pretty-display (format "~a(funccall: ~a)"  indent (funccall-name x)))]
-   
-   [(forloop? x)
-    (pretty-display (format "~a(for:"  indent))
-    (codegen-print (forloop-init x) (inc indent))
-    (codegen-print (forloop-body x) (inc indent))]
-   
-   [(ift? x)
-    (pretty-display (format "~a(if:"  indent))
-    (pretty-display (format "~a>> true"  indent))
-    (codegen-print (ift-t x) (inc indent))]
-   
-   [(iftf? x)
-    (pretty-display (format "~a(if:"  indent))
-    (pretty-display (format "~a>> true"  indent))
-    (codegen-print (iftf-t x) (inc indent))
-    (pretty-display (format "~a>> false"  indent))
-    (codegen-print (iftf-f x) (inc indent))]
-   
-   [(-ift? x)
-    (pretty-display (format "~a(-if:"  indent))
-    (pretty-display (format "~a>> true"  indent))
-    (codegen-print (-ift-t x) (inc indent))]
-   
-   [(-iftf? x)
-    (pretty-display (format "~a(-if:"  indent))
-    (pretty-display (format "~a>> true"  indent))
-    (codegen-print (-iftf-t x) (inc indent))
-    (pretty-display (format "~a>> false"  indent))
-    (codegen-print (-iftf-f x) (inc indent))]
-    
-   [(funcdecl? x)
-    (pretty-display (format "~a(funcdecl: ~a"  indent (funcdecl-name x)))
-    (codegen-print (funcdecl-body x) (inc indent))]
-   
-   [else (raise (format "visitor-codegen: print: unimplemented for ~a" x))]))
 
 (define code-generator%
   (class* object% (visitor<%>)
     (super-new)
     (init-field data-size iter-size core w h 
 		[x (floor (/ core w))] [y (modulo core w)]
-                [helper-funcs (list)] [if-count 0] [while-count 0])
+                [helper-funcs (list)] [if-count 0] [while-count 0]
+                [max 1])
 
     (define debug #f)
-
-    (define-syntax gen-block
-      (syntax-rules ()
-	[(gen-block)
-	 (block (list) 0 0)]
-	[(gen-block a ... in out)
-	 (block (list a ...) in out)]))
-
-    (define-syntax prog-append
-      (syntax-rules ()
-	[(prog-append a b) (program-append a b)]
-	[(prog-append a b c ...)
-	 (prog-append (program-append a b) c ...)]))
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -132,32 +52,6 @@
 	(if (= (modulo y 2) 0) "left" "right")]
        [(equal? port `IO)
         "io"]))
-	   
-    (define (program-append a-list b-list)
-      ;; merge b-block into a-block
-      (define (merge-into a-block b-block)
-	(set-block-body! a-block (append (block-body a-block) (block-body b-block)))
-	(define a-in  (block-in a-block))
-	(define a-out (block-out a-block))
-	(define b-in  (block-in  b-block))
-	(define b-out (block-out  b-block))
-	(if (>= a-out b-in)
-	    (set-block-out! a-block (- (+ a-out b-out) b-in))
-	    (begin
-	      (set-block-in! a-block (- (+ a-in b-in) a-out))
-	      (set-block-out! a-block b-out))))
-
-      (cond
-       [(empty? a-list) b-list]
-       [(empty? b-list) a-list]
-       [else
-	(define a-last (last a-list))
-	(define b-first (car b-list))
-	(if (and (block? a-last) (block? b-first))
-	    (begin
-	      (merge-into a-last b-first)
-	      (append a-list (cdr b-list)))
-	    (append a-list b-list))]))
 
     (define (get-if-name)
       (set! if-count (add1 if-count))
@@ -199,7 +93,10 @@
        [(is-a? ast Num%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Num ~a" (send ast to-string))))
-	(list (gen-block (number->string (get-field n (get-field n ast))) 0 1))]
+        (define n (get-field n (get-field n ast)))
+        (when (> n max)
+              (set! max n))
+	(list (gen-block (number->string n) 0 1))]
 
        [(is-a? ast Array%)
         (when debug 
@@ -409,7 +306,8 @@
           (for/list ([decl (get-field stmts ast)])
             (send decl accept this)))
         
-        (append (reverse helper-funcs) main-funcs)
+        (aforth (append (reverse helper-funcs) main-funcs) (+ data-size iter-size) 
+                (inexact->exact (floor (+ (/ (log max) (log 2)) 1))))
         ]
 
        [(is-a? ast Block%)
