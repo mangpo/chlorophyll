@@ -873,11 +873,31 @@
 
 ))
 
-(define FuncDecl%
+(define CallableDecl%
   (class Scope%
     (super-new)
-    (init-field name args body return [temps (list)] [return-print #f])
-    (inherit-field pos body-placeset)
+    (init-field name args body)
+    (inherit-field pos)
+    
+    (define/public (not-found-error)
+      (raise-syntax-error 'undefined-callable
+			  (format "'~a' error at src: l:~a c:~a" 
+				  name
+				  (position-line pos) 
+				  (position-col pos))))
+  ))
+
+(define RuntimeCallableDecl%
+  (class CallableDecl%
+    (super-new)
+    (init-field [temps (list)])
+  ))
+
+(define FuncDecl%
+  (class RuntimeCallableDecl%
+    (super-new)
+    (init-field return [return-print #f])
+    (inherit-field name args body temps body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%
     ;; return = VarDecl%
@@ -897,13 +917,12 @@
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
-    (define/public (not-found-error)
-      (raise-syntax-error 'undefined-function
-			  (format "'~a' error at src: l:~a c:~a" 
-				  name
-				  (position-line pos) 
-				  (position-col pos))))
     ))
+
+(define StaticCallableDecl%
+  (class CallableDecl%
+    (super-new)
+  ))
 
 (define InputDecl%
   (class VarDecl%
@@ -914,10 +933,10 @@
     (super-new)))
 
 (define FilterDecl%
-  (class Scope%
+  (class RuntimeCallableDecl% ;; ??
     (super-new)
-    (init-field input output name args body)
-    (inherit-field body-placeset)
+    (init-field input output)
+    (inherit-field name args body temps body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
@@ -929,10 +948,10 @@
       (send body pretty-print (inc indent)))))
 
 (define PipelineDecl%
-  (class Scope%
+  (class StaticCallableDecl%
     (super-new)
-    (init-field name args body input output)
-    (inherit-field body-placeset)
+    (init-field input output)
+    (inherit-field name args body body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
@@ -943,13 +962,13 @@
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))))
 
-(define Work%
+(define WorkBlocking%
   (class Base% ;; TODO Maybe Scope%
     (super-new)
     (init-field block)
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(WORK" indent))
+      (pretty-display (format "~a(WORKBLOCKING" indent))
       (send block pretty-print (inc indent)))))
 
 (define Add%

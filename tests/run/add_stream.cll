@@ -1,5 +1,5 @@
 int->int filter Add() {
-  work {
+  work blocking {
     out(in() + in());
   }
 }

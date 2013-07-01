@@ -11,7 +11,7 @@
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
-                               -> FILTER WORK PIPELINE ADD
+                               -> FILTER WORK BLOCKING PIPELINE ADD
 			       READ WRITE
                                PLACE HERE ANY))
 
@@ -62,6 +62,7 @@
    ("->" (token-->))
    ("filter" (token-FILTER))
    ("work" (token-WORK))
+   ("blocking" (token-BLOCKING))
    ("pipeline" (token-PIPELINE))
    ("add" (token-ADD))
    (arith-op1 (token-ARITHOP1 lexeme))
@@ -394,27 +395,18 @@
 
          ; function call
          ((funccall SEMICOL) $1)
+         
+         ; stream-related statements
+         ((WORK BLOCKING LBRACK block RBRACK) (new WorkBlocking% [block $4]))
+         ((ADD funccall SEMICOL) (new Add% [call $2]))
          )
-
-    (filter-stmt
-         ((stmt) ($1))
-         ((WORK LBRACK block RBRACK) (new Work% [block $3])))
-    (pipeline-stmt
-         ((stmt) ($1))
-         ((ADD funccall SEMICOL) (new Add% [call $2])))
     
     (stmts
          ((stmt)       (list $1))
          ((stmt stmts) (cons $1 $2)))
-    (filter-stmts
-         ((filter-stmt)       (list $1))
-         ((filter-stmt filter-stmts) (cons $1 $2)))
-    (pipeline-stmts
-         ((pipeline-stmt)       (list $1))
-         ((pipeline-stmt pipeline-stmts) (cons $1 $2)))
     
     (filter-decl
-        ((data-place-type -> data-place-type FILTER VAR LPAREN params RPAREN LBRACK filter-block RBRACK)
+        ((data-place-type -> data-place-type FILTER VAR LPAREN params RPAREN LBRACK block RBRACK)
          (new FilterDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
               [input  (new InputDecl% [var-list (list "#input")] 
                            [type (car $1)] [place (cdr $1)])]
@@ -423,7 +415,7 @@
               )))
     
     (pipeline-decl
-        ((data-place-type -> data-place-type PIPELINE VAR LPAREN params RPAREN LBRACK pipeline-block RBRACK)
+        ((data-place-type -> data-place-type PIPELINE VAR LPAREN params RPAREN LBRACK block RBRACK)
          (new PipelineDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
               [input  (new InputDecl% [var-list (list "#input")] 
                            [type (car $1)] [place (cdr $1)])]
@@ -432,8 +424,6 @@
               )))
     
     (block ((stmts) (new Block% [stmts $1])))
-    (filter-block ((filter-stmts) (new Block% [stmts $1])))
-    (pipeline-block ((pipeline-stmts) (new Block% [stmts $1])))
 
     (func-decl
          ((data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)

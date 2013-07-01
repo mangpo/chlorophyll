@@ -1,5 +1,5 @@
 int->int filter MultiplyBy(int N) {
-  work {
+  work blocking {
     out(N * in());
   }
 }
