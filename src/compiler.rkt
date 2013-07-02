@@ -117,7 +117,7 @@
     (lambda () (aforth-struct-print opts)))
   )
 
-(compile-and-optimize "../tests/run/simple.cll" "simple" 256 "null")
+(compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 256 "null")
 ;(compile-and-optimize-percore "../tests/run/function.cll" 0 2 2)
 
 (define testdir "../tests/run")

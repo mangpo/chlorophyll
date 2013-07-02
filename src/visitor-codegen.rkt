@@ -170,9 +170,9 @@
 	    (let ([index-ret (send (get-field index lhs) accept this)]
 		  [rhs-ret (send rhs accept this)])
 	      (prog-append 
-	       index-ret
 	       rhs-ret
-	       (list (gen-block "over" (number->string (car address)) "." "+" "a!" "!" "drop" 2 0))))
+	       index-ret
+	       (list (gen-block (number->string (car address)) "." "+" "a!" "!" 2 0))))
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
@@ -286,8 +286,8 @@
         (define address-str (number->string address))
         
         (define init-ret (gen-block (number->string from) address-str "a!" "!" 
-                                    (number->string (- to from 1)) 0 0)) ;; loop bound
-        
+                                    (number->string (- to from 1)) 0 1)) ;; loop bound
+         
         (define body-ret (send (get-field body ast) accept this))
         (define body-decor (list (gen-block address-str "a!" "@" "1" "." "+" "!" 0 0)))
 
