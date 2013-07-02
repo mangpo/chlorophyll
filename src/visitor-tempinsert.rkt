@@ -90,30 +90,35 @@
          (cons (append (car e1-ret) (car e2-ret)) ast)]
         
         [(is-a? ast FuncCall%)
-         ;; (define args-ret  (map (lambda (x) (send x accept this)) 
-         ;;                        (get-field args ast)))
-	 ;; (define tempified (map tempify args-ret))
-	 (define params (get-field stmts (get-field args (get-field signature ast))))
-	 (define tempified (map tempify (get-field args ast) params))
-         (define new-stmts (map car tempified))
-         (define new-args  (map cdr tempified))
-         (set-field! args ast new-args)
-         
-         ;; only insert temp for function call for now
-         (if (get-field is-stmt ast)
-	     ;; return list of stmts
-             (list new-stmts ast)
-	     ;; return (list of stmts . ast)
-             (let* ([temp (get-temp
-                           (get-field type ast) 
-                           (get-field expand ast)
-                           (get-field expect ast)
-                           (get-field place (get-field return (get-field signature ast))))]
-                    [temp-tight (send temp clone)])
-               ;; send expect = 1 so that it doesn't get expanded in desugarin step
-               (set-field! expect temp-tight 1)
-               (cons (list new-stmts (new Assign% [lhs temp-tight] [rhs ast] [nocomm #t]))
-                     temp)))]
+         (define func-ast (get-field signature ast))
+         (cond
+           [(is-a? func-ast FuncDecl%)
+            ;; (define args-ret  (map (lambda (x) (send x accept this)) 
+            ;;                        (get-field args ast)))
+            ;; (define tempified (map tempify args-ret))
+            (define params (get-field stmts (get-field args (get-field signature ast))))
+            (define tempified (map tempify (get-field args ast) params))
+            (define new-stmts (map car tempified))
+            (define new-args  (map cdr tempified))
+            (set-field! args ast new-args)
+            
+            ;; only insert temp for function call for now
+            (if (get-field is-stmt ast)
+                ;; return list of stmts
+                (cons new-stmts ast) ;; TODO Ask Mangpo, was list, works with cons
+                ;; return (list of stmts . ast)
+                (let* ([temp (get-temp
+                              (get-field type ast) 
+                              (get-field expand ast)
+                              (get-field expect ast)
+                              (get-field place (get-field return (get-field signature ast))))]
+                       [temp-tight (send temp clone)])
+                  ;; send expect = 1 so that it doesn't get expanded in desugarin step
+                  (set-field! expect temp-tight 1)
+                  (cons (list new-stmts (new Assign% [lhs temp-tight] [rhs ast] [nocomm #t]))
+                        temp)))]
+           [else (cons (list) ast)]
+           )]
 
 	[(is-a? ast Recv%)
 	 (cons (list) ast)]
@@ -163,9 +168,11 @@
          (send (get-field body ast) accept this)
          ast]
         
-        [(is-a? ast FuncDecl%)
+        [(is-a? ast RuntimeCallableDecl%)
          (send (get-field body ast) accept this)
          ast]
+        
+        [(is-a? ast StaticCallableDecl%) ast]
         
         [(is-a? ast Block%)
          (set-field! stmts ast

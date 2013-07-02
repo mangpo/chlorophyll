@@ -7,7 +7,9 @@
          "separator.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
+         "visitor-workdesugar.rkt"
          "visitor-linker.rkt" 
+         "visitor-runstatic.rkt"
          "visitor-tempinsert.rkt" 
          "visitor-desugar.rkt"
          "visitor-memory.rkt"
@@ -19,11 +21,16 @@
 (define (parse file)
   ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
+  (send my-ast pretty-print)
+  ;(send my-ast accept (new implicit-main-inserter%))
+  ;(send my-ast accept (new flatten%))
+  (send my-ast accept (new work-desugarer%))
   (define need-temp (send my-ast accept (new linker%)))
   ;(when need-temp
     (send my-ast accept (new temp-inserter%))
     (send my-ast accept (new desugar%))
     ;)
+  (send my-ast accept (new static-runner%))
   my-ast)
 
 ;; Compile IR to machine code.

@@ -236,48 +236,50 @@
         [(is-a? ast FuncCall%)
          ;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
          (define func-ast (lookup env ast))
-         (define type (get-field type (get-field return func-ast)))
-
+         
          ;; set signature
          (set-field! signature ast func-ast)
          (set-field! is-stmt ast stmt-level)
-
-	 ;; set type and expand
-	 (if (string? type)
-	     (begin
-	       (set-field! type ast type)
-	       (set-field! expand ast 1))
-	     (begin
-	       (set-field! type ast (car type))
-	       (set-field! expand ast (cdr type))))
-
-	 ;; set expect
-	 (if entry
-	     (set-field! expect ast entry)
-	     (set-field! expect ast (get-field expand ast)))
-
-	 ;; check expand against expect
-	 (when (> (get-field expand ast) (get-field expect ast))
-	       (send ast partition-mismatch (get-field expand ast) (get-field expect ast)))
          
+         ; check argument list length
          (define args (get-field args ast))
          (define params (get-field stmts (get-field args func-ast)))
-
          (unless (= (length args) (length params))
-                 (send ast args-mismatch (length params)))
+           (send ast args-mismatch (length params)))
          
          (define old-entry entry)
          (for ([arg args]
-	       [param params])
-	      (let ([param-type (get-field type param)])
-		(if (string? param-type)
-		    (set! entry 1)
-		    (set! entry (cdr param-type)))
-		(let ([arg-known (send arg accept this)])
-		  (set-field! known-type param (and (get-field known-type param) arg-known)))))
-	        
-	 (set! entry old-entry)
-	 #f]
+               [param params])
+           (let ([param-type (get-field type param)])
+             (if (string? param-type)
+                 (set! entry 1)
+                 (set! entry (cdr param-type)))
+             (let ([arg-known (send arg accept this)])
+               (set-field! known-type param (and (get-field known-type param) arg-known)))))
+         (set! entry old-entry)
+         
+         (when (is-a? func-ast FuncDecl%)
+           (define type (get-field type (get-field return func-ast)))
+           
+           ;; set type and expand
+           (if (string? type)
+               (begin
+                 (set-field! type ast type)
+                 (set-field! expand ast 1))
+               (begin
+                 (set-field! type ast (car type))
+                 (set-field! expand ast (cdr type))))
+           
+           ;; set expect
+           (if entry
+               (set-field! expect ast entry)
+               (set-field! expect ast (get-field expand ast)))
+           
+           ;; check expand against expect
+           (when (> (get-field expand ast) (get-field expect ast))
+             (send ast partition-mismatch (get-field expand ast) (get-field expect ast)))
+           )
+         #f]
 
 	[(is-a? ast Send%)
 	 (set! entry 1)
@@ -285,6 +287,10 @@
 
 	[(is-a? ast Recv%)
 	 #f]
+        
+	[(is-a? ast Add%)
+	 (set! entry 1)
+	 (send (get-field call ast) accept this)]
         
         [(is-a? ast Assign%)
          ;(pretty-display (format "LINKER: Assign ~a ~a" lhs rhs))
@@ -364,13 +370,13 @@
          
          ;; update env front to back
          (for ([stmt stmts])
-	      (if (is-a? stmt FuncDecl%)
+	      (if (is-a? stmt CallableDecl%)
 		  (declare env (get-field name stmt) stmt)
 		  (send stmt accept this)))
          
          ;; desugar back to front
          (for ([stmt (reverse stmts)])
-           (when (is-a? stmt FuncDecl%)
+           (when (is-a? stmt CallableDecl%)
 		 (send stmt accept this)))
 
          ;; return non-native flag
@@ -385,7 +391,6 @@
 	      (send stmt accept this))
          ]
         
-        
         [(is-a? ast FuncDecl%)
 	 (push-scope)
          (define return (get-field return ast))
@@ -399,6 +404,18 @@
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
 	 (pop-scope)
+         ]
+        
+        [(is-a? ast CallableDecl%)
+         (push-scope)
+         (define input (get-field input ast))
+         (define output (get-field output ast))
+         (send input accept this)
+         (send output accept this)
+         
+	 (send (get-field args ast) accept this)
+         (send (get-field body ast) accept this)
+         (pop-scope)
          ]
         
         [else

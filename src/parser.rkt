@@ -118,7 +118,6 @@
     ))
 
 (define chunk 32)
-(define default-bound 100)
 
 (define (default-array-place begin end)
   (let ([to (+ begin chunk)])
@@ -370,9 +369,9 @@
                  [known #t] [from $5] [to $7] [place-list $10] 
                  [body $12] [pos $1-start-pos]))
 
-	 ; while loop. default bound is 100, but we should so static analysis.
+	 ; while loop
 	 ((WHILE LPAREN exp RPAREN LBRACK block RBRACK)
-	    (new While% [condition $3] [body $6] [bound default-bound] [pos $1-start-pos]))
+	    (new While% [condition $3] [body $6] [pos $1-start-pos]))
 
          ; if
          ((IF LPAREN exp RPAREN LBRACK block RBRACK)
@@ -407,7 +406,7 @@
     
     (filter-decl
         ((data-place-type -> data-place-type FILTER VAR LPAREN params RPAREN LBRACK block RBRACK)
-         (new FilterDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
+         (new AbstractFilterDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
               [input  (new InputDecl% [var-list (list "#input")] 
                            [type (car $1)] [place (cdr $1)])]
               [output (new OutputDecl% [var-list (list "#output")] 

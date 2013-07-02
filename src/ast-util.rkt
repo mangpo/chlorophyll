@@ -75,6 +75,13 @@
             (update (dict-ref env "__up__"
                               (lambda () (send ast not-found-error))) ast val))))
 
+(define (update-name env name val)
+  ;(pretty-display `(lookup ,env ,name ,val))
+  (if (dict-has-key? env name)
+      (dict-set! env name val)
+      (update-name (dict-ref env "__up__"
+                             (lambda () (raise (format "undefined ~a" name)))) name val)))
+
 (define (declare env name val)
   ;(pretty-display `(declare ,env ,name ,val))
   (dict-set! env name val))

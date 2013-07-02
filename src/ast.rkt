@@ -489,12 +489,13 @@
 (define FuncCall%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type pos expand expect)
     (init-field name args [signature #f] [is-stmt #f])
+    (inherit-field place-type pos) ;; static and runtime
+    (inherit-field known-type expand expect) ;; only runtime
     (inherit print-send-path)
 
     (define/override (clone)
-      (raise (format "Funtion call '~a' cannot be cloned" name)))
+      (raise (format "Function call '~a' cannot be cloned" name)))
 
     (define/public (copy-at core)
       (new FuncCall% [name name] 
@@ -539,7 +540,6 @@
 				    name l (length args))
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
     ))
-
 
 (define Const%
   (class Livable%
@@ -801,6 +801,7 @@
 (define While%
   (class Scope%
     (super-new)
+    ;; default bound is 100, but we should do static analysis.
     (init-field condition body [bound 100])
     (inherit print-send-path)
 
@@ -933,24 +934,46 @@
     (super-new)))
 
 (define FilterDecl%
-  (class RuntimeCallableDecl% ;; ??
+  (class RuntimeCallableDecl%
     (super-new)
-    (init-field input output)
-    (inherit-field name args body temps body-placeset)
+    (init-field input output [input-src #f] [output-dst #f])
+    ))
+
+(define AbstractFilterDecl%
+  (class FilterDecl%
+    (super-new)
+    (inherit-field input output name args body temps body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "(FILTER ~a" name))
+      (pretty-display (format "(ABSTRACTFILTER ~a" name))
       (print-body-placeset indent)
       (send input pretty-print (inc indent))
       (send output pretty-print (inc indent))
       (send args pretty-print (inc indent))
-      (send body pretty-print (inc indent)))))
+      (send body pretty-print (inc indent)))
+    ))
+
+(define ConcreteFilterDecl%
+  (class FilterDecl%
+    (super-new)
+    (init-field abstract arg-values)
+    (inherit-field input output name args body body-placeset)
+    (inherit print-body-placeset)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "(CONCRETEFILTER ~a" name))
+      (print-body-placeset indent)
+      (send input pretty-print (inc indent))
+      (send output pretty-print (inc indent))
+      (send args pretty-print (inc indent))
+      (send body pretty-print (inc indent)))
+    ))
 
 (define PipelineDecl%
   (class StaticCallableDecl%
     (super-new)
-    (init-field input output)
+    (init-field input output [input-src #f] [output-dst #f])
     (inherit-field name args body body-placeset)
     (inherit print-body-placeset)
     

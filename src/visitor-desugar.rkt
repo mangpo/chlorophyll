@@ -219,17 +219,22 @@
         
         [(is-a? ast FuncCall%)
          ;(pretty-display (format "DESUGAR: FuncCall ~a" (send ast to-string)))
-         (set-field! args ast (flatten 
+         (set-field! args ast (flatten
                                (map (lambda (x) (send x accept this))
                                     (get-field args ast))))
          ast]
 
 	[(is-a? ast Recv%)
 	 ast]
-
+        
         [(is-a? ast Send%)
          (define data-ret (send (get-field data ast) accept this))
          (set-field! data ast data-ret)
+         ast]
+        
+        [(is-a? ast Add%)
+         (define call-ret (send (get-field call ast) accept this))
+         (set-field! call ast call-ret)
          ast]
         
         [(is-a? ast Assign%)
@@ -373,7 +378,7 @@
          (send (get-field body ast) accept this)
 	 ast
          ]
-        
+                
         [(is-a? ast FuncDecl%)
          ;(pretty-display (format "DESUGAR: FuncDecl ~a (return)" (get-field name ast)))
 
@@ -383,8 +388,14 @@
          ;;         (set-field! return ast (new Block% [stmts return-ret]))
          ;;         (set-field! return-print ast return)))
 
-	 (send (get-field return ast) accept this)
-	 (send (get-field args ast) accept this)
+         (send (get-field return ast) accept this)
+         (send (get-field args ast) accept this)
+         (send (get-field body ast) accept this)
+         ast
+         ]
+        
+        [(is-a? ast CallableDecl%)
+         (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
          ast
          ]
