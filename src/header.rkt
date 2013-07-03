@@ -19,3 +19,5 @@
 
 (define outdir "../output")
 (define datadir "../testdata")
+
+(struct meminfo (addr virtual data))

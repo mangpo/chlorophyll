@@ -30,31 +30,32 @@
   my-ast)
 
 ;; Compile IR to machine code.
-(define (generate-code program i w h)
+(define (generate-code program i w h virtual)
   (pretty-display `(-------------------- ,i -----------------------))
+  (pretty-display program)
   (let* ([data-iter (send program accept (new memory-mapper%))]
          [code-gen (new code-generator% [data-size (car data-iter)]
                         [iter-size (cdr data-iter)]
-                        [core i] [w w] [h h])])
+                        [core i] [w w] [h h] [virtual virtual])])
     (pretty-display ">>> code gen")
     (define res (send program accept code-gen))
     (pretty-display ">>> result")
-    (codegen-print (aforth-code res))
+    (codegen-print res)
     res))
 
 ;; Compile per-core IRs to per-core machine codes.
-(define (generate-codes programs w h)
+(define (generate-codes programs w h virtual)
   (define machine-codes (make-vector (add1 (* w h))))
   (for ([i (in-range (add1 (* w h)))])
     (let ([program (vector-ref programs i)])
-      (vector-set! machine-codes i (generate-code program i w h))))
+      (vector-set! machine-codes i (generate-code program i w h virtual))))
   machine-codes)
 
 ;; Compile per-core HLP read from file to machine code.
 (define (compile-percore file core w h)
   (define my-ast (parse file))
   ;(send my-ast pretty-print)
-  (generate-code my-ast core w h))
+  (generate-code my-ast core w h #f))
 
 ;(compile-percore "../tests/while.cll" 0 2 4)
 
@@ -94,31 +95,56 @@
                                        (layoutinfo-routes layout-res)
                                        (layoutinfo-part2core layout-res)
                                        #:verbose #f))
-  ;; generate machine code for each core
-  (generate-codes programs w h)
-  )
+
+  programs)
 
 ;; compile HLP to optimized one-core machine code.
 ;; for testing only.
 (define (compile-and-optimize-percore file core w h)
-  (define program (compile-percore file core w h))
-  (superoptimize-program program "name"))
+  (pretty-display "------------------ AST ----------------------")
+  (define program (parse file))
+  (send program pretty-print)
+
+  (pretty-display "------------------ RAW CODE ----------------------")
+  (define real-code (generate-code program 0 w h #f))
+  ;(codegen-print real-code)
+
+  (pretty-display "------------------ REDUCED CODE ----------------------")
+  (define virtual-code (generate-code program 0 w h #f))
+  ;(codegen-print virtual-code)
+
+  (pretty-display "------------------ OPT REDUCED CODE ----------------------")
+  (define virtual-opt (superoptimize virtual-code "name"))
+  ;(codegen-print virtual-opt)
+
+  (pretty-display "------------------ OPT CODE ----------------------")
+  (define real-opt (renameindex virtual-opt))
+  (codegen-print real-opt)
+  )
   
 ;; compile HLP to optimized many-core machine code
 (define (compile-and-optimize file name capacity input [w 5] [h 4] #:verbose [verbose #f])
   (define programs (compile file name capacity input w h #:verbose verbose))
+
+  (define real-codes (generate-codes programs w h #f))
+  (define virtual-codes (generate-codes programs w h #t))
   
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
-    (lambda () (aforth-struct-print programs)))
+    (lambda () (aforth-struct-print real-codes)))
+  (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
+    (lambda () (aforth-struct-print virtual-codes)))
     
-  (define opts (superoptimize-programs programs name))
+  (define virtual-opts (superoptimize-programs virtual-codes name))
+  (define real-opts (renameindex-programs virtual-codes))
   
+  (with-output-to-file #:exists 'truncate (format "~a/~a-red-opt.rkt" outdir name)
+    (lambda () (aforth-struct-print virtual-opts)))
   (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
-    (lambda () (aforth-struct-print opts)))
+    (lambda () (aforth-struct-print real-opts)))
   )
 
 (compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 256 "null")
-;(compile-and-optimize-percore "../tests/run/function.cll" 0 2 2)
+;(compile-and-optimize-percore "../tests/run/if.cll" 0 2 2)
 
 (define testdir "../tests/run")
 

@@ -7,7 +7,7 @@
 (define memory-mapper%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [mem-map (make-hash)] [mem-p 0] [iter-p 0] [max-iter 0])
+    (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] [max-iter 0])
 
     (define debug #f)
 
@@ -19,13 +19,13 @@
     (define (pop-scope)
       (set! mem-map (dict-ref mem-map "__up__")))
 
-    (define (mem p)
-      (cons p #t))
+    (define (gen-mem p rp)
+      (meminfo p rp #t))
     
-    (define (iter p)
+    (define (gen-iter p)
       (when (>= p max-iter)
 	  (set! max-iter (add1 p)))
-      (cons p #f))
+      (meminfo p p #f))
 
     (define (need-mem? name)
       (not (or (regexp-match #rx"_temp" name)
@@ -39,16 +39,19 @@
               (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast))))
 	(for ([var (get-field var-list ast)])
 	     (when (need-mem? var)
-		   (dict-set! mem-map var (mem mem-p))
+		   (dict-set! mem-map var (gen-mem mem-p mem-rp))
 		   (when (is-a? ast Param%)
-			 (set-field! address ast (mem mem-p)))
-		   (set! mem-p (add1 mem-p))))
+			 (set-field! address ast (gen-mem mem-p mem-rp)))
+		   (set! mem-p (add1 mem-p))
+                   (set! mem-rp (add1 mem-rp))))
 	]
 
        [(is-a? ast ArrayDecl%)
         (when debug (pretty-display (format "\nMEMORY: ArrayDecl ~a" (get-field var ast))))
-	(dict-set! mem-map (get-field var ast) (mem mem-p))
-	(set! mem-p (+ mem-p (get-field bound ast)))]
+	(dict-set! mem-map (get-field var ast) (gen-mem mem-p mem-rp))
+	(set! mem-p (+ mem-p (get-field bound ast)))
+        (set! mem-rp (+ mem-rp 2))
+        ]
 
        [(is-a? ast Num%)
 	void]
@@ -129,8 +132,8 @@
        [(is-a? ast For%)
         (when debug (pretty-display (format "MEMORY: For")))
 	(push-scope)
-	(dict-set! mem-map (get-field name (get-field iter ast)) (iter iter-p))
-	(set-field! address ast (iter iter-p)) ; set for itself
+	(dict-set! mem-map (get-field name (get-field iter ast)) (gen-iter iter-p))
+	(set-field! address ast (gen-iter iter-p)) ; set for itself
 	(set! iter-p (add1 iter-p))
 	(send (get-field body ast) accept this)
 	(set! iter-p (sub1 iter-p))
@@ -150,7 +153,7 @@
         (when debug (pretty-display (format "MEMORY: Program")))
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))
-	(cons mem-p max-iter)]
+	(cons (meminfo mem-p mem-rp null) max-iter)]
 
        [(is-a? ast Block%)
 	(for ([stmt (get-field stmts ast)])

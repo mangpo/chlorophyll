@@ -1,8 +1,8 @@
 #lang racket
 
-(require "../../forth-interpreter/ArrayForth/compiler.rkt" 
-         "../../forth-interpreter/machine/cegis.rkt" 
-         "../../forth-interpreter/machine/state.rkt")
+(require "../../forth-interpreter/machine/cegis.rkt" 
+         "../../forth-interpreter/machine/state.rkt" 
+         "../../forth-interpreter/machine/track-constant.rkt")
 
 (provide (all-defined-out))
 
@@ -15,7 +15,7 @@
 (struct iftf (t f))
 (struct -ift (t))
 (struct -iftf (t f))
-(struct aforth (code memsize bit))
+(struct aforth (code memsize bit indexmap))
 
 (define-syntax gen-block
   (syntax-rules ()
@@ -122,17 +122,14 @@
    [(funcdecl? x)
     (pretty-display (format "~a(funcdecl: ~a"  indent (funcdecl-name x)))
     (codegen-print (funcdecl-body x) (inc indent))]
-   
-   [else (raise (format "visitor-codegen: print: unimplemented for ~a" x))]))
 
-;; compile arrayforth to F18A machine code
-(define (aforth->f18a program)
-  (if (list? program)
-      (compile-to-string (string-join program))
-      (compile-to-string program)))
+   [(aforth? x)
+    (codegen-print (aforth-code x))]
+   
+   [else (raise (format "codegen-print: unimplemented for ~a" x))]))
 
 ;; optimize per-core program
-(define (superoptimize ast name mem-size [bit 9])
+(define (superoptimize ast name [mem-size #f] [bit #f])
   (cond
    [(block? ast)
     (define out (block-out ast))
@@ -143,7 +140,8 @@
        [(= out 2) (constraint memory s t)]
        [(> out 2) (constraint memory s t data)]))
 
-    (block (optimize (aforth->f18a (block-body ast))
+    (block (optimize (string-join (block-body ast)) 
+                     #:f18a #f
                      #:num-bits bit #:name name
                      #:constraint out-space
                      #:mem mem-size #:start mem-size)
@@ -181,16 +179,70 @@
     (funcdecl (funcdecl-name ast)
               (superoptimize (funcdecl-body ast) name mem-size bit))]
 
+   [(aforth? ast)
+    (define bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
+    (define result (superoptimize (aforth-code ast) 
+                                  name (aforth-memsize ast) bit))
+    (pretty-display `(-------------------- result -----------------------))
+    (codegen-print result)
+    (aforth result (aforth-memsize ast) bit (aforth-indexmap ast))]
+
    [else
     (raise (format "arrayforth: superoptimize: unimplemented for ~a" ast))]))
 
-(define (superoptimize-program program name)
-  (define bit (if (< (aforth-bit program) 9) 9 (aforth-bit program)))
-  (define result (superoptimize (aforth-code program) 
-				name (aforth-memsize program) bit))
-  (pretty-display `(-------------------- result -----------------------))
-  (codegen-print result)
-  (aforth result (aforth-memsize program) bit))
+(define (renameindex ast [index-map #f])
+  (cond
+   [(block? ast)
+    (define body (string-split (block-body ast)))
+    (define rename-set (track-index body))
+    (pretty-display `(renameindex ,body ,rename-set ,index-map))
+    (define new-body
+      (for/list ([inst body]
+                 [i (in-range (length body))])
+                (if (set-member? rename-set i)
+                    (number->string (dict-ref index-map (string->number inst)))
+                    inst)))
+
+    (block (string-join new-body) (block-in ast) (block-out ast) #f)]
+
+   [(list? ast)
+    (for/list ([x ast])
+              (renameindex x index-map))]
+
+   [(mult? ast)
+    (mult)]
+
+   [(funccall? ast)
+    (funccall (funccall-name ast))]
+
+   [(forloop? ast)
+    (forloop (renameindex (forloop-init ast) index-map)
+             (renameindex (forloop-body ast) index-map))]
+
+   [(ift? ast)
+    (ift (renameindex (ift-t ast) index-map))]
+
+   [(iftf? ast)
+    (iftf (renameindex (iftf-t ast) index-map)
+          (renameindex (iftf-f ast) index-map))]
+
+   [(-ift? ast)
+    (-ift (renameindex (-ift-t ast) index-map))]
+
+   [(-iftf? ast)
+    (-iftf (renameindex (-iftf-t ast) index-map)
+           (renameindex (-iftf-f ast) index-map))]
+
+   [(funcdecl? ast)
+    (funcdecl (funcdecl-name ast)
+              (renameindex (funcdecl-body ast) index-map))]
+
+   [(aforth? ast)
+    (aforth (renameindex (aforth-code ast) (aforth-indexmap ast))
+            (aforth-memsize ast) (aforth-bit ast) #f)]
+
+   [else
+    (raise (format "arrayforth: renameindex: unimplemented for ~a" ast))]))
 
 ;; optimize many-core programs
 (define (superoptimize-programs programs name)
@@ -200,8 +252,20 @@
   (for ([i (in-range (sub1 n))])
     (pretty-display `(-------------------- ,i -----------------------))
     (let* ([program (vector-ref programs i)]
-	   [result (superoptimize-program program name)])
+	   [result (superoptimize program name)])
       (vector-set! output-programs i result)))
+
+  (vector-set! output-programs (sub1 n) (vector-ref programs (sub1 n)))
+
+  output-programs)
+
+(define (renameindex-programs programs)
+  (define n (vector-length programs))
+  (define output-programs (make-vector n))
+
+  (for ([i (in-range (sub1 n))])
+    (vector-set! output-programs i 
+                 (renameindex (vector-ref programs i))))
 
   (vector-set! output-programs (sub1 n) (vector-ref programs (sub1 n)))
 

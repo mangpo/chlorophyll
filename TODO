@@ -1,6 +1,7 @@
 TODO
+- test track-constant
+- timeout mechanism (> 239 s)
 - test more
-- mem > 150 is really slow
 - connect to rohin's interpreter
 - try running GA MD5 in the simulator
 - how to measure time & energy on their MD5 code

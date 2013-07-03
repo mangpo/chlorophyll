@@ -11,10 +11,12 @@
 (define code-generator%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field data-size iter-size core w h 
+    (init-field data-size iter-size core w h virtual
 		[x (floor (/ core w))] [y (modulo core w)]
                 [helper-funcs (list)] [if-count 0] [while-count 0]
-                [max 1])
+                [max 1]
+                ;; map virtual index to real index
+                [index-map (make-hash)])
 
     (define debug #f)
 
@@ -84,6 +86,17 @@
 	  e1
 	  (new BinExp% [op (new Op% [op "-"])] [e1 e1] [e2 e2])))
 
+    (define (get-var mem)
+      ;(pretty-display `(index-map ,(meminfo-virtual mem) ,(meminfo-addr mem)))
+      (dict-set! index-map (meminfo-virtual mem) (meminfo-addr mem))
+      (if virtual (meminfo-virtual mem) (meminfo-addr mem)))
+
+    (define (get-iter mem)
+      (define reduce (+ (meminfo-virtual data-size) (meminfo-virtual mem)))
+      (define actual (+ (meminfo-addr data-size) (meminfo-virtual mem)))
+      (dict-set! index-map reduce actual)
+      (if virtual reduce actual))
+
     (define/public (visit ast)
       (cond
        [(or (is-a? ast VarDecl%)
@@ -103,7 +116,7 @@
               (pretty-display (format "\nCODEGEN: Array ~a" (send ast to-string))))
 	(define index-ret (send (get-field index ast) accept this))
 	(define address (get-field address ast))
-	(define array-ret (list (gen-block (number->string (car address)) "." "+" "a!" "@" 1 1)))
+	(define array-ret (list (gen-block (number->string (get-var address)) "." "+" "a!" "@" 1 1)))
 	(prog-append index-ret array-ret)]
 
        [(is-a? ast Var%)
@@ -112,11 +125,11 @@
 	(define address (get-field address ast))
 	(if address
 	    ;; push on the stack
-	    (if (cdr address)
+	    (if (meminfo-data address)
 		;; data
-		(list (gen-block (number->string (car address)) "a!" "@" 0 1))
+		(list (gen-block (number->string (get-var address)) "a!" "@" 0 1))
 		;; iter
-		(list (gen-block (number->string (+ data-size (car address))) "a!" "@" 0 1)))
+		(list (gen-block (number->string (get-iter address)) "a!" "@" 0 1)))
 	    ;; already on the stack
 	    (list))]
 
@@ -172,16 +185,20 @@
 	      (prog-append 
 	       rhs-ret
 	       index-ret
-	       (list (gen-block (number->string (car address)) "." "+" "a!" "!" 2 0))))
+	       (list (gen-block (number->string (get-var address)) 
+                                "." "+" "a!" "!" 2 0))))
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
 		   (if address
-		       (if (cdr address)
+		       (if (meminfo-data address)
 			   ;; data
-			   (list (gen-block (number->string (car address)) "a!" "!" 1 0))
+			   (list (gen-block (number->string (get-var address)) 
+                                            "a!" "!" 1 0))
 			   ;; iter
-			   (list (gen-block (number->string (+ data-size (car address))) "a!" "!" 1 0)))
+			   (list (gen-block 
+                                  (number->string (get-iter address))
+                                  "a!" "!" 1 0)))
 		       ;; temp on stack
 		       (list)))))]
 
@@ -282,7 +299,7 @@
        [(is-a? ast For%)
         (define from (get-field from ast))
         (define to (get-field to ast))
-        (define address (+ data-size (car (get-field address ast))))
+        (define address (get-iter (get-field address ast)))
         (define address-str (number->string address))
         
         (define init-ret (gen-block (number->string from) address-str "a!" "!" 
@@ -303,7 +320,7 @@
 	    (let* ([address (get-field address (last decls))]
 		   [args-ret (list
 			      (block (append 
-				      (list (number->string (car address)) "a!")
+				      (list (number->string (get-var address)) "a!")
 				      (for/list ([i (in-range n-decls)]) "!+")) n-decls 0))])
 	      (funcdecl (get-field name ast) (prog-append args-ret body-ret)))
 	    (funcdecl (get-field name ast) body-ret))]
@@ -314,8 +331,10 @@
           (for/list ([decl (get-field stmts ast)])
             (send decl accept this)))
         
-        (aforth (append (reverse helper-funcs) main-funcs) (+ data-size iter-size) 
-                (inexact->exact (floor (+ (/ (log max) (log 2)) 1))))
+        (aforth (append (reverse helper-funcs) main-funcs) 
+                (+ (get-var data-size) iter-size) 
+                (inexact->exact (floor (+ (/ (log max) (log 2)) 1)))
+                index-map)
         ]
 
        [(is-a? ast Block%)
