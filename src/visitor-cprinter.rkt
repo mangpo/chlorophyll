@@ -308,6 +308,6 @@
          (pretty-display "}")
          ]
         
-        [else (raise "Error: printer unimplemented!")]
+        [else (raise (format "visitor-cprinter: unimplemented for ~a" ast))]
         
         ))))
