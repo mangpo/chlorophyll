@@ -357,9 +357,10 @@
 	      (push-workspace place ast)
 	      (for ([p place])
 		   (let ([here (get-field place p)])
-		     (pretty-display `(array ,(get-field var ast) ,here 
-					     ,(get-field from p)
-					     ,(get-field to p)))
+		     (when debug
+			   (pretty-display `(array ,(get-field var ast) ,here 
+						   ,(get-field from p)
+						   ,(get-field to p))))
 		     (push-workspace 
 		      here
 		      (new ArrayDecl% [var (get-field var ast)]

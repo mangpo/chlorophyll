@@ -32,32 +32,37 @@
     [(prog-append a b c ...)
      (prog-append (program-append a b) c ...)]))
 
-    (define (program-append a-list b-list)
-      ;; merge b-block into a-block
-      (define (merge-into a-block b-block)
-	(set-block-body! a-block (append (block-body a-block) (block-body b-block)))
-	(set-block-mem! a-block (and (block-mem a-block) (block-mem b-block)))
-	(define a-in  (block-in a-block))
-	(define a-out (block-out a-block))
-	(define b-in  (block-in  b-block))
-	(define b-out (block-out  b-block))
-	(if (>= a-out b-in)
-	    (set-block-out! a-block (- (+ a-out b-out) b-in))
-	    (begin
-	      (set-block-in! a-block (- (+ a-in b-in) a-out))
-	      (set-block-out! a-block b-out))))
-
-      (cond
-       [(empty? a-list) b-list]
-       [(empty? b-list) a-list]
-       [else
-	(define a-last (last a-list))
-	(define b-first (car b-list))
-	(if (and (block? a-last) (block? b-first))
-	    (begin
-	      (merge-into a-last b-first)
-	      (append a-list (cdr b-list)))
-	    (append a-list b-list))]))
+(define (program-append a-list b-list)
+  ;; merge b-block into a-block
+  (define (merge-into a-block b-block)
+    ;; (pretty-display "MERGE:")
+    ;; (codegen-print a-block)
+    ;; (codegen-print b-block)
+    (set-block-body! a-block (append (block-body a-block) (block-body b-block)))
+    (set-block-mem! a-block (and (block-mem a-block) (block-mem b-block)))
+    (define a-in  (block-in a-block))
+    (define a-out (block-out a-block))
+    (define b-in  (block-in  b-block))
+    (define b-out (block-out  b-block))
+    (if (>= a-out b-in)
+	(set-block-out! a-block (- (+ a-out b-out) b-in))
+	(begin
+	  (set-block-in! a-block (- (+ a-in b-in) a-out))
+	  (set-block-out! a-block b-out))))
+  
+  (cond
+   [(empty? a-list) b-list]
+   [(empty? b-list) a-list]
+   [else
+    (define a-last (last a-list))
+    (define b-first (car b-list))
+    (if (and (block? a-last) (block? b-first)
+	     ;; if more than 30, too big, don't merge.
+	     (<= (+ (length (block-body a-last)) (length (block-body b-first))) 16))
+	(begin
+	  (merge-into a-last b-first)
+	  (append a-list (cdr b-list)))
+	(append a-list b-list))]))
 
 (define (codegen-print x [indent ""])
   (define (inc indent)

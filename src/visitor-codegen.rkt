@@ -16,7 +16,7 @@
                 [helper-funcs (list)] [if-count 0] [while-count 0]
                 [max 1])
 
-    (define debug #t)
+    (define debug #f)
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
