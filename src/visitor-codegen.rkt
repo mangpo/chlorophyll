@@ -14,7 +14,7 @@
     (init-field data-size iter-size core w h virtual
 		[x (floor (/ core w))] [y (modulo core w)]
                 [helper-funcs (list)] [if-count 0] [while-count 0]
-                [max 1]
+                [maxnum 1]
                 ;; map virtual index to real index
                 [index-map (make-hash)])
 
@@ -107,8 +107,8 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Num ~a" (send ast to-string))))
         (define n (get-field n (get-field n ast)))
-        (when (> n max)
-              (set! max n))
+        (when (> n maxnum)
+              (set! maxnum n))
 	(list (gen-block (number->string n) 0 1))]
 
        [(is-a? ast Array%)
@@ -321,19 +321,20 @@
 		   [args-ret (list
 			      (block (append 
 				      (list (number->string (get-var address)) "a!")
-				      (for/list ([i (in-range n-decls)]) "!+")) n-decls 0))])
+				      (for/list ([i (in-range n-decls)]) "!+")) n-decls 0 #t))])
 	      (funcdecl (get-field name ast) (prog-append args-ret body-ret)))
 	    (funcdecl (get-field name ast) body-ret))]
 
        [(is-a? ast Program%)
 	;; return list of function list
         (define main-funcs
-          (for/list ([decl (get-field stmts ast)])
+          (for/list ([decl (filter (lambda (x) (is-a? x FuncDecl%)) 
+                                   (get-field stmts ast))])
             (send decl accept this)))
-        
+
         (aforth (append (reverse helper-funcs) main-funcs) 
                 (+ (get-var data-size) iter-size) 
-                (inexact->exact (floor (+ (/ (log max) (log 2)) 1)))
+                (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
                 index-map)
         ]
 

@@ -50,7 +50,7 @@
         (when debug (pretty-display (format "\nMEMORY: ArrayDecl ~a" (get-field var ast))))
 	(dict-set! mem-map (get-field var ast) (gen-mem mem-p mem-rp))
 	(set! mem-p (+ mem-p (get-field bound ast)))
-        (set! mem-rp (+ mem-rp 2))
+        (set! mem-rp (+ mem-rp (get-field compress ast)))
         ]
 
        [(is-a? ast Num%)

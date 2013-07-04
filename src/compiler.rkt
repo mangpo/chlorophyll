@@ -7,7 +7,6 @@
          "layout-sa.rkt" 
          "separator.rkt"
          "arrayforth.rkt"
-         "arrayforth-print.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
@@ -78,7 +77,7 @@
                                    #:name name
                                    #:cores 20 
                                    #:capacity capacity 
-                                   #:verbose #f))
+                                   #:verbose #t))
   (when verbose
     (pretty-display "--- after partition ---")
     (send my-ast pretty-print))
@@ -134,6 +133,8 @@
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
     (lambda () (aforth-struct-print virtual-codes)))
     
+  (system (format "rm ~a/~a-work.rkt" outdir name))
+  
   (define virtual-opts (superoptimize-programs virtual-codes name))
   (define real-opts (renameindex-programs virtual-opts))
   
@@ -141,9 +142,11 @@
     (lambda () (aforth-struct-print virtual-opts)))
   (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
     (lambda () (aforth-struct-print real-opts)))
+  void
   )
 
-(compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 256 "null")
+;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 1400 "null")
+(compile-and-optimize "../examples/hash.cll" "hash" 256 "null")
 ;(compile-and-optimize-percore "../tests/run/if.cll" 0 2 2)
 
 (define testdir "../tests/run")

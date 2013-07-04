@@ -1,7 +1,8 @@
 #lang racket
 
 (require "header.rkt"
-         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-desugar.rkt")
+         "ast.rkt" "ast-util.rkt" 
+         "visitor-interface.rkt" "visitor-desugar.rkt" "visitor-lowerbound.rkt")
 
 (provide (all-defined-out))
 
@@ -17,7 +18,8 @@
                 [array-map (make-hash)] 
                 [non-native #f] 
                 [entry #f]
-                [stmt-level #f])
+                [stmt-level #f]
+                [lowerbound (new lowerbound%)])
     ;; env maps
     ;; 1) var-name  -> (cons type known)
     ;; 2) func-name -> func-ast
@@ -158,8 +160,10 @@
          (define index-known (send index accept this))
 	 (set! entry (get-field expect ast))
 
+         (define array-decl (lookup array-map ast))
          (unless index-known
-           (set-field! cluster (lookup array-map ast) #t))
+           (set-field! cluster array-decl #t))
+         (send array-decl update-compress (send index accept lowerbound))
          
          (define pack (lookup env ast))
          (define type (val-type pack))

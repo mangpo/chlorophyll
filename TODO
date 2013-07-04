@@ -1,10 +1,12 @@
 TODO
-- run add-noio
 - test more
 - connect to rohin's interpreter
 - try running GA MD5 in the simulator
 - how to measure time & energy on their MD5 code
+- handle io correctly
 - code length instead of runtime?
+- stat report
+
 - clean up
   = cluster
   = known field

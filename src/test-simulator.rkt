@@ -14,8 +14,8 @@
 (test "if"       "4_1" 512)
 ;(test "add"       "200" 1024)
 ;(test "add2"       "200" 1024)
-;(test "function" "4_1" 512)
-;(test "function" "4_2" 512)
+;(test "function" "4_1" 256)
+;(test "function" "4_2" 256)
 ;(test "matrixmult" "72" 400) ;capacity issue
 ;(test "pair1" "null" 512)
 ;(test "pair2" "null" 512)
