@@ -135,9 +135,9 @@
     (lambda () (aforth-struct-print virtual-codes)))
     
   (define virtual-opts (superoptimize-programs virtual-codes name))
-  (define real-opts (renameindex-programs virtual-codes))
+  (define real-opts (renameindex-programs virtual-opts))
   
-  (with-output-to-file #:exists 'truncate (format "~a/~a-red-opt.rkt" outdir name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a-opt-red.rkt" outdir name)
     (lambda () (aforth-struct-print virtual-opts)))
   (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
     (lambda () (aforth-struct-print real-opts)))

@@ -140,7 +140,9 @@
        [(= out 2) (constraint memory s t)]
        [(> out 2) (constraint memory s t data)]))
 
-    (block (optimize (string-join (block-body ast)) 
+    (block (optimize (if (string? (block-body ast))
+                         (block-body ast)
+                         (string-join (block-body ast)) )
                      #:f18a #f
                      #:num-bits bit #:name name
                      #:constraint out-space
@@ -199,7 +201,8 @@
     (define new-body
       (for/list ([inst body]
                  [i (in-range (length body))])
-                (if (set-member? rename-set i)
+                (if (and (set-member? rename-set i) 
+                         (dict-has-key? index-map (string->number inst)))
                     (number->string (dict-ref index-map (string->number inst)))
                     inst)))
 
@@ -272,3 +275,16 @@
   output-programs)
 
 ;(superoptimize (gen-block "up" "b!" "!b" "325" "b!" "!b" 0 0) "comm" 0 9)
+
+#|
+(codegen-print
+ (renameindex 
+  (aforth 
+   (list 
+    (funcdecl "main"
+              (list 
+               (block "right a! @ 4 a! @ 0 . + a! @ . + 2 a! @ 2 +" 0 2 #t)
+               ))
+    )
+   5 9 #hash((4 . 40) (2 . 20)))))|#
+  
