@@ -332,6 +332,9 @@
                                    (get-field stmts ast))])
             (send decl accept this)))
 
+        (dict-set! index-map 
+                   (+ (meminfo-virtual data-size) iter-size)
+                   (+ (meminfo-addr data-size) iter-size))
         (aforth (append (reverse helper-funcs) main-funcs) 
                 (+ (get-var data-size) iter-size) 
                 (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)

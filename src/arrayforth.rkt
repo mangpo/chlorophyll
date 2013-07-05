@@ -351,8 +351,9 @@
               (renameindex (funcdecl-body ast) index-map))]
 
    [(aforth? ast)
-    (aforth (renameindex (aforth-code ast) (aforth-indexmap ast))
-            (aforth-memsize ast) (aforth-bit ast) #f)]
+    (define index-map (aforth-indexmap ast))
+    (aforth (renameindex (aforth-code ast) index-map)
+            (dict-ref index-map (aforth-memsize ast)) (aforth-bit ast) #f)]
 
    [else
     (raise (format "arrayforth: renameindex: unimplemented for ~a" ast))]))

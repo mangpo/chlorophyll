@@ -1,15 +1,15 @@
 TODO
-- test more
+- generate arrayforth file: test more
+- stat report
+- way to initialize array
+- code length instead of runtime?
+
+- regression test
 - connect to rohin's interpreter
 - try running GA MD5 in the simulator
 - how to measure time & energy on their MD5 code
-- handle io correctly
-- code length instead of runtime?
-- stat report
 
-- clean up
-  = cluster
-  = known field
+- handle io correctly
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array

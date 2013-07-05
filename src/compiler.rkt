@@ -7,6 +7,7 @@
          "layout-sa.rkt" 
          "separator.rkt"
          "arrayforth.rkt"
+         "arrayforth-print.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
@@ -50,12 +51,6 @@
       (vector-set! machine-codes i (generate-code program i w h virtual))))
   machine-codes)
 
-;; Compile per-core HLP read from file to machine code.
-(define (compile-percore file core w h)
-  (define my-ast (parse file))
-  ;(send my-ast pretty-print)
-  (generate-code my-ast core w h #f))
-
 ;(compile-percore "../tests/while.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
@@ -97,6 +92,15 @@
 
   programs)
 
+
+
+;; Compile per-core HLP read from file to machine code.
+(define (compile-percore file core w h)
+  (define my-ast (parse file))
+  ;(send my-ast pretty-print)
+  (aforth-syntax-info w h 0)
+  (aforth-syntax-print (generate-code my-ast core w h #f)))
+
 ;; compile HLP to optimized one-core machine code.
 ;; for testing only.
 (define (compile-and-optimize-percore file core w h)
@@ -119,6 +123,9 @@
   (pretty-display "------------------ OPT CODE ----------------------")
   (define real-opt (renameindex virtual-opt))
   (codegen-print real-opt)
+  
+  (aforth-syntax-info w h)
+  (aforth-syntax-print real-opt)
   )
   
 ;; compile HLP to optimized many-core machine code
@@ -142,12 +149,17 @@
     (lambda () (aforth-struct-print virtual-opts)))
   (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
     (lambda () (aforth-struct-print real-opts)))
-  void
+  
+  (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
+    (lambda ()
+      (aforth-syntax-info w h)
+      (aforth-syntax-print real-opts)))
   )
 
 ;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 1400 "null")
-(compile-and-optimize "../examples/hash.cll" "hash" 256 "null")
-;(compile-and-optimize-percore "../tests/run/if.cll" 0 2 2)
+;(compile-and-optimize "../examples/hash.cll" "hash" 256 "null")
+;(compile-percore "../examples/add.cll" 0 2 2)
+(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
 
 (define testdir "../tests/run")
 
