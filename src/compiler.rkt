@@ -54,7 +54,7 @@
 ;(compile-percore "../tests/while.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
-(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #f])
+(define (compile-to-IR file name capacity input [w 5] [h 4] #:verbose [verbose #f])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -129,26 +129,31 @@
   )
   
 ;; compile HLP to optimized many-core machine code
-(define (compile-and-optimize file name capacity input [w 5] [h 4] #:verbose [verbose #f])
-  (define programs (compile file name capacity input w h #:verbose verbose))
+(define (compile-and-optimize file name capacity input [w 5] [h 4] 
+                              #:verbose [verbose #f]
+                              #:opt [opt #t])
+  (define programs (compile-to-IR file name capacity input w h #:verbose verbose))
 
   (define real-codes (generate-codes programs w h #f))
-  (define virtual-codes (generate-codes programs w h #t))
+  (define real-opts real-codes)
   
-  (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
-    (lambda () (aforth-struct-print real-codes)))
-  (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
-    (lambda () (aforth-struct-print virtual-codes)))
+  (when opt
+    (define virtual-codes (generate-codes programs w h #t))
     
-  (system (format "rm ~a/~a-work.rkt" outdir name))
-  
-  (define virtual-opts (superoptimize-programs virtual-codes name))
-  (define real-opts (renameindex-programs virtual-opts))
-  
-  (with-output-to-file #:exists 'truncate (format "~a/~a-opt-red.rkt" outdir name)
-    (lambda () (aforth-struct-print virtual-opts)))
-  (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
-    (lambda () (aforth-struct-print real-opts)))
+    (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
+      (lambda () (aforth-struct-print real-codes)))
+    (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
+      (lambda () (aforth-struct-print virtual-codes)))
+    
+    (system (format "rm ~a/~a-work.rkt" outdir name))
+    
+    (define virtual-opts (superoptimize-programs virtual-codes name))
+    (set! real-opts (renameindex-programs virtual-opts))
+    
+    (with-output-to-file #:exists 'truncate (format "~a/~a-opt-red.rkt" outdir name)
+      (lambda () (aforth-struct-print virtual-opts)))
+    (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
+      (lambda () (aforth-struct-print real-opts))))
   
   (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
     (lambda ()
@@ -157,14 +162,14 @@
   )
 
 ;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 1400 "null")
-;(compile-and-optimize "../examples/hash.cll" "hash" 256 "null")
+(compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 256 "null" #:opt #f)
 ;(compile-percore "../examples/add.cll" 0 2 2)
-(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
+;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
 
 (define testdir "../tests/run")
 
 (define (test-simulate name input capacity)
-  (compile (format "~a/~a.cll" testdir name) name capacity input)
+  (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input)
   (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))
   

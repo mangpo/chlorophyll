@@ -115,9 +115,17 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Array ~a" (send ast to-string))))
 	(define index-ret (send (get-field index ast) accept this))
+
+	(define offset (get-field offset ast))
+	(define offset-ret 
+	  (if (> offset 0)
+	      (list (gen-block (number->string offset) "-" "1" "." "+" "." "+" 1 1))
+	      (list (gen-block))))
+
 	(define address (get-field address ast))
 	(define array-ret (list (gen-block (number->string (get-var address)) "." "+" "a!" "@" 1 1)))
-	(prog-append index-ret array-ret)]
+
+	(prog-append index-ret offset-ret array-ret)]
 
        [(is-a? ast Var%)
         (when debug 
@@ -180,11 +188,16 @@
 	(define address (get-field address lhs))
 	;(pretty-display `(address ,address))
 	(if (is-a? lhs Array%)
-	    (let ([index-ret (send (get-field index lhs) accept this)]
-		  [rhs-ret (send rhs accept this)])
+	    (let* ([index-ret (send (get-field index lhs) accept this)]
+		   [offset (get-field offset lhs)]
+		   [offset-ret (if (> offset 0)
+				   (list (gen-block (number->string offset) "-" "1" "." "+" "." "+" 1 1))
+				   (list (gen-block)))]
+		   [rhs-ret (send rhs accept this)])
 	      (prog-append 
 	       rhs-ret
 	       index-ret
+	       offset-ret
 	       (list (gen-block (number->string (get-var address)) 
                                 "." "+" "a!" "!" 2 0))))
 	    (let ([rhs-ret (send rhs accept this)])

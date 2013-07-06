@@ -24,7 +24,7 @@
     ]
    
    [(block? x)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
 
     (if (list? (block-body x))
@@ -36,7 +36,7 @@
           (display " ")))]
    
    [(mult? x)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
     (pretty-display "17 for +* unext ")]
    
@@ -46,21 +46,21 @@
    
    [(forloop? x)
     (aforth-syntax-print (forloop-init x) indent)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
     (display "for ")
     (aforth-syntax-print (forloop-body x) (inc indent))
     (display "next ")]
    
    [(ift? x)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
     (display "if ")
     (aforth-syntax-print (ift-t x) (inc indent))
     (display "then ")]
    
    [(iftf? x)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
     (display "if ")
     (aforth-syntax-print (iftf-t x) (inc indent))
@@ -68,14 +68,14 @@
     (aforth-syntax-print (iftf-f x) (inc indent))]
    
    [(-ift? x)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
     (display "-if ")
     (aforth-syntax-print (-ift-t x) (inc indent))
     (display "then ")]
    
    [(-iftf? x)
-    (pretty-display "| br")
+    (pretty-display "| cr")
     (display indent)
     (display "-if ")
     (aforth-syntax-print (-iftf-t x) (inc indent))
@@ -89,13 +89,13 @@
 
    [(aforth? x)
     (define memsize (aforth-memsize x))
-    (pretty-display (format "{block ~a}" (+ 930 id)))
+    (pretty-display (format "{block ~a}" (+ 930 (* 2 id))))
     (pretty-display (format "( -) # ~a ( mem ~a) 0 org | cr" 
-                            (+ (* 100 (/ id w)) (modulo id w)) memsize))
+                            (+ (* 100 (floor (/ id w))) (modulo id w)) memsize))
 
     (for ([i (in-range memsize)])
          (display "0 , "))
-    (pretty-display "| cr")
+    (pretty-display "| br")
     
     (aforth-syntax-print (aforth-code x))
     (newline)
