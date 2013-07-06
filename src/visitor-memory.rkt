@@ -7,17 +7,25 @@
 (define memory-mapper%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] [max-iter 0])
+    (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] [max-iter 0]
+		;; collect iter offset to adjust for loop bound
+		[iter-map (make-hash)])
 
     (define debug #f)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
         (dict-set! new-env "__up__" mem-map)
-        (set! mem-map new-env)))
+        (set! mem-map new-env))
+      (let ([new-env (make-hash)])
+        (dict-set! new-env "__up__" iter-map)
+        (set! iter-map new-env))
+      )
 
     (define (pop-scope)
-      (set! mem-map (dict-ref mem-map "__up__")))
+      (set! mem-map (dict-ref mem-map "__up__"))
+      (set! iter-map (dict-ref iter-map "__up__"))
+      )
 
     (define (gen-mem p rp)
       (meminfo p rp #t))
@@ -59,8 +67,13 @@
        [(is-a? ast Array%)
         (when debug 
               (pretty-display (format "\nMEMORY: Array ~a" (send ast to-string))))
-	(send (get-field index ast) accept this)
-	(set-field! address ast (lookup mem-map ast))]
+	(define index (get-field index ast))
+	(define index-ret (send index accept this))
+	(set-field! address ast (lookup mem-map ast))
+        
+	(when (> (get-field offset ast) 0)
+	      (update iter-map index (cons ast (lookup iter-map index))))
+	]
         
        [(is-a? ast Var%)
         (when debug 
@@ -132,11 +145,26 @@
        [(is-a? ast For%)
         (when debug (pretty-display (format "MEMORY: For")))
 	(push-scope)
-	(dict-set! mem-map (get-field name (get-field iter ast)) (gen-iter iter-p))
+
+	(define iter-name (get-field name (get-field iter ast)))
+	(declare mem-map iter-name (gen-iter iter-p))
+	(declare iter-map iter-name (list))
+
 	(set-field! address ast (gen-iter iter-p)) ; set for itself
 	(set! iter-p (add1 iter-p))
 	(send (get-field body ast) accept this)
 	(set! iter-p (sub1 iter-p))
+
+	(define arrays (lookup iter-map iter-name))
+	(unless (empty? arrays)
+		(define min-offset (foldl (lambda (x min-so-far) (min (get-field offset x) min-so-far))
+					  (get-field to ast) arrays))
+		(when (> min-offset 0)
+		      (for ([array (lookup iter-map iter-name)])
+			   (set-field! offset ast (- (get-field offset ast) min-offset)))
+		      (set-field! from (- (get-field from ast) min-offset))
+		      (set-field! to (- (get-field to ast) min-offset))))
+	     
 	(pop-scope)
 	]
 
