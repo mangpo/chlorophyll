@@ -11,7 +11,7 @@
 		;; collect iter offset to adjust for loop bound
 		[iter-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -71,7 +71,10 @@
 	(define index-ret (send index accept this))
 	(set-field! address ast (lookup mem-map ast))
         
-	(when (> (get-field offset ast) 0)
+        ;; (pretty-display `(INDEX ,index ,(is-a? index Var%) 
+        ;;                         ,(has-var? iter-map (get-field name ast))))
+	(when (and (is-a? index Var%) (has-var? iter-map (get-field name index)))
+              ;; (pretty-display "add to index-map!!!")
 	      (update iter-map index (cons ast (lookup iter-map index))))
 	]
         
@@ -155,15 +158,18 @@
 	(send (get-field body ast) accept this)
 	(set! iter-p (sub1 iter-p))
 
-	(define arrays (lookup iter-map iter-name))
+	(define arrays (lookup-name iter-map iter-name))
+        ;; (pretty-display `(ITER ,iter-name ,arrays))
 	(unless (empty? arrays)
-		(define min-offset (foldl (lambda (x min-so-far) (min (get-field offset x) min-so-far))
+		(define min-offset (foldl (lambda (x min-so-far) 
+                                            (min (get-field offset x) min-so-far))
 					  (get-field to ast) arrays))
+                ;; (pretty-display `(min-offset ,min-offset))
 		(when (> min-offset 0)
-		      (for ([array (lookup iter-map iter-name)])
-			   (set-field! offset ast (- (get-field offset ast) min-offset)))
-		      (set-field! from (- (get-field from ast) min-offset))
-		      (set-field! to (- (get-field to ast) min-offset))))
+		      (for ([array arrays])
+			   (set-field! offset array (- (get-field offset array) min-offset)))
+		      (set-field! from ast (- (get-field from ast) min-offset))
+		      (set-field! to ast (- (get-field to ast) min-offset))))
 	     
 	(pop-scope)
 	]

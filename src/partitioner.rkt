@@ -188,13 +188,9 @@
       
       ;; Use this when solve the entire program at once.
       (set-global-sol best-sol)
-      
       (cores-evaluate cores)
-      
       (define stop (current-seconds))
       
-      (with-output-to-file #:exists 'truncate (format "~a/~a.bestsofar" outdir name)
-        (lambda () (send my-ast accept concise-printer)))
       
       (when verbose
         (pretty-display "\n=== Update Global Solution ===")
@@ -226,6 +222,16 @@
       ;; display
       (pretty-display (format "# messages = ~a" (evaluate num-msg)))
       (pretty-display (format "# cores = ~a" (evaluate num-cores)))
+      
+      ;; recored best-so-far solution
+      (let ([saved-sol global-sol])
+        (set-global-sol best-sol)
+        (with-output-to-file #:exists 'truncate (format "~a/~a.bestsofar" outdir name)
+          (lambda () 
+            (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+            (send my-ast accept concise-printer)
+            (display-cores cores)))
+        (set-global-sol saved-sol))
       
       (if (< lowerbound upperbound)
           (inner-loop)

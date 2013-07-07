@@ -70,7 +70,7 @@
   ;; partition
   (define partition (optimize-comm my-ast
                                    #:name name
-                                   #:cores 20 
+                                   #:cores (* w h) 
                                    #:capacity capacity 
                                    #:verbose #t))
   (when verbose
@@ -161,8 +161,10 @@
       (aforth-syntax-print real-opts)))
   )
 
-;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 1400 "null")
-(compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 256 "null" #:opt #f)
+;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
+;               480 "null" 7 6 #:verbose #t)
+;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 480 "null" 10 5)
+;(compile-and-optimize "../examples/bug.cll" "bug" 256 "null" #:opt #f)
 ;(compile-percore "../examples/add.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
 

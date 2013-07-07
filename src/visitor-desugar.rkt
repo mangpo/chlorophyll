@@ -197,6 +197,7 @@
              (for/list ([i-e1 e1-ret]
                         [i-op op-ret])
                (new UnaExp% [op i-op] [e1 i-e1] 
+                    [place-type (get-field place i-op)]
                     [known-type known-type] [pos (get-field pos ast)])))
          ]
         
@@ -214,6 +215,7 @@
                         [i-e2 e2-ret]
                         [i-op op-ret])
                (new BinExp% [op i-op] [e1 i-e1] [e2 i-e2] 
+                    [place-type (get-field place i-op)]
                     [known-type known-type] [pos (get-field pos ast)])))
          ]
         

@@ -11,7 +11,8 @@
 
 ;(test "simple" "null" 256)
 
-(test "if"       "4_1" 512)
+;(test "if"       "4_1" 512)
+;(test "offset"   "4_1" 256)
 ;(test "add"       "200" 1024)
 ;(test "add2"       "200" 1024)
 ;(test "function" "4_1" 256)
@@ -22,7 +23,7 @@
 ;(test "pair3" "null" 512)
 ;(test "cluster" "null" 256)
 
-;(test "md5-full" "md5" 1400)
+(test "md5-full" "md5" 1400)
 
 (for ([res (reverse result)])
   (pretty-display res))

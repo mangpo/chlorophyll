@@ -1,18 +1,9 @@
-int@1 sumrotate(int@1 k, int@1 m, int@1 r) {
-  return k + m;
-}
-
-
 void main() {
-  int[] k[64];
-  int[] r[64];
-  int[] message[16];
-
-  int g;
-  int temp;
-  
-  for(i from 0 to 64) { 
-    temp = sumrotate(k[i],message[g],r[i]);
+  int[]@{[0:5]=0,[5:10]=0} x[10];
+  int[]@{[0:5]=1,[5:10]=0} y[10];
+  for(t from 0 to 16) {
+    for(i from 0 to 10) {
+      x[i] = y[i];
+    }
   }
 }
-
