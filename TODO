@@ -1,5 +1,6 @@
 TODO
-- generate arrayforth file: test more
+- pair4
+- generate arrayforth file: test more (unoptimized & optimized)
 - stat report
 - way to initialize array
 - code length instead of runtime?

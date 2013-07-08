@@ -147,8 +147,8 @@
     
     (system (format "rm ~a/~a-work.rkt" outdir name))
     
-    (define virtual-opts (superoptimize-programs virtual-codes name))
-    (set! real-opts (renameindex-programs virtual-opts))
+    (define virtual-opts (superoptimize virtual-codes name))
+    (set! real-opts (renameindex virtual-opts))
     
     (with-output-to-file #:exists 'truncate (format "~a/~a-opt-red.rkt" outdir name)
       (lambda () (aforth-struct-print virtual-opts)))
@@ -164,7 +164,8 @@
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               480 "null" 7 6 #:verbose #t)
 ;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 480 "null" 10 5)
-;(compile-and-optimize "../examples/bug.cll" "bug" 256 "null" #:opt #f)
+(compile-and-optimize "../tests/run/pair4-noio.cll" "pair4noio" 256 "null" #:opt #f)
+
 ;(compile-percore "../examples/add.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
 

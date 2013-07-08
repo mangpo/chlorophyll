@@ -210,7 +210,7 @@
     (for ([i (in-range size)])
 	 (aforth-struct-print (vector-ref x i) (inc (inc indent))))
     (pretty-display "  ))")
-    (pretty-display "(superoptimize-programs programs \"foo\")")
+    (pretty-display "(superoptimize programs \"foo\")")
     ]
    
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))
@@ -299,6 +299,25 @@
     ret
     ]
 
+   [(vector? ast)
+    (define n (vector-length ast))
+    (define output-programs (make-vector n))
+  
+    (for ([i (in-range (sub1 n))])
+         (with-output-to-file #:exists 'append 
+           (format "~a/~a-work.rkt" outdir name)
+           (lambda ()
+             (pretty-display 
+              (format ";;;;;;;;;;;;;;;;;;;;;;;; i ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))))
+         (pretty-display 
+          (format ";;;;;;;;;;;;;;;;;;;;;;;; i ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))
+         (let* ([program (vector-ref ast i)]
+                [result (superoptimize program name)])
+           (vector-set! output-programs i result)))
+    
+    (vector-set! output-programs (sub1 n) (vector-ref ast (sub1 n)))
+    output-programs]
+
    [else
     (raise (format "arrayforth: superoptimize: unimplemented for ~a" ast))]))
 
@@ -355,35 +374,19 @@
     (aforth (renameindex (aforth-code ast) index-map)
             (dict-ref index-map (aforth-memsize ast)) (aforth-bit ast) #f)]
 
+   [(vector? ast)
+    (define n (vector-length ast))
+    (define output-programs (make-vector n))
+    
+    (for ([i (in-range (sub1 n))])
+         (vector-set! output-programs i 
+                      (renameindex (vector-ref ast i))))
+    
+    (vector-set! output-programs (sub1 n) (vector-ref ast (sub1 n)))
+    output-programs]
+
    [else
     (raise (format "arrayforth: renameindex: unimplemented for ~a" ast))]))
-
-;; optimize many-core programs
-(define (superoptimize-programs programs name)
-  (define n (vector-length programs))
-  (define output-programs (make-vector n))
-  
-  (for ([i (in-range (sub1 n))])
-    (pretty-display `(-------------------- ,i -----------------------))
-    (let* ([program (vector-ref programs i)]
-	   [result (superoptimize program name)])
-      (vector-set! output-programs i result)))
-
-  (vector-set! output-programs (sub1 n) (vector-ref programs (sub1 n)))
-
-  output-programs)
-
-(define (renameindex-programs programs)
-  (define n (vector-length programs))
-  (define output-programs (make-vector n))
-
-  (for ([i (in-range (sub1 n))])
-    (vector-set! output-programs i 
-                 (renameindex (vector-ref programs i))))
-
-  (vector-set! output-programs (sub1 n) (vector-ref programs (sub1 n)))
-
-  output-programs)
 
 ;(superoptimize (gen-block "up" "b!" "!b" "325" "b!" "!b" 0 0) "comm" 0 9)
 

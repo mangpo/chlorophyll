@@ -85,7 +85,7 @@
    [(funcdecl? x)
     (display (format ": ~a = $0 " (funcdecl-name x)))
     (aforth-syntax-print (funcdecl-body x) "  ")
-    (pretty-display "; | cr")]
+    (pretty-display "= $0 ; | cr")]
 
    [(aforth? x)
     (define memsize (aforth-memsize x))
