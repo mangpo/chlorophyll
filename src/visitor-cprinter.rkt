@@ -35,7 +35,15 @@
         (+ (* 2 n) core)]
 
        [(number? port)
-        (+ (* 2 n) port)]))
+        (+ (* 2 n) port)]
+       
+       ;; use an n by n table for interfilter communication
+       [(is-a? port ConcreteFilterDecl%)
+        (define port-id (get-field id port))
+        (define small (min core port-id))
+        (define large (max core port-id))
+        (+ (* 3 n) (* small n) (large))
+        ]))
 
     (define (print-type type)
       (if (string? type)
@@ -245,16 +253,21 @@
 		 (display ";"))
            (newline))]
 
-        [(is-a? ast FuncDecl%)
+        [(is-a? ast RuntimeCallableDecl%)
          (define (print-arg arg pre)
            (display (format "~a~a ~a_~a" pre
                            (get-field type arg) 
                            (print-name (car (get-field var-list arg)))
 			   core)))
 
-	 (define name (get-field name ast))
-	 (define type (get-field type (get-field return ast)))
-	 (set! expand #f)
+         (define name
+           (cond [(is-a? ast FuncDecl%) (get-field name ast)]
+                 [(is-a? ast ConcreteFilterDecl%) "main"]))
+         (define type
+           (cond [(is-a? ast FuncDecl%) (get-field type (get-field return ast))]
+                 [(is-a? ast ConcreteFilterDecl%) "void"]))
+         (set! expand #f)
+         
          ;; Print function signature
 	 (if (equal? name "main")
              ;; main

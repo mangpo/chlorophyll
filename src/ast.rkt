@@ -957,7 +957,7 @@
 (define ConcreteFilterDecl%
   (class FilterDecl%
     (super-new)
-    (init-field abstract arg-values)
+    (init-field abstract arg-values [id #f])
     (inherit-field input output name args body body-placeset)
     (inherit print-body-placeset)
     

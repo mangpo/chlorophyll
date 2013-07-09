@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <mutex>
+#include <unistd.h>
 
 #define N 300
 
@@ -80,7 +81,11 @@ int read(int port) {
 
 int in() {
   int data;
-  scanf("%d", &data);
+  // exit on EOF or non-integer
+  if(scanf("%d", &data) != 1) {
+    sleep(5);
+    exit(0);
+  }
   return data;
 }
 
