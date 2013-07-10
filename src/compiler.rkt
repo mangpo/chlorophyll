@@ -54,7 +54,8 @@
 ;(compile-percore "../tests/while.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
-(define (compile-to-IR file name capacity input [w 5] [h 4] #:verbose [verbose #f])
+(define (compile-to-IR file name capacity input [w 5] [h 4] 
+                       #:verbose [verbose #t])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -88,7 +89,7 @@
   (define programs (sep-and-insertcomm name my-ast w h 
                                        (layoutinfo-routes layout-res)
                                        (layoutinfo-part2core layout-res)
-                                       #:verbose #f))
+                                       #:verbose #t))
 
   programs)
 
@@ -164,7 +165,7 @@
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               480 "null" 7 6 #:verbose #t)
 ;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 480 "null" 10 5)
-(compile-and-optimize "../tests/run/pair4-noio.cll" "pair4noio" 256 "null" #:opt #f)
+(compile-and-optimize "../tests/run/while-noio.cll" "whilnoio" 256 "null" #:opt #f)
 
 ;(compile-percore "../examples/add.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)

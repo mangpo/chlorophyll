@@ -28,13 +28,14 @@
       (core-workspace (vector-ref cores i)))
 
     (define (set-workspace i x)
+      (when debug `(set-workspace ,i ,x))
       (set-core-workspace! (vector-ref cores i) x))
 
     (define (push-workspace i x)
+      (when debug (pretty-display `(push-workspace ,i ,x)))
       (let* ([block (core-workspace (vector-ref cores i))]
 	     [stmts (get-field stmts block)]
 	     [last-stmt (if (empty? stmts) #f (car stmts))])
-	(when debug (pretty-display `(push-workspace ,i ,x)))
 	(if (and (is-a? x ArrayDecl%) (is-a? last-stmt ArrayDecl%)
 		 (equal? (get-field var x) (get-field var last-stmt)))
 	    (set-field! bound last-stmt (+ (get-field bound last-stmt) (get-field bound x)))
@@ -108,10 +109,7 @@
 	       (set! count (add1 count))]
 
 	      [(and (is-a? e Var%) (regexp-match #rx"_tmp.*" (get-field name e)))
-	       void]
-
-	      [else
-	       (raise (format "@CORE ~a: ~a is left in the stack!" c (send e to-sring)))]))))
+	       void]))))
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
@@ -129,10 +127,10 @@
 		     [to (cadr path)]
 		     [temp (get-temp to)])
 		(push-workspace to (new Assign%
-					[lhs (new Var% [name temp] [place-type to]
+					[lhs (new Temp% [name temp] [place-type to]
                                                   [type "int"])]
 					[rhs (gen-recv to from)]))
-                (push-stack to (new Var% [name temp] [place-type to] [type "int"])))))
+                (push-stack to (new Temp% [name temp] [place-type to] [type "int"])))))
         
         (let ([from (car path)]
               [to (cadr path)])
@@ -163,13 +161,13 @@
                   [x (cadr path)])
               (unless (set-member? visit x)
                 (set! visit (set-add visit x))
-                (push-workspace from (gen-send from x (new Var% [name "_tmp"] [place-type from])))
+                (push-workspace from (gen-send from x (new Temp% [name "_tmp"] [place-type from])))
                 (push-workspace x (new Assign% 
                                    ;; special variable
-                                   [lhs (new Var% [name "_tmp"] [place-type x] 
+                                   [lhs (new Temp% [name "_tmp"] [place-type x] 
                                              [type "int"])]
                                    [rhs (gen-recv x from)]))
-                (push-stack x (new Var% [name "_tmp"] [place-type x] [type "int"]))))
+                (push-stack x (new Temp% [name "_tmp"] [place-type x] [type "int"]))))
             (when (> (length path) 2)
                     (gen-condition-path (cdr path))))
 
@@ -178,17 +176,18 @@
 		;(pretty-display `(gen-comm-condition:push-workspace))
                 (push-workspace place (new Assign% 
                                            ;; special variable
-                                           [lhs (new Var% [name "_tmp"] 
+                                           [lhs (new Temp% [name "_tmp"] 
                                                      [place-type place] 
                                                      [type "int"])]
                                            [rhs (pop-stack place)]))
 		;(pretty-display `(gen-comm-condition:push-stack))
-                (push-stack place (new Var% [name "_tmp"] [place-type place] [type "int"]))
+                (push-stack place (new Temp% [name "_tmp"] [place-type place] [type "int"]))
                 (for ([p path])
                      (gen-condition-path p)))
         ))
 
       (define (scope-pattern gen-ast)
+        ;; create appropriate scope
         (for ([c (get-field body-placeset ast)])
              (let ([new-ast (gen-ast c)])
                (clear-stack c)     
@@ -196,8 +195,15 @@
                (push-workspace c new-ast)
                (set-workspace c (get-field body new-ast))))
 
+        ;; visit body
         (send (get-field body ast) accept this)
-        
+
+        ;; update while loop condition
+        (when (is-a? ast While%)
+              (send (get-field condition ast) accept this)
+              (gen-comm-condition))
+
+        ;; set the scope back to the original
         (for ([c (get-field body-placeset ast)])
              (let* ([body (get-workspace c)]
                     [new-ast (get-field parent body)]
@@ -310,6 +316,7 @@
           (gen-comm))]
 
        [(is-a? ast FuncCall%)
+	(when debug (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
         (define (func-args-at ast core)
           (filter 
 	   (lambda (x) (= (get-field place-type x) core))
@@ -499,6 +506,7 @@
 	]
                
        [(is-a? ast While%)
+	(when debug (pretty-display (format "\nDIVIDE: While\n")))
         (send (get-field condition ast) accept this)
         (gen-comm-condition)
         (scope-pattern 
@@ -510,6 +518,7 @@
 			  (get-workspace c))))] ;; parent
 
        [(is-a? ast For%)
+	(when debug (pretty-display (format "\nDIVIDE: For\n")))
         (scope-pattern 
          (lambda (c)
            (let ([iter (get-field iter ast)])

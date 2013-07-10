@@ -22,8 +22,9 @@
 ;(test "pair3" "null" 512)
 ;(test "matrixmult" "72" 400) ;capacity issue
 ;(test "cluster" "null" 256)
+(test "while" "10" 256)
 
-(test "md5-full" "md5" 1400)
+;(test "md5-full" "md5" 1400)
 
 (for ([res (reverse result)])
   (pretty-display res))

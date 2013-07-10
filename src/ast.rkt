@@ -211,7 +211,7 @@
 		      [(is-a? ast While<0%)  While<0%]
 		      [(is-a? ast While>=0%) While>=0%]
 		      [else While%])])
-    (new constructor [condition c] [body t] [parent #f])))
+    (new constructor [condition c] [body t] [parent parent])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; AST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -365,8 +365,6 @@
            [expand expand] [expect expect] [type type]))
 
     (define/override (pretty-print [indent ""])
-      ;; (pretty-display (format "~a(Var:~a @~a (known=~a))" 
-      ;;   		      indent name (place-to-string place-type) known-type))
       (pretty-display (format "~a(Var:~a @~a (expand=~a/~a))" 
                               indent name (place-to-string place-type)
                               expand expect))
@@ -390,7 +388,11 @@
 
 (define Temp%
   (class Var%
-    (super-new)))
+    (super-new)
+    (inherit-field name)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Temp:~a)" indent name)))))
 
 (define Array%
   (class Var%
