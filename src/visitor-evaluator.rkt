@@ -131,6 +131,13 @@
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)
         (evaluate-placeset)]
+       
+       [(is-a? ast ConcreteFilterDecl%)
+        (send (get-field input ast) accept this)
+        (send (get-field output ast) accept this)
+        (send (get-field args ast) accept this)
+        (send (get-field body ast) accept this)
+        (evaluate-placeset)]
 
        [else (raise (format "Error: symbolic-evaluator unimplemented for ~a!" ast))]
 

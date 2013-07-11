@@ -133,16 +133,20 @@
           (when (is-a? stmt CallableDecl%)
               (declare env (get-field name stmt) stmt)))
         
-        ;; remove abstract filter declarations from program
-        (set! stmts (filter (λ (stmt) (not (is-a? stmt AbstractFilterDecl%))) stmts))
-        (set-field! stmts ast stmts)
-        
         ;; run Main()
         (define main
           (first (filter (λ (stmt) (and (is-a? stmt StaticCallableDecl%)
                                         (equal? (get-field name stmt) "Main")))
                          stmts)))
         (define filters (send main accept this))
+        
+        ;; remove abstract filter and static declarations from program
+        (set! stmts
+              (filter (λ (stmt)
+                        (not (or (is-a? stmt AbstractFilterDecl%)
+                                 (is-a? stmt StaticCallableDecl%))))
+                      stmts))
+        (set-field! stmts ast stmts)
         
         ;; add concrete filter declarations
         (set! stmts (append stmts filters))

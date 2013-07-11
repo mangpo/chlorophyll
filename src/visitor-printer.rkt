@@ -214,6 +214,44 @@
          (pretty-display "}")
          ]
         
-        [else (raise "Error: printer unimplemented!")]
+        [(is-a? ast ConcreteFilterDecl%)
+         (define (print-arg arg pre)
+           (display (format "~a~a@~a ~a" pre
+                           (get-field type arg) 
+                           (send arg get-place) 
+                           (car (get-field var-list arg)))))
+         
+         ;; Print signature
+         (let* ([input (get-field input ast)]
+		[input-type (get-field type input)]
+                [output (get-field input ast)]
+		[output-type (get-field type output)]
+		[name (get-field name ast)])
+           (if (pair? input-type)
+               (display (format "~a::~a@~a"
+                                (car input-type) (cdr input-type)
+				(place-to-string (get-field place input))))
+               (display (format "~a@~a" input-type (send input get-place))))
+           
+           (display " -> ")
+           
+           (if (pair? output-type)
+               (display (format "~a::~a@~a"
+                                (car output-type) (cdr output-type)
+				(place-to-string (get-field place output))))
+               (display (format "~a@~a" output-type (send input get-place))))
+           (display (format "~a(" name)))
+           
+         ;; TODO: Print arguments?
+         (pretty-display ") {")
+
+         ;; Print Body
+         (inc-indent)
+         (send (get-field body ast) accept this)
+         (dec-indent)
+         (pretty-display "}")
+         ]
+        
+        [else (raise (format "visitor-printer: unimplemented for ~a" ast))]
         
         ))))

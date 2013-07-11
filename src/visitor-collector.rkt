@@ -39,6 +39,9 @@
 
       (cond
         [(is-a? ast Livable%)
+         (display (format "!!visitor-collector: Livable ~a at " ast))
+         (pretty-print (get-field place ast))
+         ;(pretty-print (place-set (get-field place ast)))
          (place-set (get-field place ast))
          ]
 
@@ -102,7 +105,14 @@
                [body-set (send (get-field body ast) accept this)])
            (set-union (set-union return-set args-set) body-set))]
         
-        [else (raise (format "Error: var-collector unimplemented for ~a" ast))]
+        [(is-a? ast ConcreteFilterDecl%)
+         (let ([input-set (send (get-field input ast) accept this)]
+               [output-set (send (get-field output ast) accept this)]
+               [args-set (send (get-field args ast) accept this)]
+               [body-set (send (get-field body ast) accept this)])
+           (set-union (set-union (set-union input-set output-set) args-set) body-set))]
+        
+        [else (raise (format "Error: visitor-collector unimplemented for ~a" ast))]
 	))))
         
         
