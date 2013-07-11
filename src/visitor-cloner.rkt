@@ -119,6 +119,7 @@
              [type (get-field type ast)]
              [known (get-field known ast)]
              [bound (get-field bound ast)]
+             [init (get-field init ast)]
 	     [cluster (get-field cluster ast)]
              [place-list (get-field place-list ast)])]
 

@@ -63,17 +63,21 @@
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a ~a_~a[~a];"
+         (display (format "~a ~a_~a[~a]"
                                (get-field type ast)
                                (print-name (get-field var ast))
 			       core
 			       (get-field bound ast)))
+         (define init (get-field init ast))
+         (when init
+               (display " = {")
+               (display-list init)
+               (display "}"))
+         (display ";")
          ]
 
         [(is-a? ast Const%)
          (display (send ast to-string))]
-         
-        
         
         [(is-a? ast Op%)
          (display (get-field op ast))

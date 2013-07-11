@@ -249,10 +249,6 @@
 	 ((funccall) $1)
          )
 
-    ;; (known-type
-    ;;      (() "")
-    ;;      ((KNOWN) "known"))
-
     (cluster
          (() #f)
          ((CLUSTER) #t))
@@ -305,6 +301,18 @@
          (() (list))
          ((param-list) $1))
 
+    (num-unit
+         ((NUM) $1)
+         ((LPAREN num-list RPAREN) $2))
+         
+    (num-list
+         ((num-unit) (list $1))
+         ((num-unit COMMA num-list) (cons $1 $3)))
+
+    (array-init
+         (() #f)
+         ((= LBRACK num-list RBRACK) $3))
+
     (var-decl
          ; var declaration
          ((data-place-type var-list SEMICOL) 
@@ -312,30 +320,34 @@
                  [pos $2-start-pos]))
          
          ; array declaration
-         ((data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
+         ((data-type LSQBR RSQBR VAR LSQBR NUM RSQBR array-init SEMICOL)
             (new ArrayDecl% [var $4] [type $1] [cluster #f] [bound $6]
+                 [init $8]
 	 	 [place-list (default-array-place 0 $6)]
                  [pos $4-start-pos]))
 
          ; array declaration with placement
          ((data-type LSQBR RSQBR @ place-dist-expand
-                      VAR LSQBR NUM RSQBR SEMICOL)
+                     VAR LSQBR NUM RSQBR array-init SEMICOL)
             (new ArrayDecl% [var $6] [type $1] [cluster #f] [bound $8] 
                  [place-list (if (or (list? $5) (is-a? $5 TypeExpansion%))
                                  $5
                                  (list (new RangePlace% [from 0] [to $8] [place $5])))]
+                 [init $10]
                  [pos $6-start-pos]))
 
          ; array declaration
-         ((CLUSTER data-type LSQBR RSQBR VAR LSQBR NUM RSQBR SEMICOL)
+         ((CLUSTER data-type LSQBR RSQBR VAR LSQBR NUM RSQBR array-init SEMICOL)
             (new ArrayDecl% [var $5] [type $2] [cluster #t] [bound $7]
+                 [init $9]
 	 	 [place-list (default-array-place 0 $7)]
                  [pos $5-start-pos]))
 
          ; array declaration with placement
          ((CLUSTER data-type LSQBR RSQBR @ place-dist-expand
-                      VAR LSQBR NUM RSQBR SEMICOL)
+                      VAR LSQBR NUM RSQBR array-init SEMICOL)
             (new ArrayDecl% [var $7] [type $2] [cluster #t] [bound $9] 
+                 [init $11]
                  [place-list (if (or (list? $6) (is-a? $6 TypeExpansion%))
                                  $6
                                  (list (new RangePlace% [from 0] [to $9] [place $6])))]

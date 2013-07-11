@@ -149,3 +149,14 @@
       (assert (= other-x me-x) `(= other-x me-x))
       `E])))
 
+
+(define (display-list lst)
+  (define first (car lst))
+  (if (number? first)
+      (display first)
+      (begin (display "(") (display-list first) (display ")")))
+  (for ([i (cdr lst)])
+       (display ", ")
+       (if (number? i)
+           (display i)
+           (begin (display "(") (display-list i) (display ")")))))

@@ -79,16 +79,31 @@
          (define bound (get-field bound ast))
          (define cluster (get-field cluster ast))
          (define entry (get-field expect ast))
+
+         (define (list->tuple inits)
+           (if inits
+               (let ([v (make-vector entry (list))])
+                 (for ([tuple (reverse inits)]) ; reverse order
+                      (unless (= entry (length tuple))
+                              (send ast init-mismatch))
+                      (for ([val tuple]
+                            [i (in-range entry)])
+                           ;; cons reverses it back
+                           (vector-set! v i (cons val (vector-ref v i))))) 
+                 (vector->list v))
+               (for/list ([i (in-range entry)]) #f)))
          
 	 (if (> entry 1)
 	     ;; expanded type
 	     (for/list ([i (in-range entry)]
-			[p (get-field place-list (get-field place-list ast))])
+			[p (get-field place-list (get-field place-list ast))]
+                        [init (list->tuple (get-field init ast))])
 		       (let ([new-name (ext-name (get-field var ast) i)])
 			 (new ArrayDecl% [type type]
 			      [var new-name]
 			      [known known]
 			      [place-list p]
+                              [init init]
 			      [bound bound]
 			      [cluster cluster]
 			      [pos (get-field pos ast)])))

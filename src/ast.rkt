@@ -716,7 +716,7 @@
   (class LivableGroup%
     (super-new)
     (inherit-field pos place-list)
-    (init-field var type bound cluster [known #t] [compress (min 2 bound)])
+    (init-field var type bound cluster init [known #t] [compress (min 2 bound)])
     (inherit print-send-path)
     
     (define/override (pretty-print [indent ""])
@@ -725,12 +725,18 @@
 			      place-list
                               ;(place-to-string place-list)
                               known cluster compress))
+      (pretty-display (format "~a(init ~a)" (inc indent) init))
       (print-send-path indent))
 
     (define/public (bound-error)
       (raise-mismatch-error 'mismatch 
         (format "array boundaries at place annotation of '~a' " var)
 	(format "error at src:  l:~a c:~a" (position-line pos) (position-col pos))))
+
+    (define/public (init-mismatch)
+      (raise-mismatch-error 'entry-mismatch
+        (format "initial value entries doesn't match the declaration at array '~a' " var)
+        (format "error at src: l:~a c:~a" (position-line pos) (position-col pos))))
 
     (define/public (update-compress lowerbound)
       (when (>= lowerbound compress)

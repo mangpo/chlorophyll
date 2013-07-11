@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "visitor-interface.rkt")
+(require "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
 
 (provide (all-defined-out))
 
@@ -28,11 +28,17 @@
          ]
         
         [(is-a? ast ArrayDecl%)
-         (display (format "~a[]@~a ~a[~a];"
+         (display (format "~a[]@~a ~a[~a]"
                                (get-field type ast)
                                (place-to-string (get-field place-list ast) out)
                                (get-field var ast)
 			       (get-field bound ast)))
+         (define init (get-field init ast))
+         (when init
+               (display " = {")
+               (display-list init)
+               (display "}"))
+         (display ";")
          ]
 
         [(is-a? ast Const%)

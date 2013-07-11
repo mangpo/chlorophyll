@@ -1,4 +1,5 @@
 TODO
+- arraydecl init field
 - follow up the bug report (subprocess)
 - generate arrayforth file: test more (unoptimized & optimized)
 - way to initialize array

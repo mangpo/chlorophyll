@@ -359,11 +359,16 @@
 	(when debug 
 	      (pretty-display (format "\nDIVIDE: ArrayDecl\n")))
 
+        (define (sub-list lst from to)
+          (and lst (take (drop lst from) (- to from))))
+
 	(let ([place (get-field place-list ast)])
 	  (if (number? place)
 	      (push-workspace place ast)
 	      (for ([p place])
-		   (let ([here (get-field place p)])
+		   (let ([here (get-field place p)]
+                         [to (get-field to p)]
+                         [from (get-field from p)])
 		     (when debug
 			   (pretty-display `(array ,(get-field var ast) ,here 
 						   ,(get-field from p)
@@ -373,7 +378,8 @@
 		      (new ArrayDecl% [var (get-field var ast)]
 			   [type (get-field type ast)]
 			   [known (get-field known ast)]
-			   [bound (- (get-field to p) (get-field from p))]
+			   [bound (- to from)]
+                           [init (sub-list (get-field init ast) from to)]
 			   [cluster (get-field cluster ast)]
 			   [place-list here]))))))]
        
