@@ -258,7 +258,8 @@
   (for ([decl (get-field stmts my-ast)])
     (if 
      ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
-     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+     (is-a? decl ConcreteFilterDecl%)
+     ;(and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
         (begin
           (solve-function decl)
           (when verbose (pretty-display "------------------------------------------------")))
