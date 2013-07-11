@@ -35,7 +35,7 @@
     [(prog-append a b c ...)
      (prog-append (program-append a b) c ...)]))
 
-(define (program-append a-list b-list)
+(define (program-append a-list b-list [no-limit #f])
   ;; merge b-block into a-block
   (define (merge-into a-block b-block)
     ;; (pretty-display "MERGE:")
@@ -61,7 +61,8 @@
     (define b-first (car b-list))
     (if (and (block? a-last) (block? b-first)
 	     ;; if more than 30, too big, don't merge.
-	     (<= (+ (length (block-body a-last)) (length (block-body b-first))) 16))
+             (or no-limit
+                 (<= (+ (length (block-body a-last)) (length (block-body b-first))) 16)))
 	(begin
 	  (merge-into a-last b-first)
 	  (append a-list (cdr b-list)))
@@ -222,10 +223,9 @@
     (define out (block-out ast))
     (define out-space
       (cond 
-       [(= out 0) (constraint memory)]
-       [(= out 1) (constraint memory t)]
-       [(= out 2) (constraint memory s t)]
-       [(> out 2) (constraint memory s t data)]))
+       [(= out 0) (constraint memory t)]
+       [(= out 1) (constraint memory s t)]
+       [(> out 1) (constraint memory s t data)]))
 
     (define result
       (block (optimize (if (string? (block-body ast))
@@ -234,7 +234,7 @@
                        #:f18a #f
                        #:num-bits bit #:name name
                        #:constraint out-space
-                     #:mem mem-size #:start mem-size)
+                       #:mem mem-size #:start mem-size)
              (block-in ast) out (block-mem ast)))
     (with-output-to-file #:exists 'append 
       (format "~a/~a-work.rkt" outdir name)
@@ -308,9 +308,9 @@
            (format "~a/~a-work.rkt" outdir name)
            (lambda ()
              (pretty-display 
-              (format ";;;;;;;;;;;;;;;;;;;;;;;; i ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))))
+              (format ";;;;;;;;;;;;;;;;;;;;;;;; ~a ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))))
          (pretty-display 
-          (format ";;;;;;;;;;;;;;;;;;;;;;;; i ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))
+          (format ";;;;;;;;;;;;;;;;;;;;;;;; ~a ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))
          (let* ([program (vector-ref ast i)]
                 [result (superoptimize program name)])
            (vector-set! output-programs i result)))

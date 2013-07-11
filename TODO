@@ -1,16 +1,14 @@
 TODO
-- pair4
+- follow up the bug report (subprocess)
 - generate arrayforth file: test more (unoptimized & optimized)
-- stat report
 - way to initialize array
-- code length instead of runtime?
-- 3 a! @ 32 - 1 . + . + 0 . + a! @
-
-- regression test
 - connect to rohin's interpreter
+- stat report
+- 3 a! @ 32 - 1 . + . + 0 . + a! @
 - try running GA MD5 in the simulator
 - how to measure time & energy on their MD5 code
 
+- regression test
 - handle io correctly
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter

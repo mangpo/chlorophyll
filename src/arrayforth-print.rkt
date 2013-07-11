@@ -27,13 +27,18 @@
     (pretty-display "| cr")
     (display indent)
 
-    (if (list? (block-body x))
-        (for ([i (block-body x)])
-          (display i)
-          (display " "))
-        (begin
-          (display (block-body x))
-          (display " ")))]
+    (define inst-list
+      (if (list? (block-body x))
+          (block-body x)
+          (string-split (block-body x))))
+    (set! inst-list (filter (lambda (a) (and (not (equal? "nop" a)) (not (equal? "." a)))) 
+                            inst-list))
+
+    (for ([i inst-list])
+         (when (equal? "+" i)
+               (display ".") (display " "))
+         (display i) (display " "))
+    ]
    
    [(mult? x)
     (pretty-display "| cr")

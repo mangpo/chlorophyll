@@ -28,17 +28,17 @@
        [(equal? op "~") (list (gen-block "-" 1 1))]
        [(equal? op "!") (list (gen-block "-" 1 1))]
        [(equal? op "*") (list (mult))]
-       [(equal? op "-") (list (gen-block "-" "1" "." "+" "." "+" 2 1))]
-       [(equal? op "+") (list (gen-block "." "+" 2 1))]
-       [(equal? op ">>") (list (gen-block "dup" "dup" "or" "-" "." "+" 1 1) 
+       [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
+       [(equal? op "+") (list (gen-block "+" 2 1))]
+       [(equal? op ">>") (list (gen-block "dup" "dup" "or" "-" "+" 1 1) 
 			       (forloop (gen-block) (list (gen-block "2/" 1 1))))] 
        ;; x-1 for 2/ unext
-       [(equal? op "<<") (list (gen-block "dup" "dup" "or" "-" "." "+" 1 1) 
+       [(equal? op "<<") (list (gen-block "dup" "dup" "or" "-" "+" 1 1) 
 			       (forloop (gen-block) (list (gen-block "2*" 1 1))))] 
        ;; x-1 for 2* unext
        [(equal? op "&") (list (gen-block "and" 2 1))]
        [(equal? op "^") (list (gen-block "or" 2 1))]
-       [(equal? op "|") (list (gen-block "over" "-" "and" "." "+" 2 1))]
+       [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
     (define (gen-port port)
@@ -119,11 +119,11 @@
 	(define offset (get-field offset ast))
 	(define offset-ret 
 	  (if (> offset 0)
-	      (list (gen-block (number->string offset) "-" "1" "." "+" "." "+" 1 1))
+	      (list (gen-block (number->string offset) "-" "1" "+" "+" 1 1))
 	      (list (gen-block))))
 
 	(define address (get-field address ast))
-	(define array-ret (list (gen-block (number->string (get-var address)) "." "+" "a!" "@" 1 1)))
+	(define array-ret (list (gen-block (number->string (get-var address)) "+" "a!" "@" 1 1)))
 
 	(prog-append index-ret offset-ret array-ret)]
 
@@ -196,7 +196,7 @@
 	    (let* ([index-ret (send (get-field index lhs) accept this)]
 		   [offset (get-field offset lhs)]
 		   [offset-ret (if (> offset 0)
-				   (list (gen-block (number->string offset) "-" "1" "." "+" "." "+" 1 1))
+				   (list (gen-block (number->string offset) "-" "1" "+" "+" 1 1))
 				   (list (gen-block)))]
 		   [rhs-ret (send rhs accept this)])
 	      (prog-append 
@@ -204,7 +204,7 @@
 	       index-ret
 	       offset-ret
 	       (list (gen-block (number->string (get-var address)) 
-                                "." "+" "a!" "!" 2 0))))
+                                "+" "a!" "!" 2 0))))
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
@@ -324,7 +324,7 @@
                                     (number->string (- to from 1)) 0 1)) ;; loop bound
          
         (define body-ret (send (get-field body ast) accept this))
-        (define body-decor (list (gen-block address-str "a!" "@" "1" "." "+" "!" 0 0)))
+        (define body-decor (list (gen-block address-str "a!" "@" "1" "+" "!" 0 0)))
 
         (list (forloop init-ret (prog-append body-ret body-decor)))
 	]
