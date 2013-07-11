@@ -110,6 +110,9 @@
 
        [(is-a? ast FuncDecl%)
         (send (get-field body ast) accept this)]
+       
+       [(is-a? ast ConcreteFilterDecl%)
+        (send (get-field body ast) accept this)]
 
        [(or (is-a? ast Num%)
             (is-a? ast Var%)

@@ -205,7 +205,13 @@
         (for ([arg (get-field stmts (get-field args ast))])
              (send arg accept this))
         (send (get-field body ast) accept this)]
+       
+       [(is-a? ast ConcreteFilterDecl%)
+        (for ([arg (get-field stmts (get-field args ast))])
+             (send arg accept this))
+        (send (get-field body ast) accept this)]
 
+       [else (raise (format "visitor-unroll: unimplemented for ~a" ast))]
        ))))
        
             

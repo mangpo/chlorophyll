@@ -436,8 +436,22 @@
           (set-field! body-placeset ast ret)
           ret)
         ]
+       
+       [(is-a? ast ConcreteFilterDecl%)
+        (when debug 
+	      (pretty-display "\n--------------------------------------------")
+              (pretty-display (format "COMMINSERT: ConcreteFilterDecl ~a" (get-field name ast))))
+        (define input-ret (send (get-field input ast) accept this))
+        (define output-ret (send (get-field output ast) accept this))
+        (define args-ret (send (get-field args ast) accept this))
+        (define body-ret (send (get-field body ast) accept this))
+        ;(convert-placeset)
+        (let ([ret (set-union input-ret output-ret args-ret body-ret)])
+          (set-field! body-placeset ast ret)
+          ret)
+        ]
 
-       [else (raise (format "Error: in partition-to-number, ~a unimplemented!" ast))]
+       [else (raise (format "visitor-comminsert: ~a unimplemented" ast))]
        ))
     ))
             

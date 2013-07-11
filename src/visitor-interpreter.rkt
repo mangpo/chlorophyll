@@ -335,7 +335,7 @@
        [(is-a? ast Var%)
         (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
             
-        ;; if expend < expand then it is temp in temp = func()
+        ;; if expect < expand then it is temp in temp = func()
         ;; we don't need to find place for such temp
         (if (<= (get-field expand ast) (get-field expect ast))
           ;; lookup place from env
@@ -701,7 +701,7 @@
 	     (let ([decl-ret (send decl accept this)])
 	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
 		     (set! ret decl-ret))))
-	;; Return main declaration
+        ;; Return main declaration
 	ret]
 
        [(is-a? ast Block%) 
@@ -740,34 +740,34 @@
 			       body-placeset)])
 	    ;; declare function
 	    (declare env (get-field name ast) ret)
-	    ret)]
+            ret)]
        
        [(is-a? ast ConcreteFilterDecl%)
-          (push-scope)
-          (define input-ret (send (get-field input ast) accept this))
-          (define output-ret (send (get-field output ast) accept this))
-          (define args-ret (send (get-field args ast) accept this))
-          (define body-ret (send (get-field body ast) accept this))
-          (pop-scope)
-          
-          (when debug
-            (pretty-display (format ">> ConcreteFilterDecl ~a" (get-field name ast))))
-          
-          (define body-placeset
-            (set-union (set-union (set-union (comminfo-placeset args-ret)
-                                             (comminfo-placeset body-ret))
-                                  (comminfo-placeset input-ret))
-                       (comminfo-placeset output-ret)))
-          (set-field! body-placeset ast body-placeset)
-          
-          (let ([ret (comminfo (+ (+ (+ (comminfo-msgs args-ret)
-                                        (comminfo-msgs body-ret))
-                                     (comminfo-msgs input-ret))
-                                  (comminfo-msgs output-ret))
-                               body-placeset)])
-            ;; declare function
-            (declare env (get-field name ast) ret)
-            ret)]
+        (push-scope)
+        (define input-ret (send (get-field input ast) accept this))
+        (define output-ret (send (get-field output ast) accept this))
+        (define args-ret (send (get-field args ast) accept this))
+        (define body-ret (send (get-field body ast) accept this))
+        (pop-scope)
+        
+        (when debug
+          (pretty-display (format ">> ConcreteFilterDecl ~a" (get-field name ast))))
+        
+        (define body-placeset
+          (set-union (set-union (set-union (comminfo-placeset args-ret)
+                                           (comminfo-placeset body-ret))
+                                (comminfo-placeset input-ret))
+                     (comminfo-placeset output-ret)))
+        (set-field! body-placeset ast body-placeset)
+        
+        (let ([ret (comminfo (+ (+ (+ (comminfo-msgs args-ret)
+                                      (comminfo-msgs body-ret))
+                                   (comminfo-msgs input-ret))
+                                (comminfo-msgs output-ret))
+                             body-placeset)])
+          ;; declare function
+          (declare env (get-field name ast) ret)
+          ret)]
        
        [else (raise (format "visitor-interpreter: unimplemented for ~a" ast))]))
 ))
