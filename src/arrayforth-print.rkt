@@ -91,16 +91,18 @@
     (display (format ": ~a = $0 " (funcdecl-name x)))
     (aforth-syntax-print (funcdecl-body x) "  ")
     (pretty-display "= $0 ; | cr")]
+   
+   [(vardecl? x)
+    (for ([val (vardecl-val x)])
+         (display val)
+         (display " , "))
+    (pretty-display "| br")]
 
    [(aforth? x)
     (define memsize (aforth-memsize x))
     (pretty-display (format "{block ~a}" (+ 930 (* 2 id))))
     (pretty-display (format "( -) # ~a ( mem ~a) 0 org | cr" 
                             (+ (* 100 (floor (/ id w))) (modulo id w)) memsize))
-
-    (for ([i (in-range memsize)])
-         (display "0 , "))
-    (pretty-display "| br")
     
     (aforth-syntax-print (aforth-code x))
     (newline)

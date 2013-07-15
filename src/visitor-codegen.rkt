@@ -13,12 +13,14 @@
     (super-new)
     (init-field data-size iter-size core w h virtual
 		[x (floor (/ core w))] [y (modulo core w)]
-                [helper-funcs (list)] [if-count 0] [while-count 0]
+                [helper-funcs (list)] 
+                [data (make-vector (+ (meminfo-addr data-size) iter-size) 0)]
+                [if-count 0] [while-count 0]
                 [maxnum 1]
                 ;; map virtual index to real index
                 [index-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -99,9 +101,22 @@
 
     (define/public (visit ast)
       (cond
-       [(or (is-a? ast VarDecl%)
-	    (is-a? ast ArrayDecl%))
-	(list)]
+       [(is-a? ast VarDecl%)
+        (list)]
+
+       [(is-a? ast ArrayDecl%)
+        (when debug
+              (pretty-display (format "\nCODEGEN: VarDecl ~a" (get-field var ast))))
+        (define init (get-field init ast))
+        (when (and (not virtual) init)
+              (define address (get-field address ast))
+              (for ([i (in-range (length init))]
+                    [val init])
+                   (vector-set! data (+ (meminfo-addr address) i) val)))
+        (when debug
+              (pretty-display (format "\nCODEGEN: VarDecl ~a (done)" (get-field var ast))))
+        (list)
+        ]
 
        [(is-a? ast Num%)
         (when debug 
@@ -344,6 +359,9 @@
 	    (funcdecl (get-field name ast) body-ret))]
 
        [(is-a? ast Program%)
+        (when debug 
+              (pretty-display (format "\nCODEGEN: Program")))
+
 	;; return list of function list
         (define main-funcs
           (for/list ([decl (filter (lambda (x) (is-a? x FuncDecl%)) 
@@ -353,7 +371,9 @@
         (dict-set! index-map 
                    (+ (meminfo-virtual data-size) iter-size)
                    (+ (meminfo-addr data-size) iter-size))
-        (aforth (append (reverse helper-funcs) main-funcs) 
+        (aforth (append (list (vardecl (vector->list data))) 
+                        (reverse helper-funcs) 
+                        main-funcs) 
                 (+ (get-var data-size) iter-size) 
                 (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
                 index-map)

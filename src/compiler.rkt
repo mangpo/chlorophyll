@@ -163,11 +163,12 @@
       (aforth-syntax-print real-opts)))
   )
 
-(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
+;(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               480 "null" 7 6 #:verbose #t)
 ;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 480 "null" 10 5)
-;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 256 "null" #:opt #t)
+(compile-and-optimize "../tests/run/array-noio.cll" "arraynoio" 
+                      256 "null" #:opt #f)
 
 ;(compile-percore "../examples/add.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)

@@ -586,7 +586,7 @@
   (class Livable%
     (super-new)
     (inherit-field place pos)
-    (init-field var-list type [known #t])
+    (init-field var-list type [known #t] [address #f])
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
@@ -623,7 +623,7 @@
 (define Param%
   (class VarDecl%
     (super-new)
-    (init-field [place-type #f] [known-type #t] [address #f])
+    (init-field [place-type #f] [known-type #t])
     (inherit-field var-list type known place)
 
     (define/public (set-known val)
@@ -716,7 +716,7 @@
   (class LivableGroup%
     (super-new)
     (inherit-field pos place-list)
-    (init-field var type bound cluster init [known #t] [compress (min 2 bound)])
+    (init-field var type bound cluster init [known #t] [compress (min 2 bound)] [address #f])
     (inherit print-send-path)
     
     (define/override (pretty-print [indent ""])

@@ -11,7 +11,7 @@
 		;; collect iter offset to adjust for loop bound
 		[iter-map (make-hash)])
 
-    (define debug #t)
+    (define debug #f)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -48,8 +48,7 @@
 	(for ([var (get-field var-list ast)])
 	     (when (need-mem? var)
 		   (dict-set! mem-map var (gen-mem mem-p mem-rp))
-		   (when (is-a? ast Param%)
-			 (set-field! address ast (gen-mem mem-p mem-rp)))
+                   (set-field! address ast (gen-mem mem-p mem-rp))
 		   (set! mem-p (add1 mem-p))
                    (set! mem-rp (add1 mem-rp))))
 	]
@@ -57,6 +56,7 @@
        [(is-a? ast ArrayDecl%)
         (when debug (pretty-display (format "\nMEMORY: ArrayDecl ~a" (get-field var ast))))
 	(dict-set! mem-map (get-field var ast) (gen-mem mem-p mem-rp))
+        (set-field! address ast (gen-mem mem-p mem-rp))
 	(set! mem-p (+ mem-p (get-field bound ast)))
         (set! mem-rp (+ mem-rp (get-field compress ast)))
         ]

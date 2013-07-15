@@ -9,6 +9,7 @@
                 (cons name (test-simulate name input capacity))
                 result)))
 
+(test "array" "10" 256)
 ;(test "simple" "null" 256)
 
 ;(test "if"       "4_1" 512)
@@ -22,7 +23,7 @@
 ;(test "pair3" "null" 512)
 ;(test "matrixmult" "72" 400) ;capacity issue
 ;(test "cluster" "null" 256)
-(test "while" "10" 256)
+;(test "while" "10" 256)
 
 ;(test "md5-full" "md5" 1400)
 

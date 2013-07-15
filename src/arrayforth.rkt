@@ -11,6 +11,7 @@
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body) #:mutable)
+(struct vardecl (val))
 (struct forloop (init body))
 (struct ift (t))
 (struct iftf (t f))
@@ -128,6 +129,9 @@
     (pretty-display (format "~a(funcdecl: ~a"  indent (funcdecl-name x)))
     (codegen-print (funcdecl-body x) (inc indent))]
 
+   [(vardecl? x)
+    (pretty-display (format "~a(vardecl: ~a)" indent (vardecl-val x)))]
+
    [(aforth? x)
     (codegen-print (aforth-code x))]
    
@@ -195,6 +199,9 @@
     (pretty-display (format "~a(funcdecl \"~a\""  indent (funcdecl-name x)))
     (aforth-struct-print (funcdecl-body x) (inc indent))
     (pretty-display (format "~a)" indent))]
+
+   [(vardecl? x)
+    (pretty-display (format "~a(vardecl ~a)" indent (vardecl-val x)))]
 
    [(aforth? x)
     (pretty-display (format "~a(aforth " indent))
@@ -277,6 +284,9 @@
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
               (superoptimize (funcdecl-body ast) name mem-size bit))]
+
+   [(vardecl? ast)
+    (vardecl (vardecl-val ast))]
 
    [(aforth? ast)
     (define bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
@@ -368,6 +378,9 @@
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
               (renameindex (funcdecl-body ast) index-map))]
+
+   [(vardecl? ast)
+    (vardecl (vardecl-val ast))]
 
    [(aforth? ast)
     (define index-map (aforth-indexmap ast))
