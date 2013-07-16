@@ -1,10 +1,8 @@
 TODO
-- arraydecl init field
-- follow up the bug report (subprocess)
 - generate arrayforth file: test more (unoptimized & optimized)
-- way to initialize array
-- connect to rohin's interpreter
+  = while, offset, function
 - stat report
+- connect to rohin's interpreter
 - 3 a! @ 32 - 1 . + . + 0 . + a! @
 - try running GA MD5 in the simulator
 - how to measure time & energy on their MD5 code

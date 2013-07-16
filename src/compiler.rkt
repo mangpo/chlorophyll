@@ -131,7 +131,8 @@
   )
   
 ;; compile HLP to optimized many-core machine code
-(define (compile-and-optimize file name capacity input [w 5] [h 4] 
+(define (compile-and-optimize file name capacity input 
+                              #:w [w 5] #:h [h 4] 
                               #:verbose [verbose #f]
                               #:opt [opt #t])
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose))
@@ -139,11 +140,19 @@
   (define real-codes (generate-codes programs w h #f))
   (define real-opts real-codes)
   
+  
+  (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
+    (lambda () (aforth-struct-print real-codes)))
+  
+  ;; arrayforth without superoptimization
+  (with-output-to-file #:exists 'truncate (format "~a/~a-noopt.aforth" outdir name)
+    (lambda ()
+      (aforth-syntax-info w h)
+      (aforth-syntax-print real-codes)))
+  
   (when opt
     (define virtual-codes (generate-codes programs w h #t))
     
-    (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
-      (lambda () (aforth-struct-print real-codes)))
     (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
       (lambda () (aforth-struct-print virtual-codes)))
     
@@ -157,6 +166,7 @@
     (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
       (lambda () (aforth-struct-print real-opts))))
   
+  ;; superoptimized arrayforth
   (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
     (lambda ()
       (aforth-syntax-info w h)
@@ -166,9 +176,14 @@
 ;(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               480 "null" 7 6 #:verbose #t)
-;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 480 "null" 10 5)
-(compile-and-optimize "../tests/run/array-noio.cll" "arraynoio" 
+(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
                       256 "null" #:opt #f)
+#|(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
+                      256 "null" #:opt #t)
+(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
+                      256 "null" #:opt #t)|#
+#|(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
+                      600 "null" #:w 10 #:h 5 #:opt #t)|#
 
 ;(compile-percore "../examples/add.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)

@@ -168,7 +168,7 @@
     (pretty-display (format "~a(funccall \"~a\")"  indent (funccall-name x)))]
    
    [(forloop? x)
-    (pretty-display (format "~a(for "  indent))
+    (pretty-display (format "~a(forloop "  indent))
     (aforth-struct-print (forloop-init x) (inc indent))
     (aforth-struct-print (forloop-body x) (inc indent))
     (pretty-display (format "~a)" indent))]
@@ -201,7 +201,7 @@
     (pretty-display (format "~a)" indent))]
 
    [(vardecl? x)
-    (pretty-display (format "~a(vardecl ~a)" indent (vardecl-val x)))]
+    (pretty-display (format "~a(vardecl '~a)" indent (vardecl-val x)))]
 
    [(aforth? x)
     (pretty-display (format "~a(aforth " indent))
@@ -216,6 +216,7 @@
     (pretty-display "  (vector")
     (define size (vector-length x))
     (for ([i (in-range size)])
+         (pretty-display (format "    ;; core ~a" i))
 	 (aforth-struct-print (vector-ref x i) (inc (inc indent))))
     (pretty-display "  ))")
     (pretty-display "(superoptimize programs \"foo\")")
