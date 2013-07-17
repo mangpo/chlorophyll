@@ -99,6 +99,9 @@
       (dict-set! index-map reduce actual)
       (if virtual reduce actual))
 
+    (define (get-iter-org mem)
+      (+ (meminfo-addr data-size) (meminfo-virtual mem)))
+
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
@@ -138,7 +141,11 @@
 	      (list (gen-block))))
 
 	(define address (get-field address ast))
-	(define array-ret (list (gen-block (number->string (get-var address)) "+" "a!" "@" 1 1)))
+	(define array-ret (list (gen-block-org 
+                                 ((number->string (get-var address)) "+" "a!" "@")
+                                 ((number->string (meminfo-addr address)) "+" "a!" "@")
+                                 1 1
+                                 )))
 
 	(prog-append index-ret offset-ret array-ret)]
 
@@ -150,9 +157,17 @@
 	    ;; push on the stack
 	    (if (meminfo-data address)
 		;; data
-		(list (gen-block (number->string (get-var address)) "a!" "@" 0 1))
+		(list (gen-block-org 
+                       ((number->string (get-var address)) "a!" "@")
+                       ((number->string (meminfo-addr address)) "a!" "@")
+                       0 1
+                       ))
 		;; iter
-		(list (gen-block (number->string (get-iter address)) "a!" "@" 0 1)))
+		(list (gen-block-org 
+                       ((number->string (get-iter address)) "a!" "@")
+                       ((number->string (get-iter-org address)) "a!" "@")
+                       0 1
+                       )))
 	    ;; already on the stack
 	    (list))]
 
@@ -211,27 +226,36 @@
 	    (let* ([index-ret (send (get-field index lhs) accept this)]
 		   [offset (get-field offset lhs)]
 		   [offset-ret (if (> offset 0)
-				   (list (gen-block (number->string offset) "-" "1" "+" "+" 1 1))
+				   (list (gen-block 
+                                          (number->string offset) "-" "1" "+" "+" 1 1))
 				   (list (gen-block)))]
 		   [rhs-ret (send rhs accept this)])
 	      (prog-append 
 	       rhs-ret
 	       index-ret
 	       offset-ret
-	       (list (gen-block (number->string (get-var address)) 
-                                "+" "a!" "!" 2 0))))
+	       (list (gen-block-org 
+                      ((number->string (get-var address)) "+" "a!" "!")
+                      ((number->string (meminfo-addr address)) "+" "a!" "!")
+                      2 0
+                      ))))
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
 		   (if address
 		       (if (meminfo-data address)
 			   ;; data
-			   (list (gen-block (number->string (get-var address)) 
-                                            "a!" "!" 1 0))
+			   (list (gen-block-org 
+                                  ((number->string (get-var address)) "a!" "!")
+                                  ((number->string (meminfo-addr address)) "a!" "!")
+                                  1 0
+                                  ))
 			   ;; iter
-			   (list (gen-block 
-                                  (number->string (get-iter address))
-                                  "a!" "!" 1 0)))
+			   (list (gen-block-org
+                                  ((number->string (get-iter address)) "a!" "!")
+                                  ((number->string (get-iter-org address)) "a!" "!")
+                                  1 0
+                                  )))
 		       ;; temp on stack
 		       (list)))))]
 
@@ -335,8 +359,13 @@
         (define address (get-iter (get-field address ast)))
         (define address-str (number->string address))
         
-        (define init-ret (gen-block (number->string from) address-str "a!" "!" 
-                                    (number->string (- to from 1)) 0 1)) ;; loop bound
+        (define init-ret (gen-block-org
+                          ((number->string from) address-str 
+                           "a!" "!" (number->string (- to from 1)))
+                          ((number->string from) (get-iter-org (get-field address ast))
+                           "a!" "!" (number->string (- to from 1)))
+                          0 1
+                          )) ;; loop bound
          
         (define body-ret (send (get-field body ast) accept this))
         (define body-decor (list (gen-block address-str "a!" "@" "1" "+" "!" 0 0)))
@@ -351,10 +380,9 @@
 
 	(if (> n-decls 0)
 	    (let* ([address (get-field address (last decls))]
-		   [args-ret (list
-			      (block (append 
-				      (list (number->string (get-var address)) "a!")
-				      (for/list ([i (in-range n-decls)]) "!+")) n-decls 0 #t))])
+                   [code (append (list (number->string (get-var address)) "a!")
+                                 (for/list ([i (in-range n-decls)]) "!+"))]
+		   [args-ret (list (block code n-decls 0 #t code))])
 	      (funcdecl (get-field name ast) (prog-append args-ret body-ret)))
 	    (funcdecl (get-field name ast) body-ret))]
 

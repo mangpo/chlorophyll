@@ -7,7 +7,7 @@
 
 (provide (all-defined-out))
 
-(struct block (body in out mem) #:mutable)
+(struct block (body in out mem org) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body) #:mutable)
@@ -24,11 +24,16 @@
 (define-syntax gen-block
   (syntax-rules ()
     [(gen-block)
-     (block (list) 0 0 #t)]
+     (block (list) 0 0 #t (list))]
     [(gen-block mem)
-     (block (list) 0 0 mem)]
+     (block (list) 0 0 mem (list))]
     [(gen-block a ... in out)
-     (block (list a ...) in out #t)]))
+     (block (list a ...) in out #t (list a ...))]))
+
+(define-syntax gen-block-org
+  (syntax-rules ()
+    [(gen-block-org (a ...) (b ...) in out)
+     (block (list a ...) in out #t (list a ...))]))
 
 (define-syntax prog-append
   (syntax-rules ()
@@ -39,10 +44,11 @@
 (define (program-append a-list b-list [no-limit #f])
   ;; merge b-block into a-block
   (define (merge-into a-block b-block)
-    ;; (pretty-display "MERGE:")
-    ;; (codegen-print a-block)
-    ;; (codegen-print b-block)
+    (pretty-display "MERGE:")
+    (codegen-print a-block)
+    (codegen-print b-block)
     (set-block-body! a-block (append (block-body a-block) (block-body b-block)))
+    (set-block-org! a-block (append (block-org a-block) (block-org b-block)))
     (set-block-mem! a-block (and (block-mem a-block) (block-mem b-block)))
     (define a-in  (block-in a-block))
     (define a-out (block-out a-block))
@@ -224,16 +230,22 @@
    
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))
 
+
+(define (out-space out)
+  (cond 
+   [(= out 0) (constraint memory t)]
+   [(= out 1) (constraint memory s t)]
+   [(> out 1) (constraint memory s t data)]))
+
+(define index-map #f)
+(define mem-size #f)
+(define bit #f)
+
 ;; optimize per-core program
-(define (superoptimize ast name [mem-size #f] [bit #f])
+(define (superoptimize ast name)
   (cond
    [(block? ast)
     (define out (block-out ast))
-    (define out-space
-      (cond 
-       [(= out 0) (constraint memory t)]
-       [(= out 1) (constraint memory s t)]
-       [(> out 1) (constraint memory s t data)]))
 
     (define result
       (block (optimize (if (string? (block-body ast))
@@ -241,9 +253,9 @@
                            (string-join (block-body ast)) )
                        #:f18a #f
                        #:num-bits bit #:name name
-                       #:constraint out-space
+                       #:constraint (out-space out)
                        #:mem mem-size #:start mem-size)
-             (block-in ast) out (block-mem ast)))
+             (block-in ast) out (block-mem ast) (block-org ast)))
     (with-output-to-file #:exists 'append 
       (format "~a/~a-work.rkt" outdir name)
       (lambda () 
@@ -256,7 +268,7 @@
 
    [(list? ast)
     (for/list ([x ast])
-              (superoptimize x name mem-size bit))]
+              (superoptimize x name))]
 
    [(mult? ast)
     (mult)]
@@ -265,34 +277,34 @@
     (funccall (funccall-name ast))]
 
    [(forloop? ast)
-    (forloop (superoptimize (forloop-init ast) name mem-size bit)
-             (superoptimize (forloop-body ast) name mem-size bit))]
+    (forloop (superoptimize (forloop-init ast) name)
+             (superoptimize (forloop-body ast) name))]
 
    [(ift? ast)
-    (ift (superoptimize (ift-t ast) name mem-size bit))]
+    (ift (superoptimize (ift-t ast) name))]
 
    [(iftf? ast)
-    (iftf (superoptimize (iftf-t ast) name mem-size bit)
-          (superoptimize (iftf-f ast) name mem-size bit))]
+    (iftf (superoptimize (iftf-t ast) name)
+          (superoptimize (iftf-f ast) name))]
 
    [(-ift? ast)
-    (-ift (superoptimize (-ift-t ast) name mem-size bit))]
+    (-ift (superoptimize (-ift-t ast) name))]
 
    [(-iftf? ast)
-    (-iftf (superoptimize (-iftf-t ast) name mem-size bit)
-           (superoptimize (-iftf-f ast) name mem-size bit))]
+    (-iftf (superoptimize (-iftf-t ast) name)
+           (superoptimize (-iftf-f ast) name))]
 
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
-              (superoptimize (funcdecl-body ast) name mem-size bit))]
+              (superoptimize (funcdecl-body ast) name))]
 
    [(vardecl? ast)
     (vardecl (vardecl-val ast))]
 
    [(aforth? ast)
-    (define bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
-    (define result (superoptimize (aforth-code ast) 
-                                  name (aforth-memsize ast) bit))
+    (set! bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
+    (set! mem-size (aforth-memsize ast))
+    (define result (superoptimize (aforth-code ast) name))
     (pretty-display `(-------------------- result -----------------------))
     (codegen-print result)
     (define ret
@@ -332,10 +344,11 @@
    [else
     (raise (format "arrayforth: superoptimize: unimplemented for ~a" ast))]))
 
-(define (renameindex ast [index-map #f])
+(define (renameindex ast)
   (cond
    [(block? ast)
     (define body (string-split (block-body ast)))
+    (define org (block-org ast))
     (define rename-set (track-index body))
     (pretty-display `(renameindex ,body ,rename-set ,index-map))
     (define new-body
@@ -346,11 +359,23 @@
                     (number->string (dict-ref index-map (string->number inst)))
                     inst)))
 
-    (block (string-join new-body) (block-in ast) (block-out ast) #f)]
+    (define same (program-equal? org new-body
+                                 mem-size (out-space (block-out ast)) bit))
+
+    (if same
+        (begin
+          (pretty-display "VALIDATE: different")
+          (pretty-display (string-join new-body))
+          (pretty-display org))
+        (pretty-display "VALIDATE: same"))
+
+    (if same
+        (block org (block-in ast) (block-out ast) mem-size org)
+        (block (string-join new-body) (block-in ast) (block-out ast) mem-size (block-org ast)))]
 
    [(list? ast)
     (for/list ([x ast])
-              (renameindex x index-map))]
+              (renameindex x))]
 
    [(mult? ast)
     (mult)]
@@ -359,34 +384,36 @@
     (funccall (funccall-name ast))]
 
    [(forloop? ast)
-    (forloop (renameindex (forloop-init ast) index-map)
-             (renameindex (forloop-body ast) index-map))]
+    (forloop (renameindex (forloop-init ast))
+             (renameindex (forloop-body ast)))]
 
    [(ift? ast)
-    (ift (renameindex (ift-t ast) index-map))]
+    (ift (renameindex (ift-t ast)))]
 
    [(iftf? ast)
-    (iftf (renameindex (iftf-t ast) index-map)
-          (renameindex (iftf-f ast) index-map))]
+    (iftf (renameindex (iftf-t ast))
+          (renameindex (iftf-f ast)))]
 
    [(-ift? ast)
-    (-ift (renameindex (-ift-t ast) index-map))]
+    (-ift (renameindex (-ift-t ast)))]
 
    [(-iftf? ast)
-    (-iftf (renameindex (-iftf-t ast) index-map)
-           (renameindex (-iftf-f ast) index-map))]
+    (-iftf (renameindex (-iftf-t ast))
+           (renameindex (-iftf-f ast)))]
 
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
-              (renameindex (funcdecl-body ast) index-map))]
+              (renameindex (funcdecl-body ast)))]
 
    [(vardecl? ast)
     (vardecl (vardecl-val ast))]
 
    [(aforth? ast)
-    (define index-map (aforth-indexmap ast))
-    (aforth (renameindex (aforth-code ast) index-map)
-            (dict-ref index-map (aforth-memsize ast)) (aforth-bit ast) #f)]
+    (set! index-map (aforth-indexmap ast))
+    (set! mem-size (aforth-memsize ast))
+    (set! bit (aforth-bit ast))
+    (aforth (renameindex (aforth-code ast))
+            (dict-ref index-map mem-size) bit #f)]
 
    [(vector? ast)
     (define n (vector-length ast))

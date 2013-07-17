@@ -1,6 +1,12 @@
 TODO
+- more accurate on constraint data
+- nop is less than everything, @ < @+
+- merge for loop
+- longest subsequence
+
 - generate arrayforth file: test more (unoptimized & optimized)
   = while, offset, function
+- md5: block 934 = $79 words
 - stat report
 - connect to rohin's interpreter
 - 3 a! @ 32 - 1 . + . + 0 . + a! @
