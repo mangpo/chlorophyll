@@ -33,7 +33,7 @@
 (define-syntax gen-block-org
   (syntax-rules ()
     [(gen-block-org (a ...) (b ...) in out)
-     (block (list a ...) in out #t (list a ...))]))
+     (block (list a ...) in out #t (list b ...))]))
 
 (define-syntax prog-append
   (syntax-rules ()
@@ -44,9 +44,9 @@
 (define (program-append a-list b-list [no-limit #f])
   ;; merge b-block into a-block
   (define (merge-into a-block b-block)
-    (pretty-display "MERGE:")
-    (codegen-print a-block)
-    (codegen-print b-block)
+    ;; (pretty-display "MERGE:")
+    ;; (codegen-print a-block)
+    ;; (codegen-print b-block)
     (set-block-body! a-block (append (block-body a-block) (block-body b-block)))
     (set-block-org! a-block (append (block-org a-block) (block-org b-block)))
     (set-block-mem! a-block (and (block-mem a-block) (block-mem b-block)))
@@ -88,13 +88,22 @@
 	 (codegen-print i indent))]
    
    [(block? x)
-    (display (format "~a(block: " indent))
+    (pretty-display (format "~a(block" indent))
+    (display (format "~acode:" (inc indent)))
     (if (list? (block-body x))
         (for ([i (block-body x)])
           (display i)
           (display " "))
         (display (block-body x)))
-    (pretty-display (format ", in:~a out:~a mem:~a)" (block-in x) (block-out x) (block-mem x)))]
+    (newline)
+    (display (format "~aorg:" (inc indent)))
+    (if (list? (block-org x))
+        (for ([i (block-org x)])
+          (display i)
+          (display " "))
+        (display (block-org x)))
+    (pretty-display (format "~ain:~a out:~a mem:~a)" (inc indent) 
+                            (block-in x) (block-out x) (block-mem x)))]
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
@@ -232,10 +241,9 @@
 
 
 (define (out-space out)
-  (cond 
-   [(= out 0) (constraint memory t)]
-   [(= out 1) (constraint memory s t)]
-   [(> out 1) (constraint memory s t data)]))
+  (if (= out 0)
+      (constraint memory s t)
+      (constraint-data out memory s t)))
 
 (define index-map #f)
 (define mem-size #f)
@@ -359,19 +367,20 @@
                     (number->string (dict-ref index-map (string->number inst)))
                     inst)))
 
-    (define same (program-equal? org new-body
-                                 mem-size (out-space (block-out ast)) bit))
+    (define new-mem-size (dict-ref index-map mem-size))
+    (define diff (program-diff? org new-body
+                                 new-mem-size (out-space (block-out ast)) bit))
 
-    (if same
+    (if diff
         (begin
           (pretty-display "VALIDATE: different")
           (pretty-display (string-join new-body))
           (pretty-display org))
         (pretty-display "VALIDATE: same"))
 
-    (if same
-        (block org (block-in ast) (block-out ast) mem-size org)
-        (block (string-join new-body) (block-in ast) (block-out ast) mem-size (block-org ast)))]
+    (if diff
+        (block org (block-in ast) (block-out ast) new-mem-size org)
+        (block (string-join new-body) (block-in ast) (block-out ast) new-mem-size (block-org ast)))]
 
    [(list? ast)
     (for/list ([x ast])

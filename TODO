@@ -1,8 +1,7 @@
 TODO
-- more accurate on constraint data
-- nop is less than everything, @ < @+
 - merge for loop
 - longest subsequence
+- nop is less than everything, @ < @+
 
 - generate arrayforth file: test more (unoptimized & optimized)
   = while, offset, function

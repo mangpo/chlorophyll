@@ -20,7 +20,7 @@
                 ;; map virtual index to real index
                 [index-map (make-hash)])
 
-    (define debug #t)
+    (define debug #f)
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -100,7 +100,7 @@
       (if virtual reduce actual))
 
     (define (get-iter-org mem)
-      (+ (meminfo-addr data-size) (meminfo-virtual mem)))
+      (+ (meminfo-addr data-size) (meminfo-addr mem)))
 
     (define/public (visit ast)
       (cond
@@ -362,7 +362,8 @@
         (define init-ret (gen-block-org
                           ((number->string from) address-str 
                            "a!" "!" (number->string (- to from 1)))
-                          ((number->string from) (get-iter-org (get-field address ast))
+                          ((number->string from) 
+                           (number->string (get-iter-org (get-field address ast)))
                            "a!" "!" (number->string (- to from 1)))
                           0 1
                           )) ;; loop bound

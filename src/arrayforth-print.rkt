@@ -6,9 +6,9 @@
 
 (define w #f)
 (define h #f)
-(define id #f)
+(define id 0)
 
-(define (aforth-syntax-info my-w my-h [my-id #f])
+(define (aforth-syntax-info my-w my-h [my-id 0])
   (set! w my-w)
   (set! h my-h)
   (set! id my-id))
