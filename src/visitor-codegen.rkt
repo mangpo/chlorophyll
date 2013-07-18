@@ -135,19 +135,30 @@
 	(define index-ret (send (get-field index ast) accept this))
 
 	(define offset (get-field offset ast))
-	(define offset-ret 
-	  (if (> offset 0)
-	      (list (gen-block (number->string offset) "-" "1" "+" "+" 1 1))
-	      (list (gen-block))))
+	;; (define offset-ret 
+	;;   (if (> offset 0)
+	;;       (list (gen-block (number->string offset) "-" "1" "+" "+" 1 1))
+	;;       (list (gen-block))))
 
 	(define address (get-field address ast))
-	(define array-ret (list (gen-block-org 
-                                 ((number->string (get-var address)) "+" "a!" "@")
-                                 ((number->string (meminfo-addr address)) "+" "a!" "@")
-                                 1 1
-                                 )))
+        (define actual-addr (- (get-var address) offset))
+        (define actual-addr-org (- (meminfo-addr address) offset))
 
-	(prog-append index-ret offset-ret array-ret)]
+        (define insts
+          (if (= actual-addr 0)
+              (list "a!" "@")
+              (list (number->string actual-addr) "+" "a!" "@")))
+        (define insts-org
+          (if (= actual-addr-org 0)
+              (list "a!" "@")
+              (list (number->string actual-addr-org) "+" "a!" "@")))
+
+        (define array-ret
+          (list (block insts 1 1 #t insts-org)))
+
+	;; (prog-append index-ret offset-ret array-ret)
+	(prog-append index-ret array-ret)
+        ]
 
        [(is-a? ast Var%)
         (when debug 
@@ -224,21 +235,26 @@
 	;(pretty-display `(address ,address))
 	(if (is-a? lhs Array%)
 	    (let* ([index-ret (send (get-field index lhs) accept this)]
-		   [offset (get-field offset lhs)]
-		   [offset-ret (if (> offset 0)
-				   (list (gen-block 
-                                          (number->string offset) "-" "1" "+" "+" 1 1))
-				   (list (gen-block)))]
-		   [rhs-ret (send rhs accept this)])
+		   [offset    (get-field offset lhs)]
+		   ;; [offset-ret (if (> offset 0)
+		   ;;      	   (list (gen-block 
+                   ;;                        (number->string offset) "-" "1" "+" "+" 1 1))
+		   ;;      	   (list (gen-block)))]
+		   [rhs-ret     (send rhs accept this)]
+                   [actual-addr (- (get-var address) offset)]
+                   [actual-addr-org (- (meminfo-addr address) offset)]
+                   [insts (if (= actual-addr 0)
+                              (list "a!" "!")
+                              (list (number->string actual-addr) "+" "a!" "!"))]
+                   [insts-org (if (= actual-addr-org 0)
+                                  (list "a!" "!")
+                                  (list (number->string actual-addr-org) "+" "a!" "!"))])
 	      (prog-append 
 	       rhs-ret
 	       index-ret
-	       offset-ret
-	       (list (gen-block-org 
-                      ((number->string (get-var address)) "+" "a!" "!")
-                      ((number->string (meminfo-addr address)) "+" "a!" "!")
-                      2 0
-                      ))))
+	       ;;offset-ret
+               (list (block insts 2 0 #t insts-org))
+               ))
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
