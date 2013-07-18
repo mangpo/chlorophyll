@@ -1,12 +1,9 @@
-int sum(int a, int b, int c, int d) {
-  return a + b + c + d;
-}
-
 void main() {
-  int@1 a;
-  int@1 b;
-  int@2 c;
-  int@2 d;
-  int@0 ret;
-  ret = sum(a,b,c,sum(d,c,b,a));
+  int x;
+  for(i from 0 to 10) {
+    x = i;
+  }
+  for(i from 10 to 20) {
+    x = i;
+  }
 }

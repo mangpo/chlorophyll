@@ -12,7 +12,7 @@
 (struct funccall (name))
 (struct funcdecl (name body) #:mutable)
 (struct vardecl (val))
-(struct forloop (init body))
+(struct forloop (init body iter from to) #:mutable)
 (struct ift (t))
 (struct iftf (t f))
 (struct -ift (t))
@@ -43,7 +43,7 @@
 
 (define (program-append a-list b-list [no-limit #f])
   ;; merge b-block into a-block
-  (define (merge-into a-block b-block)
+  (define (merge-block a-block b-block)
     ;; (pretty-display "MERGE:")
     ;; (codegen-print a-block)
     ;; (codegen-print b-block)
@@ -59,10 +59,36 @@
 	(begin
 	  (set-block-in! a-block (- (+ a-in b-in) a-out))
 	  (set-block-out! a-block b-out))))
+
+  (define (merge-forloop a-for b-for)
+    (pretty-display `(merge-forloop ,(forloop-body a-for) ,(forloop-body b-for)))
+    (and (equal? (forloop-iter a-for) (forloop-iter b-for))
+         (equal? (forloop-to a-for) (forloop-from b-for))
+         (aforth-eq? (forloop-body a-for) (forloop-body b-for))
+         (let ([addr (car (forloop-iter a-for))]
+               [addr-org (cdr (forloop-iter a-for))]
+               [from (forloop-from a-for)]
+               [to   (forloop-to b-for)])
+           (set-forloop-to! a-for to)
+           (set-forloop-init! a-for
+                              (gen-block-org
+                               ((number->string from) (number->string addr)
+                                "a!" "!" (number->string (- to from 1)))
+                               ((number->string from) (number->string addr-org)
+                                "a!" "!" (number->string (- to from 1)))
+                               0 1))
+           #t)))
   
   (cond
    [(empty? a-list) b-list]
    [(empty? b-list) a-list]
+
+   [(and (forloop? (last a-list)) (forloop? (car b-list)))
+    (define merge (merge-forloop (last a-list) (car b-list)))
+    (if merge
+        (append a-list (cdr b-list))
+        (append a-list b-list))]
+
    [else
     (define a-last (last a-list))
     (define b-first (car b-list))
@@ -71,9 +97,26 @@
              (or no-limit
                  (<= (+ (length (block-body a-last)) (length (block-body b-first))) 16)))
 	(begin
-	  (merge-into a-last b-first)
+	  (merge-block a-last b-first)
 	  (append a-list (cdr b-list)))
 	(append a-list b-list))]))
+
+(define (aforth-eq? a b)
+  (pretty-display `(aforth-eq? ,a ,b ,(block? a) ,(block? b)))
+  (or
+   (and (list? a) (list? b) (andmap aforth-eq? a b))
+   (and (block? a) (block? b) (equal? (block-body a) (block-body b)))
+   (and (mult? a) (mult? b))
+   (and (funccall? a) (funccall? b) (equal? (funccall-name a) (funccall-name b)))
+   (and (forloop? a) (forloop? b) (equal? (forloop-iter a) (forloop-iter b))
+        (aforth-eq? (forloop-body a) (forloop-body b)))
+   (and (ift? a) (ift? b) (aforth-eq? (ift-t a) (ift-t b)))
+   (and (iftf? a) (iftf? b) 
+        (aforth-eq? (iftf-t a) (iftf-t b)) (aforth-eq? (iftf-f a) (iftf-f b)))
+   (and (-ift? a) (-ift? b) (aforth-eq? (-ift-t a) (-ift-t b)))
+   (and (-iftf? a) (-iftf? b) 
+        (aforth-eq? (-iftf-t a) (-iftf-t b)) (aforth-eq? (-iftf-f a) (-iftf-f b)))
+   (equal? a b)))
 
 ;; casual printting
 (define (codegen-print x [indent ""])
@@ -186,7 +229,8 @@
     (pretty-display (format "~a(forloop "  indent))
     (aforth-struct-print (forloop-init x) (inc indent))
     (aforth-struct-print (forloop-body x) (inc indent))
-    (pretty-display (format "~a)" indent))]
+    (pretty-display (format "~a ~a ~a~a)" 
+                            (forloop-iter x) (forloop-from x) (forloop-to x) indent))]
    
    [(ift? x)
     (pretty-display (format "~a(ift "  indent))
@@ -286,7 +330,10 @@
 
    [(forloop? ast)
     (forloop (superoptimize (forloop-init ast) name)
-             (superoptimize (forloop-body ast) name))]
+             (superoptimize (forloop-body ast) name)
+             (forloop-iter ast)
+             (forloop-from ast)
+             (forloop-to ast))]
 
    [(ift? ast)
     (ift (superoptimize (ift-t ast) name))]
@@ -394,7 +441,10 @@
 
    [(forloop? ast)
     (forloop (renameindex (forloop-init ast))
-             (renameindex (forloop-body ast)))]
+             (renameindex (forloop-body ast))
+             (forloop-iter ast)
+             (forloop-from ast)
+             (forloop-to ast))]
 
    [(ift? ast)
     (ift (renameindex (ift-t ast)))]
@@ -437,18 +487,4 @@
 
    [else
     (raise (format "arrayforth: renameindex: unimplemented for ~a" ast))]))
-
-;(superoptimize (gen-block "up" "b!" "!b" "325" "b!" "!b" 0 0) "comm" 0 9)
-
-#|
-(codegen-print
- (renameindex 
-  (aforth 
-   (list 
-    (funcdecl "main"
-              (list 
-               (block "right a! @ 4 a! @ 0 . + a! @ . + 2 a! @ 2 +" 0 2 #t)
-               ))
-    )
-   5 9 #hash((4 . 40) (2 . 20)))))|#
   

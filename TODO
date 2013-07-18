@@ -1,10 +1,10 @@
 TODO
-- merge for loop
+- test
+  = merge for loop
+  = offset, function
 - longest subsequence
 - nop is less than everything, @ < @+
 
-- generate arrayforth file: test more (unoptimized & optimized)
-  = while, offset, function
 - md5: block 934 = $79 words
 - stat report
 - connect to rohin's interpreter

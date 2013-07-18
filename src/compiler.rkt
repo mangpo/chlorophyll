@@ -179,12 +179,12 @@
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
 ;                      256 "null" #:opt #t)
-(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
-                      256 "null" #:opt #t)
+;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
+;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
 ;                      600 "null" #:w 10 #:h 5 #:opt #t)
 
-;(compile-percore "../examples/add.cll" 0 2 2)
+(compile-percore "../examples/test.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
 
 (define testdir "../tests/run")
