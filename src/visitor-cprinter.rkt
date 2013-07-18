@@ -211,6 +211,9 @@
         [(is-a? ast If%)
          (display "if(")
          (send (get-field condition ast) accept this)
+
+         (when (is-a? ast If<0%) (display " < 0"))
+
          (pretty-display ") {")
          (inc-indent)
          (send (get-field true-block ast) accept this)
@@ -227,6 +230,12 @@
 	[(is-a? ast While%)
 	 (display "while(")
 	 (send (get-field condition ast) accept this)
+
+         (cond
+          [(is-a? ast While==0%) (display " == 0")]
+          [(is-a? ast While<0%)  (display " < 0")]
+          [(is-a? ast While>=0%) (display " > 0")])
+
 	 (pretty-display ") {")
          (inc-indent)
          (send (get-field body ast) accept this)

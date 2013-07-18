@@ -68,6 +68,8 @@
 
   (define divider (new ast-divider% [w w] [h h]))
   (define programs (send ast accept divider))
+  (when verbose (pretty-display "--- after dividing ---"))
+  
   (define cprinter (new cprinter% [thread #t] [w w] [h h]))
   (define n (add1 (* w h)))
 
@@ -82,6 +84,11 @@
         (newline))
       (print-main programs n)
       ))
+  
+  #|
+  (for ([i (in-range (* w h))])
+    (pretty-display (format ">>>>>>>>>>>>>>>> ~a: after divide" i))
+    (send (vector-ref programs i) pretty-print))|#
   
   programs
   )

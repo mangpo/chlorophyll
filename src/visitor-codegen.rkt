@@ -244,11 +244,16 @@
         (list (gen-block (gen-port (get-field port ast)) "a!" "@" 0 1))]
 
        [(is-a? ast Send%)
+        (define data (get-field data ast))
         (when debug 
-              (pretty-display (format "\nCODEGEN: Send ~a" (get-field port ast))))
-	(define data-ret (send (get-field data ast) accept this))
+              (pretty-display (format "\nCODEGEN: Send ~a ~a" (get-field port ast) data)))
+	(define data-ret (send data accept this))
+        (define temp-ret
+          (if (is-a? data Temp%)
+              (list (gen-block "dup" 1 2))
+              (list (gen-block))))
 	(define send-ret (list (gen-block (gen-port (get-field port ast)) "a!" "!" 1 0)))
-        (prog-append data-ret send-ret)]
+        (prog-append data-ret temp-ret send-ret)]
 
        [(is-a? ast FuncCall%)
         (when debug 

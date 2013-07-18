@@ -21,6 +21,7 @@
 ;(test "pair2" "null" 512)
 ;(test "pair3" "null" 512)
 ;(test "cluster" "null" 256)
+;(test "while" "10" 256)
 
 ;(test "md5-full" "md5" 1400)
 

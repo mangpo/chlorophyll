@@ -60,7 +60,8 @@
 ;(compile-percore "../tests/while.cll" 0 2 4)
 
 ;; Compile HLP read from file to per-core machine codes.
-(define (compile file name capacity input [w 5] [h 4] #:verbose [verbose #f])
+(define (compile file name capacity input [w 5] [h 4] 
+                       #:verbose [verbose #t])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -94,7 +95,7 @@
   (define programs (sep-and-insertcomm name my-ast w h 
                                        (layoutinfo-routes layout-res)
                                        (layoutinfo-part2core layout-res)
-                                       #:verbose #f))
+                                       #:verbose #t))
   ;; generate machine code for each core
   (generate-codes programs w h)
   )
