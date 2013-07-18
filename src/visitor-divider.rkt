@@ -592,6 +592,28 @@
              (set-func c func)
              func)))]
          
+       [(is-a? ast ConcreteFilterDecl%)
+	(when debug (pretty-display (format "\nDIVIDE: ConcreteFilterDecl ~a\n" (get-field name ast))))
+        (define (func-args-at ast core)
+          (new Block% 
+               [stmts
+                (filter 
+                 (lambda (x) (= (get-field place-type x) core))
+                 (get-field stmts (get-field args ast)))]))
+
+        (scope-pattern 
+         (lambda (c)
+           (let ([func (new ConcreteFilterDecl%
+                            [name (get-field name ast)]
+                            [abstract #f]
+                            [input #f]
+                            [output #f]
+                            [args (func-args-at ast c)]
+                            [arg-values #f]
+                            [body (new Block% [stmts (list)])]
+                            [parent (get-workspace c)])])
+             (set-func c func)
+             func)))]
 
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
