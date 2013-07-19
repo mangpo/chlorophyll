@@ -66,7 +66,8 @@
         [(is-a? ast VarDecl%)
          (display (format "~a ~a;"
                                (print-type (get-field type ast))
-                               (list-to-string (map print-name (get-field var-list ast)) core)
+                               (list-to-string (map print-name (get-field var-list ast))
+                                               (if thread core #f))
 			       ))
          ]
         
@@ -128,7 +129,10 @@
 	 ;;       (when sub
 	 ;; 	     (display (format ".~a" (vector-ref print-sub sub))))))
 
-	 (display (format "~a_~a" (print-name name) core))
+         (if thread
+           (display (format "~a_~a" (print-name name) core))
+           (display (print-name name)))
+
 	 (when sub
 	       (display (format ".~a" (vector-ref print-sub sub))))
          ]
@@ -280,9 +284,7 @@
          ;; Print function signature
 	 (if (equal? name "main")
              ;; main
-             (if thread
-                 (pretty-display (format "void *main_~a(void *dummy) {" core))
-                 (pretty-display "int main() {"))
+             (pretty-display (format "void *main_~a(void *dummy) {" core))
              ;; everything else
 	     (begin
 	       (display (format "~a ~a_~a(" (print-type type) name core))
@@ -322,9 +324,7 @@
          (send (get-field body ast) accept this)
 	 (when (equal? name "main")
 	       (display indent)
-               (if thread
-                   (pretty-display "return NULL;")
-                   (pretty-display "return 0;"))
+               (pretty-display "return NULL;")
                )
          (dec-indent)
          (pretty-display "}")

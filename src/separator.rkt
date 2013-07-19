@@ -103,7 +103,7 @@
       (new Block% [stmts (list decl)])
       ))
   (define n (vector-length programs))
-  (define cprinter (new cprinter% [thread #t] [n n]))
+  (define cprinter (new cprinter% [thread #f] [n n]))
   
   (with-output-to-file #:exists 'truncate file
     (lambda ()
@@ -111,6 +111,7 @@
       (for ([decl (get-field stmts ast)]
             #:unless (is-a? decl CallableDecl%))
         (send decl accept cprinter))
+      (newline)
       (newline)
       (for ([i (in-range n)])
         (define program (vector-ref programs i))

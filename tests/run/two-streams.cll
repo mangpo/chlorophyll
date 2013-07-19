@@ -1,0 +1,17 @@
+int->int filter Double() {
+  work blocking {
+    out(2 * in());
+  }
+}
+
+int->int filter PlusThree() {
+  work blocking {
+    out(3 + in());
+  }
+}
+
+int->int pipeline Main() {
+  add Double();
+  add PlusThree();
+}
+
