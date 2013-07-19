@@ -175,14 +175,14 @@
 ;(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               480 "null" 7 6 #:verbose #t)
-;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
-;                      256 "null" #:opt #f)
-(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
-                      256 "null" #:opt #t)
-(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
-                      256 "null" #:opt #t)
-(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
-                      600 "null" #:w 10 #:h 5 #:opt #t)
+(compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 
+                      256 "null" #:opt #f)
+;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
+;                      256 "null" #:opt #t)
+;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
+;                      256 "null" #:opt #t)
+;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
+;                      600 "null" #:w 10 #:h 5 #:opt #t)
 
 ;(compile-percore "../examples/test.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)

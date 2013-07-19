@@ -211,13 +211,26 @@
     ]
    
    [(block? x)
-    (display (format "~a(block \"" indent))
+    (pretty-display (format "~a(block" indent))
+
+    (display (format "~a\"" (inc indent)))
     (if (list? (block-body x))
         (for ([i (block-body x)])
           (display i)
           (display " "))
         (display (block-body x)))
-    (pretty-display (format "\" ~a ~a ~a)" (block-in x) (block-out x) (block-mem x)))]
+    (pretty-display "\"")
+
+    (pretty-display (format "~a~a ~a ~a" (inc indent) 
+                            (block-in x) (block-out x) (block-mem x)))
+
+    (display (format "~a\"" (inc indent)))
+    (if (list? (block-org x))
+        (for ([i (block-org x)])
+          (display i)
+          (display " "))
+        (display (block-org x)))
+    (pretty-display "\")")]
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
@@ -229,8 +242,12 @@
     (pretty-display (format "~a(forloop "  indent))
     (aforth-struct-print (forloop-init x) (inc indent))
     (aforth-struct-print (forloop-body x) (inc indent))
-    (pretty-display (format "~a ~a ~a~a)" 
-                            (forloop-iter x) (forloop-from x) (forloop-to x) indent))]
+
+    (display (inc indent))
+    (when (forloop-iter x)
+          (display "'"))
+    (pretty-display (format "~a ~a ~a)" 
+                            (forloop-iter x) (forloop-from x) (forloop-to x)))]
    
    [(ift? x)
     (pretty-display (format "~a(ift "  indent))
