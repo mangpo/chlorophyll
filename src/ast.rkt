@@ -894,18 +894,11 @@
     ;; args = list of VarDecl%
     ;; return = VarDecl%
 
-    ;; clone everything but body is empty
-    ;; (define/public (clone)
-    ;;   (new FuncDecl% [name name] 
-    ;; 	   [args (send args clone)] 
-    ;; 	   [body (new Block% [stmts (list)])]
-    ;; 	   [body-placeset body-placeset]
-    ;; 	   [return (send return clone)]))
-
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(FUNCTION ~a" name))
       (print-body-placeset indent)
-      (send return pretty-print (inc indent))
+      (when return
+            (send return pretty-print (inc indent)))
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 

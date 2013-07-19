@@ -393,12 +393,13 @@
         [(is-a? ast FuncDecl%)
 	 (push-scope)
          (define return (get-field return ast))
-	 (send return accept this)
+	 (when return 
+               (send return accept this)
 
-         ;; reserve expanded type for return value
-         (define entry (get-field expect return))
-         (when (> entry 1)
-             (set-field! type return (cons (get-field type return) entry)))
+               ;; reserve expanded type for return value
+               (define entry (get-field expect return))
+               (when (> entry 1)
+                     (set-field! type return (cons (get-field type return) entry))))
 
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)

@@ -170,7 +170,8 @@
              [name (get-field name ast)]
              [args (send (get-field args ast) accept this)]
              [body (send (get-field body ast) accept this)]
-             [return (send (get-field return ast) accept this)]
+             [return (and (get-field return ast) 
+                          (send (get-field return ast) accept this))]
              [body-placeset (get-field body-placeset ast)])] ;; not copy
 
        [else

@@ -14,7 +14,7 @@
     (super-new)
     (init-field routing-table part2core n)
 
-    (define debug #f)
+    (define debug #t)
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -428,7 +428,10 @@
         (when debug 
 	      (pretty-display "\n--------------------------------------------")
               (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
-        (define return-ret (send (get-field return ast) accept this))
+        (define return-ret 
+          (if (get-field return ast)
+              (send (get-field return ast) accept this)
+              (set)))
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
         ;(convert-placeset)

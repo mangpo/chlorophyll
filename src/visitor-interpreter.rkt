@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #t)
+    (define debug #f)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -88,7 +88,7 @@
         (raise "find-place-type: native is not Livable%"))
       
       (define place-type (get-field place-type ast))
-      (pretty-display `(find-place-type ,place-type))
+      ;(pretty-display `(find-place-type ,place-type))
       (if (or (number? place-type) (pair? place-type))
           ; place-type is infered during abstract interpretation
           ; and the format is right, we can return right away
@@ -97,7 +97,7 @@
             ; get index for @place(i) before place because (find-place) will remove that info
             (define index (find-index (get-field place native)))
             (define place (find-place native))
-	    (pretty-display `(find-place-type place ,place index ,index))
+	    ;(pretty-display `(find-place-type place ,place index ,index))
             (if (or (number? place) (place-type-dist? place))
                 place
                 (cons place index)))))
@@ -399,10 +399,6 @@
           (define e2-ret (send e2 accept this))
           
 	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
-          (pretty-display (format "BinExp!!! inc-space  '~a' ~a @~a"
-                                  (get-field op op)
-                                  (hash-ref space-map (get-field op op))
-                                  place-type))
 
           (when debug
                 (pretty-display (format ">> BinOp ~a ~a" (send ast to-string) place-type)))
@@ -730,7 +726,10 @@
        [(is-a? ast FuncDecl%)
           (push-scope)
 	  (define return (get-field return ast))
-          (define return-ret (send return accept this))
+          (define return-ret 
+            (if return
+                (send return accept this)
+                (comminfo 0 (set))))
           (define args-ret (send (get-field args ast) accept this))
           (define body-ret (send (get-field body ast) accept this))
           (pop-scope)

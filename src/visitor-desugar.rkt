@@ -400,7 +400,8 @@
          ;;         (set-field! return ast (new Block% [stmts return-ret]))
          ;;         (set-field! return-print ast return)))
 
-	 (send (get-field return ast) accept this)
+         (when (get-field return ast)
+               (send (get-field return ast) accept this))
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
          ast

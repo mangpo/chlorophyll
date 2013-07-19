@@ -266,7 +266,10 @@
 			   core)))
 
 	 (define name (get-field name ast))
-	 (define type (get-field type (get-field return ast)))
+         (define return (get-field return ast))
+	 (define type (if return 
+                          (get-field type return)
+                          "void"))
 	 (set! expand #f)
          ;; Print function signature
 	 (if (equal? name "main")

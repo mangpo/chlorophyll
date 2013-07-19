@@ -97,7 +97,9 @@
 	 (union-set-from-list (get-field stmts ast))]
 
         [(is-a? ast FuncDecl%)
-         (let ([return-set (send (get-field return ast) accept this)]
+         (let ([return-set (if (get-field return ast)
+                               (send (get-field return ast) accept this)
+                               (set))]
                [args-set (send (get-field args ast) accept this)]
                [body-set (send (get-field body ast) accept this)])
            (set-union (set-union return-set args-set) body-set))]

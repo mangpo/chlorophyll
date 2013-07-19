@@ -127,7 +127,8 @@
              (send stmt accept this))]
 
        [(is-a? ast FuncDecl%)
-        (send (get-field return ast) accept this)
+        (when (get-field return ast)
+              (send (get-field return ast) accept this))
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)
         (evaluate-placeset)]

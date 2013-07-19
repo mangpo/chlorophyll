@@ -201,7 +201,9 @@
          ;; Print function signature
          (let* ([return (get-field return ast)]
 		[name (get-field name ast)]
-		[type (get-field type return)])
+		[type (if return 
+                          (get-field type return)
+                          "void")])
            (if (pair? type)
                (display (format "~a::~a@~a ~a(" 
 				(car type) (cdr type)

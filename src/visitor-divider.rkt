@@ -561,6 +561,8 @@
              ;;         [known (get-field known (car return))]))
              ;;  ]
 
+             [(not return) #f]
+
              [(is-a? (get-field place return) TypeExpansion%)
               (define place-list (get-field place-list (get-field place return)))
 
@@ -583,9 +585,13 @@
               return]
 
              [else
-              (new VarDecl% 
-                   [var-list (list "#return")]
-                   [type "void"] [place core] [known (get-field known return)])])))
+              (raise (format "visitor-divider: funcdecl: unimplemented for return ~a" return))]
+
+             ;; [else
+             ;;  (new VarDecl% 
+             ;;       [var-list (list "#return")]
+             ;;       [type "void"] [place core] [known (get-field known return)])]
+             )))
                        
         (scope-pattern 
          (lambda (c)
