@@ -1,9 +1,6 @@
 #lang racket
 
-(require "header.rkt"
-         "../../forth-interpreter/machine/cegis.rkt" 
-         "../../forth-interpreter/machine/state.rkt" 
-         "../../forth-interpreter/machine/track-constant.rkt")
+(require "header.rkt")
 
 (provide (all-defined-out))
 
@@ -126,6 +123,9 @@
     (substring indent 2))
 
   (cond
+   [(equal? x #f) 
+    (pretty-display (format "~a#f" indent))]
+
    [(list? x)
     (for ([i x])
 	 (codegen-print i indent))]
@@ -202,7 +202,10 @@
   (define (dec indent)
     (substring indent 2))
   
-    (cond
+  (cond
+   [(equal? x #f)
+    (pretty-display (format "~a#f" indent))]
+
    [(list? x)
     (pretty-display (format "~a(list " indent))
     (for ([i x])
@@ -301,207 +304,3 @@
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))
 
 
-(define (out-space out)
-  (if (= out 0)
-      (constraint memory s t)
-      (constraint-data out memory s t)))
-
-(define index-map #f)
-(define mem-size #f)
-(define bit #f)
-
-;; optimize per-core program
-(define (superoptimize ast name)
-  (cond
-   [(block? ast)
-    (define out (block-out ast))
-
-    (define result
-      (block (optimize (if (string? (block-body ast))
-                           (block-body ast)
-                           (string-join (block-body ast)) )
-                       #:f18a #f
-                       #:num-bits bit #:name name
-                       #:constraint (out-space out)
-                       #:mem mem-size #:start mem-size)
-             (block-in ast) out (block-mem ast) (block-org ast)))
-    (with-output-to-file #:exists 'append 
-      (format "~a/~a-work.rkt" outdir name)
-      (lambda () 
-        (pretty-display ";; original")
-        (aforth-struct-print ast)
-        (pretty-display ";; optimized")
-        (aforth-struct-print result)))
-    result
-    ]
-
-   [(list? ast)
-    (for/list ([x ast])
-              (superoptimize x name))]
-
-   [(mult? ast)
-    (mult)]
-
-   [(funccall? ast)
-    (funccall (funccall-name ast))]
-
-   [(forloop? ast)
-    (forloop (superoptimize (forloop-init ast) name)
-             (superoptimize (forloop-body ast) name)
-             (forloop-iter ast)
-             (forloop-from ast)
-             (forloop-to ast))]
-
-   [(ift? ast)
-    (ift (superoptimize (ift-t ast) name))]
-
-   [(iftf? ast)
-    (iftf (superoptimize (iftf-t ast) name)
-          (superoptimize (iftf-f ast) name))]
-
-   [(-ift? ast)
-    (-ift (superoptimize (-ift-t ast) name))]
-
-   [(-iftf? ast)
-    (-iftf (superoptimize (-iftf-t ast) name)
-           (superoptimize (-iftf-f ast) name))]
-
-   [(funcdecl? ast)
-    (funcdecl (funcdecl-name ast)
-              (superoptimize (funcdecl-body ast) name))]
-
-   [(vardecl? ast)
-    (vardecl (vardecl-val ast))]
-
-   [(aforth? ast)
-    (set! bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
-    (set! mem-size (aforth-memsize ast))
-    (define result (superoptimize (aforth-code ast) name))
-    (pretty-display `(-------------------- result -----------------------))
-    (codegen-print result)
-    (define ret
-      (aforth result (aforth-memsize ast) bit (aforth-indexmap ast)))
-    
-    (with-output-to-file #:exists 'append 
-      (format "~a/~a-work.rkt" outdir name)
-      (lambda () 
-        (pretty-display ";; original")
-        (aforth-struct-print ast)
-        (pretty-display ";; optimized")
-        (aforth-struct-print ret)
-        (pretty-display ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-        ))
-    ret
-    ]
-
-   [(vector? ast)
-    (define n (vector-length ast))
-    (define output-programs (make-vector n))
-  
-    (for ([i (in-range (sub1 n))])
-         (with-output-to-file #:exists 'append 
-           (format "~a/~a-work.rkt" outdir name)
-           (lambda ()
-             (pretty-display 
-              (format ";;;;;;;;;;;;;;;;;;;;;;;; ~a ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))))
-         (pretty-display 
-          (format ";;;;;;;;;;;;;;;;;;;;;;;; ~a ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))
-         (let* ([program (vector-ref ast i)]
-                [result (superoptimize program name)])
-           (vector-set! output-programs i result)))
-    
-    (vector-set! output-programs (sub1 n) (vector-ref ast (sub1 n)))
-    output-programs]
-
-   [else
-    (raise (format "arrayforth: superoptimize: unimplemented for ~a" ast))]))
-
-(define (renameindex ast)
-  (cond
-   [(block? ast)
-    (define body (string-split (block-body ast)))
-    (define org (block-org ast))
-    (define rename-set (track-index body))
-    (pretty-display `(renameindex ,body ,rename-set ,index-map))
-    (define new-body
-      (for/list ([inst body]
-                 [i (in-range (length body))])
-                (if (and (set-member? rename-set i) 
-                         (dict-has-key? index-map (string->number inst)))
-                    (number->string (dict-ref index-map (string->number inst)))
-                    inst)))
-
-    (define new-mem-size (dict-ref index-map mem-size))
-    (define diff (program-diff? org new-body
-                                 new-mem-size (out-space (block-out ast)) bit))
-
-    (if diff
-        (begin
-          (pretty-display "VALIDATE: different")
-          (pretty-display (string-join new-body))
-          (pretty-display org))
-        (pretty-display "VALIDATE: same"))
-
-    (if diff
-        (block org (block-in ast) (block-out ast) new-mem-size org)
-        (block (string-join new-body) (block-in ast) (block-out ast) new-mem-size (block-org ast)))]
-
-   [(list? ast)
-    (for/list ([x ast])
-              (renameindex x))]
-
-   [(mult? ast)
-    (mult)]
-
-   [(funccall? ast)
-    (funccall (funccall-name ast))]
-
-   [(forloop? ast)
-    (forloop (renameindex (forloop-init ast))
-             (renameindex (forloop-body ast))
-             (forloop-iter ast)
-             (forloop-from ast)
-             (forloop-to ast))]
-
-   [(ift? ast)
-    (ift (renameindex (ift-t ast)))]
-
-   [(iftf? ast)
-    (iftf (renameindex (iftf-t ast))
-          (renameindex (iftf-f ast)))]
-
-   [(-ift? ast)
-    (-ift (renameindex (-ift-t ast)))]
-
-   [(-iftf? ast)
-    (-iftf (renameindex (-iftf-t ast))
-           (renameindex (-iftf-f ast)))]
-
-   [(funcdecl? ast)
-    (funcdecl (funcdecl-name ast)
-              (renameindex (funcdecl-body ast)))]
-
-   [(vardecl? ast)
-    (vardecl (vardecl-val ast))]
-
-   [(aforth? ast)
-    (set! index-map (aforth-indexmap ast))
-    (set! mem-size (aforth-memsize ast))
-    (set! bit (aforth-bit ast))
-    (aforth (renameindex (aforth-code ast))
-            (dict-ref index-map mem-size) bit #f)]
-
-   [(vector? ast)
-    (define n (vector-length ast))
-    (define output-programs (make-vector n))
-    
-    (for ([i (in-range (sub1 n))])
-         (vector-set! output-programs i 
-                      (renameindex (vector-ref ast i))))
-    
-    (vector-set! output-programs (sub1 n) (vector-ref ast (sub1 n)))
-    output-programs]
-
-   [else
-    (raise (format "arrayforth: renameindex: unimplemented for ~a" ast))]))
-  

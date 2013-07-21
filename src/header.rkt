@@ -17,7 +17,9 @@
 (define max-bit 18)
 (define n-bit 16)
 
-(define outdir "../output")
-(define datadir "../testdata")
+(define outdir "/home/mangpo/work/greensyn/output")
+(define outdir-rel "../output")
+(define datadir "/home/mangpo/work/greensyn/testdata")
 
 (struct meminfo (addr virtual data))
+

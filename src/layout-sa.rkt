@@ -98,7 +98,7 @@
          (string-split
           (last (string-split
                  (with-output-to-string
-                  (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir name))))
+                  (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir-rel name))))
                  "\n")))))
 
   (with-output-to-file #:exists 'truncate (format "~a/~a.layout" outdir name)

@@ -8,6 +8,7 @@
          "layout-sa.rkt" 
          "separator.rkt"
          "arrayforth.rkt"
+         "arrayforth-optimize.rkt"
          "arrayforth-print.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
@@ -99,8 +100,7 @@
 (define (compile-percore file core w h)
   (define my-ast (parse file))
   ;(send my-ast pretty-print)
-  (aforth-syntax-info w h 0)
-  (aforth-syntax-print (generate-code my-ast core w h #f)))
+  (aforth-syntax-print (generate-code my-ast core w h #f) w h))
 
 ;; compile HLP to optimized one-core machine code.
 ;; for testing only.
@@ -125,8 +125,7 @@
   (define real-opt (renameindex virtual-opt))
   (codegen-print real-opt)
   
-  (aforth-syntax-info w h)
-  (aforth-syntax-print real-opt)
+  (aforth-syntax-print real-opt w h)
   )
   
 ;; compile HLP to optimized many-core machine code
@@ -146,43 +145,35 @@
   ;; arrayforth without superoptimization
   (with-output-to-file #:exists 'truncate (format "~a/~a-noopt.aforth" outdir name)
     (lambda ()
-      (aforth-syntax-info w h)
-      (aforth-syntax-print real-codes)))
+      (aforth-syntax-print real-codes w h)))
   
   (when opt
+    ;; genreate code
     (define virtual-codes (generate-codes programs w h #t))
     
     (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
       (lambda () (aforth-struct-print virtual-codes)))
     
-    (system (format "rm ~a/~a-work.rkt" outdir name))
-    
-    (define virtual-opts (superoptimize virtual-codes name))
-    (set! real-opts (renameindex virtual-opts))
-    
-    (with-output-to-file #:exists 'truncate (format "~a/~a-opt-red.rkt" outdir name)
-      (lambda () (aforth-struct-print virtual-opts)))
+    ;; superoptimize
+    (set! real-opts (superoptimize virtual-codes name w h))
     (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
       (lambda () (aforth-struct-print real-opts))))
   
   ;; superoptimized arrayforth
   (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
     (lambda ()
-      (aforth-syntax-info w h)
-      (aforth-syntax-print real-opts)))
+      (aforth-syntax-print real-opts w h)))
   )
 
 ;(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               480 "null" 7 6 #:verbose #t)
-;(compile-and-optimize "../examples/test.cll" "test" 
-;                      256 #f #:opt #f)
-;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
+;(compile-and-optimize "../tests/run/offset-noio.cll" "offset-noio" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
 ;                      256 "null" #:opt #t)
-;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
-;                      600 "null" #:w 10 #:h 5 #:opt #t)
+(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
+                      600 "null" #:w 10 #:h 5 #:opt #t)
 
 ;(compile-percore "../examples/test.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)

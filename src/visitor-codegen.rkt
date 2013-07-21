@@ -111,11 +111,12 @@
         (when debug
               (pretty-display (format "\nCODEGEN: VarDecl ~a" (get-field var ast))))
         (define init (get-field init ast))
-        (when (and (not virtual) init)
+        (when init ;(and (not virtual) init)
               (define address (get-field address ast))
               (for ([i (in-range (length init))]
                     [val init])
                    (vector-set! data (+ (meminfo-addr address) i) val)))
+
         (when debug
               (pretty-display (format "\nCODEGEN: VarDecl ~a (done)" (get-field var ast))))
         (list)
@@ -386,7 +387,10 @@
                           )) ;; loop bound
          
         (define body-ret (send (get-field body ast) accept this))
-        (define body-decor (list (gen-block address-str "a!" "@" "1" "+" "!" 0 0)))
+        (define body-decor (list (gen-block-org 
+                                  (address-str "a!" "@" "1" "+" "!")
+                                  (address-org-str "a!" "@" "1" "+" "!")
+                                  0 0)))
 
         (list (forloop init-ret (prog-append body-ret body-decor) 
                        (cons address address-org) from to))
@@ -409,21 +413,24 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Program")))
 
-	;; return list of function list
-        (define main-funcs
-          (for/list ([decl (filter (lambda (x) (is-a? x FuncDecl%)) 
-                                   (get-field stmts ast))])
-            (send decl accept this)))
-
-        (dict-set! index-map 
-                   (+ (meminfo-virtual data-size) iter-size)
-                   (+ (meminfo-addr data-size) iter-size))
-        (aforth (append (list (vardecl (vector->list data))) 
-                        (reverse helper-funcs) 
-                        main-funcs) 
-                (+ (get-var data-size) iter-size) 
-                (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
-                index-map)
+        (if (empty? (get-field stmts ast))
+            #f
+            
+            ;; return list of function list
+            (let ([main-funcs
+                   (for/list ([decl (filter (lambda (x) (is-a? x FuncDecl%)) 
+                                            (get-field stmts ast))])
+                             (send decl accept this))])
+              
+              (dict-set! index-map 
+                         (+ (meminfo-virtual data-size) iter-size)
+                         (+ (meminfo-addr data-size) iter-size))
+              (aforth (append (list (vardecl (vector->list data))) 
+                              (reverse helper-funcs) 
+                              main-funcs) 
+                      (+ (get-var data-size) iter-size) 
+                      (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
+                      index-map)))
         ]
 
        [(is-a? ast Block%)

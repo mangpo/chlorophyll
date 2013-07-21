@@ -1,20 +1,17 @@
 TODO
-- help andres
-- test
-  = offset, function
+- md5
+- connect to rohin's interpreter
+  = left, right, up, down
+  = 0 , 0 , 0 ,
+- or tikhon's
+  = word for starting to execute
+
 - kill z3 when user break happens
 - longest subsequence
 - nop is less than everything, @ < @+
-
-- md5: block 934 = $79 words
 - stat report
-- connect to rohin's interpreter
 - 3 a! @ 32 - 1 . + . + 0 . + a! @
-- try running GA MD5 in the simulator
-- how to measure time & energy on their MD5 code
 
-- regression test
-- handle io correctly
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
