@@ -410,7 +410,7 @@
               [input  (new InputDecl% [var-list (list "#input")] 
                            [type (car $1)] [place (cdr $1)])]
               [output (new OutputDecl% [var-list (list "#output")] 
-                           [type (car $1)] [place (cdr $1)])]
+                           [type (car $3)] [place (cdr $3)])]
               )))
     
     (pipeline-decl
@@ -419,7 +419,7 @@
               [input  (new InputDecl% [var-list (list "#input")] 
                            [type (car $1)] [place (cdr $1)])]
               [output (new OutputDecl% [var-list (list "#output")] 
-                           [type (car $1)] [place (cdr $1)])]
+                           [type (car $3)] [place (cdr $3)])]
               )))
     
     (block ((stmts) (new Block% [stmts $1])))
