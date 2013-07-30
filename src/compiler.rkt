@@ -25,12 +25,11 @@
   ;(send my-ast accept (new implicit-main-inserter%))
   ;(send my-ast accept (new flatten%))
   (send my-ast accept (new work-desugarer%))
-  (define need-temp (send my-ast accept (new linker%)))
-  ;(when need-temp
-    (send my-ast accept (new temp-inserter%))
-    (send my-ast accept (new desugar%))
-    ;)
+  (send my-ast accept (new desugar%))
+  (send my-ast accept (new linker% [static #t]))
   (send my-ast accept (new static-runner%))
+  (send my-ast accept (new linker% [static #f]))
+  (send my-ast accept (new temp-inserter%))
   my-ast)
 
 ;; Compile IR to machine code.

@@ -922,6 +922,10 @@
 
     ))
 
+(define IOFuncDecl%
+  (class FuncDecl%
+  (super-new)))
+
 (define StaticCallableDecl%
   (class CallableDecl%
     (super-new)
@@ -938,7 +942,7 @@
 (define FilterDecl%
   (class RuntimeCallableDecl%
     (super-new)
-    (init-field input output [input-src #f] [output-dst #f])
+    (init-field input output)
     ))
 
 (define AbstractFilterDecl%
@@ -959,13 +963,19 @@
 (define ConcreteFilterDecl%
   (class FilterDecl%
     (super-new)
-    (init-field abstract arg-values [id #f])
+    (init-field abstract arg-values [id #f] [input-src #f] [output-dst #f] [stdin #f] [stdout #f])
     (inherit-field input output name args body body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(CONCRETEFILTER ~a" name))
       (print-body-placeset indent)
+
+      ;(when input-src
+        ;(pretty-display "(input-src ")
+        ;(send input-src pretty-print (inc indent))
+        ;(pretty-display ")\n"))
+
       (send input pretty-print (inc indent))
       (send output pretty-print (inc indent))
       (send args pretty-print (inc indent))

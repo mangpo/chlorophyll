@@ -21,7 +21,10 @@
                   [arg-values (list)]
                   [body (new Block% [stmts (list)])]
                   [abstract (void)]
-                  [input (void)]
+                  [input (new VarDecl%
+                              [var-list (list)]
+                              [type "void"]
+                              [known #f])]
                   [output (new VarDecl% [var-list (list "#output")]
                                [type "int"] ;; TODO: make it generic
                                [place (new Place% [at "io"])]
@@ -32,10 +35,13 @@
                   [arg-values (list)]
                   [body (new Block% [stmts (list)])]
                   [abstract (void)]
-                  [input (void)]
-                  [output (new VarDecl% [var-list (list "#output")]
-                               [type "int"] ;; TODO: make it generic
-                               [place (new Place% [at "io"])]
+                  [input (new VarDecl% [var-list (list "#output")]
+                              [type "int"] ;; TODO: make it generic
+                              [place (new Place% [at "io"])]
+                              [known #f])]
+                  [output (new VarDecl%
+                               [var-list (list)]
+                               [type "void"]
                                [known #f])]))
     (declare env "__previous__" (lookup-name env "__globalinputsrc__"))
     
@@ -98,7 +104,7 @@
         (for ([var var-list])
           (declare env var (cons type (void))))
         
-        (void)]
+        (list)]
 
        [(is-a? ast ArrayDecl%)
         (raise "visitor-runstatic: arrays not supported yet. TODO!")]
@@ -120,7 +126,7 @@
         (define value (send rhs accept this))
         (update env var value)
         
-        (void)]
+        (list)]
 
        [(is-a? ast Return%)
         (raise "visitor-runstatic: return not supported yet. TODO!")]
@@ -138,7 +144,9 @@
           (first (filter (λ (stmt) (and (is-a? stmt StaticCallableDecl%)
                                         (equal? (get-field name stmt) "Main")))
                          stmts)))
-        (define filters (send main accept this))
+        (define filters-funcs (send main accept this))
+        (define filters (car filters-funcs))
+        (define funcs (cdr filters-funcs))
         
         ;; remove abstract filter and static declarations from program
         (set! stmts
@@ -149,24 +157,41 @@
         (set-field! stmts ast stmts)
         
         ;; add concrete filter declarations
-        (set! stmts (append stmts filters))
+        (set! stmts (append stmts filters funcs))
         (set-field! stmts ast stmts)
         
 	(void)]
 
        [(is-a? ast Block%) 
-        (flatten (for/list ([stmt (get-field stmts ast)])
-          (send stmt accept this)))]
+        (define pairs
+          (for/list ([stmt (get-field stmts ast)])
+                    (send stmt accept this)))
+        (define filters (list))
+        (define funcs (list))
+
+        (for ([pair pairs])
+          (set! filters (append filters (car pair)))
+          (set! funcs (append funcs (cdr pair))))
+
+        (cons filters funcs)]
 
        [(is-a? ast PipelineDecl%)
         (pretty-display (format "RUNSTATIC: PipelineDecl ~a" ast))
         (push-scope)
-        (define filters (send (get-field body ast) accept this))
+        (define filters-funcs (send (get-field body ast) accept this))
+        (define filters (car filters-funcs))
+        (define funcs (cdr filters-funcs))
+
         (set-field! output-dst (last filters) (lookup-name env "__globaloutputdst__"))
+        (define stdout (get-stdout-push (lookup-name env "__globaloutputdst__")))
+        (set-field! stdout (last filters) stdout)
+
         (set-field! input-src (lookup-name env "__globaloutputdst__") (last filters))
+        (define stdin (get-stdin-pull (last filters)))
+        (set-field! stdin (lookup-name env "__globaloutputdst__") stdin)
+
         (pop-scope)
-        filters
-        ]
+        (cons filters (append funcs (list stdout stdin)))]
        
        [(is-a? ast Add%)
         (pretty-display (format "RUNSTATIC: Add ~a" ast))
@@ -175,31 +200,33 @@
         (define arg-values (map (λ (exp) (send exp accept this))
                                 (get-field args call)))
         
-        (define filters
+        (define filter
           (cond
             [(is-a? decl AbstractFilterDecl%)
-             (define filter (new ConcreteFilterDecl%
-                                 [abstract decl]
-                                 [arg-values arg-values]
-                                 ;;
-                                 [name (get-field name decl)]
-                                 [input (get-field input decl)]
-                                 [output (get-field output decl)]
-                                 [args (get-field args decl)]
-                                 [body (get-field body decl)]
-                                 ))
-             (list filter)]
+             (new ConcreteFilterDecl%
+                  [abstract decl]
+                  [arg-values arg-values]
+                  ;;
+                  [name (get-field name decl)]
+                  [input (get-field input decl)]
+                  [output (get-field output decl)]
+                  [args (get-field args decl)]
+                  [body (get-field body decl)]
+                  )]
             [(is-a? decl FuncDecl%)
              (raise (format "visitor-runstatic: tried to add function as a stream in ~a" ast))]
-            [else (raise (format "visitor-runstatic: unimplemented add call to ~a" decl))]
-            ))
-        
-        (set-field! output-dst (lookup-name env "__previous__") (first filters))
-        (set-field! input-src (first filters) (lookup-name env "__previous__"))
-        (update-name env "__previous__" (last filters))
-        
-        filters
-        ]
+            [else (raise (format "visitor-runstatic: unimplemented add call to ~a" decl))]))
+
+        (set-field! output-dst (lookup-name env "__previous__") filter)
+        (define stdout (get-stdout-make-available (lookup-name env "__previous__")))
+        (set-field! stdout (lookup-name env "__previous__") stdout)
+
+        (set-field! input-src filter (lookup-name env "__previous__"))
+        (define stdin (get-stdin-pull (lookup-name env "__previous__")))
+        (set-field! stdin filter stdin)
+
+        (update-name env "__previous__" filter)
+        (cons (list filter) (list stdin stdout))]
        
        [(is-a? ast FuncDecl%)
         (raise "visitor-runstatic: function declarations not supported yet. TODO!")]

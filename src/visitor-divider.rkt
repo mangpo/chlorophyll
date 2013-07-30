@@ -610,7 +610,8 @@
 
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
-             (send stmt accept this))
+             (unless (is-a? stmt IOFuncDecl%)
+               (send stmt accept this)))
 
         (when (is-a? ast Program%)
               (for ([i (in-range n)])

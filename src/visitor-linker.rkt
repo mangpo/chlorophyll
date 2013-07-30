@@ -13,7 +13,8 @@
 (define linker%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [env (make-hash)] 
+    (init-field static
+                [env (make-hash)] 
                 [array-map (make-hash)] 
                 [non-native #f] 
                 [entry #f]
@@ -25,10 +26,6 @@
     ;; type
     ;; 1) data-type
     ;; 2) (cons data-type entry) for int::2
-
-    ;; Declare IO function: in(), out(data)
-    (declare env "in" (get-stdin))
-    (declare env "out" (get-stdout))
 
     (struct val (type expand known) #:mutable)
 
@@ -240,45 +237,48 @@
          ;; set signature
          (set-field! signature ast func-ast)
          (set-field! is-stmt ast stmt-level)
-         
-         ; check argument list length
-         (define args (get-field args ast))
-         (define params (get-field stmts (get-field args func-ast)))
-         (unless (= (length args) (length params))
-           (send ast args-mismatch (length params)))
-         
-         (define old-entry entry)
-         (for ([arg args]
-               [param params])
-           (let ([param-type (get-field type param)])
-             (if (string? param-type)
-                 (set! entry 1)
-                 (set! entry (cdr param-type)))
-             (let ([arg-known (send arg accept this)])
-               (set-field! known-type param (and (get-field known-type param) arg-known)))))
-         (set! entry old-entry)
-         
-         (when (is-a? func-ast FuncDecl%)
-           (define type (get-field type (get-field return func-ast)))
+
+         (when (or (not static) (not (is-a? func-ast AbstractFilterDecl%)))
+           (send func-ast accept this)
+
+           ; check argument list length
+           (define args (get-field args ast))
+           (define params (get-field stmts (get-field args func-ast)))
+           (unless (= (length args) (length params))
+             (send ast args-mismatch (length params)))
            
-           ;; set type and expand
-           (if (string? type)
-               (begin
-                 (set-field! type ast type)
-                 (set-field! expand ast 1))
-               (begin
-                 (set-field! type ast (car type))
-                 (set-field! expand ast (cdr type))))
+           (define old-entry entry)
+           (for ([arg args]
+                 [param params])
+             (let ([param-type (get-field type param)])
+               (if (string? param-type)
+                   (set! entry 1)
+                   (set! entry (cdr param-type)))
+               (let ([arg-known (send arg accept this)])
+                 (set-field! known-type param (and (get-field known-type param) arg-known)))))
+           (set! entry old-entry)
            
-           ;; set expect
-           (if entry
-               (set-field! expect ast entry)
-               (set-field! expect ast (get-field expand ast)))
-           
-           ;; check expand against expect
-           (when (> (get-field expand ast) (get-field expect ast))
-             (send ast partition-mismatch (get-field expand ast) (get-field expect ast)))
-           )
+           (when (is-a? func-ast FuncDecl%)
+             (define type (get-field type (get-field return func-ast)))
+             
+             ;; set type and expand
+             (if (string? type)
+                 (begin
+                   (set-field! type ast type)
+                   (set-field! expand ast 1))
+                 (begin
+                   (set-field! type ast (car type))
+                   (set-field! expand ast (cdr type))))
+             
+             ;; set expect
+             (if entry
+                 (set-field! expect ast entry)
+                 (set-field! expect ast (get-field expand ast)))
+             
+             ;; check expand against expect
+             (when (> (get-field expand ast) (get-field expect ast))
+               (send ast partition-mismatch (get-field expand ast) (get-field expect ast)))
+             ))
          #f]
 
 	[(is-a? ast Send%)
@@ -370,14 +370,15 @@
          
          ;; update env front to back
          (for ([stmt stmts])
-	      (if (is-a? stmt CallableDecl%)
-		  (declare env (get-field name stmt) stmt)
-		  (send stmt accept this)))
+              (if (is-a? stmt CallableDecl%)
+                  (declare env (get-field name stmt) stmt)
+                  (send stmt accept this)))
          
          ;; desugar back to front
          (for ([stmt (reverse stmts)])
-           (when (is-a? stmt CallableDecl%)
-		 (send stmt accept this)))
+           (when (or (and static       (is-a? stmt StaticCallableDecl%))
+                     (and (not static) (is-a? stmt ConcreteFilterDecl%)))
+             (send stmt accept this)))
 
          ;; return non-native flag
          non-native
@@ -412,6 +413,9 @@
          (define output (get-field output ast))
          (send input accept this)
          (send output accept this)
+         (when (is-a? ast ConcreteFilterDecl%)
+           (declare env "in" (get-field stdin ast))
+           (declare env "out" (get-field stdout ast)))
          
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)

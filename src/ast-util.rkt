@@ -7,34 +7,62 @@
 (define (ext-name name ext)
   (format "~a::~a" name ext))
 
-(define (get-stdin)
+(define stdio-uid 0)
+(define (get-stdin-pull src)
+  (set! stdio-uid (add1 stdio-uid))
+  (define output-vardecl (get-field output src))
   (define stdin
-    (new FuncDecl% [name "in"] 
+    (new IOFuncDecl% [name (format "in#from#~a#~a" (get-field name src) stdio-uid)] 
 	 [args (new Block% [stmts (list)])] 
 	 [body (new Block% [stmts (list)])]
-	 [body-placeset (set (new Place% [at "io"]))] 
+	 [body-placeset (set (get-field place output-vardecl))]
 	 [return (new VarDecl% [var-list (list "#return")]
-		      [type "int"] ;; TODO: make it generic
-		      [place (new Place% [at "io"])]
-		      [known #f])]))
+                      [type (get-field type output-vardecl)]
+                      [place (get-field place output-vardecl)]
+                      [known #f]
+                      )]))
   stdin)
 
-(define (get-stdout)
+(define (get-stdout-push dst)
+  (set! stdio-uid (add1 stdio-uid))
+  (define input-vardecl (get-field input dst))
   (define stdout
-    (new FuncDecl% [name "out"] 
-	 [args (new Block% [stmts (list 
-				   (new Param% 
-					[var-list (list "data")]
-					[type "int"] ;; TODO: make it generic
-					[known #f]
-					[place (new Place% [at "io"])]
-					[place-type (new Place% [at "io"])]))])]
+    (new IOFuncDecl% [name (format "out#to#~a#~a" (get-field name dst) stdio-uid)] 
+	 [args (new Block% [stmts (list (new Param%
+                                             [var-list (list "data")]
+                                             [type (get-field type input-vardecl)]
+                                             [known #f]
+                                             [place (get-field place input-vardecl)]
+                                             [place-type (get-field place input-vardecl)]
+                                             ))])]
 	 [body (new Block% [stmts (list)])]
-	 [body-placeset (set (new Place% [at "io"]))] 
+	 [body-placeset (set (get-field place input-vardecl))]
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]
-		      [place (new Place% [at "io"])])]))
+		      [place (new Place% [at "io"])]
+                      )]))
+  stdout)
+
+(define (get-stdout-make-available this)
+  (set! stdio-uid (add1 stdio-uid))
+  (define output-vardecl (get-field output this))
+  (define stdout
+    (new IOFuncDecl% [name (format "out#inside#~a#~a" (get-field name this) stdio-uid)] 
+	 [args (new Block% [stmts (list (new Param%
+                                             [var-list (list "data")]
+                                             [type (get-field type output-vardecl)]
+                                             [known #f]
+                                             [place (get-field place output-vardecl)]
+                                             [place-type (get-field place output-vardecl)]
+                                             ))])]
+	 [body (new Block% [stmts (list)])]
+	 [body-placeset (set (get-field place output-vardecl))]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+		      [place (new Place% [at "io"])]
+                      )]))
   stdout)
 
 (define (same-place? a b)
