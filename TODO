@@ -1,5 +1,7 @@
 TODO
-- md5: 954, 962, 972, 
+- md5: 954 (repartition), 962 (var instead of consts), 980 (rewrite leftrotate)
+  = no index when unnecessary (test)
+  = caching
 - connect to rohin's interpreter
   = left, right, up, down
   = 0 , 0 , 0 ,

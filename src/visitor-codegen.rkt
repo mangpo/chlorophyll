@@ -4,6 +4,7 @@
          "ast.rkt" 
 	 "ast-util.rkt"
 	 "visitor-interface.rkt"
+         "visitor-arrayaccess.rkt"
          "arrayforth.rkt")
 
 (provide (all-defined-out))
@@ -21,6 +22,7 @@
                 [index-map (make-hash)])
 
     (define debug #f)
+    (define no-iter (list #f))
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -136,29 +138,29 @@
 	(define index-ret (send (get-field index ast) accept this))
 
 	(define offset (get-field offset ast))
-	;; (define offset-ret 
-	;;   (if (> offset 0)
-	;;       (list (gen-block (number->string offset) "-" "1" "+" "+" 1 1))
-	;;       (list (gen-block))))
-
 	(define address (get-field address ast))
         (define actual-addr (- (get-var address) offset))
         (define actual-addr-org (- (meminfo-addr address) offset))
 
         (define insts
-          (if (= actual-addr 0)
-              (list "a!" "@")
-              (list (number->string actual-addr) "+" "a!" "@")))
+          (if (car no-iter)
+              (list "@+")
+              (if (= actual-addr 0)
+                  (list "a!" "@")
+                  (list (number->string actual-addr) "+" "a!" "@"))))
         (define insts-org
-          (if (= actual-addr-org 0)
-              (list "a!" "@")
-              (list (number->string actual-addr-org) "+" "a!" "@")))
+          (if (car no-iter)
+              (list "@+")
+              (if (= actual-addr-org 0)
+                  (list "a!" "@")
+                  (list (number->string actual-addr-org) "+" "a!" "@"))))
 
         (define array-ret
           (list (block insts 1 1 #t insts-org)))
 
-	;; (prog-append index-ret offset-ret array-ret)
-	(prog-append index-ret array-ret)
+        (if (car no-iter)
+            array-ret
+            (prog-append index-ret array-ret))
         ]
 
        [(is-a? ast Var%)
@@ -170,14 +172,14 @@
 	    (if (meminfo-data address)
 		;; data
 		(list (gen-block-org 
-                       ((number->string (get-var address)) "a!" "@")
-                       ((number->string (meminfo-addr address)) "a!" "@")
+                       ((number->string (get-var address)) "b!" "@b")
+                       ((number->string (meminfo-addr address)) "b!" "@b")
                        0 1
                        ))
 		;; iter
 		(list (gen-block-org 
-                       ((number->string (get-iter address)) "a!" "@")
-                       ((number->string (get-iter-org address)) "a!" "@")
+                       ((number->string (get-iter address)) "b!" "@b")
+                       ((number->string (get-iter-org address)) "b!" "@b")
                        0 1
                        )))
 	    ;; already on the stack
@@ -201,7 +203,7 @@
        [(is-a? ast Recv%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Recv ~a" (get-field port ast))))
-        (list (gen-block (gen-port (get-field port ast)) "a!" "@" 0 1))]
+        (list (gen-block (gen-port (get-field port ast)) "b!" "@b" 0 1))]
 
        [(is-a? ast Send%)
         (define data (get-field data ast))
@@ -212,7 +214,7 @@
           (if (is-a? data Temp%)
               (list (gen-block "dup" 1 2))
               (list (gen-block))))
-	(define send-ret (list (gen-block (gen-port (get-field port ast)) "a!" "!" 1 0)))
+	(define send-ret (list (gen-block (gen-port (get-field port ast)) "b!" "!b" 1 0)))
         (prog-append data-ret temp-ret send-ret)]
 
        [(is-a? ast FuncCall%)
@@ -237,25 +239,24 @@
 	(if (is-a? lhs Array%)
 	    (let* ([index-ret (send (get-field index lhs) accept this)]
 		   [offset    (get-field offset lhs)]
-		   ;; [offset-ret (if (> offset 0)
-		   ;;      	   (list (gen-block 
-                   ;;                        (number->string offset) "-" "1" "+" "+" 1 1))
-		   ;;      	   (list (gen-block)))]
 		   [rhs-ret     (send rhs accept this)]
                    [actual-addr (- (get-var address) offset)]
                    [actual-addr-org (- (meminfo-addr address) offset)]
-                   [insts (if (= actual-addr 0)
-                              (list "a!" "!")
-                              (list (number->string actual-addr) "+" "a!" "!"))]
-                   [insts-org (if (= actual-addr-org 0)
-                                  (list "a!" "!")
-                                  (list (number->string actual-addr-org) "+" "a!" "!"))])
-	      (prog-append 
-	       rhs-ret
-	       index-ret
-	       ;;offset-ret
-               (list (block insts 2 0 #t insts-org))
-               ))
+                   [insts 
+                    (if (car no-iter)
+                        (list "!+")
+                        (if (= actual-addr 0)
+                            (list "a!" "!")
+                            (list (number->string actual-addr) "+" "a!" "!")))]
+                   [insts-org 
+                    (if (car no-iter)
+                        (list "!+")
+                        (if (= actual-addr-org 0)
+                            (list "a!" "!")
+                            (list (number->string actual-addr-org) "+" "a!" "!")))])
+              (if (car no-iter)
+                  (prog-append rhs-ret (list (block insts 1 0 #t insts-org)))
+                  (prog-append rhs-ret index-ret (list (block insts 2 0 #t insts-org)))))
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
@@ -263,14 +264,14 @@
 		       (if (meminfo-data address)
 			   ;; data
 			   (list (gen-block-org 
-                                  ((number->string (get-var address)) "a!" "!")
-                                  ((number->string (meminfo-addr address)) "a!" "!")
+                                  ((number->string (get-var address)) "b!" "!b")
+                                  ((number->string (meminfo-addr address)) "b!" "!b")
                                   1 0
                                   ))
 			   ;; iter
 			   (list (gen-block-org
-                                  ((number->string (get-iter address)) "a!" "!")
-                                  ((number->string (get-iter-org address)) "a!" "!")
+                                  ((number->string (get-iter address)) "b!" "!b")
+                                  ((number->string (get-iter-org address)) "b!" "!b")
                                   1 0
                                   )))
 		       ;; temp on stack
@@ -371,29 +372,58 @@
 	]
 
        [(is-a? ast For%)
+        (define arrayaccess-counter (new arrayaccess%))
+        (define arrayaccess (send (get-field body ast) accept arrayaccess-counter))
+        (set! no-iter (cons (<= arrayaccess 1) no-iter))
+
         (define from (get-field from ast))
         (define to (get-field to ast))
         (define address (get-iter (get-field address ast)))
         (define address-str (number->string address))
         (define address-org (get-iter-org (get-field address ast)))
         (define address-org-str (number->string address-org))
+        ;; if no arrayaccess => no need to initialize
+        (define addr-pair (if (= arrayaccess 0) (cons #f #f) (cons address address-org)))
         
-        (define init-ret (gen-block-org
-                          ((number->string from) address-str 
-                           "a!" "!" (number->string (- to from 1)))
-                          ((number->string from) address-org-str
-                           "a!" "!" (number->string (- to from 1)))
-                          0 1
-                          )) ;; loop bound
+        ;; if no arrayaccess => no need to initialize
+        (define init-ret 
+          (cond
+           [(= arrayaccess 0)
+            (gen-block (number->string (- to from 1)) 0 1)]
+           
+           [(= arrayaccess 1)
+            (define array (get-field array arrayaccess-counter))
+            (define offset (get-field offset array))
+            (define address (get-field address array))
+            (define actual-addr (- (get-var address) offset))
+            (define actual-addr-org (- (meminfo-addr address) offset))
+            (gen-block-org
+             ((number->string actual-addr) "a!" (number->string (- to from 1)))
+             ((number->string actual-addr-org) "a!" (number->string (- to from 1)))
+             0 1)
+            ]
+
+           [else
+            (gen-block-org
+             ((number->string from) address-str 
+              "a!" "!" (number->string (- to from 1)))
+             ((number->string from) address-org-str
+              "a!" "!" (number->string (- to from 1)))
+             0 1)])) ;; loop bound
          
         (define body-ret (send (get-field body ast) accept this))
-        (define body-decor (list (gen-block-org 
-                                  (address-str "a!" "@" "1" "+" "!")
-                                  (address-org-str "a!" "@" "1" "+" "!")
-                                  0 0)))
 
+        (define body-decor 
+          (list (if (car no-iter)
+                    (gen-block)
+                    (gen-block-org 
+                     (address-str "a!" "@" "1" "+" "!")
+                     (address-org-str "a!" "@" "1" "+" "!")
+                     0 0))))
+
+        (set! no-iter (cdr no-iter))
         (list (forloop init-ret (prog-append body-ret body-decor) 
-                       (cons address address-org) from to))
+                       addr-pair from to))
 	]
 
        [(is-a? ast FuncDecl%)

@@ -68,12 +68,14 @@
                [to   (forloop-to b-for)])
            (set-forloop-to! a-for to)
            (set-forloop-init! a-for
-                              (gen-block-org
-                               ((number->string from) (number->string addr)
-                                "a!" "!" (number->string (- to from 1)))
-                               ((number->string from) (number->string addr-org)
-                                "a!" "!" (number->string (- to from 1)))
-                               0 1))
+                              (if addr
+                                  (gen-block-org
+                                   ((number->string from) (number->string addr)
+                                    "a!" "!" (number->string (- to from 1)))
+                                   ((number->string from) (number->string addr-org)
+                                    "a!" "!" (number->string (- to from 1)))
+                                   0 1)
+                                  (gen-block (number->string (- to from 1)) 0 1)))
            #t)))
   
   (cond
