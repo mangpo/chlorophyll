@@ -4,9 +4,9 @@
 
 (define result (list))
 
-(define (test name input capacity)
+(define (test name input capacity #:w [w 5] #:h [h 4])
   (set! result (cons 
-                (cons name (test-simulate name input capacity))
+                (cons name (test-simulate name input capacity w h))
                 result)))
 
 ;(test "array" "10" 256)
@@ -25,7 +25,7 @@
 ;(test "while" "10" 256)
 ;(test "cluster" "null" 256)
 
-(test "md5-full" "md5" 1400)
+(test "md5-full" "md5" 1400 #:w 7 #:h 6)
 
 (for ([res (reverse result)])
   (pretty-display res))

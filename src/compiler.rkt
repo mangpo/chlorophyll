@@ -183,8 +183,8 @@
 
 (define testdir "../tests/run")
 
-(define (test-simulate name input capacity)
-  (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input)
+(define (test-simulate name input capacity w h)
+  (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input w h)
   (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))
   
