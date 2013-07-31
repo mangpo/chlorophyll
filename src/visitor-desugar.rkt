@@ -116,19 +116,22 @@
          (define entry (get-field expect ast))
          (if (= entry 1)
              ast
-             (let ([x (get-field n (get-field n ast))]
-                   [max-num (arithmetic-shift 1 n-bit)])
-               (for/list ([i (in-range entry)])
-                 (let ([n (modulo x max-num)])
-                   (set! x (arithmetic-shift x (- 0 n-bit)))
-                   ;; num known-type is already default to true
-                   (new Num% [n (new Const% [n n])] [pos (get-field pos ast)])))))]
+	     (for/list ([i (in-range entry)])
+		       (send ast clone)))
+             ;; (let ([x (get-field n (get-field n ast))]
+             ;;       [max-num (arithmetic-shift 1 n-bit)])
+             ;;   (for/list ([i (in-range entry)])
+             ;;     (let ([n (modulo x max-num)])
+             ;;       (set! x (arithmetic-shift x (- 0 n-bit)))
+             ;;       ;; num known-type is already default to true
+             ;;       (new Num% [n (new Const% [n n])] [pos (get-field pos ast)])))))
+	 ]
         
         
         [(is-a? ast Array%)
          ;(pretty-display (format "DESUGAR: Array ~a" (send ast to-string)))
          
-         (define index (send (get-field index ast) accept this))
+         (define index-ret (send (get-field index ast) accept this))
          (define entry (get-field expect ast))
          (define expand (get-field expand ast))
          (define known-type (get-field known-type ast))
@@ -142,20 +145,34 @@
              
              ;; list of ASTs
              (if (= expand 1)
-                 (cons
-                  ast
-                  (for/list ([i (in-range (sub1 entry))])
-                    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))
-                 (append
-                  (for/list ([i (in-range expand)])
-                    (let ([new-name (ext-name (get-field name ast) i)])
-                      (new Array% [name new-name]
-                           [index (send index clone)]
-                           ;; set known-type
-                           [known-type known-type]
-			   [pos (get-field pos ast)])))
-                  (for/list ([i (in-range (- entry expand))])
-                    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
+		 (for/list ([i (in-range entry)])
+			   (send ast clone))
+                 ;; (cons
+                 ;;  ast
+                 ;;  (for/list ([i (in-range (sub1 entry))])
+                 ;;    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))
+		 (if (= expand entry)
+		     (for/list ([i (in-range expand)]
+                                [i-index index-ret])
+			      (let ([new-name (ext-name (get-field name ast) i)])
+				(new Array% [name new-name]
+				     [index i-index]
+				     ;; set known-type
+				     [known-type known-type]
+				     [pos (get-field pos ast)])))
+		     (raise (format "Expect tuple with ~a entries, ~a entries are given at ~a"
+				    entry expand (send ast to-string))))))
+		   
+                 ;; (append
+                 ;;  (for/list ([i (in-range expand)])
+                 ;;    (let ([new-name (ext-name (get-field name ast) i)])
+                 ;;      (new Array% [name new-name]
+                 ;;           [index (send index clone)]
+                 ;;           ;; set known-type
+                 ;;           [known-type known-type]
+		 ;; 	   [pos (get-field pos ast)])))
+                 ;;  (for/list ([i (in-range (- entry expand))])
+                 ;;    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
          ]
         
         [(is-a? ast Var%)
@@ -174,20 +191,31 @@
              
              ;; list of ASTs
              (if (= expand 1)
-                 (cons
-                  ast
-                  (for/list ([i (in-range (sub1 entry))])
-                    (new Num% [n (new Const% [n 0] [pos (get-field pos ast)])])))
+		 (for/list ([i (in-range entry)])
+			   (send ast clone))
+                 ;; (cons
+                 ;;  ast
+                 ;;  (for/list ([i (in-range (sub1 entry))])
+                 ;;    (new Num% [n (new Const% [n 0] [pos (get-field pos ast)])])))
                  ;; allow cast up
-                 (append
-                  (for/list ([i (in-range expand)])
-                    (let ([new-name (ext-name (get-field name ast) i)])
-                      (new Var% [name new-name]
-			     ;; set known-type
-                           [known-type known-type]
-                           [pos (get-field pos ast)])))
-                  (for/list ([i (in-range (- entry expand))])
-                    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
+		 (if (= expand entry)
+		     (for/list ([i (in-range expand)])
+			       (let ([new-name (ext-name (get-field name ast) i)])
+				 (new Var% [name new-name]
+				      ;; set known-type
+				      [known-type known-type]
+				      [pos (get-field pos ast)])))
+		     (raise (format "Expect tuple with ~a entries, ~a entries are given at ~a"
+				    entry expand (send ast to-string))))))
+                 ;; (append
+                 ;;  (for/list ([i (in-range expand)])
+                 ;;    (let ([new-name (ext-name (get-field name ast) i)])
+                 ;;      (new Var% [name new-name]
+		 ;; 	     ;; set known-type
+                 ;;           [known-type known-type]
+                 ;;           [pos (get-field pos ast)])))
+                 ;;  (for/list ([i (in-range (- entry expand))])
+                 ;;    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
          ]
         
         [(is-a? ast Op%)

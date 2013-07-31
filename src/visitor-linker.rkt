@@ -155,10 +155,10 @@
          ;(pretty-display (format "LINKER: Array ~a" (send ast to-string)))
 	 (set-field! expect ast entry)
 
-	 (set! entry 1)
+	 ;(set! entry 1)
 	 (define index (get-field index ast))
          (define index-known (send index accept this))
-	 (set! entry (get-field expect ast))
+	 ;(set! entry (get-field expect ast))
 
          (define array-decl (lookup array-map ast))
          (unless index-known

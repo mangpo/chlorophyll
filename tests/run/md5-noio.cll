@@ -32,8 +32,8 @@ int::2@(10, 25) cadd(int::2@(24,25) x, int::2@(24,25) y) {
   return z;
 }
 
-int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(21,20) b, int::2@(28,21) f, int::2@(2,3) k, int@4 m0, int@5 m1, int@6 r) {
-  int::2@(4,5) m;
+int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(21,20) b, int::2@(28,21) f, int::2@(2,3) k, int@28 m0, int@29 m1, int@6 r) {
+  int::2@(28,29) m;
   m::0 = m0;
   m::1 = m1;
   return csum(b, leftrotate(csum(a +@(28,21) f +@(28,29) k, m), r));

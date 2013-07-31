@@ -2,7 +2,7 @@ int::2@(1,2) func(int::2@(1,2) x) {
   return 10;
 }
 
-int::2@(1,2) func2(int z, int::3@(1,2,3) x) {
+int::2@(1,2) func2(int z, int::2@(1,2) x) {
   int::2 a;
   a::0 = x::0;
   a::1 = z;
