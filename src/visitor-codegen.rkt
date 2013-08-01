@@ -22,7 +22,6 @@
                 [index-map (make-hash)])
 
     (define debug #f)
-    (define no-iter (list #f))
 
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -141,15 +140,16 @@
 	(define address (get-field address ast))
         (define actual-addr (- (get-var address) offset))
         (define actual-addr-org (- (meminfo-addr address) offset))
+	(define opt (get-field opt ast))
 
         (define insts
-          (if (car no-iter)
+          (if opt
               (list "@+")
               (if (= actual-addr 0)
                   (list "a!" "@")
                   (list (number->string actual-addr) "+" "a!" "@"))))
         (define insts-org
-          (if (car no-iter)
+          (if opt
               (list "@+")
               (if (= actual-addr-org 0)
                   (list "a!" "@")
@@ -158,7 +158,7 @@
         (define array-ret
           (list (block insts 1 1 #t insts-org)))
 
-        (if (car no-iter)
+        (if opt
             array-ret
             (prog-append index-ret array-ret))
         ]
@@ -242,19 +242,20 @@
 		   [rhs-ret     (send rhs accept this)]
                    [actual-addr (- (get-var address) offset)]
                    [actual-addr-org (- (meminfo-addr address) offset)]
+		   [opt (get-field opt lhs)]
                    [insts 
-                    (if (car no-iter)
+                    (if opt
                         (list "!+")
                         (if (= actual-addr 0)
                             (list "a!" "!")
                             (list (number->string actual-addr) "+" "a!" "!")))]
                    [insts-org 
-                    (if (car no-iter)
+                    (if opt
                         (list "!+")
                         (if (= actual-addr-org 0)
                             (list "a!" "!")
                             (list (number->string actual-addr-org) "+" "a!" "!")))])
-              (if (car no-iter)
+              (if opt
                   (prog-append rhs-ret (list (block insts 1 0 #t insts-org)))
                   (prog-append rhs-ret index-ret (list (block insts 2 0 #t insts-org)))))
 	    (let ([rhs-ret (send rhs accept this)])
@@ -372,9 +373,7 @@
 	]
 
        [(is-a? ast For%)
-        (define arrayaccess-counter (new arrayaccess%))
-        (define arrayaccess (send (get-field body ast) accept arrayaccess-counter))
-        (set! no-iter (cons (<= arrayaccess 1) no-iter))
+	(define array (get-field iter-type ast))
 
         (define from (get-field from ast))
         (define to (get-field to ast))
@@ -383,16 +382,15 @@
         (define address-org (get-iter-org (get-field address ast)))
         (define address-org-str (number->string address-org))
         ;; if no arrayaccess => no need to initialize
-        (define addr-pair (if (= arrayaccess 0) (cons #f #f) (cons address address-org)))
+        (define addr-pair (if (equal? array 0) (cons #f #f) (cons address address-org)))
         
         ;; if no arrayaccess => no need to initialize
         (define init-ret 
           (cond
-           [(= arrayaccess 0)
+           [(equal? array 0)
             (gen-block (number->string (- to from 1)) 0 1)]
            
-           [(= arrayaccess 1)
-            (define array (get-field array arrayaccess-counter))
+           [(is-a? array Array%)
             (define offset (get-field offset array))
             (define address (get-field address array))
             (define actual-addr (- (get-var address) offset))
@@ -414,14 +412,13 @@
         (define body-ret (send (get-field body ast) accept this))
 
         (define body-decor 
-          (list (if (car no-iter)
+          (list (if (or (equal? array 0) (is-a? array Array%))
                     (gen-block)
                     (gen-block-org 
                      (address-str "a!" "@" "1" "+" "!")
                      (address-org-str "a!" "@" "1" "+" "!")
                      0 0))))
 
-        (set! no-iter (cdr no-iter))
         (list (forloop init-ret (prog-append body-ret body-decor) 
                        addr-pair from to))
 	]

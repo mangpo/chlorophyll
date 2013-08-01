@@ -10,6 +10,7 @@
          "arrayforth.rkt"
          "arrayforth-optimize.rkt"
          "arrayforth-print.rkt"
+         "visitor-arrayaccess.rkt"
          "visitor-desugar.rkt"
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
@@ -35,6 +36,10 @@
 (define (generate-code program i w h virtual)
   (pretty-display `(-------------------- ,i -----------------------))
   (pretty-display program)
+  
+  ;; mark forloop and array for optimization
+  (send program accept (new arrayaccess%))
+  
   (let* ([data-iter (send program accept (new memory-mapper%))]
          [code-gen (new code-generator% [data-size (car data-iter)]
                         [iter-size (cdr data-iter)]
@@ -118,7 +123,7 @@
   (codegen-print virtual-code)
 
   (pretty-display "------------------ OPT REDUCED CODE ----------------------")
-  (define virtual-opt (superoptimize virtual-code "name"))
+  (define virtual-opt (superoptimize virtual-code "name" w h))
   (codegen-print virtual-opt)
 
   (pretty-display "------------------ OPT CODE ----------------------")
@@ -167,10 +172,10 @@
 
 ;(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
-;               600 "null" 7 6 #:verbose #t)
+;               530 "null" 7 6 #:verbose #f)
 
-;(compile-and-optimize "../examples/array.cll" "array" 
-;                      256 "null" #:opt #f)
+(compile-and-optimize "../examples/array.cll" "array" 
+                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset-noio.cll" "offset-noio" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
@@ -179,7 +184,7 @@
 ;                      600 "null" #:w 10 #:h 5 #:opt #t)
 
 ;(compile-percore "../examples/array.cll" 0 2 2)
-;(compile-and-optimize-percore "../examples/add.cll" 0 2 2)
+;(compile-and-optimize-percore "../examples/array.cll" 0 2 2)
 
 (define testdir "../tests/run")
 

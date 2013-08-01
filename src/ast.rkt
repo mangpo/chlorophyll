@@ -398,7 +398,7 @@
   (class Var%
     (super-new)
     (inherit-field known-type place-type pos name expand expect)
-    (init-field index [offset 0])
+    (init-field index [offset 0] [opt #f])
     (inherit print-send-path)
 
     (define/override (pretty-print [indent ""])
@@ -696,7 +696,7 @@
 (define For%
   (class Scope%
     (super-new)
-    (init-field iter from to body place-list known [address #f])
+    (init-field iter from to body place-list known [address #f] [iter-type 0])
     (inherit print-send-path print-body-placeset)
 
     (define/public (to-concrete)

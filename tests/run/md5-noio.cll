@@ -32,8 +32,8 @@ int::2@(10, 25) cadd(int::2@(24,25) x, int::2@(24,25) y) {
   return z;
 }
 
-int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(21,20) b, int::2@(28,21) f, int::2@(2,3) k, int::2 m, int@6 r) {
-  return csum(b, leftrotate(csum(a +@(28,21) f +@(28,29) k, m), r));
+int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(14,15) b, int::2@(20,21) f, int::2@(2,3) k, int::2@(0,28) m, int@6 r) {
+  return csum(b, leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r));
 }
 
 void main() {
@@ -111,81 +111,36 @@ void main() {
 }
 
 /*
-core = 0, space = 272, ops = #<set:>
+core = 0, space = 389, ops = #<set:>
 core = 1, space = 272, ops = #<set:>
 core = 2, space = 417, ops = #<set:>
 core = 3, space = 417, ops = #<set:>
-core = 4, space = 471, ops = #<set:>
-core = 5, space = 471, ops = #<set:>
+core = 4, space = 524, ops = #<set:>
+core = 5, space = 524, ops = #<set:>
 core = 6, space = 385, ops = #<set:>
 core = 7, space = 284, ops = #<set:>
 core = 8, space = 284, ops = #<set:>
 core = 9, space = 360, ops = #<set:>
 core = 10, space = 400, ops = #<set:>
-core = 11, space = 468, ops = #<set:>
+core = 11, space = 244, ops = #<set:>
 core = 12, space = 348, ops = #<set:>
 core = 13, space = 348, ops = #<set:>
-core = 14, space = 408, ops = #<set:>
+core = 14, space = 477, ops = #<set:>
 core = 15, space = 408, ops = #<set:>
 core = 16, space = 284, ops = #<set:>
-core = 17, space = 458, ops = #<set:>
+core = 17, space = 432, ops = #<set:>
 core = 18, space = 284, ops = #<set:>
 core = 19, space = 284, ops = #<set:>
-core = 20, space = 450, ops = #<set:>
-core = 21, space = 450, ops = #<set:>
+core = 20, space = 444, ops = #<set:>
+core = 21, space = 454, ops = #<set:>
 core = 22, space = 344, ops = #<set:>
 core = 23, space = 344, ops = #<set:>
 core = 24, space = 339, ops = #<set:>
 core = 25, space = 388, ops = #<set:>
 core = 26, space = 328, ops = #<set:>
 core = 27, space = 328, ops = #<set:>
-core = 28, space = 439, ops = #<set:>
-core = 29, space = 434, ops = #<set:>
-core = 30, space = 421, ops = #<set:>
-core = 31, space = 421, ops = #<set:>
-core = 32, space = 0, ops = #<set:>
-core = 33, space = 0, ops = #<set:>
-core = 34, space = 0, ops = #<set:>
-core = 35, space = 0, ops = #<set:>
-core = 36, space = 0, ops = #<set:>
-core = 37, space = 0, ops = #<set:>
-core = 38, space = 0, ops = #<set:>
-core = 39, space = 0, ops = #<set:>
-core = 40, space = 0, ops = #<set:>
-core = 41, space = 0, ops = #<set:>
-*/
-
-/* new
-core = 0, space = 272, ops = #<set:>
-core = 1, space = 272, ops = #<set:>
-core = 2, space = 417, ops = #<set:>
-core = 3, space = 417, ops = #<set:>
-core = 4, space = 581, ops = #<set:>
-core = 5, space = 581, ops = #<set:>
-core = 6, space = 385, ops = #<set:>
-core = 7, space = 284, ops = #<set:>
-core = 8, space = 284, ops = #<set:>
-core = 9, space = 360, ops = #<set:>
-core = 10, space = 400, ops = #<set:>
-core = 11, space = 274, ops = #<set:>
-core = 12, space = 348, ops = #<set:>
-core = 13, space = 348, ops = #<set:>
-core = 14, space = 408, ops = #<set:>
-core = 15, space = 408, ops = #<set:>
-core = 16, space = 284, ops = #<set:>
-core = 17, space = 402, ops = #<set:>
-core = 18, space = 284, ops = #<set:>
-core = 19, space = 284, ops = #<set:>
-core = 20, space = 450, ops = #<set:>
-core = 21, space = 561, ops = #<set:>
-core = 22, space = 344, ops = #<set:>
-core = 23, space = 344, ops = #<set:>
-core = 24, space = 339, ops = #<set:>
-core = 25, space = 388, ops = #<set:>
-core = 26, space = 328, ops = #<set:>
-core = 27, space = 328, ops = #<set:>
-core = 28, space = 476, ops = #<set:>
-core = 29, space = 396, ops = #<set:>
+core = 28, space = 482, ops = #<set:>
+core = 29, space = 487, ops = #<set:>
 core = 30, space = 202, ops = #<set:>
 core = 31, space = 202, ops = #<set:>
 core = 32, space = 174, ops = #<set:>
