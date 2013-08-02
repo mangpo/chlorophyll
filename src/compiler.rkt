@@ -174,14 +174,14 @@
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               530 "null" 7 6 #:verbose #f)
 
-(compile-and-optimize "../examples/array.cll" "array" 
-                      256 "null" #:opt #f)
+;(compile-and-optimize "../examples/array.cll" "array" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset-noio.cll" "offset-noio" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
 ;                      256 "null" #:opt #t)
-;(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
-;                      600 "null" #:w 10 #:h 5 #:opt #t)
+(compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
+                      600 "null" #:w 10 #:h 5 #:opt #f)
 
 ;(compile-percore "../examples/array.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/array.cll" 0 2 2)

@@ -77,9 +77,7 @@
         (define children-count (send (get-field body ast) accept this))
 	(define arrays (pack-arrays (car stack)))
 	(define my-count (length arrays))
-	(pretty-display (format "!!!!!!!!!!!!!!!! children-count ~a" children-count))
-	(pretty-display (format "!!!!!!!!!!!!!!!! my-count ~a" my-count))
-	
+
         (cond 
 	 [(= my-count 0)
 	  (set-field! iter-type ast 0)]

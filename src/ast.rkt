@@ -217,7 +217,7 @@
 
 (define Base%
   (class object%
-    (super-new)2
+    (super-new)
     (init-field [pos #f] [send-path #f] [convert #f] [expect 1])   
 
     (abstract pretty-print)

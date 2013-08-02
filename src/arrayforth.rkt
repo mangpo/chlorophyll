@@ -16,6 +16,8 @@
 (struct -iftf (t f))
 (struct aforth (code memsize bit indexmap))
 
+(struct linklist (prev entry next) #:mutable)
+
 (define ga-bit 18)
 
 (define-syntax gen-block
@@ -58,7 +60,7 @@
 	  (set-block-out! a-block b-out))))
 
   (define (merge-forloop a-for b-for)
-    (pretty-display `(merge-forloop ,(forloop-body a-for) ,(forloop-body b-for)))
+    ;; (pretty-display `(merge-forloop ,(forloop-body a-for) ,(forloop-body b-for)))
     (and (equal? (forloop-iter a-for) (forloop-iter b-for))
          (equal? (forloop-to a-for) (forloop-from b-for))
          (aforth-eq? (forloop-body a-for) (forloop-body b-for))
@@ -101,7 +103,7 @@
 	(append a-list b-list))]))
 
 (define (aforth-eq? a b)
-  (pretty-display `(aforth-eq? ,a ,b ,(block? a) ,(block? b)))
+  ;; (pretty-display `(aforth-eq? ,a ,b ,(block? a) ,(block? b)))
   (or
    (and (list? a) (list? b) (= (length a) (length b)) (andmap aforth-eq? a b))
    (and (block? a) (block? b) (equal? (block-body a) (block-body b)))
@@ -213,6 +215,16 @@
     (for ([i x])
 	 (aforth-struct-print i (inc indent)))
     (pretty-display (format "~a)" indent))
+    ]
+
+   [(linklist? x)
+    (unless (linklist-prev x)
+	    (pretty-display (format "~a(list " indent)))
+    (when (linklist-entry x)
+	  (aforth-struct-print (linklist-entry x) (inc indent)))
+    (if (linklist-next x)
+	(aforth-struct-print (linklist-next x) indent)
+	(pretty-display (format "~a)" indent)))
     ]
    
    [(block? x)
