@@ -112,6 +112,10 @@
        [(is-a? ast For%)
         (raise "visitor-runstatic: for loops not supported yet. TODO!")]
 
+       [(is-a? ast Forever%)
+        (raise "visitor-runstatic: forever loops not supported yet 
+               (ever? same as while(1), etc. though) TODO!")]
+
        [(is-a? ast If%)
         (raise "visitor-runstatic: if statements not supported yet. TODO!")]
 

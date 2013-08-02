@@ -91,6 +91,9 @@
             (send body accept this)
             bound)))]
 
+       [(is-a? ast Forever%)
+        (multiply (send (get-field body ast) accept this) (get-field bound ast))]
+
        [(is-a? ast Assign%)
         (let ([lhs (get-field lhs ast)]
               [rhs (get-field rhs ast)])

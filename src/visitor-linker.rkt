@@ -348,6 +348,12 @@
          (send (get-field body ast) accept this)
 	 (pop-scope)
          ]
+
+        [(is-a? ast Forever%)
+         (push-scope)
+         (send (get-field body ast) accept this)
+         (pop-scope)
+         ]
         
         [(is-a? ast For%)
          ;(pretty-display "LINKER: For")

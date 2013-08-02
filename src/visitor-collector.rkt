@@ -95,6 +95,9 @@
 	[(is-a? ast While%)
 	 (set-union (send (get-field condition ast) accept this)
 		    (send (get-field body ast) accept this))]
+
+        [(is-a? ast Forever%)
+         (send (get-field body ast) accept this)]
         
         [(is-a? ast Block%)
 	 (union-set-from-list (get-field stmts ast))]

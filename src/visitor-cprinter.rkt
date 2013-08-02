@@ -251,6 +251,13 @@
          (dec-indent)
          (display (format "~a}" indent))]
 
+	[(is-a? ast Forever%)
+	 (pretty-display "while(true) {")
+         (inc-indent)
+         (send (get-field body ast) accept this)
+         (dec-indent)
+         (display (format "~a}" indent))]
+
         [(is-a? ast For%)
          (let ([iter (send (get-field iter ast) to-string)])
            (pretty-display (format "for(int ~a_~a = ~a; ~a_~a < ~a; ++~a_~a) {"

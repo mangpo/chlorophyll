@@ -181,6 +181,10 @@
         (send (get-field body ast) accept this)
         ast]
 
+       [(is-a? ast Forever%)
+        (send (get-field body ast) accept this)
+        ast]
+
        [(is-a? ast Assign%)
         ;(pretty-display "UNROLL: Assign")
         (send (get-field lhs ast) accept this)

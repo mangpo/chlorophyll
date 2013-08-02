@@ -24,8 +24,7 @@
         (set-field! stmts body
                     (for/list ([stmt (get-field stmts body)])
                       (if (is-a? stmt WorkBlocking%)
-                          (new While%
-                               [condition (new Num% [n (new Const% [n 1] [pos (get-field pos stmt)])])]
+                          (new Forever%
                                [body (get-field block stmt)]
                                [pos (get-field pos stmt)])
                           stmt)))]

@@ -516,6 +516,14 @@
 			  #f #f ;; bound, body-placeset
 			  (get-workspace c))))] ;; parent
 
+       [(is-a? ast Forever%)
+	(when debug (pretty-display (format "\nDIVIDE: Forever\n")))
+        (scope-pattern
+          (lambda (c)
+            (new Forever%
+                 [body (new Block% [stmts (list)])]
+                 [parent (get-workspace c)])))]
+
        [(is-a? ast For%)
 	(when debug (pretty-display (format "\nDIVIDE: For\n")))
         (scope-pattern 

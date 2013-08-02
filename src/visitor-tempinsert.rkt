@@ -163,6 +163,11 @@
          
          (set-field! condition ast (cdr cond-ret))
          (list (car cond-ret) ast)]
+
+        [(is-a? ast Forever%)
+         (send (get-field body ast) accept this)
+         ast
+         ]
         
         [(is-a? ast For%)
          (send (get-field body ast) accept this)

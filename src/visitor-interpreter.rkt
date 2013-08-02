@@ -649,6 +649,20 @@
            (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret)))
 	  ]
 
+       [(is-a? ast Forever%)
+          ;; TODO Ask Mangpo if this makes sense
+          (define body-ret (send (get-field body ast) accept this))
+
+          ;; increase space
+          (inc-space-placeset (comminfo-placeset body-ret) est-while)
+
+          (set-field! body-placeset ast (comminfo-placeset body-ret))
+
+          (comminfo
+            (* (get-field bound ast) (comminfo-msgs body-ret))
+            (comminfo-placeset body-ret))
+          ]
+
        [(is-a? ast Assign%) 
           (when debug (newline))
           (define lhs (get-field lhs ast))

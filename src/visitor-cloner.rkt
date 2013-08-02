@@ -147,6 +147,14 @@
 		       (get-field bound ast)
 		       (get-field body-placeset ast))]
 
+       [(is-a? ast Forever%)
+        (new Forever%
+             [body (send (get-field body ast) accept this)]
+             [bound (get-field bound ast)]
+             [known (get-field known ast)]
+             [place-list (get-field place-list ast)]
+             [body-placeset (get-field body-placeset ast)])]
+
        [(is-a? ast Assign%)
         (new Assign%
              [lhs (send (get-field lhs ast) accept this)]

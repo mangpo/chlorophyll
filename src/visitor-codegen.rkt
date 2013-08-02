@@ -381,6 +381,14 @@
 	(list (funccall name))
 	]
 
+       [(is-a? ast Forever%)
+        (send 
+          (new While%
+               [condition (new Num% [n (new Const% [n 1] [pos (get-field pos ast)])])]
+               [body (get-field body ast)])
+          accept this)
+	]
+
        [(is-a? ast For%)
         (define from (get-field from ast))
         (define to (get-field to ast))

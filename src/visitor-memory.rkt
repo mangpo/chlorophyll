@@ -126,6 +126,12 @@
 	(pop-scope)
 	]
 
+       [(is-a? ast Forever%)
+	(push-scope)
+	(send (get-field body ast) accept this)
+	(pop-scope)
+	]
+
        [(is-a? ast For%)
         (when debug (pretty-display (format "MEMORY: For")))
 	(push-scope)

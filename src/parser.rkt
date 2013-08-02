@@ -11,7 +11,7 @@
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
-                               -> FILTER WORK BLOCKING PIPELINE ADD
+                               -> FILTER WORK BLOCKING PIPELINE ADD FOREVER
 			       READ WRITE
                                PLACE HERE ANY))
 
@@ -65,6 +65,7 @@
    ("blocking" (token-BLOCKING))
    ("pipeline" (token-PIPELINE))
    ("add" (token-ADD))
+   ("forever" (token-FOREVER))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -372,6 +373,10 @@
 	 ; while loop
 	 ((WHILE LPAREN exp RPAREN LBRACK block RBRACK)
 	    (new While% [condition $3] [body $6] [pos $1-start-pos]))
+
+	 ; forever loop
+	 ((FOREVER LBRACK block RBRACK)
+	    (new Forever% [body $3] [pos $1-start-pos]))
 
          ; if
          ((IF LPAREN exp RPAREN LBRACK block RBRACK)

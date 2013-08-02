@@ -803,6 +803,21 @@
       (pretty-print-content indent))
 ))
 
+(define Forever%
+  (class Scope%
+    (super-new)
+    (init-field body [bound 100])
+    (inherit print-send-path)
+
+    (define/public (pretty-print-content indent)
+      (print-send-path indent)
+      (send body pretty-print (inc indent)))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(FOREVER" indent))
+      (pretty-print-content indent))
+    ))
+
 (define While%
   (class Scope%
     (super-new)

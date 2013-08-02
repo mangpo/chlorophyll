@@ -129,6 +129,9 @@
 	(send (get-field condition ast) accept this)
         (send (get-field body ast) accept this)]
 
+       [(is-a? ast Forever%)
+        (send (get-field body ast) accept this)]
+
        [(is-a? ast Block%) 
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))]

@@ -122,6 +122,11 @@
         (evaluate-placeset)
         ]
 
+       [(is-a? ast Forever%)
+        (send (get-field body ast) accept this)
+        (evaluate-placeset)
+        ]
+
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))]

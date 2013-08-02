@@ -418,6 +418,11 @@
         (set-union ret (all-path ast))
         ]
 
+       [(is-a? ast Forever%)
+        (define body-ret (send (get-field body ast) accept this))
+        (set-field! body-placeset ast body-ret)
+        (set-union body-ret (all-path ast))]
+
        [(is-a? ast Block%) 
         (when debug 
               (pretty-display (format "COMMINSERT: Block")))
