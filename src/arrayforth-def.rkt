@@ -197,8 +197,11 @@
 	  [x-code inst-lists])
 	 ;; TODO update in, out, org
       (let* ([b (linklist-entry x-linklist)]
-             [org (string-split (block-org b))])
+             [org (string-split (block-org b))]
+             [inout (estimate-inout x-code)])
         (set-block-body! b x-code)
+        (set-block-in! b (car inout))
+        (set-block-out! b (cdr inout))
         (if (equal? location `front)
             (set-block-org! b (string-join (take org (length x-code))))
             (set-block-org! b (string-join (drop org (- (length org) (length x-code))))))
@@ -296,8 +299,8 @@
   (define to (car tos))
 
   ;; replace common sequences wiht funccalls
-  (for ([from froms];(map linklist-next from-diffs)]
-	[to   tos]);(map linklist-prev to-diffs)])
+  (for ([from froms]
+	[to   tos])
     (let* ([from-prev (linklist-prev from)]
            [to-next   (linklist-next to)]
            [new-linklist (linklist from-prev (funccall new-name) to-next)])
@@ -305,16 +308,20 @@
       (set-linklist-prev! to-next new-linklist)))
   
   (when prefix
-    (set! from (linklist #f 
-                         (block prefix 0 0 (aforth-memsize program) prefix-org)
-                         from)))
+    (let ([inout (estimate-inout prefix)])
+      (set! from (linklist #f 
+                           (block prefix (car inout) (cdr inout) 
+                                  (aforth-memsize program) prefix-org)
+                           from))))
   
   (when suffix
-    (let ([suffix-linklist (linklist to 
-                                     (block suffix 0 0 (aforth-memsize program) suffix-org)
-                                     #f)])
-    (set-linklist-next! to suffix-linklist)
-    (set! to suffix-linklist)))
+    (let* ([inout (estimate-inout suffix)]
+           [suffix-linklist (linklist to 
+                                      (block suffix (car inout) (cdr inout)
+                                             (aforth-memsize program) suffix-org)
+                                      #f)])
+      (set-linklist-next! to suffix-linklist)
+      (set! to suffix-linklist)))
   
   ;; set head for from
   (define head (linklist #f #f from))

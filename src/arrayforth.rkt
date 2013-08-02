@@ -20,6 +20,50 @@
 
 (define ga-bit 18)
 
+(define (inout inst)
+  (cond
+   [(or (member inst (list "@+" "@b" "@" "pop" "a"))
+        (string->number inst))
+    (cons 0 1)]
+
+   [(member inst (list "!+" "!b" "!" "drop" "push" "b!" "a!"))
+    (cons 1 0)]
+
+   [(member inst (list "+*"))
+    (cons 2 2)]
+
+   [(member inst (list "2*" "2/" "-"))
+    (cons 1 1)]
+
+   [(member inst (list "+" "and" "or"))
+    (cons 2 1)]
+
+   [(member inst (list "dup"))
+    (cons 1 2)]
+
+   [(member inst (list "over"))
+    (cons 2 3)]
+   [else
+    (raise (format "arrayforth-inout: unimplemented for ~a" inst))]))
+
+(define (combine-inout a-pair b-pair)
+  (define a-in  (car a-pair))
+  (define a-out (cdr a-pair))
+  (define b-in  (car b-pair))
+  (define b-out (cdr b-pair))
+  (if (>= a-out b-in)
+      (cons a-in 
+            (- (+ a-out b-out) b-in))
+      (cons (- (+ a-in b-in) a-out)
+            b-out)))
+
+(define (estimate-inout insts)
+  (when (string? insts)
+        (set! insts (string-split insts)))
+  (foldl (lambda (inst res)
+           (combine-inout res (inout inst)))
+         (cons 0 0) insts))
+
 (define-syntax gen-block
   (syntax-rules ()
     [(gen-block)
