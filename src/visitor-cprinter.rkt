@@ -31,18 +31,23 @@
        [(equal? port `W)
 	(sub1 (+ n core))]
 
-       [(equal? port `IO)
+       [(equal? port `INPUT)
         (+ (* 2 n) core)]
+       [(equal? port `OUTPUT)
+        (+ (* 3 n) core)]
 
-       [(number? port)
-        (+ (* 2 n) port)]
+       [(and (pair? port) (number? (cdr port)))
+        (cond [(equal? (car port) `INPUT)
+               (+ (* 2 n) (cdr port))]
+              [(equal? (car port) `OUTPUT)
+               (+ (* 3 n) (cdr port))])]
        
        ;; use an n by n table for interfilter communication
        [(is-a? port ConcreteFilterDecl%)
         (define port-id (get-field id port))
         (define small (min core port-id))
         (define large (max core port-id))
-        (+ (* 3 n) (* small n) (large))
+        (+ (* 4 n) (* small n) (large))
         ]))
 
     (define (print-type type)

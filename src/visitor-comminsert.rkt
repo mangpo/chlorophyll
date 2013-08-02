@@ -130,8 +130,10 @@
           (for ([i (car p)])
                (send i accept this))
           p]
-         [(at-io? p)
+         [(at-global-input? p)
           n]
+         [(at-global-output? p)
+          (add1 n)]
 	 ;; [(is-a? p Place%)
 	 ;;  p]
          [(and (is-a? p Place%) (equal? (get-field at p) "any"))

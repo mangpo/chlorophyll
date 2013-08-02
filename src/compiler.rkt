@@ -46,7 +46,7 @@
 
 ;; Compile per-core IRs to per-core machine codes.
 (define (generate-codes programs w h)
-  (for ([i (in-range (add1 (* w h)))])
+  (for ([i (in-range (add1 (add1 (* w h))))])
     (let ([program (vector-ref programs i)])
       (generate-code program i w h))))
 

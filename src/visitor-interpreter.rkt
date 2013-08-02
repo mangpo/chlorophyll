@@ -39,7 +39,7 @@
       (define (derive-place p)
         ;(pretty-display `(derive-place ,p))
         (cond
-         [(or (equal? p "any") (equal? p "io"))
+         [(or (equal? p "any") (equal? p "input") (equal? p "output"))
           p]
 
          [(is-a? p Array%)
@@ -53,7 +53,7 @@
           (raise (format "derive-place: unimplemented for ~a" p))]))
 
       (cond
-        [(at-io? place-exp)
+        [(or (at-global-input? place-exp) (at-global-output? place-exp))
          place-exp]
         [(is-a? place-exp Place%)
          (let ([place (derive-place (get-field at place-exp))])
@@ -121,7 +121,7 @@
         [(number? place)
          (cores-inc-space places place add-space)]
         
-        [(at-io? place)
+        [(or (at-global-input? place) (at-global-output? place))
          void]
         
         [else
@@ -191,7 +191,7 @@
           [(or (number? p) (equal? p #f)) 1]
           [(is-a? p Place%)
            (let ([at (get-field at p)])
-             (if (or (equal? at "any") (equal? at "io"))
+             (if (or (equal? at "any") (equal? at "input") (equal? at "output"))
                  1
                  (raise "count-comm doesn't support Place% that is not @any")))]
           [(pair? p)

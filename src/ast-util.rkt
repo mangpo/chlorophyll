@@ -40,7 +40,7 @@
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]
-		      [place (new Place% [at "io"])]
+		      [place (new Place% [at "output"])]
                       )]))
   stdout)
 
@@ -61,7 +61,7 @@
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]
-		      [place (new Place% [at "io"])]
+		      [place (new Place% [at "output"])]
                       )]))
   stdout)
 
@@ -80,7 +80,10 @@
                  (andmap (lambda (a-p b-p) (send a-p equal-rangeplace? b-p))
                          a-list b-list)))
           ;; if one of them is @any
-          (or (at-any? a) (at-any? b) (at-io? a) (at-io? b)))))
+          (or (at-any? a) (at-any? b)
+              (at-global-input? a) (at-global-output? a)
+              (at-global-input? b) (at-global-output? b)
+              ))))
 
 (define (lookup-name env name)
   (dict-ref env name
@@ -154,10 +157,16 @@
         [other-y (modulo other w)])
     (cond 
      [(= me (* w h))
-      other]
+      (cons `INPUT other)]
 
      [(= other (* w h))
-      `IO]
+      `INPUT]
+
+     [(= me (add1 (* w h)))
+      (cons `OUTPUT other)]
+
+     [(= other (add1 (* w h)))
+      `OUTPUT]
 
      [(< other-x me-x)
       (assert (= (add1 other-x) me-x) `(= (add1 other-x) me-x))

@@ -22,8 +22,11 @@
 (define (at-any? x)
   (or (equal? x #f) (and (is-a? x Place%) (equal? (get-field at x) "any"))))
 
-(define (at-io? x)
-  (and (is-a? x Place%) (equal? (get-field at x) "io")))
+(define (at-global-input? x)
+  (and (is-a? x Place%) (equal? (get-field at x) "input")))
+
+(define (at-global-output? x)
+  (and (is-a? x Place%) (equal? (get-field at x) "output")))
 
 (define (place-type? p)
   (or (number? p) (place-type-dist? p)))
@@ -169,7 +172,7 @@
            (set) place)]
    [(pair? place)
     (to-place-set (car place))]
-   [(or (at-any? place) (at-io? place))
+   [(or (at-any? place) (at-global-input? place) (at-global-output? place))
     (set)]
    [(is-a? place TypeExpansion%)
     place]

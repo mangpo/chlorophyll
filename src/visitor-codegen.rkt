@@ -130,8 +130,10 @@
 	(if (= (modulo y 2) 0) "right" "left")]
        [(equal? port `W)
 	(if (= (modulo y 2) 0) "left" "right")]
-       [(equal? port `IO)
-        "io"]))
+       [(equal? port `INPUT)
+        "input"]
+       [(equal? port `OUTPUT)
+        "output"]))
 	   
     (define (program-append a-list b-list)
       ;; merge b-block into a-block

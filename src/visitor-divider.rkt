@@ -11,7 +11,7 @@
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
-    (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
+    (init-field w h [n (add1 (add1 (* w h)))] [cores (make-vector n)] [expand-map (make-hash)])
 
     (define debug #f)
 

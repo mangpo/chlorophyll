@@ -71,7 +71,7 @@
   (when verbose (pretty-display "--- after dividing ---"))
   
   (define cprinter (new cprinter% [thread #t] [w w] [h h]))
-  (define n (add1 (* w h)))
+  (define n (add1 (add1 (* w h))))
 
   (with-output-to-file #:exists 'truncate (format "~a/~a.cpp" outdir name)
     (lambda ()

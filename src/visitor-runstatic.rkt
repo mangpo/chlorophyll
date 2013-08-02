@@ -27,7 +27,7 @@
                               [known #f])]
                   [output (new VarDecl% [var-list (list "#output")]
                                [type "int"] ;; TODO: make it generic
-                               [place (new Place% [at "io"])]
+                               [place (new Place% [at "input"])]
                                [known #f])]))
     (declare env "__globaloutputdst__"
              (new ConcreteFilterDecl% [name "__globaloutputdst__"]
@@ -37,7 +37,7 @@
                   [abstract (void)]
                   [input (new VarDecl% [var-list (list "#output")]
                               [type "int"] ;; TODO: make it generic
-                              [place (new Place% [at "io"])]
+                              [place (new Place% [at "output"])]
                               [known #f])]
                   [output (new VarDecl%
                                [var-list (list)]
