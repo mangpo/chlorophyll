@@ -2,7 +2,7 @@
 
 (require "header.rkt" "arrayforth.rkt")
 
-(provide aforth-syntax-print)
+(provide aforth-syntax-print string-converter%)
 
 (define w #f)
 (define h #f)
@@ -150,3 +150,52 @@
    [(equal? x #f) void]
    
    [else (raise (format "arrayforth-syntax-print: unimplemented for ~a" x))]))
+
+
+(define string-converter%
+  (class object%
+    (super-new)
+
+    (define/public (visit ast)
+      (cond
+       [(linklist? ast)
+        (define str "")
+        (when (linklist-entry ast)
+          (set! str (send this visit (linklist-entry ast))))
+	(when (linklist-next ast)
+	      (set! str (string-append str " " (send this visit (linklist-next ast)))))
+	(string-trim str)]
+
+       [(block? ast)
+	(define body (block-body ast))
+	(if (string? body)
+	    body
+	    (string-join body))]
+
+       [(forloop? ast)
+	(string-append (send this visit (forloop-init ast))
+		       " for "
+		       (send this visit (forloop-body ast))
+		       " next")]
+
+       [(ift? ast)
+	(string-append "if " (send this visit (ift-t ast)))]
+
+       [(iftf? ast)
+	(string-append "if " (send this visit (iftf-t ast))
+		       " then " (send this visit (iftf-f ast)))]
+
+       [(-ift? ast)
+	(string-append "-if " (send this visit (-ift-t ast)))]
+
+       [(-iftf? ast)
+	(string-append "-if " (send this visit (-iftf-t ast))
+		       " then " (send this visit (-iftf-f ast)))]
+
+       [(mult? ast)
+	"mult"]
+
+       [(funccall? ast)
+	(funccall-name ast)]
+
+       [else #f]))))

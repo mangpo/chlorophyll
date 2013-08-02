@@ -1,6 +1,9 @@
 #lang racket
 
-(require "header.rkt" "arrayforth.rkt")
+(require "header.rkt" 
+         "arrayforth.rkt" 
+         "arrayforth-print.rkt"
+         "arrayforth-miner.rkt")
 
 (define (list->linklist lst)
   (define (inner lst)
@@ -52,114 +55,6 @@
 	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast))]
 
    [else ast]))
-
-(define string-converter%
-  (class object%
-    (super-new)
-
-    (define/public (visit ast)
-      (cond
-       [(linklist? ast)
-        (define str "")
-        (when (linklist-entry ast)
-          (set! str (send this visit (linklist-entry ast))))
-	(when (linklist-next ast)
-	      (set! str (string-append str " " (send this visit (linklist-next ast)))))
-	(string-trim str)]
-
-       [(block? ast)
-	(define body (block-body ast))
-	(if (string? body)
-	    body
-	    (string-join body))]
-
-       [(forloop? ast)
-	(string-append (send this visit (forloop-init ast))
-		       " for "
-		       (send this visit (forloop-body ast))
-		       " next")]
-
-       [(ift? ast)
-	(string-append "if " (send this visit (ift-t ast)))]
-
-       [(iftf? ast)
-	(string-append "if " (send this visit (iftf-t ast))
-		       " then " (send this visit (iftf-f ast)))]
-
-       [(-ift? ast)
-	(string-append "-if " (send this visit (-ift-t ast)))]
-
-       [(-iftf? ast)
-	(string-append "-if " (send this visit (-iftf-t ast))
-		       " then " (send this visit (-iftf-f ast)))]
-
-       [(mult? ast)
-	"mult"]
-
-       [(funccall? ast)
-	(funccall-name ast)]
-
-       [else #f]))))
-
-(define to-string (new string-converter%))
-
-(define structure-extractor%
-  (class object%
-    (super-new)
-    (define structure (make-hash))
-    (define parent #f)
-
-    
-    (define/public (visit ast)
-      (define (hash-structure)
-	(define str (send to-string visit ast))
-	(if (hash-has-key? structure str)
-	    (hash-set! structure str (cons parent (hash-ref structure str)))
-	    (hash-set! structure str (list parent))))
-
-      (cond
-       [(linklist? ast)
-	(set! parent ast)
-	(send this visit (linklist-entry ast))
-	(when (linklist-next ast)
-	      (send this visit (linklist-next ast)))]
-
-       [(forloop? ast)
-	(hash-structure)
-        (send this visit (forloop-body ast))]
-
-       [(ift? ast)
-	(hash-structure)
-	(send this visit (ift-t ast))]
-
-       [(iftf? ast)
-	(hash-structure)
-	(send this visit (iftf-t ast))
-	(send this visit (iftf-f ast))]
-
-       [(-ift? ast)
-	(hash-structure)
-	(send this visit (-ift-t ast))]
-
-       [(-iftf? ast)
-	(hash-structure)
-	(send this visit (-iftf-t ast))
-	(send this visit (-iftf-f ast))]
-
-       [(funcdecl? ast)
-	(send this visit (funcdecl-body ast))]
-
-       [(aforth? ast)
-	(send this visit (aforth-code ast))
-	(findf (lambda (lst) (> (length lst) 1))
-	       (hash-values structure))
-	]
-       
-       [(list? ast)
-        (raise "structure-extractor: please convert aforth structure to linklist first.")]
-       
-       [else void]))))
-
 
 (define count 0)
 
@@ -342,6 +237,8 @@
   (set-linklist-next! pre-entry new-entry)
   (set-linklist-prev! def-entry new-entry)
   )
+
+
 
 (define program
   (aforth 
