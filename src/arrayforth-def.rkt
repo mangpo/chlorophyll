@@ -113,14 +113,12 @@
     (define/public (visit ast)
       (define (hash-structure)
 	(define str (send to-string visit ast))
-        (pretty-display str)
 	(if (hash-has-key? structure str)
 	    (hash-set! structure str (cons parent (hash-ref structure str)))
 	    (hash-set! structure str (list parent))))
 
       (cond
        [(linklist? ast)
-        (pretty-display `linklist?)
 	(set! parent ast)
 	(send this visit (linklist-entry ast))
 	(when (linklist-next ast)
@@ -149,11 +147,9 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-        (pretty-display `funcdecl?)
 	(send this visit (funcdecl-body ast))]
 
        [(aforth? ast)
-        (pretty-display `aforth)
 	(send this visit (aforth-code ast))
 	(findf (lambda (lst) (> (length lst) 1))
 	       (hash-values structure))
@@ -172,13 +168,6 @@
 (define (make-definition lst program)
   ;; args: list of linklists
   ;; return: true if their entries are the same
-  #|
-  (define (same? x)
-    (let ([val (send to-string visit (linklist-entry (car x)))])
-      (and (not (equal? val #f)) 
-	   (andmap (lambda (a) (equal? val (send to-string visit (linklist-entry a))))
-		   (cdr x)))))|#
-  
   (define (same? x)
     (let ([ele (linklist-entry (car x))])
       (and (not (equal? ele #f))
@@ -230,10 +219,13 @@
   (define froms lst)
   ;; the lst common entries
   (define tos lst)
+  
+  (define ref (linklist-entry (car lst)))
 
   ;; get previous entries in list of linklists x
   (define (get-from x)
-    (if (same? x)
+    (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
+             (same? x))
 	(begin
 	  (set! froms x) 
 	  (get-from (map linklist-prev x)))
@@ -241,7 +233,8 @@
 
   ;; get next entries in list of linklists x
   (define (get-to x)
-    (if (same? x)
+    (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
+             (same? x))
 	(begin
 	  (set! tos x)
 	  (get-to (map linklist-next x)))
@@ -252,11 +245,19 @@
   ;; the next entries from the last common entries
   (define to-diffs (get-to (map linklist-next lst)))
   
+  (define is-gap (not (aforth-eq?
+                       (linklist-entry (first froms))
+                       (linklist-entry (linklist-next (second tos))))))
+  ;(pretty-display (send to-string visit (linklist-entry (first froms))))
+  ;(pretty-display (send to-string visit (linklist-entry (linklist-next (second tos)))))
+  ;(pretty-display no-space)
+                    
   (define prefix #f)
   (define prefix-org #f)
   ;; check that it is a linklist that contains block
-  (when (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
-	      from-diffs)
+  (when (and is-gap
+             (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
+                     from-diffs))
       ;; if not off the list
       (let* ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))]
              [revs (map (lambda (x)
@@ -273,8 +274,9 @@
   (define suffix #f)
   (define suffix-org #f)
   ;; check that it is a linklist that contains block
-  (when (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
-	      to-diffs)
+  (when (and is-gap
+             (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
+                     to-diffs))
       ;; if not off the list
       (let* ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))]
              [forwards (map (lambda (x)
@@ -288,37 +290,51 @@
 	(set! suffix (car pair))
         (set! suffix-org (take first-insts (length prefix)))
         ))
-
+  
   (define new-name (new-def))
   (define from (car froms))
   (define to (car tos))
+
+  ;; replace common sequences wiht funccalls
+  (for ([from froms];(map linklist-next from-diffs)]
+	[to   tos]);(map linklist-prev to-diffs)])
+    (let* ([from-prev (linklist-prev from)]
+           [to-next   (linklist-next to)]
+           [new-linklist (linklist from-prev (funccall new-name) to-next)])
+      (set-linklist-next! from-prev new-linklist)
+      (set-linklist-prev! to-next new-linklist)))
+  
   (when prefix
-	(set! from (linklist #f 
-			     (block prefix 0 0 (aforth-memsize program) prefix-org)
-			     from)))
+    (set! from (linklist #f 
+                         (block prefix 0 0 (aforth-memsize program) prefix-org)
+                         from)))
+  
   (when suffix
-	(set! to (linklist to 
-			   (block suffix 0 0 (aforth-memsize program) suffix-org)
-			   #f)))
+    (let ([suffix-linklist (linklist to 
+                                     (block suffix 0 0 (aforth-memsize program) suffix-org)
+                                     #f)])
+    (set-linklist-next! to suffix-linklist)
+    (set! to suffix-linklist)))
+  
   ;; set head for from
   (define head (linklist #f #f from))
   (set-linklist-prev! from head)
   ;; set tail for to
   (set-linklist-next! to (linklist to #f #f))
-
+  
+  #|(pretty-display "FROM!!!!!")
+  (pretty-display (send to-string visit (linklist-entry from)))
+  (pretty-display "TO!!!!!")
+  (pretty-display (send to-string visit (linklist-entry to)))
+  (pretty-display (send to-string visit from))|#
+  
   ;; insert new funcdecl into program
   (define def-entry (first-funcdecl-linklist (aforth-code program)))
   (define pre-entry (linklist-prev def-entry))
   (define new-entry (linklist pre-entry (funcdecl new-name head) def-entry))
   (set-linklist-next! pre-entry new-entry)
   (set-linklist-prev! def-entry new-entry)
-
-  ;; replace common sequences wiht funccalls
-  (for ([from from-diffs]
-	[to to-diffs])
-    (let ([new-linklist (linklist from (funccall new-name) to)])
-      (set-linklist-next! from new-linklist)
-      (set-linklist-prev! to new-linklist))))
+  )
 
 (define program
   (aforth 
@@ -431,9 +447,87 @@
       )
     20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
 
+(define program2
+  (aforth 
+      (list 
+        (funcdecl "sumrotate"
+          (list 
+            (block
+              "down b! @b left b! !b "
+              0 0 #t
+              "down b! @b left b! !b ")
+          )
+        )
+        (funcdecl "main"
+          (list 
+            (forloop 
+              (block
+                "15 "
+                0 1 #t
+                "15 ")
+              (list 
+                (block
+                  "1 17 b! !b "
+                  0 0 #t
+                  "1 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 0 16)
+                (funccall "sumrotate")
+                (block
+                  "dup dup or 2 17 b! !b "
+                  0 0 #t
+                  "dup dup or 2 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 16 32)
+                (funccall "sumrotate")
+                (block
+                  "dup dup or pop "
+                  0 0 #t
+                  "dup dup or pop ")
+                (block
+                  "dup dup or 2 17 b! !b "
+                  0 0 #t
+                  "dup dup or 2 17 b! !b ")
+              )
+              '(#f . #f) 0 16)
+          )
+        )
+      )
+    20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
+
 
 (define extractor (new structure-extractor%))
-(define linklist-program (aforth-linklist program))
+(define linklist-program (aforth-linklist program2))
 (define same-structures (send extractor visit linklist-program))
 (make-definition same-structures linklist-program)
 (aforth-struct-print linklist-program)
