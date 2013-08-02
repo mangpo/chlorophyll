@@ -106,6 +106,9 @@
   ;; (pretty-display `(aforth-eq? ,a ,b ,(block? a) ,(block? b)))
   (or
    (and (list? a) (list? b) (= (length a) (length b)) (andmap aforth-eq? a b))
+   (and (linklist? a) (linklist? b)
+        (aforth-eq? (linklist-entry a) (linklist-entry b))
+        (aforth-eq? (linklist-next a) (linklist-next b)))
    (and (block? a) (block? b) (equal? (block-body a) (block-body b)))
    (and (mult? a) (mult? b))
    (and (funccall? a) (funccall? b) (equal? (funccall-name a) (funccall-name b)))

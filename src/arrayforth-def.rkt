@@ -172,12 +172,19 @@
 (define (make-definition lst program)
   ;; args: list of linklists
   ;; return: true if their entries are the same
+  #|
   (define (same? x)
     (let ([val (send to-string visit (linklist-entry (car x)))])
       (and (not (equal? val #f)) 
 	   (andmap (lambda (a) (equal? val (send to-string visit (linklist-entry a))))
-		   (cdr x)))))
-
+		   (cdr x)))))|#
+  
+  (define (same? x)
+    (let ([ele (linklist-entry (car x))])
+      (and (not (equal? ele #f))
+           (andmap (lambda (a) (aforth-eq? (linklist-entry a) ele))
+                   (cdr x)))))
+           
   ;; return a pair of
   ;; 1) list of common insts
   ;; 2) list of different list of insts
@@ -251,17 +258,16 @@
   (when (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
 	      from-diffs)
       ;; if not off the list
-      (let* ([revs (map (lambda (x)
+      (let* ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))]
+             [revs (map (lambda (x)
                           (let* ([insts (block-body (linklist-entry x))]
                                  [insts-list (if (list? insts) insts (string-split insts))])
                             (reverse insts-list)))
                         from-diffs)]
              [pair (common-prefix revs)])
 	(update from-diffs (map reverse (cdr pair)) `front)
-	;; TODO prefix-org
 	(set! prefix (reverse (car pair)))
-        (let ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))])
-          (set! prefix-org (drop first-insts (- (length first-insts) (length prefix)))))
+        (set! prefix-org (drop first-insts (- (length first-insts) (length prefix))))
         ))
   
   (define suffix #f)
@@ -270,7 +276,8 @@
   (when (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
 	      to-diffs)
       ;; if not off the list
-      (let* ([forwards (map (lambda (x)
+      (let* ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))]
+             [forwards (map (lambda (x)
 			     (let* ([insts (block-body (linklist-entry x))]
                                     [insts-list (if (list? insts) insts (string-split insts))])
                                insts-list))
@@ -279,8 +286,7 @@
         (update to-diffs (cdr pair) `back)
 	;; TODO suffix-org
 	(set! suffix (car pair))
-        (let ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))])
-          (set! prefix-org (take first-insts (length prefix))))
+        (set! suffix-org (take first-insts (length prefix)))
         ))
 
   (define new-name (new-def))
