@@ -127,15 +127,26 @@
        [(aforth? ast)
 	(send this visit (aforth-code ast))
 	;; max length
-	(define max-len (foldl (lambda (x res) (max x res)) 0 lens))
+	(define max-len (foldl (lambda (x res) (max x res)) 0 
+                               lens))
 	;; second max length
-	(define snd-len (foldl (lambda (x res) (max x res)) 0 (remove max-len lens)))
+	(define snd-len (foldl (lambda (x res) (max x res)) 0 
+                               (remove max-len lens)))
 
 	(values seqs snd-len)
 	]
        
        [else void]))))
 
+(define (first-location exp ast)
+  (define (contain-block-funccall x)
+    (if (or (block? (linklist-entry x)) (funccall? (linklist-entry x)))
+        x 
+        (contain-block-funccall (linklist-next x))))
+  
+  (define-values (next insts) 
+    (collect-from-block (contain-block-funccall ast)))
+  (car (regexp-match-positions exp (string-join insts))))
 
 (define sequence-matcher%
   (class object%
@@ -147,8 +158,11 @@
       (define (add-to-result insts)
 	(define matches (regexp-match-positions* exp (string-join insts)))
 	
+        ;; add prev pointers to result list
 	(for ([pos matches])
-	     (set! result (cons (cons ast pos) result))))
+             (pretty-display "ADD TO RESULT:")
+             (aforth-struct-print (linklist-prev ast))
+	     (set! result (cons (linklist-prev ast) result))))
 	
       (cond
        [(linklist? ast)
@@ -158,11 +172,11 @@
         (send this visit (linklist-entry next))
         (send this visit (linklist-next next))]
 
-       [(block? ast)
-        (define body (block-body ast))
-	(define insts (if (string? body) (string-split body) body))
-        (add-to-result insts)
-	]
+       ;; [(block? ast)
+       ;;  (define body (block-body ast))
+       ;;  (define insts (if (string? body) (string-split body) body))
+       ;;  (add-to-result insts)
+       ;;  ]
 
        [(forloop? ast)
         (send this visit (forloop-init ast))
@@ -202,7 +216,7 @@
   (define filtered (filter (lambda (x) (>= (length x) min-len)) (set->list seq-set)))
   (define result (list))
 
-  (for* ([len (in-range (add1 max-len) min-len -1)]
+  (for* ([len (in-range max-len (sub1 min-len) -1)]
 	 [seq filtered]
 	 [i (in-range (add1 (- (length seq) len)))])
 	(set! result (cons (take (drop seq i) len) result)))

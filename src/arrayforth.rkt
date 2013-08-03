@@ -22,7 +22,7 @@
 
 (define (inout inst)
   (cond
-   [(or (member inst (list "@+" "@b" "@" "pop" "a"))
+   [(or (member inst (list "@+" "@b" "@" "pop" "a" "up" "down" "left" "right"))
         (string->number inst))
     (cons 0 1)]
 
@@ -43,6 +43,7 @@
 
    [(member inst (list "over"))
     (cons 2 3)]
+
    [else
     (raise (format "arrayforth-inout: unimplemented for ~a" inst))]))
 
