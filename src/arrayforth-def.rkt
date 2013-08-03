@@ -434,28 +434,20 @@
 (define (define-repeating-seq program)
   (define (get-linklist ll index)
     (define entry (linklist-entry ll))
-    (define insts
-      (string-join
-       (if (block? entry)
-           (block-body insts)
-           (list (funccall-name entry)))))
-    (define org
-      (string-join
-       (if (block? entry)
-           (block-org insts)
-           #f)))
+    (define insts (string-join (block-body insts)))
+    (define org (block-org insts))
     
-    (if (> (length insts) from)
-        (values ll from insts org)
+    (if (> (length insts) index)
+        (values ll index insts org)
         (get-linklist (linklist-next ll) (- index (length insts)))))
     
   (define (split-linklist ll index code org)
     (let* ([insts (substring code 0 index)]
-           [org (and org (substring org 0 index))]
+           [org (substring org 0 index)]
            [inout (estimate-inout insts)]
            [entry (linklist-entry ll)]
            [snd-insts (substring code index)]
-           [snd-org (and org (substring org index))]
+           [snd-org (substring org index)]
            [snd-inout (estimate-inout snd-insts)]
            [new-linklist (linklist (linklist-prev ll)
                                    (if org
@@ -490,7 +482,7 @@
     (set-linklist-next! from-prev new-linklist)
     (set-linklist-prev! to-next new-linklist)
     (values from to)
-    )
+    ))
 
   (define (define-and-replace locations)
     (define new-name (new-def))
