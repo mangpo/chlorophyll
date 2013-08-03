@@ -58,6 +58,31 @@
 
 (define count 0)
 
+;; return new name for definition
+(define (new-def)
+  (set! count (add1 count))
+  (format "~arep" count))
+
+(define (insert-definition from to program new-name)
+  ;; set head for from
+  (define head (linklist #f #f from))
+  (set-linklist-prev! from head)
+  ;; set tail for to
+  (set-linklist-next! to (linklist to #f #f))
+  
+  #|(pretty-display "FROM!!!!!")
+  (pretty-display (send to-string visit (linklist-entry from)))
+  (pretty-display "TO!!!!!")
+  (pretty-display (send to-string visit (linklist-entry to)))
+  (pretty-display (send to-string visit from))|#
+  
+  ;; insert new funcdecl into program
+  (define def-entry (first-funcdecl-linklist (aforth-code program)))
+  (define pre-entry (linklist-prev def-entry))
+  (define new-entry (linklist pre-entry (funcdecl new-name head) def-entry))
+  (set-linklist-next! pre-entry new-entry)
+  (set-linklist-prev! def-entry new-entry))
+
 ;; mutate program by definig a new definition for the repeated sequences 
 ;; given as lst argument
 (define (make-definition lst program)
@@ -108,10 +133,6 @@
 	lst
 	(first-funcdecl-linklist (linklist-next lst))))
 
-  ;; return new name for definition
-  (define (new-def)
-    (set! count (add1 count))
-    (format "~arep" count))
 
   ;; the first common entries
   (define froms lst)
@@ -218,27 +239,8 @@
       (set-linklist-next! to suffix-linklist)
       (set! to suffix-linklist)))
   
-  ;; set head for from
-  (define head (linklist #f #f from))
-  (set-linklist-prev! from head)
-  ;; set tail for to
-  (set-linklist-next! to (linklist to #f #f))
-  
-  #|(pretty-display "FROM!!!!!")
-  (pretty-display (send to-string visit (linklist-entry from)))
-  (pretty-display "TO!!!!!")
-  (pretty-display (send to-string visit (linklist-entry to)))
-  (pretty-display (send to-string visit from))|#
-  
-  ;; insert new funcdecl into program
-  (define def-entry (first-funcdecl-linklist (aforth-code program)))
-  (define pre-entry (linklist-prev def-entry))
-  (define new-entry (linklist pre-entry (funcdecl new-name head) def-entry))
-  (set-linklist-next! pre-entry new-entry)
-  (set-linklist-prev! def-entry new-entry)
+  (insert-definition from to program new-name)
   )
-
-
 
 (define program
   (aforth 
@@ -429,10 +431,90 @@
       )
     20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
 
+(define (define-repeating-seq program)
+  (define (get-linklist ll index)
+    (define entry (linklist-entry ll))
+    (define insts
+      (string-join
+       (if (block? entry)
+           (block-body insts)
+           (list (funccall-name entry)))))
+    (define org
+      (string-join
+       (if (block? entry)
+           (block-org insts)
+           #f)))
+    
+    (if (> (length insts) from)
+        (values ll from insts org)
+        (get-linklist (linklist-next ll) (- index (length insts)))))
+    
+  (define (split-linklist ll index code org)
+    (let* ([insts (substring code 0 index)]
+           [org (and org (substring org 0 index))]
+           [inout (estimate-inout insts)]
+           [entry (linklist-entry ll)]
+           [snd-insts (substring code index)]
+           [snd-org (and org (substring org index))]
+           [snd-inout (estimate-inout snd-insts)]
+           [new-linklist (linklist (linklist-prev ll)
+                                   (if org
+                                       (block insts (car inout) (cdr inout)
+                                              (aforth-memsize program) 
+                                              org)
+                                       (funccall insts))
+                                   ll)])
+      (set-block-body! entry snd-insts)
+      (set-block-org! entry snd-org)
+      (set-block-in! entry (car snd-inout))
+      (set-block-out! entry (cdr snd-inout))
+      (set-linklist-next! (linklist-prev ll) new-linklist)
+      (set-linklist-prev! ll new-linklist)))
+  
+  (define (replace-with ll from to func)
+    (define-values (ll-from index-from code-from org-from) (get-linklist ll from))
+    (define-values (ll-to index-to code-to org-to)         (get-linklist ll (sub1 to)))
+    (set! index-to (add1 index-to))
+    
+    (when (> index-start 0)
+      (split-linklist ll-from index-from code-from org-from index-from))
+    
+    (when (< index-to (length code-to))
+      (split-linklist ll-to index-to code-to org-to index-to)
+      (set! to (linklist-next ro))
+  
+    (define from-prev (linklist-prev from))
+    (define to-next (linklist-next to))
+    
+    (define new-linklist (linklist from-prev func to-next))
+    (set-linklist-next! from-prev new-linklist)
+    (set-linklist-prev! to-next new-linklist)
+    (values from to)
+    )
 
-(define extractor (new structure-extractor%))
-(define linklist-program (aforth-linklist program2))
-(define same-structures (send extractor visit linklist-program))
-(make-definition same-structures linklist-program)
-(aforth-struct-print linklist-program)
+  (define (define-and-replace locations)
+    (define new-name (new-def))
+    (define-values (from to)
+      (for/first ([location locations])
+        (replace-with (car location) (cadr location) (cddr location) (funccall new-name))))
+    
+    (insert-definition from to program new-name))
+  
+  (define linklist-program (aforth-linklist program))
+  (define same-structures (send (new structure-extractor%) visit linklist-program))
+  (make-definition same-structures linklist-program)
+  (aforth-struct-print linklist-program)
+  
+  (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
+  (define subseqs (sort-subsequence seqs 6 max-len))
+  (pretty-display seqs)
+  
+  (let* ([matcher (new sequence-matcher% 
+                      [exp (regexp "dup dup or")])])
+         ;; [exp (regexp (string-join (car subseqs)))])]
+    (let ([locations (send matcher visit linklist-program)])
+      (when (> (length locations) 1)
+        (define-and-replace locations)))
+    ))
 
+(define-repeating-seq program2)
