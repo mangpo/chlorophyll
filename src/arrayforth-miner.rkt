@@ -70,8 +70,20 @@
 
        [(aforth? ast)
 	(send this visit (aforth-code ast))
+	;; return a list of linklists of the first repeated structure found.
 	(findf (lambda (lst) (> (length lst) 1))
 	       (hash-values structure))
+
+	;; (pretty-display ">>> ALL-PAIRS")
+	;; (pretty-display (hash->list structure))
+	;; (define filtered-pairs (filter (lambda (pair) (> (length (cdr pair)) 1))
+	;; 			       (hash->list structure)))
+	;; (pretty-display ">>> FILTERED-PAIRS")
+	;; (pretty-display filtered-pairs)
+	;; (pretty-display ">>>")
+	;; (if (empty? filtered-pairs)
+	;;     #f
+	;;     (cdr (argmax (lambda (pair) (string-length (car pair))) filtered-pairs)))
 	]
        
        [(list? ast)
@@ -89,8 +101,6 @@
       (cond
        [(linklist? ast)
         (define-values (next insts) (collect-from-block ast))
- 	;; (define next (car ret))		
-	;; (define insts (cdr ret))
         (set! seqs (set-add seqs insts))
 	(set! lens (cons (length insts) lens))
         (send this visit (linklist-entry next))
@@ -172,12 +182,6 @@
         (send this visit (linklist-entry next))
         (send this visit (linklist-next next))]
 
-       ;; [(block? ast)
-       ;;  (define body (block-body ast))
-       ;;  (define insts (if (string? body) (string-split body) body))
-       ;;  (add-to-result insts)
-       ;;  ]
-
        [(forloop? ast)
         (send this visit (forloop-init ast))
         (send this visit (forloop-body ast))]
@@ -205,6 +209,48 @@
 	]
        
        [else void]))))
+
+(define dependencey-collector%
+  (class object%
+    (super-new)
+    (define result (set))
+
+    (define/public (visit ast)
+	
+      (cond
+       [(linklist? ast)
+        (send this visit (linklist-entry ast))
+        (send this visit (linklist-next ast))]
+
+       [(forloop? ast)
+        (send this visit (forloop-init ast))
+        (send this visit (forloop-body ast))]
+
+       [(ift? ast)
+	(send this visit (ift-t ast))]
+
+       [(iftf? ast)
+	(send this visit (iftf-t ast))
+	(send this visit (iftf-f ast))]
+
+       [(-ift? ast)
+	(send this visit (-ift-t ast))]
+
+       [(-iftf? ast)
+	(send this visit (-iftf-t ast))
+	(send this visit (-iftf-f ast))]
+
+       [(funcdecl? ast)
+	(set! result (set))
+	(send this visit (funcdecl-body ast))
+	result
+	]
+
+       [(funccall? ast)
+	(set! result (set-add result (funccall-name ast)))]
+       
+       [else void]))))
+
 
 ;; Arg: set of sequences of instructions, 
 ;;      minimum length of output sequence of insturction

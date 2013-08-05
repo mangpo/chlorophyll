@@ -56,19 +56,21 @@
 
    [else ast]))
 
+
+;; return the first funcdecl in the given linklist
+(define (first-funcdecl-linklist lst)
+  (if (funcdecl? (linklist-entry lst))
+      lst
+      (first-funcdecl-linklist (linklist-next lst))))
+
 (define count 0)
 
-;; return new name for definition
+;; Return new name for definition.
 (define (new-def)
   (set! count (add1 count))
   (format "~arep" count))
 
 (define (insert-definition from to program new-name)
-  ;; return the first funcdecl in the given linklist
-  (define (first-funcdecl-linklist lst)
-    (if (funcdecl? (linklist-entry lst))
-	lst
-	(first-funcdecl-linklist (linklist-next lst))))
   
   ;; set head for from
   (define head (linklist #f #f from))
@@ -89,9 +91,11 @@
   (set-linklist-next! pre-entry new-entry)
   (set-linklist-prev! def-entry new-entry))
 
-;; mutate program by definig a new definition for the repeated sequences 
-;; given as lst argument
-(define (make-definition lst program)
+;; Mutate program by definig a new definition for the repeated structure. 
+;; lst is a list of linklists that point to the starting of the structure
+;; at multiple places in the program.
+(define (extract-structure lst program)
+
   ;; args: list of linklists
   ;; return: true if their entries are the same
   (define (same? x)
@@ -138,7 +142,7 @@
 
   ;; the first common entries
   (define froms lst)
-  ;; the lst common entries
+  ;; the last common entries
   (define tos lst)
   
   (define ref (linklist-entry (car lst)))
@@ -146,6 +150,7 @@
   ;; get previous entries in list of linklists x
   (define (get-from x)
     (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
+	     ;; compare to ref to ensure we don't extract overlapping chunk
              (same? x))
 	(begin
 	  (set! froms x) 
@@ -155,6 +160,7 @@
   ;; get next entries in list of linklists x
   (define (get-to x)
     (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
+	     ;; compare to ref to ensure we don't extract overlapping chunk
              (same? x))
 	(begin
 	  (set! tos x)
@@ -244,10 +250,16 @@
   (insert-definition from to program new-name)
   )
 
+(define (extract-all-structure linklist-program)
+  (define same-structures (send (new structure-extractor%) visit linklist-program))
+  (when same-structures
+	(extract-structure same-structures linklist-program)
+	;; call itself until there is no more repeated structure found.
+	(extract-all-structure linklist-program)))
+
 (define program
   (aforth 
       (list 
-        (vardecl '(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0))
         (funcdecl "sumrotate"
           (list 
             (block
@@ -258,37 +270,6 @@
         )
         (funcdecl "main"
           (list 
-            (forloop 
-              (block
-                "15 "
-                0 1 #t
-                "15 ")
-              (list 
-                (block
-                  "0 16 b! !b 1 17 b! !b "
-                  0 0 #t
-                  "0 16 b! !b 1 17 b! !b ")
-                (forloop 
-                  (block
-                    "15 "
-                    0 1 #t
-                    "15 ")
-                  (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
-                    (funccall "sumrotate")
-                    (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
-                      0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
-                  )
-                  '(#f . #f) 0 16)
-                (block
-                  "1 16 b! !b 5 17 b! !b "
-                  0 0 #t
-                  "1 16 b! !b 5 17 b! !b ")
                 (forloop 
                   (block
                     "15 "
@@ -306,68 +287,6 @@
                       "16 b! @b 17 b! @b + 15 and 16 b! !b ")
                   )
                   '(#f . #f) 16 32)
-                (block
-                  "5 16 b! !b 3 17 b! !b "
-                  0 0 #t
-                  "5 16 b! !b 3 17 b! !b ")
-                (forloop 
-                  (block
-                    "15 "
-                    0 1 #t
-                    "15 ")
-                  (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
-                    (funccall "sumrotate")
-                    (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
-                      0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
-                  )
-                  '(#f . #f) 32 48)
-                (block
-                  "0 16 b! !b 7 17 b! !b "
-                  0 0 #t
-                  "0 16 b! !b 7 17 b! !b ")
-                (forloop 
-                  (block
-                    "15 "
-                    0 1 #t
-                    "15 ")
-                  (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
-                    (funccall "sumrotate")
-                    (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
-                      0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
-                  )
-                  '(#f . #f) 48 64)
-              )
-              '(#f . #f) 0 16)
-          )
-        )
-      )
-    20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
-
-(define program2
-  (aforth 
-      (list 
-        (funcdecl "sumrotate"
-          (list 
-            (block
-              "down b! @b left b! !b "
-              0 0 #t
-              "down b! @b left b! !b ")
-          )
-        )
-        (funcdecl "main"
-          (list 
             (forloop 
               (block
                 "15 "
@@ -426,6 +345,23 @@
                   "dup dup or 2 17 b! !b "
                   0 0 #t
                   "dup dup or 2 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 16 32)
               )
               '(#f . #f) 0 16)
           )
@@ -433,9 +369,7 @@
       )
     20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
 
-(define (define-repeating-seq program)
-  
-  (define linklist-program (aforth-linklist program))
+(define (extract-all-sequence linklist-program)
   
   (define (get-linklist ll index)
     (define entry (linklist-entry ll))
@@ -542,14 +476,9 @@
     
     (insert-definition (car res) (cdr res) linklist-program new-name))
   
-  (define same-structures (send (new structure-extractor%) visit linklist-program))
-  (make-definition same-structures linklist-program)
-  (aforth-struct-print linklist-program)
-  
   (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
-  (define subseqs (sort-subsequence seqs 6 max-len))
+  (define subseqs (sort-subsequence seqs 3 max-len))
   (pretty-display seqs)
-  
   
   (for ([subseq subseqs])
        (let* ([str (string-join subseq)]
@@ -562,7 +491,47 @@
                (define-and-replace locations exp)))
        )
   
-  (aforth-struct-print linklist-program)
+  ;(aforth-struct-print linklist-program)
   )
 
-(define-repeating-seq program2)
+(define (reorder-definition program)
+  (define dependency-collector (new dependencey-collector%))
+
+  (define (get-funcdecl lst)
+    (define entry (linklist-entry lst))
+    (if (funcdecl? entry)
+	(cons (cons entry (send dependency-collector visit entry))
+	      (get-funcdecl (linklist-next lst)))
+	(list)))
+
+  ;; Return a topo sorted list of funcdecls
+  (define (topo-sort lst)
+    (if (empty? lst)
+	lst
+	(let* ([fst (findf (lambda (pair) (set-empty? (cdr pair))) lst)]
+	       [func (car fst)]
+	       [name (funcdecl-name func)]
+	       [rst (remove fst lst 
+			    (lambda (x y) (equal? (funcdecl-name (car x)) (funcdecl-name (car y)))))]
+	       [updated (map (lambda (pair) (cons (car pair)
+						  (set-remove (cdr pair) name)))
+			     rst)])
+          (cons (car fst) (topo-sort updated)))))
+	  
+
+  (define start (first-funcdecl-linklist (aforth-code program)))
+  (define funcdecls (topo-sort (get-funcdecl start)))
+  (define new-start (list->linklist funcdecls))
+  (set-linklist-next! (linklist-prev start) new-start)
+  (set-linklist-prev! new-start (linklist-prev start))
+)
+
+(define (define-repeating-code program)
+  (define linklist-program (aforth-linklist program))
+  (extract-all-structure linklist-program)
+  (extract-all-sequence linklist-program)
+  (reorder-definition linklist-program)
+  (aforth-struct-print linklist-program)
+)
+
+(define-repeating-code program)
