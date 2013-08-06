@@ -246,7 +246,6 @@
         (update to-diffs (cdr pair) `back)
 	;; TODO suffix-org
 	(set! suffix (car pair))
-	(pretty-display first-insts)
         (set! suffix-org (take first-insts (length suffix)))
         ))
   
@@ -669,4 +668,4 @@
         )
       )
     20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
-(define-repeating-code program2)
+;(define-repeating-code program2)

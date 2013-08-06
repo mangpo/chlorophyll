@@ -53,7 +53,6 @@
     (pretty-display virtual)
     (define concise (define-repeating-code res))
     concise
-    ;res
     ))
 
 ;; Compile per-core IRs to per-core machine codes.
