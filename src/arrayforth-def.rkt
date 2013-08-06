@@ -511,8 +511,10 @@
 	       [updated (map (lambda (pair) (cons (car pair)
 						  (set-remove (cdr pair) name)))
 			     rst)])
-          (cons (car fst) (topo-sort updated)))))
-	  
+          (cons func (topo-sort updated)))))
+  
+  ;; (define (topo-sort-fake lst)
+  ;;   (map car lst))
 
   (define start (first-funcdecl-linklist (aforth-code program)))
   (define funcdecls (topo-sort (get-funcdecl start)))

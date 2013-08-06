@@ -354,7 +354,7 @@
 
    [(vector? x)
     (pretty-display "#lang racket")
-    (pretty-display "(require \"../src/arrayforth.rkt\")")
+    (pretty-display "(require \"../src/arrayforth.rkt\" \"../src/arrayforth-optimize.rkt\")")
     (pretty-display "(define programs")
     (pretty-display "  (vector")
     (define size (vector-length x))
@@ -362,7 +362,6 @@
          (pretty-display (format "    ;; core ~a" i))
 	 (aforth-struct-print (vector-ref x i) (inc (inc indent))))
     (pretty-display "  ))")
-    (pretty-display "(superoptimize programs \"foo\")")
     ]
    
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))

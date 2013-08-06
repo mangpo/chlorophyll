@@ -7,18 +7,21 @@
 (define to-string (new string-converter%))
 
 
-(define (collect-from-block x [insts (list)])
+(define (collect-from-block x [func #f] [insts (list)])
   (define entry (linklist-entry x))
   (cond
    [(block? entry)
     (define body (block-body entry))
     (define seq (if (string? body) (string-split body) body))
     (set! insts (append insts seq))
-    (collect-from-block (linklist-next x) insts)]
+    (collect-from-block (linklist-next x) func insts)]
    
    [(funccall? entry)
-    (set! insts (append insts (list (funccall-name entry))))
-    (collect-from-block (linklist-next x) insts)]
+    (if (and func (equal? func (funccall-name entry)))
+	(values x insts)
+	(begin
+	  (set! insts (append insts (list (funccall-name entry))))
+	  (collect-from-block (linklist-next x) func insts)))]
    
    [else (values x insts)]))
 
@@ -96,11 +99,13 @@
     (super-new)
     (define seqs (set))
     (define lens (list))
+    (define func #f)
 
     (define/public (visit ast)
       (cond
        [(linklist? ast)
-        (define-values (next insts) (collect-from-block ast))
+        (define-values (next insts) (collect-from-block ast func))
+	;(pretty-display (format "FUNC: ~a, SEQ: ~a" func insts))
         (set! seqs (set-add seqs insts))
 	(set! lens (cons (length insts) lens))
         (send this visit (linklist-entry next))
@@ -132,7 +137,10 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-	(send this visit (funcdecl-body ast))]
+	(set! func (funcdecl-name ast))
+	(send this visit (funcdecl-body ast))
+	(set! func #f)
+	]
 
        [(aforth? ast)
 	(send this visit (aforth-code ast))
@@ -163,6 +171,7 @@
     (super-new)
     (init-field exp)
     (define result (list)) ;; list of (linklist . start-pos)
+    (define func #f)
 
     (define/public (visit ast)
       (define (add-to-result insts)
@@ -176,7 +185,7 @@
 	
       (cond
        [(linklist? ast)
-        (define-values (next insts) (collect-from-block ast))
+        (define-values (next insts) (collect-from-block ast func))
         (add-to-result insts)
 
         (send this visit (linklist-entry next))
@@ -201,7 +210,10 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-	(send this visit (funcdecl-body ast))]
+	(set! func (funcdecl-name ast))
+	(send this visit (funcdecl-body ast))
+	(set! func #f)
+	]
 
        [(aforth? ast)
 	(send this visit (aforth-code ast))
@@ -214,6 +226,7 @@
   (class object%
     (super-new)
     (define result (set))
+    (define func #f)
 
     (define/public (visit ast)
 	
@@ -242,12 +255,15 @@
 
        [(funcdecl? ast)
 	(set! result (set))
+	(set! func (funcdecl-name ast))
 	(send this visit (funcdecl-body ast))
+	(set! func #f)
 	result
 	]
 
        [(funccall? ast)
-	(set! result (set-add result (funccall-name ast)))]
+	(unless (equal? func (funccall-name ast))
+		(set! result (set-add result (funccall-name ast))))]
        
        [else void]))))
 

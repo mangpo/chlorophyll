@@ -172,7 +172,10 @@
     (define virtual-codes (define-repeating-codes (generate-codes programs w h #t) w h))
     
     (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
-      (lambda () (aforth-struct-print virtual-codes)))
+      (lambda () 
+        (aforth-struct-print virtual-codes)
+        (pretty-display (format "(superoptimize programs \"~a\" ~a ~a)" name w h))
+        ))
     
     ;; superoptimize
     (set! real-opts (superoptimize virtual-codes name w h))
@@ -191,12 +194,14 @@
 
 ;(compile-and-optimize "../examples/array.cll" "array" 
 ;                      256 "null" #:opt #f)
-;(compile-and-optimize "../tests/run/offset-noio.cll" "offset-noio" 
-;                      256 "null" #:opt #t)
+;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
-;                      256 "null" #:opt #t)
+;                      256 "null" #:opt #f)
+;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
+;                      256 "null" #:opt #f)
 (compile-and-optimize "../tests/run/md5-noio.cll" "md5noio" 
-                      600 "null" #:w 10 #:h 5 #:opt #f)
+                      600 "null" #:w 10 #:h 5 #:opt #t)
 
 ;(compile-percore "../examples/array.cll" 0 2 2)
 ;(compile-and-optimize-percore "../examples/array.cll" 0 2 2)
