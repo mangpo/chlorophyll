@@ -49,10 +49,11 @@
     (define res (send program accept code-gen))
     (pretty-display ">>> result")
     (codegen-print res)
-    (pretty-display ">>> repeating def")
-    (pretty-display virtual)
-    (define concise (define-repeating-code res))
-    concise
+    res
+    ;; (pretty-display ">>> repeating def")
+    ;; (pretty-display virtual)
+    ;; (define concise (define-repeating-code res))
+    ;; concise
     ))
 
 ;; Compile per-core IRs to per-core machine codes.
@@ -146,20 +147,29 @@
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose))
 
   (define real-codes (generate-codes programs w h #f))
-  (define real-opts real-codes)
+  (define shorter-codes (define-repeating-codes real-codes w h))
+  (define real-opts shorter-codes)
   
   
-  (with-output-to-file #:exists 'truncate (format "~a/~a-gen.rkt" outdir name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a-gen1.rkt" outdir name)
     (lambda () (aforth-struct-print real-codes)))
   
+  (with-output-to-file #:exists 'truncate (format "~a/~a-gen2.rkt" outdir name)
+    (lambda () (aforth-struct-print shorter-codes)))
+  
   ;; arrayforth without superoptimization
-  (with-output-to-file #:exists 'truncate (format "~a/~a-noopt.aforth" outdir name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a-noopt1.aforth" outdir name)
     (lambda ()
       (aforth-syntax-print real-codes w h)))
   
+  ;; arrayforth without superoptimization
+  (with-output-to-file #:exists 'truncate (format "~a/~a-noopt2.aforth" outdir name)
+    (lambda ()
+      (aforth-syntax-print shorter-codes w h)))
+  
   (when opt
     ;; genreate code
-    (define virtual-codes (generate-codes programs w h #t))
+    (define virtual-codes (define-repeating-codes (generate-codes programs w h #t) w h))
     
     (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
       (lambda () (aforth-struct-print virtual-codes)))

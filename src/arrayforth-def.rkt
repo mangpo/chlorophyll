@@ -5,14 +5,19 @@
          "arrayforth-print.rkt"
          "arrayforth-miner.rkt")
 
-(provide define-repeating-code)
+(provide define-repeating-code define-repeating-codes)
 
 (define (list->linklist lst)
+  (define (copy x)
+    (if (block? x)
+        (struct-copy block x)
+        x))
+
   (define (inner lst)
     (if (empty? lst)
         (linklist #f #f #f)
         (let* ([rest (inner (cdr lst))]
-               [me (linklist #f (car lst) rest)])
+               [me (linklist #f (copy (car lst)) rest)])
           (when rest
             (set-linklist-prev! rest me))
           me)))
@@ -290,115 +295,93 @@
 
 (define program
   (aforth 
+      ;; list
       (list 
-        (funcdecl "sumrotate"
+        (vardecl '(0 0 0 0 0))
+        (funcdecl "cadd"
+          ;; list
           (list 
             (block
-              "down b! @b left b! !b "
+              "0 a! !+ !+ "
+              2 0 #t
+              "0 a! !+ !+ ")
+            (block
+              "right b! @b 1 b! @b 0 b! @b + + "
+              0 1 #t
+              "right b! @b 1 b! @b 0 b! @b + + ")
+            (block
+              "2 b! @b"
+              0 1 #f
+              "2 b! @b")
+          )
+        )
+        (funcdecl "sumrotate"
+          ;; list
+          (list 
+            (block
+              "left b! @b right b! !b "
               0 0 #t
-              "down b! @b left b! !b ")
+              "left b! @b right b! !b ")
           )
         )
         (funcdecl "main"
+          ;; list
           (list 
-                (forloop 
-                  (block
-                    "15 "
-                    0 1 #t
-                    "15 ")
-                  (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
-                    (funccall "sumrotate")
-                    (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
-                      0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
-                  )
-                  '(#f . #f) 16 32)
             (forloop 
               (block
                 "15 "
                 0 1 #t
                 "15 ")
+              ;; list
               (list 
                 (block
-                  "1 17 b! !b "
+                  "down b! @b right b! !b "
                   0 0 #t
-                  "1 17 b! !b ")
+                  "down b! @b right b! !b ")
                 (forloop 
                   (block
-                    "15 "
+                    "63 "
                     0 1 #t
-                    "15 ")
+                    "63 ")
+                  ;; list
                   (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
                     (funccall "sumrotate")
                     (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      ""
                       0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                      "")
                   )
-                  '(#f . #f) 0 16)
-                (funccall "sumrotate")
+                  '(#f . #f) 0 64)
                 (block
-                  "dup dup or 2 17 b! !b "
-                  0 0 #t
-                  "dup dup or 2 17 b! !b ")
-                (forloop 
-                  (block
-                    "15 "
-                    0 1 #t
-                    "15 ")
-                  (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
-                    (funccall "sumrotate")
-                    (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
-                      0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
-                  )
-                  '(#f . #f) 16 32)
-                (funccall "sumrotate")
+                  "down b! @b right b! @b "
+                  0 2 #t
+                  "down b! @b right b! @b ")
+                (funccall "cadd")
                 (block
-                  "dup dup or pop "
-                  0 0 #t
-                  "dup dup or pop ")
+                  "down b! !b"
+                  1 0 #t
+                  "down b! !b")
+                (funccall "cadd")
                 (block
-                  "dup dup or 2 17 b! !b "
-                  0 0 #t
-                  "dup dup or 2 17 b! !b ")
-                (forloop 
-                  (block
-                    "15 "
-                    0 1 #t
-                    "15 ")
-                  (list 
-                    (block
-                      "16 b! @b a! @ left b! !b "
-                      0 0 #t
-                      "16 b! @b a! @ left b! !b ")
-                    (funccall "sumrotate")
-                    (block
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
-                      0 0 #t
-                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
-                  )
-                  '(#f . #f) 16 32)
+                  "down b! !b"
+                  1 0 #t
+                  "down b! !b")
+                (funccall "cadd")
+                (block
+                  "down b! !b down b! @b right b! @b "
+                  1 2 #t
+                  "down b! !b down b! @b right b! @b ")
+                (funccall "cadd")
+                (block
+                  "down b! !b "
+                  1 0 #t
+                  "down b! !b ")
               )
               '(#f . #f) 0 16)
           )
         )
       )
-    20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
+    5 18 #hash((0 . 0) (1 . 1) (2 . 2) (3 . 3) (4 . 4) (5 . 5))))
 
 (define (extract-all-sequence linklist-program)
   
@@ -498,8 +481,8 @@
               [exp (regexp reformatted)]
               [matcher (new sequence-matcher% [exp exp])]
               [locations (send matcher visit linklist-program)])
-         ;(pretty-display (format "STRING: ~a" reformatted))
          (when (> (length locations) 1)
+               (pretty-display (format "STRING: ~a" reformatted))
                (define-and-replace locations exp)))
        )
   
@@ -541,9 +524,9 @@
 (define (define-repeating-code program)
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program list->linklist)])
-        (pretty-display ">>> EXTRACT-STRUCTURES")
+        ;(pretty-display ">>> EXTRACT-STRUCTURES")
 	(extract-all-structure linklist-program)
-        (pretty-display ">>> EXTRACT-SEQUENCES")
+        ;(pretty-display ">>> EXTRACT-SEQUENCES")
 	(extract-all-sequence linklist-program)
 	(reorder-definition linklist-program)
         
@@ -553,6 +536,12 @@
 	)
       program)
 )
+
+(define (define-repeating-codes programs w h)
+  (define res (make-vector (* w h)))
+  (for ([i (in-range (* w h))])
+       (vector-set! res i (define-repeating-code (vector-ref programs i))))
+  res)
 
 (define program2
       (aforth 
@@ -668,4 +657,4 @@
         )
       )
     20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
-;(define-repeating-code program2)
+;(define-repeating-code program)
