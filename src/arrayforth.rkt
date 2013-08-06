@@ -259,6 +259,7 @@
     (pretty-display (format "~a#f" indent))]
 
    [(list? x)
+    (pretty-display (format "~a;; list" indent))
     (pretty-display (format "~a(list " indent))
     (for ([i x])
 	 (aforth-struct-print i (inc indent)))
@@ -267,6 +268,7 @@
 
    [(linklist? x)
     (unless (linklist-prev x)
+	    (pretty-display (format "~a;; linklist" indent))
 	    (pretty-display (format "~a(list " indent)))
     (when (linklist-entry x)
 	  (aforth-struct-print (linklist-entry x) (inc indent)))

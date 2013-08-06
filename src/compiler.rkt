@@ -8,6 +8,7 @@
          "layout-sa.rkt" 
          "separator.rkt"
          "arrayforth.rkt"
+	 "arrayforth-def.rkt"
          "arrayforth-optimize.rkt"
          "arrayforth-print.rkt"
          "visitor-arrayaccess.rkt"
@@ -48,7 +49,12 @@
     (define res (send program accept code-gen))
     (pretty-display ">>> result")
     (codegen-print res)
-    res))
+    (pretty-display ">>> repeating def")
+    (pretty-display virtual)
+    (define concise (define-repeating-code res))
+    concise
+    ;res
+    ))
 
 ;; Compile per-core IRs to per-core machine codes.
 (define (generate-codes programs w h virtual)

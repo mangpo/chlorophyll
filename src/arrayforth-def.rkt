@@ -5,6 +5,8 @@
          "arrayforth-print.rkt"
          "arrayforth-miner.rkt")
 
+(provide define-repeating-code)
+
 (define (list->linklist lst)
   (define (inner lst)
     (if (empty? lst)
@@ -20,38 +22,65 @@
   (set-linklist-prev! start head)
   head)
 
-(define (aforth-linklist ast)
+(define (linklist->list lst)
+  (define (inner lst)
+    (if (linklist-entry lst)
+	(cons (linklist-entry lst) (inner (linklist-next lst)))
+	(if (linklist-next lst)
+	    (raise "Invalid linklist: inproper tail.")
+	    (list))))
+
+  (if (linklist-entry lst)
+      (raise "Invalid linklist: no head.")
+      (inner (linklist-next lst))))
+
+(define (aforth-linklist ast proc)
   (cond
    [(list? ast)
-    (list->linklist (for/list ([x ast]) (aforth-linklist x)))]
+    (proc (for/list ([x ast]) (aforth-linklist x proc)))]
+
+   [(linklist? ast)
+    (define (inner lst)
+      (if (linklist-entry lst)
+	  (cons (aforth-linklist (linklist-entry lst) proc) 
+		(inner (linklist-next lst)))
+	  (if (linklist-next lst)
+	      (raise "Invalid linklist: inproper tail.")
+	      (list))))
+    
+    (if (linklist-entry ast)
+	(raise "Invalid linklist: no head.")
+	(inner (linklist-next ast)))
+    ]
 
    [(forloop? ast)
     (forloop (forloop-init ast) 
-	     (aforth-linklist (forloop-body ast))
+	     (aforth-linklist (forloop-body ast) proc)
 	     (forloop-iter ast)
 	     (forloop-from ast)
 	     (forloop-to ast))]
 
    [(ift? ast)
-    (ift (aforth-linklist (ift-t ast)))]
+    (ift (aforth-linklist (ift-t ast) proc))]
 
    [(iftf? ast)
-    (iftf (aforth-linklist (iftf-t ast))
-          (aforth-linklist (iftf-f ast)))]
+    (iftf (aforth-linklist (iftf-t ast) proc)
+          (aforth-linklist (iftf-f ast) proc))]
 
    [(-ift? ast)
-    (-ift (aforth-linklist (-ift-t ast)))]
+    (-ift (aforth-linklist (-ift-t ast) proc))]
 
    [(-iftf? ast)
-    (-iftf (aforth-linklist (-iftf-t ast))
-           (aforth-linklist (-iftf-f ast)))]
+    (-iftf (aforth-linklist (-iftf-t ast) proc)
+           (aforth-linklist (-iftf-f ast) proc))]
 
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
-              (aforth-linklist (funcdecl-body ast)))]
+              (aforth-linklist (funcdecl-body ast) proc))
+    ]
 
    [(aforth? ast)
-    (aforth (aforth-linklist (aforth-code ast))
+    (aforth (aforth-linklist (aforth-code ast) proc)
 	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast))]
 
    [else ast]))
@@ -127,7 +156,7 @@
 	  [x-code inst-lists])
 	 ;; TODO update in, out, org
       (let* ([b (linklist-entry x-linklist)]
-             [org (string-split (block-org b))]
+             [org (if (string? (block-org b)) (string-split (block-org b)) (block-org b))]
              [inout (estimate-inout x-code)])
         (set-block-body! b x-code)
         (set-block-in! b (car inout))
@@ -186,7 +215,8 @@
              (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
                      from-diffs))
       ;; if not off the list
-      (let* ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))]
+      (let* ([org (block-org (linklist-entry (car from-diffs)))]
+	     [first-insts (if (string? org) (string-split org) org)]
              [revs (map (lambda (x)
                           (let* ([insts (block-body (linklist-entry x))]
                                  [insts-list (if (list? insts) insts (string-split insts))])
@@ -205,7 +235,8 @@
              (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
                      to-diffs))
       ;; if not off the list
-      (let* ([first-insts (string-split (block-org (linklist-entry (car from-diffs))))]
+      (let* ([org (block-org (linklist-entry (car to-diffs)))]
+             [first-insts (if (string? org) (string-split org) org)]
              [forwards (map (lambda (x)
 			     (let* ([insts (block-body (linklist-entry x))]
                                     [insts-list (if (list? insts) insts (string-split insts))])
@@ -215,7 +246,8 @@
         (update to-diffs (cdr pair) `back)
 	;; TODO suffix-org
 	(set! suffix (car pair))
-        (set! suffix-org (take first-insts (length prefix)))
+	(pretty-display first-insts)
+        (set! suffix-org (take first-insts (length suffix)))
         ))
   
   (define new-name (new-def))
@@ -393,8 +425,8 @@
   ;; Split linklist ll into 2 linklists by inserting a new linklist
   ;; after the splitted one.
   (define (split-linklist ll index code org)
-    (pretty-display `(split-linklist ,(substring code 0 index) ,(substring code index)))
-    (pretty-display `(org ,org))
+    ;; (pretty-display `(split-linklist ,(substring code 0 index) ,(substring code index)))
+    ;; (pretty-display `(org ,org))
     (let* ([insts (substring code 0 index)]
            [fst-org (substring org 0 index)]
            [inout (estimate-inout insts)]
@@ -418,20 +450,15 @@
   
   (define (replace-with head func exp)
     (define ll (linklist-next head))
-    (pretty-display "LOCATION")
-    (aforth-struct-print ll)
     (define pair (first-location exp ll))
     (define from (car pair))
     (define to (cdr pair))
-
-    (aforth-struct-print ll)
     
     (define-values (ll-from index-from code-from org-from) (get-linklist ll from))
     (define-values (ll-to index-to code-to org-to)         (get-linklist ll (sub1 to)))
     (set! index-to (add1 index-to))
     
     (when (> index-from 0)
-      (pretty-display "(> index-from)")
       (split-linklist ll-from index-from code-from org-from)
       (when (equal? ll-from ll-to)
         (set! ll-to (linklist-next ll-from)))
@@ -439,36 +466,22 @@
       )
     
     (when (< index-to (string-length code-to))
-      (pretty-display "(< index-to)")
       (split-linklist ll-to index-to code-to org-to)
       )
   
     (define from-prev (linklist-prev ll-from))
     (define to-next (linklist-next ll-to))
-    (pretty-display "TO-NEXT")
-    (aforth-struct-print to-next)
-    
-    (pretty-display ">>> FROM-PREV before")
-    (aforth-struct-print from-prev)
-    (pretty-display "<<< FROM-PREV before")
     
     (define new-linklist (linklist from-prev func to-next))
-    (pretty-display ">>> NEW")
-    (aforth-struct-print new-linklist)
-    (pretty-display "<<< NEW")
     (set-linklist-next! from-prev new-linklist)
     (set-linklist-prev! to-next new-linklist)
-    
-    (pretty-display ">>> FROM-PREV after")
-    (aforth-struct-print from-prev)
-    (pretty-display "<<< FROM-PREV after")
     
     (cons ll-from ll-to)
     )
 
   (define (define-and-replace locations exp)
     (define new-name (new-def))
-    (pretty-display locations)
+    ;(pretty-display locations)
     (define res
       (car
        (for/list ([location locations])
@@ -477,8 +490,8 @@
     (insert-definition (car res) (cdr res) linklist-program new-name))
   
   (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
-  (define subseqs (sort-subsequence seqs 3 max-len))
-  (pretty-display seqs)
+  (define subseqs (sort-subsequence seqs 6 max-len))
+  ;(pretty-display seqs)
   
   (for ([subseq subseqs])
        (let* ([str (string-join subseq)]
@@ -486,7 +499,7 @@
               [exp (regexp reformatted)]
               [matcher (new sequence-matcher% [exp exp])]
               [locations (send matcher visit linklist-program)])
-         (pretty-display (format "STRING: ~a" reformatted))
+         ;(pretty-display (format "STRING: ~a" reformatted))
          (when (> (length locations) 1)
                (define-and-replace locations exp)))
        )
@@ -522,16 +535,138 @@
   (define start (first-funcdecl-linklist (aforth-code program)))
   (define funcdecls (topo-sort (get-funcdecl start)))
   (define new-start (list->linklist funcdecls))
-  (set-linklist-next! (linklist-prev start) new-start)
-  (set-linklist-prev! new-start (linklist-prev start))
+  (set-linklist-next! (linklist-prev start) (linklist-next new-start))
+  (set-linklist-prev! (linklist-next new-start) (linklist-prev start))
 )
 
 (define (define-repeating-code program)
-  (define linklist-program (aforth-linklist program))
-  (extract-all-structure linklist-program)
-  (extract-all-sequence linklist-program)
-  (reorder-definition linklist-program)
-  (aforth-struct-print linklist-program)
+  (if (and program (aforth-code program))
+      (let ([linklist-program (aforth-linklist program list->linklist)])
+        (pretty-display ">>> EXTRACT-STRUCTURES")
+	(extract-all-structure linklist-program)
+        (pretty-display ">>> EXTRACT-SEQUENCES")
+	(extract-all-sequence linklist-program)
+	(reorder-definition linklist-program)
+        
+        (define result (aforth-linklist linklist-program linklist->list))
+        (aforth-struct-print result)
+	result
+	)
+      program)
 )
 
-(define-repeating-code program)
+(define program2
+      (aforth 
+      (list 
+        (vardecl '(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0))
+        (funcdecl "sumrotate"
+          (list 
+            (block
+              "down b! @b left b! !b "
+              0 0 #t
+              "down b! @b left b! !b ")
+          )
+        )
+        (funcdecl "main"
+          (list 
+            (forloop 
+              (block
+                "15 "
+                0 1 #t
+                "15 ")
+              (list 
+                (block
+                  "0 16 b! !b 1 17 b! !b "
+                  0 0 #t
+                  "0 16 b! !b 1 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 0 16)
+                (block
+                  "1 16 b! !b 5 17 b! !b "
+                  0 0 #t
+                  "1 16 b! !b 5 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 16 32)
+                (block
+                  "5 16 b! !b 3 17 b! !b "
+                  0 0 #t
+                  "5 16 b! !b 3 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 32 48)
+                (block
+                  "0 16 b! !b 7 17 b! !b "
+                  0 0 #t
+                  "0 16 b! !b 7 17 b! !b ")
+                (forloop 
+                  (block
+                    "15 "
+                    0 1 #t
+                    "15 ")
+                  (list 
+                    (block
+                      "16 b! @b a! @ left b! !b "
+                      0 0 #t
+                      "16 b! @b a! @ left b! !b ")
+                    (funccall "sumrotate")
+                    (block
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b "
+                      0 0 #t
+                      "16 b! @b 17 b! @b + 15 and 16 b! !b ")
+                  )
+                  '(#f . #f) 48 64)
+                (block
+                  ""
+                  0 0 #t
+                  "")
+              )
+              '(#f . #f) 0 16)
+          )
+        )
+      )
+    20 18 #hash((6 . 20) (0 . 0) (2 . 16) (3 . 17) (4 . 18) (5 . 19))))
+(define-repeating-code program2)

@@ -2,7 +2,7 @@
 
 (require "header.rkt" "arrayforth.rkt" "arrayforth-print.rkt")
 
-(provide (all-defined-out))
+(provide (except-out (all-defined-out) to-string))
 
 (define to-string (new string-converter%))
 
@@ -170,8 +170,8 @@
 	
         ;; add prev pointers to result list
 	(for ([pos matches])
-             (pretty-display "ADD TO RESULT:")
-             (aforth-struct-print (linklist-prev ast))
+             ;; (pretty-display "ADD TO RESULT:")
+             ;; (aforth-struct-print (linklist-prev ast))
 	     (set! result (cons (linklist-prev ast) result))))
 	
       (cond
