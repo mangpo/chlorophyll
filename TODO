@@ -1,7 +1,9 @@
 TODO
-- md5: 954 (repartition), 962 (var instead of consts), 980 (rewrite leftrotate)
-  = no index when unnecessary (test)
-  = caching
+- test constraint a + superoptimize
+- array access analysis can be less convervation
+- init constants
+- merge block after define-repeating-seq
+- md5: 998, 1002, 1006 + repeat more
 - connect to rohin's interpreter
   = left, right, up, down
   = 0 , 0 , 0 ,

@@ -4,7 +4,7 @@
 
 (provide (all-defined-out))
 
-(struct block (body in out mem org) #:mutable)
+(struct block (body in out cnstr org) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body) #:mutable)
@@ -15,6 +15,7 @@
 (struct -ift (t))
 (struct -iftf (t f))
 (struct aforth (code memsize bit indexmap))
+(struct restrict (mem a b) #:mutable)
 
 (struct linklist (prev entry next) #:mutable)
 
@@ -65,19 +66,25 @@
            (combine-inout res (inout inst)))
          (cons 0 0) insts))
 
-(define-syntax gen-block
-  (syntax-rules ()
-    [(gen-block)
-     (block (list) 0 0 #t (list))]
-    [(gen-block mem)
-     (block (list) 0 0 mem (list))]
-    [(gen-block a ... in out)
-     (block (list a ...) in out #t (list a ...))]))
+(define (estimate-a insts)
+  (when (string? insts)
+        (set! insts (string-split insts)))
+  (foldl (lambda (inst res)
+           (cond 
+	    [(equal? inst "a!") #t]
+	    [(member insts (list "@" "@+" "!" "!+" "a")) #f]
+	    [else res]))
+         #f insts))
 
-(define-syntax gen-block-org
-  (syntax-rules ()
-    [(gen-block-org (a ...) (b ...) in out)
-     (block (list a ...) in out #t (list b ...))]))
+(define (estimate-b insts)
+  (when (string? insts)
+        (set! insts (string-split insts)))
+  (foldl (lambda (inst res)
+           (cond 
+	    [(equal? inst "b!") #t]
+	    [(member insts (list "@b" "!b")) #f]
+	    [else res]))
+         #f insts))
 
 (define-syntax prog-append
   (syntax-rules ()
@@ -93,7 +100,13 @@
     ;; (codegen-print b-block)
     (set-block-body! a-block (append (block-body a-block) (block-body b-block)))
     (set-block-org! a-block (append (block-org a-block) (block-org b-block)))
-    (set-block-mem! a-block (and (block-mem a-block) (block-mem b-block)))
+
+    (define a-cnstr (block-cnstr a-block))
+    (define b-cnstr (block-cnstr b-block))
+    (set-block-cnstr! a-block (restrict (or (restrict-mem a-cnstr) (restrict-mem b-cnstr))
+					(or (restrict-a a-cnstr) (restrict-a b-cnstr))
+					(or (restrict-b a-cnstr) (restrict-b b-cnstr))))
+
     (define a-in  (block-in a-block))
     (define a-out (block-out a-block))
     (define b-in  (block-in  b-block))
@@ -109,20 +122,26 @@
     (and (equal? (forloop-iter a-for) (forloop-iter b-for))
          (equal? (forloop-to a-for) (forloop-from b-for))
          (aforth-eq? (forloop-body a-for) (forloop-body b-for))
-         (let ([addr (car (forloop-iter a-for))]
-               [addr-org (cdr (forloop-iter a-for))]
-               [from (forloop-from a-for)]
-               [to   (forloop-to b-for)])
+         (let* ([addr (car (forloop-iter a-for))]
+		[addr-org (cdr (forloop-iter a-for))]
+		[from (forloop-from a-for)]
+		[to   (forloop-to b-for)]
+		[bound-str (number->string (- to from 1))])
            (set-forloop-to! a-for to)
            (set-forloop-init! a-for
-                              (if addr
-                                  (gen-block-org
-                                   ((number->string from) (number->string addr)
-                                    "a!" "!" (number->string (- to from 1)))
-                                   ((number->string from) (number->string addr-org)
-                                    "a!" "!" (number->string (- to from 1)))
-                                   0 1)
-                                  (gen-block (number->string (- to from 1)) 0 1)))
+			      (cond
+			       [(equal? addr #f)
+				(block (list bound-str) 0 1 (restrict #t #t #f) (list bound-str))]
+
+			       [(pair? addr #f)
+				(block (list (car addr) "a!" bound-str)
+				       0 1 (restrict #t #t #f)
+				       (list (car addr-org) "a!" bound-str))]
+
+			       [else
+				(block (list (number->string from) addr "b!" "!b" bound-str)
+				       0 1 (restrict #t #t #f)
+				       (list (number->string from) addr-org "b!" "!b" bound-str))]))
            #t)))
   
   (cond
@@ -197,8 +216,10 @@
           (display i)
           (display " "))
         (display (block-org x)))
-    (pretty-display (format "~ain:~a out:~a mem:~a)" (inc indent) 
-                            (block-in x) (block-out x) (block-mem x)))]
+    (define cnstr (block-cnstr x))
+    (pretty-display (format "~ain:~a out:~a mem:~a a:~a b:~a)" (inc indent) 
+                            (block-in x) (block-out x) 
+			    (restrict-mem cnstr) (restrict-a cnstr) (restrict-b cnstr)))]
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
@@ -288,8 +309,10 @@
         (display (block-body x)))
     (pretty-display "\"")
 
-    (pretty-display (format "~a~a ~a ~a" (inc indent) 
-                            (block-in x) (block-out x) (block-mem x)))
+    (define cnstr (block-cnstr x))
+    (pretty-display (format "~a~a ~a (restrict ~a ~a ~a)" (inc indent) 
+                            (block-in x) (block-out x)
+			    (restrict-mem cnstr) (restrict-a cnstr) (restrict-b cnstr)))
 
     (display (format "~a\"" (inc indent)))
     (if (list? (block-org x))

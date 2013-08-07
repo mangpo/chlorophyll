@@ -7,10 +7,12 @@
 
 (provide superoptimize renameindex)
 
-(define (out-space out)
-  (if (= out 0)
-      (constraint memory s t)
-      (constraint-data out memory s t)))
+(define (out-space out cnstr)
+  (define result
+    (if (= out 0)
+	(constraint s t)
+	(constraint-data out s t)))
+  (struct-copy progstate result [memory (restrict-mem cnstr)] [a (restrict-a cnstr)]))
 
 (define index-map #f)
 (define mem-size #f)
@@ -43,9 +45,9 @@
                                      (string-join (block-body ast)))
                                  #:f18a #f
                                  #:num-bits bit #:name name
-                                 #:constraint (out-space out)
+                                 #:constraint (out-space out (block-cnstr ast))
                                  #:mem mem-size #:start mem-size)
-                       (block-in ast) out mem-size (block-org ast)))
+                       (block-in ast) out (block-cnstr ast) (block-org ast)))
 
     (define renamed (renameindex opt mem-size bit index-map))
 
@@ -182,5 +184,5 @@
       (pretty-display "VALIDATE: same"))
   
   (if diff
-      (block org (block-in ast) (block-out ast) new-mem-size org)
-      (block (string-join new-body) (block-in ast) (block-out ast) new-mem-size (block-org ast))))
+      (block org (block-in ast) (block-out ast) (block-cnstr ast) org)
+      (block (string-join new-body) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))
