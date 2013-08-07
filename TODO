@@ -1,6 +1,4 @@
 TODO
-- test constraint a + superoptimize
-- array access analysis can be less convervation
 - init constants
 - merge block after define-repeating-seq
 - md5: 998, 1002, 1006 + repeat more
@@ -15,6 +13,8 @@ TODO
 - nop is less than everything, @ < @+
 - stat report
 - 3 a! @ 32 - 1 . + . + 0 . + a! @
+  = implement an abstract interpreter to just figure how many send and recv we need
+  = no need to generate first pair from the interpreter
 
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter

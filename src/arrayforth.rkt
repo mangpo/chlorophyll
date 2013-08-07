@@ -133,7 +133,7 @@
 			       [(equal? addr #f)
 				(block (list bound-str) 0 1 (restrict #t #t #f) (list bound-str))]
 
-			       [(pair? addr #f)
+			       [(pair? addr)
 				(block (list (car addr) "a!" bound-str)
 				       0 1 (restrict #t #t #f)
 				       (list (car addr-org) "a!" bound-str))]

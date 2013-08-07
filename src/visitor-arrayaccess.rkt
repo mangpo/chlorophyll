@@ -78,18 +78,24 @@
 	(define arrays (pack-arrays (car stack)))
 	(define my-count (length arrays))
 
+	(set! stack (cdr stack))
         (cond 
 	 [(= my-count 0)
-	  (set-field! iter-type ast 0)]
+	  (set-field! iter-type ast 0)
+	  children-count
+	  ]
+
 	 [(and (= my-count 1) (= children-count 0))
 	  (define array (car arrays))
 	  (set-field! opt array #t)
-	  (set-field! iter-type ast array)]
-	 [else
-	  (set-field! iter-type ast (+ my-count children-count))])
+	  (set-field! iter-type ast array)
+	  1
+	  ]
 
-	(set! stack (cdr stack))
-	(+ my-count children-count)
+	 [else
+	  (set-field! iter-type ast (+ my-count children-count))
+	  children-count
+	  ])
 	]
 
        [(is-a? ast Block%)

@@ -1,9 +1,12 @@
 void main() {
   int[]@0 x[10];
   int[]@1 y[10];
-  int[]@1 z[10];
+  int[]@2 z[10];
 
   for(i from 0 to 10) {
+    for(j from 0 to 10) {
+      x[j] = x[j-1] + 1;
+    }
     z[i] = x[i] +@2 y[i];
   }
 }

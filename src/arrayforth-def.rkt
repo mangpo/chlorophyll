@@ -449,7 +449,7 @@
       (set-block-in! entry (car inout))
       (set-block-out! entry (cdr inout))
       ;; need to handle a special because of @+/!+ opt
-      (set-block-cnstr! (restrict mem (or org-a a) b))
+      (set-block-cnstr! entry (restrict mem (or org-a a) b))
       (set-linklist-prev! (linklist-next ll) new-linklist)
       (set-linklist-next! ll new-linklist)))
   

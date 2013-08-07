@@ -174,7 +174,7 @@
                   inst)))
   (define new-mem-size (dict-ref index-map mem-size))
   (define diff (program-diff? org new-body
-                              new-mem-size (out-space (block-out ast)) bit))
+                              new-mem-size (out-space (block-out ast) (block-cnstr ast)) bit))
   
   (if diff
       (begin
