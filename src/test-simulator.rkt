@@ -22,10 +22,11 @@
 ;(test "pair1" "null" 512)
 ;(test "pair2" "null" 512)
 ;(test "matrixmult" "72" 400) ;capacity issue
+(test "matrixmult-noio" "null" 500)
 ;(test "while" "10" 256)
 ;(test "cluster" "null" 256)
 
-(test "md5-init" "null" 1400 #:w 7 #:h 6)
+;(test "md5-init" "null" 1400 #:w 7 #:h 6)
 
 (for ([res (reverse result)])
   (pretty-display res))

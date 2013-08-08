@@ -68,6 +68,9 @@
 	(send this visit (-iftf-t ast))
 	(send this visit (-iftf-f ast))]
 
+       [(mult? ast)
+        (hash-structure)]
+
        [(funcdecl? ast)
 	(send this visit (funcdecl-body ast))]
 

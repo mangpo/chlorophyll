@@ -51,7 +51,7 @@
     (when original (display "| cr"))
     (newline)
     (display indent)
-    (pretty-display "17 for +* unext ")]
+    (display "17 for +* unext ")]
    
    [(funccall? x)
     (display (funccall-name x))
