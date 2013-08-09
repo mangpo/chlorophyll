@@ -276,11 +276,14 @@
   (when prefix
     (let ([inout (estimate-inout prefix)]
 	  [a (estimate-a prefix)]
-	  [b (estimate-b prefix)])
+	  [b (estimate-b prefix)]
+	  [r (estimate-r prefix)]
+          )
       (set! from (linklist #f 
                            (block prefix (car inout) (cdr inout) 
                                   (restrict (restrict-mem prefix-cnstr) 
-					    (or (restrict-a prefix-cnstr) a) b) 
+					    (or (restrict-a prefix-cnstr) a) 
+                                            b r)
 				  prefix-org)
                            from))))
   
@@ -288,10 +291,12 @@
     (let* ([inout (estimate-inout suffix)]
 	   [a (estimate-a suffix)]
 	   [b (estimate-b suffix)]
+	   [r (estimate-r suffix)]
            [suffix-linklist (linklist to 
                                       (block suffix (car inout) (cdr inout)
 					     (restrict (restrict-mem suffix-cnstr) 
-						       (or (restrict-a suffix-cnstr) a) b) 
+						       (or (restrict-a suffix-cnstr) a) 
+                                                       b r)
                                              suffix-org)
                                       #f)])
       (set-linklist-next! to suffix-linklist)
@@ -338,19 +343,23 @@
            [inout (estimate-inout insts)]
            [a     (estimate-a insts)]
            [b     (estimate-b insts)]
+           [r     (estimate-r insts)]
            [entry (linklist-entry ll)]
 	   [mem   (restrict-mem (block-cnstr entry))]
 	   [org-a (restrict-a (block-cnstr entry))]
+	   [org-r (restrict-r (block-cnstr entry))]
            [snd-insts (substring code index)]
            [snd-org (substring org index)]
            [snd-inout (estimate-inout snd-insts)]
            [snd-a     (estimate-a snd-insts)]
            [snd-b     (estimate-b snd-insts)]
+           [snd-r     (estimate-r snd-insts)]
            [new-linklist (linklist ll
                                    (if snd-org
                                        (block snd-insts (car snd-inout) (cdr snd-inout)
 					      ;; need to handle a special because of @+/!+ opt
-                                              (restrict mem (or org-a snd-a) snd-b)
+                                              (restrict mem 
+                                                        (or org-a snd-a) snd-b snd-r)
                                               snd-org)
                                        (funccall snd-insts))
                                    (linklist-next ll))])
@@ -359,7 +368,7 @@
       (set-block-in! entry (car inout))
       (set-block-out! entry (cdr inout))
       ;; need to handle a special because of @+/!+ opt
-      (set-block-cnstr! entry (restrict mem (or org-a a) b))
+      (set-block-cnstr! entry (restrict mem (or org-a a) b r))
       (set-linklist-prev! (linklist-next ll) new-linklist)
       (set-linklist-next! ll new-linklist)))
   

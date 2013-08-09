@@ -12,7 +12,11 @@
     (if (= out 0)
 	(constraint s t)
 	(constraint-data out s t)))
-  (struct-copy progstate result [memory (restrict-mem cnstr)] [a (restrict-a cnstr)]))
+  (struct-copy progstate result 
+               [memory (restrict-mem cnstr)] 
+               [a (restrict-a cnstr)]
+               [r (restrict-r cnstr)]
+               ))
 
 (define index-map #f)
 (define mem-size #f)

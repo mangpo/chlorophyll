@@ -1,9 +1,5 @@
 void main() {
-  int[]@{[0:5]=0,[5:10]=0} x[10];
-  int[]@{[0:5]=1,[5:10]=0} y[10];
-  for(t from 0 to 16) {
-    for(i from 0 to 10) {
-      x[i] = y[i];
-    }
-  }
+  int@0 a, b, x;
+  int@1 c, d;
+  x = (a +@0 b) *@0 (c +@0 d);
 }

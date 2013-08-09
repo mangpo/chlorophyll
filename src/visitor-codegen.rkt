@@ -27,21 +27,26 @@
     (define-syntax gen-block
       (syntax-rules ()
 	[(gen-block)
-	 (block (list) 0 0 (restrict #t (car const-a) #f) (list))]
+	 (block (list) 0 0 (restrict #t (car const-a) #f #f) (list))]
 	[(gen-block mem)
-	 (block (list) 0 0 (restrict mem (car const-a) #f) (list))]
+	 (block (list) 0 0 (restrict mem (car const-a) #f #f) (list))]
 	[(gen-block a ... in out)
-	 (block (list a ...) in out (restrict #t (car const-a) #f) (list a ...))]))
+	 (block (list a ...) in out (restrict #t (car const-a) #f #f) (list a ...))]))
+
+    (define-syntax gen-block-r
+      (syntax-rules ()
+	[(gen-block-r a ... in out)
+         (block (list a ...) in out (restrict #t (car const-a) #f #t) (list a ...))]))
     
     (define-syntax gen-block-list
       (syntax-rules ()
 	[(gen-block-list insts insts-org in out)
-	 (block insts in out (restrict #t (car const-a) #f) insts-org)]))
+	 (block insts in out (restrict #t (car const-a) #f #f) insts-org)]))
     
     (define-syntax gen-block-org
       (syntax-rules ()
 	[(gen-block-org (a ...) (b ...) in out)
-	 (block (list a ...) in out (restrict #t (car const-a) #f) (list b ...))]))
+	 (block (list a ...) in out (restrict #t (car const-a) #f #f) (list b ...))]))
     
     (define (is-temp? name)
       (regexp-match #rx"_temp" name))
@@ -50,7 +55,11 @@
       (cond
        [(equal? op "~") (list (gen-block "-" 1 1))]
        [(equal? op "!") (list (gen-block "-" 1 1))]
-       [(equal? op "*") (list (mult))]
+       [(equal? op "*") 
+        (if (car const-a)
+            (list (gen-block-r "a" "push" 0 0) (mult) (gen-block "pop" "a!" 0 0))
+            (list (mult)))]
+
        [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
        [(equal? op "+") (list (gen-block "+" 2 1))]
        [(equal? op ">>") (list (gen-block "dup" "dup" "or" "-" "+" 1 1) 

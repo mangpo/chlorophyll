@@ -15,7 +15,7 @@
 (struct -ift (t))
 (struct -iftf (t f))
 (struct aforth (code memsize bit indexmap))
-(struct restrict (mem a b) #:mutable)
+(struct restrict (mem a b r) #:mutable)
 
 (struct linklist (prev entry next) #:mutable)
 
@@ -86,6 +86,16 @@
 	    [else res]))
          #f insts))
 
+(define (estimate-r insts)
+  (when (string? insts)
+        (set! insts (string-split insts)))
+  (foldl (lambda (inst res)
+           (cond 
+	    [(equal? inst "push") #t]
+	    [(equal? inst "pop") #f]
+	    [else res]))
+         #f insts))
+
 (define-syntax prog-append
   (syntax-rules ()
     [(prog-append a b) (program-append a b)]
@@ -105,7 +115,9 @@
     (define b-cnstr (block-cnstr b-block))
     (set-block-cnstr! a-block (restrict (or (restrict-mem a-cnstr) (restrict-mem b-cnstr))
 					(or (restrict-a a-cnstr) (restrict-a b-cnstr))
-					(or (restrict-b a-cnstr) (restrict-b b-cnstr))))
+					(or (restrict-b a-cnstr) (restrict-b b-cnstr))
+					(or (restrict-r a-cnstr) (restrict-r b-cnstr))
+                                        ))
 
     (define a-in  (block-in a-block))
     (define a-out (block-out a-block))
@@ -217,9 +229,12 @@
           (display " "))
         (display (block-org x)))
     (define cnstr (block-cnstr x))
-    (pretty-display (format "~ain:~a out:~a mem:~a a:~a b:~a)" (inc indent) 
+    (pretty-display (format "~ain:~a out:~a mem:~a a:~a b:~a r:~a)" (inc indent) 
                             (block-in x) (block-out x) 
-			    (restrict-mem cnstr) (restrict-a cnstr) (restrict-b cnstr)))]
+			    (restrict-mem cnstr) 
+                            (restrict-a cnstr) (restrict-b cnstr)
+                            (restrict-r cnstr)
+                            ))]
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
@@ -310,9 +325,12 @@
     (pretty-display "\"")
 
     (define cnstr (block-cnstr x))
-    (pretty-display (format "~a~a ~a (restrict ~a ~a ~a)" (inc indent) 
+    (pretty-display (format "~a~a ~a (restrict ~a ~a ~a ~a)" (inc indent) 
                             (block-in x) (block-out x)
-			    (restrict-mem cnstr) (restrict-a cnstr) (restrict-b cnstr)))
+			    (restrict-mem cnstr) 
+                            (restrict-a cnstr) (restrict-b cnstr)
+                            (restrict-r cnstr)
+                            ))
 
     (display (format "~a\"" (inc indent)))
     (if (list? (block-org x))

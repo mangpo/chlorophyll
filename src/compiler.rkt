@@ -200,8 +200,10 @@
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
 ;                      256 "null" #:opt #f)
-(compile-and-optimize "../tests/run/matrixmult-noio.cll" "matrix" 
-                      400 "null" #:w 5 #:h 4 #:opt #f)
+(compile-and-optimize "../examples/bug.cll" "bug" 
+                      256 "null" #:w 5 #:h 4 #:opt #f)
+;(compile-and-optimize "../tests/run/matrixmult-noio.cll" "matrix" 
+;                      256 "null" #:w 5 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/md5-init.cll" "md5init" 
 ;                      600 "null" #:w 10 #:h 5 #:opt #t)
 

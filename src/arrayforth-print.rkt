@@ -51,7 +51,7 @@
     (when original (display "| cr"))
     (newline)
     (display indent)
-    (display "17 for +* unext ")]
+    (display "a! 0 17 for +* unext drop drop a ")]
    
    [(funccall? x)
     (display (funccall-name x))

@@ -1,4 +1,7 @@
 TODO
+- fix bug, matrixmult
+  = not tmp for read()!
+- test constraint on r
 - repartition matrixmult, run matrix on IDE
 - optimize md5, run optimized md5 on IDE
 - merge block after define-repeating-seq
