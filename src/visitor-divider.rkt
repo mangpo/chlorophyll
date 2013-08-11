@@ -439,6 +439,7 @@
                                           [lhs (pop-stack p)])))))]
 
        [(is-a? ast Return%)
+        (when debug (pretty-display (format "\nDIVIDE: Return\n")))
         (define val (get-field val ast))
         (if (list? val)
             ;; list
@@ -455,7 +456,7 @@
             ;; exp
             (let ([place (get-field place-type val)])
               (send val accept this)
-              (push-workspace place (pop-stack place))))]
+              (push-workspace place (new Return% [val (pop-stack place)]))))]
 
        [(is-a? ast If%)
 	(when debug (pretty-display (format "\nDIVIDE: If (condition)\n")))
@@ -575,17 +576,20 @@
                   (new VarDecl% [var-list (list "#return")]
                        [type (if (= occur 1) type (cons type occur))]
                        [place core])
-                  (new VarDecl% 
-                   [var-list (list "#return")]
-                   [type "void"] [place core] [known (get-field known return)]))
+                  #f)
+                  ;; (new VarDecl% 
+                  ;;  [var-list (list "#return")]
+                  ;;  [type "void"] [place core] [known (get-field known return)]))
               ]
 
-             [(and (not (equal? (get-field type return) "void")) 
+             [(and (not (equal? (get-field type return) "void"))
                      (= (get-field place return) core))
               return]
 
              [else
-              (raise (format "visitor-divider: funcdecl: unimplemented for return ~a" return))]
+              #f
+              ;; (raise (format "visitor-divider: funcdecl: unimplemented for return type = ~a, place = ~a" (get-field type return) (get-field place return)))
+              ]
 
              ;; [else
              ;;  (new VarDecl% 
@@ -595,13 +599,18 @@
                        
         (scope-pattern 
          (lambda (c)
-           (let ([return (get-field return ast)]
-                 [func (new FuncDecl%
+           (let* ([return (func-return-at ast c)]
+                  [func (new FuncDecl%
                             [name (get-field name ast)]
                             [args (func-args-at ast c)]
-                            [return (func-return-at ast c)]
+                            [return return]
                             [body (new Block% [stmts (list)])]
                             [parent (get-workspace c)])])
+             ;; (pretty-display (format "FUNDECL: name ~a core ~a return ~a" 
+             ;;                         (get-field name ast) c return))
+             ;; (when return
+             ;;       (pretty-display (format "type = ~a, place = ~a"
+             ;;                               (get-field type return) (get-field place return))))
              (set-func c func)
              func)))]
          

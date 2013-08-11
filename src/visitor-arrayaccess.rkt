@@ -82,8 +82,8 @@
                0))]
 
        [(is-a? ast While%)
-        (send (get-field condition ast) accept this)
-        (send (get-field body ast) accept this)]
+        (+ (send (get-field condition ast) accept this)
+           (send (get-field body ast) accept this))]
 
        [(is-a? ast For%)
 	(set! stack (cons (pack (get-field name (get-field iter ast)) (list))
