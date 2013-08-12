@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -318,7 +318,7 @@
 		  (set-field! place-type ast (cons places index))))
 
           ;; Infer place
-          (send index infer-place (get-field place-type ast))
+          ;(send index infer-place (get-field place-type ast))
 	  (define index-ret (send index accept this))
 
           (inc-space places est-acc-arr) ; not accurate
@@ -333,10 +333,24 @@
            (set-union (comminfo-placeset index-ret) (to-place-set places)))
           ]
 
+       [(is-a? ast Temp%)
+        (unless (get-field place-type ast)
+                (define link (lookup env ast))
+                (when debug 
+                      (pretty-display (format ">> Temp ~a (decl ~a)" 
+                                              (send ast to-string) link)))
+                (if (is-a? link AssignTemp%)
+                    (begin
+                      (set-field! link ast link)
+                      (set-field! place-type ast 
+                                  (get-field place-type (get-field lhs link))))
+                    (set-field! place-type ast link)))
+        (comminfo 0 (set))]
+
        [(is-a? ast Var%)
         (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
             
-        ;; if expend < expand then it is temp in temp = func()
+        ;; if expect > expand then it is temp in temp = func()
         ;; we don't need to find place for such temp
         (if (<= (get-field expand ast) (get-field expect ast))
           ;; lookup place from env
@@ -348,8 +362,6 @@
             ;; place can be list if var is iterator
             ;; need to call to-place-type to turn place-list into (place-list . index)
             (set-field! place-type ast place-type)
-            (unless (is-a? ast Temp%)
-              (inc-space place-type est-var))
             (comminfo 0 (to-place-set place)))
           (comminfo 0 (set)))
           ]
@@ -364,7 +376,7 @@
           (set-field! place-type ast place-type)
 
           ;; Infer place-type
-          (send e1 infer-place place-type)
+          ;(send e1 infer-place place-type)
 
           (define e1-ret (send e1 accept this))
 
@@ -392,8 +404,8 @@
 	  (set-field! place-type ast place-type)
 
           ;; Infer place-type
-          (send e1 infer-place place-type)
-          (send e2 infer-place place-type)
+          ;(send e1 infer-place place-type)
+          ;(send e2 infer-place place-type)
 
           (define e1-ret (send e1 accept this))
           (define e2-ret (send e2 accept this))
@@ -440,10 +452,10 @@
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
 	       ;; infer place-type
-	       (send arg infer-place (get-field place-type param))
+	       ;(send arg infer-place (get-field place-type param))
 	       (let ([arg-ret (send arg accept this)])
 		 ;; infer place-type
-		 (send param infer-place (get-field place-type arg))
+		 ;(send param infer-place (get-field place-type arg))
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
           
@@ -466,10 +478,14 @@
               (pretty-display (format ">> TempDecl ~a" temp)))
 
 	(if (string? type)
-	    (declare env temp place)
+            ;; put ast into env when place is #f to link tempdecl to assigntemp
+            ;; to be used in infer-place for tempdecl
+            (declare env temp (if place place ast))
 	    (let* ([entry (cdr type)]
 		   [actual-type (car type)]
-		   [place-expand (get-field place-list (get-field place ast))])
+		   [place-expand (if (get-field place ast)
+                                     (get-field place-list (get-field place ast))
+                                     (for/list ([i (in-range entry)]) #f))])
 	      (for ([i (in-range entry)]
 		    [p place-expand])
 		   (declare env (ext-name temp i) p))))
@@ -493,11 +509,10 @@
           (when debug
                 (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
 
-	  (unless (is-a? ast TempDecl%)
-		  (inc-space place (* (length var-list) 
-				      (if (is-a? ast Param%)
-					  (add1 est-data)
-					  est-data)))) ; increase space
+          (inc-space place (* (length var-list) 
+                              (if (is-a? ast Param%)
+                                  (add1 est-data)
+                                  est-data))) ; increase space
           
 	  (when debug
                 (pretty-display (format ">> VarDecl ~a (after)" var-list)))
@@ -650,6 +665,56 @@
            (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret)))
 	  ]
 
+       [(is-a? ast AssignTemp%)
+        (when debug (newline))
+          (define lhs (get-field lhs ast))
+          (define rhs (get-field rhs ast))
+
+          ;; Visit lhs
+          (when debug
+                (pretty-display ">> AssignTemp (lhs)"))
+          ;(define lhs-ret (send lhs accept this))
+          (define lhs-place-type (get-field place-type lhs))
+
+          ;; Visit rhs
+          (when debug
+                (pretty-display ">> AssignTemp (rhs)"))
+          (define rhs-ret (send rhs accept this))
+          (define rhs-place-type (get-field place-type rhs))
+
+          ;; put temp itself into env for infering later
+          ;; (unless lhs-place-type
+          ;;   (define decl (lookup env lhs))
+          ;;   (cond 
+          ;;    [(is-a? decl TempDecl%)
+          ;;     (set-field! place-type lhs rhs-place-type)
+          ;;     ;; get tempdecl ast
+          ;;     (set-field! place decl (to-place rhs-place-type))
+          ;;     ;; store inside lhs for furuther infer
+          ;;     (set-field! decl lhs decl)
+          ;;     (update env lhs ast)]
+
+          ;;    [(is-a? decl AssignTemp%)
+          ;;     (set-field! place-type ast 
+          ;;                 (get-field place-type (get-field lhs decl)))]
+
+          ;;    [else
+          ;;     (set-field! place-type decl)]))
+
+          (when (and (not lhs-place-type) (is-a? (lookup env lhs) TempDecl%))
+                (set-field! place-type lhs rhs-place-type)
+                ;; Get tempdecl ast
+                (set-field! place decl (to-place rhs-place-type))
+                ;; Store inside lhs for furuther infer
+                (set-field! decl lhs decl)
+                ;; Update env to point to first AssignTemp% we found.
+                ;; There can be > AssignTemp% in case of While%.
+                (update env lhs ast))
+
+          ;; don't increse space
+
+          rhs-ret]
+
        [(is-a? ast Assign%) 
           (when debug (newline))
           (define lhs (get-field lhs ast))
@@ -659,31 +724,20 @@
                 (pretty-display ">> Assign (lhs)"))
           ;; Visit lhs
           (define lhs-ret (send lhs accept this))
-
           (define lhs-place-type (get-field place-type lhs))
-	  (define lhs-name (get-field name lhs))
 
           ;; infer type
-          (send rhs infer-place lhs-place-type)
+          ;(send rhs infer-place lhs-place-type)
 
           ;; Visit rhs
           (define rhs-ret (send rhs accept this))
           (define rhs-place-type (get-field place-type rhs))
 
           ;; infer type
-          (send lhs infer-place rhs-place-type)
-
-	  ;; Don't increase space
-
-          (define comm-lhs-rhs
-            (if ;;(and (is-a? rhs FuncCall%) (regexp-match #rx"_temp" (get-field name lhs)))
-                ;; always 0 when _tempX = func()
-	        (get-field nocomm ast)
-                0
-                (count-msg lhs rhs)))
+          ;(send lhs infer-place rhs-place-type)
        
           (comminfo
-           (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) comm-lhs-rhs)
+           (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
            (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
          ]
 

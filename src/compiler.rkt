@@ -26,11 +26,17 @@
 (define (parse file)
   ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
+  (pretty-display "=============== before link ===============")
+  (send my-ast pretty-print)
   (define need-temp (send my-ast accept (new linker%)))
-  ;(when need-temp
-    (send my-ast accept (new temp-inserter%))
-    (send my-ast accept (new desugar%))
-    ;)
+  (pretty-display "=============== after link ===============")
+  (send my-ast pretty-print)
+  (send my-ast accept (new temp-inserter%))
+  (pretty-display "=============== after temp-insert ===============")
+  (send my-ast pretty-print)
+  (send my-ast accept (new desugar%))
+  (pretty-display "=============== after desugar ===============")
+  (send my-ast pretty-print)
   my-ast)
 
 ;; Compile IR to machine code.
@@ -191,13 +197,17 @@
 ;(compile-to-IR "../examples/array.cll" "array" 256 "null" 4 5 #:verbose #t)
 ;(compile-to-IR "../tests/run/md5-noio.cll" "md5noio" 
 ;               530 "null" 7 6 #:verbose #f)
+;(compile-to-IR "../tests/run/function.cll" "function"
+;               256 "4_1" 4 5 #:verbose #t)
+;(compile-to-IR "../tests/run/array.cll" "array"
+;               256 "10" 4 5 #:verbose #t)
 
 ;(compile-and-optimize "../examples/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
 ;                      256 "null" #:opt #f)
-(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
-                      256 "null" #:opt #f)
+;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/bug.cll" "bug" 

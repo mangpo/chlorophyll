@@ -175,6 +175,11 @@
     place]
    [else (raise (format "to-place-set: unimplemented for ~a" place))]))
 
+(define (to-place x)
+  (if (place-type-dist? x)
+      (car x)
+      x))
+
 ;; number, place-list -> place-type
 (define (to-place-type ast place)
   (cond
@@ -293,9 +298,9 @@
     (super-new)
     (init-field [known-type #f] [place-type #f] [cluster #f] [expand 1] [type #f])
 
-    (define/public (infer-place [p place-type])
+    (define/public (infer-place p)
       ;(pretty-display `(infer-place ,p ,place-type))
-      (when (at-any? place-type)
+      (when (and p (at-any? place-type))
             (set! place-type p)))
 
     (define/public (get-place-known)
@@ -357,7 +362,7 @@
   (class Exp%
     (super-new)
     (inherit-field type known-type place-type pos expand expect)
-    (init-field name [sub #f] [address #f])
+    (init-field name [sub #f] [address #f] [compact #f])
     (inherit print-send-path)
     
     (define/override (clone)
@@ -389,10 +394,24 @@
 (define Temp%
   (class Var%
     (super-new)
-    (inherit-field name)
+    (init-field [link #f] [decl #f])
+    (inherit-field name place-type)
+    
+    (define/override (clone)
+      ;; don't copy link & decl
+      (new Temp% [name name] [known-type known-type] [place-type place-type] [pos pos]
+           [expand expand] [expect expect] [type type]))
+
+    (define/override (infer-place p)
+      (when (and p (at-any? place-type))
+            (set! place-type p)
+            (when link
+                  (send link infer-place p))
+            (when decl
+                  (send decl infer-place (to-place p)))))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Temp:~a)" indent name)))))
+      (pretty-display (format "~a(Temp:~a place-type:~a)" indent name place-type)))))
 
 (define Array%
   (class Var%
@@ -448,8 +467,8 @@
       (send e2 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
-    (define/override (infer-place [p place-type])
-      (when (at-any? place-type)
+    (define/override (infer-place p)
+      (when (and p (at-any? place-type))
             (set! place-type p)
 	    (send e1 infer-place p)
 	    (send e2 infer-place p)))
@@ -478,8 +497,8 @@
       (send e1 pretty-print (inc indent))
       (pretty-display (format "~a)" indent)))
 
-    (define/override (infer-place [p place-type])
-      (when (at-any? place-type)
+    (define/override (infer-place p)
+      (when (and p (at-any? place-type))
             (set! place-type p)
 	    (send e1 infer-place p)))
 
@@ -496,6 +515,7 @@
     (inherit print-send-path)
 
     (define/override (clone)
+      ;; TODO: clone function call (in case of while%)
       (raise (format "Funtion call '~a' cannot be cloned" name)))
 
     (define/public (copy-at core)
@@ -586,11 +606,11 @@
   (class Livable%
     (super-new)
     (inherit-field place pos)
-    (init-field var-list type [known #t] [address #f])
+    (init-field var-list type [known #t] [address #f] [compact #f])
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
-      (when (at-any? place)
+      (when (and p (at-any? place))
             (set! place p)))
 
     ;; (define/public (copy)
@@ -614,11 +634,14 @@
 
 (define ReturnDecl%
   (class VarDecl%
-    (super-new)))
+    (super-new)
+    (inherit-field compact)
+    (set! compact #t)))
 
 (define TempDecl%
   (class VarDecl%
-    (super-new)))
+    (super-new)
+    ))
 
 (define Param%
   (class VarDecl%
@@ -630,8 +653,8 @@
       (set! known val)
       (set! known-type val))
 
-    (define/override (infer-place [p place-type])
-      (when (at-any? place-type)
+    (define/override (infer-place p)
+      (when (and p (at-any? place-type))
             (set! place p)
             (set! place-type p)))
     
@@ -749,13 +772,31 @@
     (super-new)
     (init-field lhs rhs [ignore #f] [nocomm #f])
 
+    (define/public (clone)
+      ;; TODO
+      )
+
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN" indent))
       (send lhs pretty-print (inc indent))
       (send rhs pretty-print (inc indent))
       )
-
   ))
+
+(define AssignTemp%
+  (class Assign%
+    (super-new)
+    (inherit-field nocomm lhs rhs)
+    (set! nocomm #t)
+
+    (define/override (clone)
+      ;; TODO
+      )
+
+    (define/public (infer-place p)
+      (when p
+            (send lhs infer-place p)
+            (send rhs infer-place p)))))
 
 (define Return%
   (class Base%

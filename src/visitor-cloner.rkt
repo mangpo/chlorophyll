@@ -66,6 +66,12 @@
 	     [cluster (get-field cluster ast)]
              [place-type (car place-offset)] [known-type (get-known-type)])]
 
+       [(is-a? ast Temp%)
+        (new Temp% [name (get-field name ast)]
+             [place-type (get-place-type)] [known-type (get-known-type)]
+             [compact (get-field compact ast)])]
+       
+
        [(is-a? ast Var%)
         (new Var% [name (get-field name ast)]
              [place-type (get-place-type)] [known-type (get-known-type)])]

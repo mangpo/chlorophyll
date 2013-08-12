@@ -103,15 +103,16 @@
 
 	 (when (not thread)
 	       ;; this renaming is only relavent for sequential version
-	       (set! sub #f)
-	       (when (or (regexp-match #rx"_temp" name) (regexp-match #rx"#return" name))
-		     (let ([full-name (regexp-match #rx"(.+)::(.+)" name)])
-		       (when full-name
-			     ;; "a::0" -> ("a::0" "a" "0")
-			     (let* ([actual-name (cadr full-name)]
-				    [expand (string->number (caddr full-name))])
-			       (set! name actual-name)
-			       (set! sub expand))))))
+	       (set! sub #f)	
+               (when (get-field compact ast)
+                     ;; (or (regexp-match #rx"_temp" name) (regexp-match #rx"#return" name))
+                     (let ([full-name (regexp-match #rx"(.+)::(.+)" name)])
+                       (when full-name
+                             ;; "a::0" -> ("a::0" "a" "0")
+                             (let* ([actual-name (cadr full-name)]
+                                    [expand (string->number (caddr full-name))])
+                               (set! name actual-name)
+                               (set! sub expand))))))
 
 	 ;; (when (and (equal? name "#return")
 	 ;; 	    sub (= (add1 sub) expand))

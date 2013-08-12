@@ -32,8 +32,25 @@
     (define/public (visit ast)
       (cond
         [(is-a? ast TempDecl%)
-	 ast]
+         (define type (get-field type ast))
+         (define native-type
+           (if (string? type)
+               type
+               (car type)))
+         
+         (define known (get-field known ast))
+         (define entry (get-field expect ast))
 
+         (if (and (not (get-field compact ast)) (> entry 1))
+             (for/list ([i (in-range entry)])
+                       (new TempDecl%
+                            [type native-type]
+                            [var-list (decor-list (get-field var-list ast) i)]
+                            [known known]
+                            [place #f]
+                            [pos (get-field pos ast)]))
+             ast)]
+         
         [(is-a? ast VarDecl%)
          ;(pretty-display (format "DESUGAR: VarDecl ~a" (get-field var-list ast)))
          (define type (get-field type ast))
@@ -47,16 +64,14 @@
          
 	 (if (> entry 1)
 	     ;; int a::0: int a::1;
-	     (for/list ([i (in-range entry)]
-			[p (get-field place-list (get-field place ast))])
-		       (new (if (is-a? ast Param%)
-				Param%
-				VarDecl% )
-			    [type native-type]
-			    [var-list (decor-list (get-field var-list ast) i)]
-			    [known known]
-			    [place (if p p (get-sym))]
-			    [pos (get-field pos ast)]))
+             (for/list ([i (in-range entry)]
+                        [p (get-field place-list (get-field place ast))])
+                        (new (if (is-a? ast Param%) Param%  VarDecl%)
+                             [type native-type]
+                             [var-list (decor-list (get-field var-list ast) i)]
+                             [known known]
+                             [place (if p p (get-sym))]
+                             [pos (get-field pos ast)]))
 	     ;; normal type
 	     ast)
          ]
@@ -193,29 +208,21 @@
              (if (= expand 1)
 		 (for/list ([i (in-range entry)])
 			   (send ast clone))
-                 ;; (cons
-                 ;;  ast
-                 ;;  (for/list ([i (in-range (sub1 entry))])
-                 ;;    (new Num% [n (new Const% [n 0] [pos (get-field pos ast)])])))
-                 ;; allow cast up
 		 (if (= expand entry)
 		     (for/list ([i (in-range expand)])
 			       (let ([new-name (ext-name (get-field name ast) i)])
-				 (new Var% [name new-name]
-				      ;; set known-type
-				      [known-type known-type]
-				      [pos (get-field pos ast)])))
+                                 (if (is-a? ast Temp%)
+                                     (new Temp% [name new-name]
+                                          [known-type known-type]
+                                          [pos (get-field pos ast)]
+                                          [compact (get-field compact ast)]
+                                          [decl (get-field decl ast)])
+                                     (new Var% [name new-name]
+                                          ;; set known-type
+                                          [known-type known-type]
+                                          [pos (get-field pos ast)]))))
 		     (raise (format "Expect tuple with ~a entries, ~a entries are given at ~a"
 				    entry expand (send ast to-string))))))
-                 ;; (append
-                 ;;  (for/list ([i (in-range expand)])
-                 ;;    (let ([new-name (ext-name (get-field name ast) i)])
-                 ;;      (new Var% [name new-name]
-		 ;; 	     ;; set known-type
-                 ;;           [known-type known-type]
-                 ;;           [pos (get-field pos ast)])))
-                 ;;  (for/list ([i (in-range (- entry expand))])
-                 ;;    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))))
          ]
         
         [(is-a? ast Op%)
@@ -292,7 +299,9 @@
              ast
 	     (for/list ([i-lhs lhs-ret]
 			[i-rhs rhs-ret])
-		       (new Assign% [lhs i-lhs] [rhs i-rhs] [pos (get-field pos ast)])))
+                       (new 
+                        (if (is-a? ast AssignTemp%) AssignTemp% Assign%)
+                        [lhs i-lhs] [rhs i-rhs] [pos (get-field pos ast)])))
          ]
 
 	[(is-a? ast Return%)
@@ -302,7 +311,8 @@
 
 	 (if (= entry 1)
              (list
-              (new Assign% [lhs (new Var% [name "#return"] [pos pos])] [rhs val-ret])
+              (new Assign% [lhs (new Var% [name "#return"] [pos pos] [compact #t])] 
+                   [rhs val-ret])
               (begin (set-field! val ast (new Var% [name "#return"] [pos pos]))
                      ast))
              (list
@@ -310,14 +320,14 @@
                          [i-val val-ret])
                         (new Assign% [lhs (new Var% 
                                                [name (ext-name "#return" i)] 
-                                               [pos pos])]
+                                               [pos pos] [compact #t])]
                              [rhs i-val]))
               (begin 
                 (set-field! val ast 
                             (for/list ([i (in-range entry)])
                                       (new Var% 
                                            [name (ext-name "#return" i)]
-                                           [pos pos])))
+                                           [pos pos] [compact #t])))
                      ast)))
          ]
         

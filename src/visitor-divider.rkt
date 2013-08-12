@@ -13,7 +13,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -259,14 +259,16 @@
 	  (gen-comm))]
 
        [(is-a? ast Var%)
-	(when debug (pretty-display (format "\nDIVIDE: Var ~a\n" (send ast to-string))))
         (define place (get-field place-type ast))
+	(when debug (pretty-display (format "\nDIVIDE: Var ~a @~a\n" (send ast to-string)
+                                            place)))
 
 	
 	(define old-name (get-field name ast))
 	;; clean up residual sub
         (set-field! sub ast #f)
-	(when (or (regexp-match #rx"_temp" old-name) (regexp-match #rx"#return" old-name))
+	;(when (or (regexp-match #rx"_temp" old-name) (regexp-match #rx"#return" old-name))
+        (when (get-field compact ast)
 	      (let ([full-name (regexp-match #rx"(.+)::(.+)" old-name)])
 		(when full-name
 		      ;; "a::0" -> ("a::0" "a" "0")
@@ -394,14 +396,13 @@
 	  (push-workspace place ast)]
 
 	 [(list? place)
-	  (for ([p place])
-		   (let ([here (get-field place p)])
-		     (push-workspace 
-		      here
-		      (new VarDecl% [var-list (get-field var-list ast)]
-			   [type (get-field type ast)]
-			   [known (get-field known ast)]
-			   [place here]))))]
+	  (for ([here (list->set (map (lambda (x) (get-field place x)) place))])
+               (push-workspace 
+                here
+                (new VarDecl% [var-list (get-field var-list ast)]
+                     [type (get-field type ast)]
+                     [known (get-field known ast)]
+                     [place here])))]
 
 	 [(is-a? place TypeExpansion%)
 	  (define place-list (get-field place-list place))
