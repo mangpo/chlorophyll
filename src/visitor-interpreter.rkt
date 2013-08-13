@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #t)
+    (define debug #f)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -305,6 +305,7 @@
 
 	  ;(send const accept this)
           (define place-type (find-place-type ast (get-field n ast)))
+          (when debug (pretty-display (format ">> Num ~a @~a" (send ast to-string) place-type)))
 	  (set-field! place-type ast place-type)
 	  (inc-space place-type est-num) ; increase space
 
@@ -331,7 +332,7 @@
 		  (set-field! place-type ast (cons places index))))
 
           ;; Infer place
-          ;(send index infer-place (get-field place-type ast))
+          (send index infer-place (get-field place-type ast))
 	  (define index-ret (send index accept this))
 
           (inc-space places est-acc-arr) ; not accurate
@@ -391,7 +392,7 @@
           (set-field! place-type ast place-type)
 
           ;; Infer place-type
-          ;(send e1 infer-place place-type)
+          (send e1 infer-place place-type)
 
           (define e1-ret (send e1 accept this))
 
@@ -400,8 +401,8 @@
           (when debug
                 (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
           (when (and debug-sym (symbolic? (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
-                (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string))
-                                (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
+                (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string)
+                                        (+ (comminfo-msgs e1-ret) (count-msg ast e1)))))
           
           (comminfo
            (+ (comminfo-msgs e1-ret) (count-msg ast e1))
@@ -419,8 +420,8 @@
 	  (set-field! place-type ast place-type)
 
           ;; Infer place-type
-          ;(send e1 infer-place place-type)
-          ;(send e2 infer-place place-type)
+          (send e1 infer-place place-type)
+          (send e2 infer-place place-type)
 
           (define e1-ret (send e1 accept this))
           (define e2-ret (send e2 accept this))
@@ -467,10 +468,10 @@
 	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		[arg   (get-field args ast)]) ; actual
 	       ;; infer place-type
-	       ;(send arg infer-place (get-field place-type param))
+	       (send arg infer-place (get-field place-type param))
 	       (let ([arg-ret (send arg accept this)])
 		 ;; infer place-type
-		 ;(send param infer-place (get-field place-type arg))
+		 (send param infer-place (get-field place-type arg))
 		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
 		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
           
@@ -747,14 +748,14 @@
           (define lhs-place-type (get-field place-type lhs))
 
           ;; infer type
-          ;(send rhs infer-place lhs-place-type)
+          (send rhs infer-place lhs-place-type)
 
           ;; Visit rhs
           (define rhs-ret (send rhs accept this))
           (define rhs-place-type (get-field place-type rhs))
 
           ;; infer type
-          ;(send lhs infer-place rhs-place-type)
+          (send lhs infer-place rhs-place-type)
        
           (comminfo
            (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))

@@ -339,8 +339,9 @@
     (define/override (pretty-print [indent ""])
       ;; (pretty-display (format "~a(Num:~a @~a (known=~a))" 
       ;;   		      indent (get-field n n) (place-to-string place-type) known-type))
-      (pretty-display (format "~a(Num:~a @~a (expand=~a/~a))" 
+      (pretty-display (format "~a(Num:~a @~a @~a (expand=~a/~a))" 
 			      indent (get-field n n) (place-to-string place-type) 
+                              (get-field place n)
                               expand expect))
       (print-send-path indent))
 
@@ -563,6 +564,7 @@
     (inherit-field place pos)
     (init-field n)
     (inherit get-place print-send-path)
+    (set! place #f)
 
     (define/public (clone)
       (new Const% [n n] [place place] [pos pos]))
