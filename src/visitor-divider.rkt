@@ -187,6 +187,7 @@
         ))
 
       (define (scope-pattern gen-ast)
+	(define body-placeset (get-field body-placeset ast))
         ;; create appropriate scope
         (for ([c (get-field body-placeset ast)])
              (let ([new-ast (gen-ast c)])
@@ -195,13 +196,35 @@
                (push-workspace c new-ast)
                (set-workspace c (get-field body new-ast))))
 
+	(when (is-a? ast While%)
+	  ;; switch to precondition scope
+	  (for ([c (get-field body-placeset ast)])
+	       (let* ([body (get-workspace c)]
+		      [while (get-field parent body)]
+		      [pre (get-field pre while)])
+		 (set-field! parent pre while)
+		 (set-workspace c pre)))
+	  
+	  (send (get-field pre ast) accept this)
+	  (send (get-field condition ast) accept this)
+	  (gen-comm-condition)
+
+	  ;; switch back to body scope
+	  (for ([c (get-field body-placeset ast)])
+	       (let* ([pre (get-workspace c)]
+		      [while (get-field parent pre)])
+		 (set-field! condition while (pop-stack c))
+		 (reverse-stmts pre)
+		 (clear-stack c)     
+		 (set-workspace c (get-field body while)))))
+
         ;; visit body
         (send (get-field body ast) accept this)
 
-        ;; update while loop condition
-        (when (is-a? ast While%)
-              (send (get-field condition ast) accept this)
-              (gen-comm-condition))
+        ;; ;; update while loop condition
+        ;; (when (is-a? ast While%)
+        ;;       (send (get-field condition ast) accept this)
+        ;;       (gen-comm-condition))
 
         ;; set the scope back to the original
         (for ([c (get-field body-placeset ast)])
@@ -515,14 +538,15 @@
                
        [(is-a? ast While%)
 	(when debug (pretty-display (format "\nDIVIDE: While\n")))
-        (send (get-field condition ast) accept this)
-        (gen-comm-condition)
+        ;; (send (get-field condition ast) accept this)
+        ;; (gen-comm-condition)
         (scope-pattern 
          (lambda (c) 
 	   (get-new-while ast
-			  (pop-stack c) ;; condition
+			  #f ;; condition
 			  (new Block% [stmts (list)]) ;; body
-			  #f #f ;; bound, body-placeset
+			  #f #f;; bound, body-placeset pre
+			  (new Block% [stmts (list)]) ;; pre
 			  (get-workspace c))))] ;; parent
 
        [(is-a? ast For%)

@@ -117,6 +117,7 @@
         ]
 
        [(is-a? ast While%)
+        (send (get-field pre ast) accept this)
         (send (get-field condition ast) accept this)
         (send (get-field body ast) accept this)
         (evaluate-placeset)

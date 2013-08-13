@@ -152,7 +152,8 @@
 		       (send (get-field condition ast) accept this)
 		       (send (get-field body ast) accept this)
 		       (get-field bound ast)
-		       (get-field body-placeset ast))]
+		       (get-field body-placeset ast)
+		       (send (get-field pre ast) accept this))]
 
        [(is-a? ast Assign%)
         (new Assign%

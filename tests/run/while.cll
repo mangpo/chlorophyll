@@ -1,12 +1,7 @@
 void main() {
   int@1 i;
-  int[]@2 x[10];
+  int[]@2 x[10] = {0,0,0,0,0,0,0,0,0,0};
   i = 0;
-
-  for(i from 0 to 10) {
-    x[i] = 0;
-  }
-
   while(i <@1 10) {
     x[i] = i;
     i = i +@1 2; 

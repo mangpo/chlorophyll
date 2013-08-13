@@ -402,6 +402,7 @@
         ]
 
        [(is-a? ast While%)
+	(define pre-ret (send (get-field pre ast) accept this))
 	(define cond-ret (send (get-field condition ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
         ;(convert-placeset)
@@ -409,7 +410,7 @@
         (when debug 
               (pretty-display (format "COMMINSERT: While")))
 
-        (define ret (set-union cond-ret body-ret))
+        (define ret (set-union pre-ret cond-ret body-ret))
         (set-field! body-placeset ast ret)
 
         (gen-path-condition ast)

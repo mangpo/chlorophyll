@@ -646,6 +646,7 @@
         ]
 
        [(is-a? ast While%)
+          (define pre-ret (send (get-field pre ast) accept this))
           (define condition (get-field condition ast))
           (define condition-ret (send condition accept this))
           
@@ -657,12 +658,14 @@
           (set-field! body-placeset ast (comminfo-placeset body-ret))
 
           (comminfo
-           (+ (* (get-field bound ast)
-                 (+ (comminfo-msgs condition-ret)
-                    (count-msg-placeset condition
-                                        (comminfo-placeset body-ret))))
-              (* (get-field bound ast) (comminfo-msgs body-ret)))
-           (set-union (comminfo-placeset condition-ret) (comminfo-placeset body-ret)))
+           (* (get-field bound ast)
+	      (+ (comminfo-msgs condition-ret)
+		 (comminfo-msgs pre-ret)
+		 (comminfo-msgs body-ret)
+		 (count-msg-placeset condition (comminfo-placeset body-ret))))
+           (set-union (comminfo-placeset pre-ret)
+		      (comminfo-placeset condition-ret) 
+		      (comminfo-placeset body-ret)))
 	  ]
 
        [(is-a? ast AssignTemp%)
@@ -701,15 +704,17 @@
           ;;    [else
           ;;     (set-field! place-type decl)]))
 
-          (when (and (not lhs-place-type) (is-a? (lookup env lhs) TempDecl%))
-                (set-field! place-type lhs rhs-place-type)
-                ;; Get tempdecl ast
-                (set-field! place decl (to-place rhs-place-type))
-                ;; Store inside lhs for furuther infer
-                (set-field! decl lhs decl)
-                ;; Update env to point to first AssignTemp% we found.
-                ;; There can be > AssignTemp% in case of While%.
-                (update env lhs ast))
+	  (when (not lhs-place-type)
+		(define decl (lookup env lhs))
+		(when (is-a? decl TempDecl%)
+		      (set-field! place-type lhs rhs-place-type)
+		      ;; Get tempdecl ast
+		      (set-field! place decl (to-place rhs-place-type))
+		      ;; Store inside lhs for furuther infer
+		      (set-field! decl lhs decl)
+		      ;; Update env to point to first AssignTemp% we found.
+		      ;; There can be > AssignTemp% in case of While%.
+		      (update env lhs ast)))
 
           ;; don't increse space
 

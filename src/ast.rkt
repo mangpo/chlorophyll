@@ -194,14 +194,6 @@
    
    [else (raise (format "to-place-type: unimplemented for ~a" place))]))
 
-;; (define (clone-place place)
-;;   (cond
-;;    [(number? place)          place]
-;;    [(list? place)            (map (lambda (x) (send x clone)) place)]
-;;    [(place-type-dist? place) (cons (clone-place (car place)) (clone-place (cdr place)))]
-;;    [(is-a? place Base%)      (send place clone)]
-;;    [else                     (raise (format "clone-place: unimplemented for ~a" place))]))
-
 (define (get-new-if ast c t f body-placeset [parent #f])
   (let ([constructor (cond
 		      [(is-a? ast If!=0%) If!=0%]
@@ -209,14 +201,14 @@
 		      [else If%])])
     (new constructor [condition c] [true-block t] [false-block f] [parent parent])))
 
-(define (get-new-while ast c t bound body-placeset [parent #f])
+(define (get-new-while ast c t bound body-placeset pre [parent #f])
   (let ([constructor (cond
 		      [(is-a? ast While!=0%) While!=0%]
 		      [(is-a? ast While==0%) While==0%]
 		      [(is-a? ast While<0%)  While<0%]
 		      [(is-a? ast While>=0%) While>=0%]
 		      [else While%])])
-    (new constructor [condition c] [body t] [parent parent])))
+    (new constructor [condition c] [body t] [parent parent] [pre pre])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; AST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -378,11 +370,11 @@
     (define/override (to-string) name)
 
     (define/public (not-found-error)
-      (raise-syntax-error 'undefined
-			  (format "'~a' error at src: l:~a c:~a" 
-				  name
-				  (position-line pos) 
-				  (position-col pos))))
+      (if pos
+	  (raise-syntax-error 'undefined
+			      (format "'~a' error at src: l:~a c:~a" 
+				      name (position-line pos) (position-col pos)))
+	  (raise-syntax-error 'undefined (format "'~a'" name))))
 
     (define/public (partition-mismatch part expect)
       (raise-mismatch-error 'data-partition
@@ -395,7 +387,7 @@
   (class Var%
     (super-new)
     (init-field [link #f] [decl #f])
-    (inherit-field name place-type)
+    (inherit-field name place-type known-type pos expand expect type)
     
     (define/override (clone)
       ;; don't copy link & decl
@@ -438,7 +430,8 @@
       )
 
     (define/override (clone)
-      (new Array% [name name] [index (send index clone)] [offset offset] [known-type known-type] [place-type place-type] [pos pos]))
+      (new Array% [name name] [index (send index clone)] [offset offset] [known-type known-type] 
+	   [place-type place-type] [pos pos]))
 
     (define/public (index-out-of-bound index)
       (raise-range-error 'array "error at src" "" index 
@@ -450,13 +443,13 @@
 (define BinExp%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type)
+    (inherit-field known-type place-type pos)
     (init-field op e1 e2)
     (inherit print-send-path)
         
     (define/override (clone)
       (new BinExp% [op (send op clone)] [e1 (send e1 clone)] [e2 (send e2 clone)]
-	   [known-type known-type] [place-type place-type]))
+	   [known-type known-type] [place-type place-type] [pos pos]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
@@ -482,12 +475,13 @@
 (define UnaExp%
   (class Exp%
     (super-new)
-    (inherit-field known-type place-type)
+    (inherit-field known-type place-type pos)
     (init-field op e1)
     (inherit print-send-path)
 
     (define/override (clone)
-      (new UnaExp% [op (send op clone)] [e1 (send op clone)] [known-type known-type] [place-type place-type]))
+      (new UnaExp% [op (send op clone)] [e1 (send op clone)] [known-type known-type] 
+	   [place-type place-type] [pos pos]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
@@ -515,7 +509,6 @@
     (inherit print-send-path)
 
     (define/override (clone)
-      ;; TODO: clone function call (in case of while%)
       (raise (format "Funtion call '~a' cannot be cloned" name)))
 
     (define/public (copy-at core)
@@ -772,10 +765,6 @@
     (super-new)
     (init-field lhs rhs [ignore #f] [nocomm #f])
 
-    (define/public (clone)
-      ;; TODO
-      )
-
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ASSIGN" indent))
       (send lhs pretty-print (inc indent))
@@ -788,10 +777,6 @@
     (super-new)
     (inherit-field nocomm lhs rhs)
     (set! nocomm #t)
-
-    (define/override (clone)
-      ;; TODO
-      )
 
     (define/public (infer-place p)
       (when p
@@ -854,11 +839,12 @@
 (define While%
   (class Scope%
     (super-new)
-    (init-field condition body [bound 100])
+    (init-field condition body [bound 100] [pre (new Block% [stmts (list)])])
     (inherit print-send-path)
 
     (define/public (pretty-print-content indent)
       (print-send-path indent)
+      (send pre pretty-print (inc indent))
       (send condition pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
@@ -945,10 +931,10 @@
 
     (define/public (not-found-error)
       (raise-syntax-error 'undefined-function
-			  (format "'~a' error at src: l:~a c:~a" 
-				  name
-				  (position-line pos) 
-				  (position-col pos))))
+      			  (format "'~a' error at src: l:~a c:~a" 
+      				  name
+      				  (position-line pos) 
+      				  (position-col pos))))
     ))
 
 (define Program%

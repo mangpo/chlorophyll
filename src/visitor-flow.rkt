@@ -78,18 +78,17 @@
               ret))]
 
        [(is-a? ast While%)
-        (let ([condition (get-field condition ast)]
+        (let ([pre (get-field pre ast)]
+	      [condition (get-field condition ast)]
               [body (get-field body ast)]
               [bound (get-field bound ast)])
-          (append
-           (multiply
-            (append (send condition accept this)
-                    (cross-product-raw (get-field place-type condition) 
-                                       (get-field body-placeset ast)))
-            bound)
-           (multiply
-            (send body accept this)
-            bound)))]
+	  (multiply
+	   (append (send pre accept this)
+		   (send condition accept this)
+		   (send body accept this)
+		   (cross-product-raw (get-field place-type condition) 
+				      (get-field body-placeset ast)))
+	   bound))]
 
        [(is-a? ast Assign%)
         (let ([lhs (get-field lhs ast)]

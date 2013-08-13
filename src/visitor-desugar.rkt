@@ -384,6 +384,7 @@
         
         [(is-a? ast While%)
 
+	 (define pre (get-field pre ast))
 	 (define exp (get-field condition ast))
 	 (define t (get-field body ast))
 	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
@@ -392,32 +393,33 @@
 	   (cond
 	    [(binop-equal? exp "!=")
 	     (new While!=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t])]
+		  [body t] [pre pre])]
 	    
 	    [(binop-equal? exp "==")
 	     (new While==0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t])]
+		  [body t] [pre pre])]
 	    
 	    [(binop-equal? exp "<")
 	     (new While<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t])]
+		  [body t] [pre pre])]
 	    
 	    [(binop-equal? exp ">")
 	     (new While<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
-		  [body t])]
+		  [body t] [pre pre])]
 	    
 	    [(binop-equal? exp ">=")
 	     (new While>=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t])]
+		  [body t] [pre pre])]
 	    
 	    [(binop-equal? exp "<=")
 	     (new While>=0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
-		  [body t])]
+		  [body t] [pre pre])]
 	    
 	    [else
 	     ast]))
 	 
          ;(pretty-display "DESUGAR: While")
+         (send (get-field pre new-while) accept this)
          (send (get-field condition new-while) accept this)
          (send (get-field body new-while) accept this)
 	 new-while

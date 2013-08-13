@@ -22,7 +22,7 @@
 
 ;(test "pair1" "null" 512)
 ;(test "pair2" "null" 512)
-(test "while" "10" 256)
+;(test "while" "10" 256)
 
 ;(test "matrixmult" "72" 400) ;capacity issue
 ;(test "matrixmult-noio" "null" 500)

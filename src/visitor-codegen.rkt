@@ -322,6 +322,7 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: If")))
 	;; not yet support && ||
+        (define pre-ret (send (get-field pre ast) accept this))
         (define cond-ret (send (get-field condition ast) accept this))
         (define true-ret (send (get-field true-block ast) accept this))
         (define false-ret 
@@ -332,22 +333,23 @@
         (cond
          [(is-a? ast If!=0%)
           (if false-ret
-              (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
+              (define-if (prog-append pre-ret cond-ret (list (iftf true-ret false-ret))))
               (prog-append cond-ret (list (ift true-ret))))
           ]
 
          [(is-a? ast If<0%)
           (if false-ret
-              (define-if (prog-append cond-ret (list (-iftf true-ret false-ret))))
+              (define-if (prog-append pre-ret cond-ret (list (-iftf true-ret false-ret))))
               (prog-append cond-ret (list (-ift true-ret))))
           ]
 
          [else
           (if false-ret
-              (define-if (prog-append cond-ret (list (iftf true-ret false-ret))))
+              (define-if (prog-append pre-ret cond-ret (list (iftf true-ret false-ret))))
               (prog-append cond-ret (list (ift true-ret))))])]
        
        [(is-a? ast While%)
+	(define pre (get-field pre ast))
 	(define exp (get-field condition ast))
 	(define name (get-while-name))
 	(define body (get-field body ast))
@@ -359,23 +361,23 @@
 	(define if-rep
 	  (cond
 	   [(is-a? ast While!=0%) 
-	    (new If!=0% [condition exp] [true-block block])]
+	    (new If!=0% [pre pre] [condition exp] [true-block block])]
 
 	   [(is-a? ast While==0%)
-	    (new If!=0% [condition exp] 
+	    (new If!=0% [pre pre] [condition exp] 
 		 [true-block (new Block% [stmts (list)])]
 		 [false-block block])]
 
 	   [(is-a? ast While<0%)
-	    (new If<0% [condition exp] [true-block block])]
+	    (new If<0% [pre pre] [condition exp] [true-block block])]
 	    
 	   [(is-a? ast While>=0%) 
-	    (new If<0% [condition exp] 
+	    (new If<0% [pre pre] [condition exp] 
 		 [true-block (new Block% [stmts (list)])]
 		 [false-block block])]
 
 	   [else
-	    (new If% [condition exp] [true-block block])]))
+	    (new If% [pre pre] [condition exp] [true-block block])]))
 	
 	(define if-ret (send if-rep accept this))
 	;; (pretty-display "~~~~~~~~~~~~~~~~~~~~~~")

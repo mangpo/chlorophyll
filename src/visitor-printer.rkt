@@ -157,6 +157,7 @@
          ]
 
 	[(is-a? ast While%)
+	 (send (get-field pre ast) accept this)
 	 (display "while(")
 	 (send (get-field condition ast) accept this)
 
