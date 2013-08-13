@@ -120,9 +120,9 @@ void main() {
     hash[3] = cadd(hash[3],d);
   } 
 
-  /*for(i from 0 to 4) {
+  for(i from 0 to 4) {
     out(hash::0[i]);
     out(hash::1[i]);
-  }*/
+  }
 }
 

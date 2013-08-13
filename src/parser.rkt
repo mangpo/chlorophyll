@@ -359,7 +359,7 @@
             (new Assign% [lhs $1] [rhs $3] [pos $1-start-pos]))
 
          ; var declaration/array declaration
-         ((var-decl) $1)
+         ; ((var-decl) $1)
 
          ; for loop
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK block RBRACK)
@@ -408,9 +408,19 @@
 
     (block ((stmts) (new Block% [stmts $1])))
 
+    (var-decls
+         (() (list))
+         ((var-decl) (list $1))
+         ((var-decl var-decls) (cons $1 $2)))
+
+    (decl-block ((var-decls) (new Block% [stmts $1])))
+
     (func-decl
-         ((data-place-type VAR LPAREN params RPAREN LBRACK block RBRACK)
-          (new FuncDecl% [name $2] [args (new Block% [stmts $4])] [body $7] 
+         ((data-place-type VAR LPAREN params RPAREN LBRACK var-decls stmts RBRACK)
+          (new FuncDecl% [name $2] [args (new Block% [stmts $4])] 
+               [body (new Block% [stmts (list 
+                                         (new Block% [stmts $7])
+                                         (new Block% [stmts $8]))])]
                [return (and (not (equal? (car $1) "void"))
                             (new ReturnDecl% [var-list (list "#return")] 
                                  [type (car $1)] [place (cdr $1)]))]

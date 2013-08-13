@@ -46,7 +46,7 @@
           (let ([a-list (car a)]
                 [b-list (car b)]
                 [a-index (cdr a)]
-                      [b-index (cdr b)])
+                [b-index (cdr b)])
             (and (and (equal? (length a-list) (length b-list))
                       (equal? (send a-index to-string) (send b-index to-string)))
                  (andmap (lambda (a-p b-p) (send a-p equal-rangeplace? b-p))

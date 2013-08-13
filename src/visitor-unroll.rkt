@@ -196,10 +196,10 @@
              (send decl accept this))]
 
        [(is-a? ast Block%)
-        
         (set-field! stmts ast
                     (flatten (map (lambda (x) (send x accept this)) 
                                   (get-field stmts ast))))
+        ast
         ]
 
        [(is-a? ast FuncDecl%)

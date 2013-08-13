@@ -30,14 +30,16 @@
     
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
-      ;(pretty-display `(find-place ,ast))
-      (when (not (is-a? ast Livable%))
-        (raise "find-place: ast is not Livable%"))
+      ;; (when (not (is-a? ast Livable%))
+      ;;   (raise "find-place: ast is not Livable%"))
       
-      (define place-exp (get-field place ast))
+      (define place-exp (if (is-a? ast Exp%)
+                            (get-field place-type ast)
+                            (get-field place ast)))
+      (when debug (pretty-display `(find-place ,ast ,place-exp)))
 
       (define (derive-place p)
-        ;(pretty-display `(derive-place ,p))
+        (when debug (pretty-display `(derive-place ,p)))
         (cond
          [(or (equal? p "any") (equal? p "io"))
           p]
@@ -54,38 +56,46 @@
 
       (cond
         [(at-io? place-exp)
+         (when debug (pretty-display `(at-io)))
          place-exp]
         [(is-a? place-exp Place%)
+         (when debug (pretty-display `(place%)))
          (let ([place (derive-place (get-field at place-exp))])
-           (when modify (set-field! place ast place))
+           (when (and modify (is-a? ast Livable%)) 
+                 (set-field! place ast place))
            place)]
         [else
+         (when debug (pretty-display `(else)))
          place-exp]))
     
     ;; find index of @place(x[i]) if x is distributed.
     (define (find-index place)
+      (when debug (pretty-display `(find-index ,place)))
       (if (is-a? place Place%)
-          (let* ([at (get-field at place)]
-                 [index (if (is-a? at Array%)
-			    ;; return i when place = @place(x[i])
-			    (get-field index at)
-                            ;; return i when place = @place(i)
-                            at)])
-	    (define info (lookup env at))
-	    ;(pretty-display `(find-index at ,(send at to-string) info ,info))
-	    (when (and (pair? info) (not (list? info)) (cdr info)) 
-		  ;; @place(x[i]) if x is cluster, illegal
-		  (send place illegal-place))
-            (if (is-a? index Var%)
-                  index
-                (raise "Place expression cannot be more complicated than @place(x[i])")))         
+          (let ([at (get-field at place)])
+            (if (string? at)
+                at
+                (let* ([index (if (is-a? at Array%)
+                                 ;; return i when place = @place(x[i])
+                                 (get-field index at)
+                                 ;; return i when place = @place(i)
+                                 at)]
+                       [info (lookup env at)])
+                  (when debug (pretty-display `(find-index at ,(send at to-string) 
+                                                           info ,info)))
+                  (when (and (pair? info) (not (list? info)) (cdr info)) 
+                        ;; @place(x[i]) if x is cluster, illegal
+                        (send place illegal-place))
+                  (if (is-a? index Var%)
+                      index
+                      (raise "Place expression cannot be more complicated than @place(x[i])")))))
           ;; return false otherwise
           #f))
 
     ;; find place-type for @place(x)
     (define (find-place-type ast native)
-      (when (not (is-a? native Livable%))
-        (raise "find-place-type: native is not Livable%"))
+      ;; (when (not (is-a? native Livable%))
+      ;;   (raise "find-place-type: native is not Livable%"))
       
       (define place-type (get-field place-type ast))
       ;(pretty-display `(find-place-type ,place-type))
@@ -95,10 +105,13 @@
           place-type
           (begin
             ; get index for @place(i) before place because (find-place) will remove that info
-            (define index (find-index (get-field place native)))
+            (define index (find-index (if (is-a? native Exp%)
+                                          (get-field place-type native)
+                                          (get-field place native))))
             (define place (find-place native))
 	    ;(pretty-display `(find-place-type place ,place index ,index))
-            (if (or (number? place) (place-type-dist? place))
+            (if (or (number? place) (place-type-dist? place) 
+                    (at-any? place) (at-io? place))
                 place
                 (cons place index)))))
 
@@ -334,17 +347,19 @@
           ]
 
        [(is-a? ast Temp%)
-        (unless (get-field place-type ast)
-                (define link (lookup env ast))
-                (when debug 
-                      (pretty-display (format ">> Temp ~a (decl ~a)" 
-                                              (send ast to-string) link)))
-                (if (is-a? link AssignTemp%)
-                    (begin
-                      (set-field! link ast link)
-                      (set-field! place-type ast 
-                                  (get-field place-type (get-field lhs link))))
-                    (set-field! place-type ast link)))
+        (define place-type (get-field place-type ast))
+        (if place-type
+            (set-field! place-type ast (find-place-type ast ast))
+            (let ([link (lookup env ast)])
+              (when debug 
+                    (pretty-display (format ">> Temp ~a (decl ~a)" 
+                                            (send ast to-string) link)))
+              (if (is-a? link AssignTemp%)
+                  (begin
+                    (set-field! link ast link)
+                    (set-field! place-type ast 
+                                (get-field place-type (get-field lhs link))))
+                  (set-field! place-type ast link))))
         (comminfo 0 (set))]
 
        [(is-a? ast Var%)
@@ -475,7 +490,7 @@
         (define temp (car (get-field var-list ast)))
         (define place (find-place ast))
         (when debug
-              (pretty-display (format ">> TempDecl ~a" temp)))
+              (pretty-display (format ">> TempDecl ~a @ ~a" temp place)))
 
 	(if (string? type)
             ;; put ast into env when place is #f to link tempdecl to assigntemp
@@ -778,9 +793,7 @@
           
           (when (and debug-sym (symbolic? (comminfo-msgs ret)))
                 (pretty-display `(BLOCK SYM num-msgs = ,(comminfo-msgs ret))))
-          ret
-          )
-          ]
+          ret)]
 
        [(is-a? ast FuncDecl%)
           (push-scope)

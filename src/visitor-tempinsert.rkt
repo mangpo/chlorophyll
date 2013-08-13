@@ -46,14 +46,14 @@
         (values tmp1 tmp2))))
 
     (define/public (visit ast)
-      (define (temp-stmt-exp my-p)
+      (define (temp-stmt-exp my-p [x ast])
         (let-values ([(tmp1 tmp2) 
-                      (get-temp (get-field type ast) 
-                                (get-field expect ast)
-                                (get-field expect ast)
+                      (get-temp (get-field type x) 
+                                (get-field expect x)
+                                (get-field expect x)
                                 my-p #f)])
-          ;(pretty-display `(temp-stmt-exp ,(send ast to-string) ,(get-field place-type ast)))
-          (values (list (new Assign% [lhs tmp1] [rhs ast]))
+          ;(pretty-display `(temp-stmt-exp ,(send x to-string) ,(get-field place-type x)))
+          (values (list (new Assign% [lhs tmp1] [rhs x]))
                   tmp2)))
 
 
@@ -159,13 +159,16 @@
                     (get-field type ast) 
                     (get-field expand ast)
                     (get-field expect ast)
-		    (if my-p my-p ;; need another temp: same as signature -> my-p
-			(get-field place (get-field return (get-field signature ast))))
+                    (get-field place (get-field return (get-field signature ast)))
                     #t)])
                ;; send expect = 1 so that it doesn't get expanded in desugarin step
                (set-field! expect tmp1 1)
-               (cons (list new-stmts (new AssignTemp% [lhs tmp1] [rhs ast]))
-                     tmp2)))]
+               (let ([stmt1 (new AssignTemp% [lhs tmp1] [rhs ast])])
+                 (if my-p
+                     (let-values ([(stmt2 tmp3) (temp-stmt-exp my-p tmp2)])
+                       (cons (list new-stmts stmt1 stmt2) tmp3))
+                     (cons (list new-stmts stmt1) tmp2)))))]
+               
 
 	[(is-a? ast Recv%)
 	 (define my-p current-p)
@@ -237,7 +240,11 @@
          ast]
         
         [(is-a? ast FuncDecl%)
-         (send (get-field body ast) accept this)
+         (define body (get-field body ast))
+         (define decl-block (car (get-field stmts body)))
+         (send body accept this)
+         (set-field! stmts decl-block (append (get-field stmts decl-block) new-decls))
+         (set! new-decls (list))
          ast]
         
         [(is-a? ast Block%)
@@ -247,6 +254,7 @@
                                    (get-field stmts ast))))
          (when (is-a? ast Program%)
            (set-field! stmts ast (append new-decls (get-field stmts ast))))
+         ast
          ]
         
         [else

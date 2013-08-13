@@ -1,5 +1,5 @@
 TODO
-- visitor-tempinsert: funccall TODO
+- why is there sym-place in matrixmult-init?
 - fix bug, matrixmult
   = not tmp for read()!
 - test constraint on r

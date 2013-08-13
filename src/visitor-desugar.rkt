@@ -42,12 +42,13 @@
          (define entry (get-field expect ast))
 
          (if (and (not (get-field compact ast)) (> entry 1))
-             (for/list ([i (in-range entry)])
+             (for/list ([i (in-range entry)]
+                        [p (get-field place-list (get-field place ast))])
                        (new TempDecl%
                             [type native-type]
                             [var-list (decor-list (get-field var-list ast) i)]
                             [known known]
-                            [place #f]
+                            [place p]
                             [pos (get-field pos ast)]))
              ast)]
          
@@ -196,33 +197,37 @@
          (define known-type (get-field known-type ast))
          
          ;(pretty-display (format "DESUGAR: Var ~a" (send ast to-string)))
-         ;; no need to worry about place-type at this step
+
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
                (when sub
                      (set-field! name ast (ext-name (get-field name ast) sub)))
-               ast
-               )
+               ast)
              
              ;; list of ASTs
              (if (= expand 1)
 		 (for/list ([i (in-range entry)])
-			   (send ast clone))
+		   (send ast clone))
 		 (if (= expand entry)
-		     (for/list ([i (in-range expand)])
-			       (let ([new-name (ext-name (get-field name ast) i)])
-                                 (if (is-a? ast Temp%)
-                                     (new Temp% [name new-name]
-                                          [known-type known-type]
-                                          [pos (get-field pos ast)]
-                                          [compact (get-field compact ast)]
-                                          [decl (get-field decl ast)])
-                                     (new Var% [name new-name]
-                                          ;; set known-type
-                                          [known-type known-type]
-                                          [pos (get-field pos ast)]))))
-		     (raise (format "Expect tuple with ~a entries, ~a entries are given at ~a"
-				    entry expand (send ast to-string))))))
+                     (if (is-a? ast Temp%)
+                         (for/list ([i (in-range expand)]
+                                    [p (get-field place-list (get-field place-type ast))])
+                           (let ([new-name (ext-name (get-field name ast) i)])
+                             (new Temp% [name new-name]
+                                  [known-type known-type]
+                                  [pos (get-field pos ast)]
+                                  [compact (get-field compact ast)]
+                                  [decl (get-field decl ast)]
+                                  [place-type p])))
+                         (for/list ([i (in-range expand)])
+                           (let ([new-name (ext-name (get-field name ast) i)])
+                             (new Var% [name new-name]
+                                  ;; set known-type
+                                  [known-type known-type]
+                                  [pos (get-field pos ast)]))))
+		     (raise (format 
+                             "Expect tuple with ~a entries, ~a entries are given at ~a"
+                             entry expand (send ast to-string))))))
          ]
         
         [(is-a? ast Op%)
@@ -452,6 +457,7 @@
          (set-field! stmts ast (flatten 
                                 (map (lambda (x) (send x accept this))
                                      (get-field stmts ast))))
+         ast
          ]
         
         [else

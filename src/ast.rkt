@@ -403,7 +403,8 @@
                   (send decl infer-place (to-place p)))))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Temp:~a place-type:~a)" indent name place-type)))))
+      (pretty-display (format "~a(Temp:~a place-type:~a)" indent name 
+                              (place-to-string place-type))))))
 
 (define Array%
   (class Var%
@@ -462,9 +463,9 @@
 
     (define/override (infer-place p)
       (when (and p (at-any? place-type))
-            (set! place-type p)
-	    (send e1 infer-place p)
-	    (send e2 infer-place p)))
+            (set! place-type p))
+      (send e1 infer-place p)
+      (send e2 infer-place p))
 
     (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
@@ -493,8 +494,8 @@
 
     (define/override (infer-place p)
       (when (and p (at-any? place-type))
-            (set! place-type p)
-	    (send e1 infer-place p)))
+            (set! place-type p))
+      (send e1 infer-place p))
 
     (define/override (to-string)
       (format "(~a ~a)" (send op to-string) (send e1 to-string)))
