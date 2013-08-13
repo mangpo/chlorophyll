@@ -18,25 +18,13 @@
       (cond
        [(is-a? ast Array%)
 	(define index (get-field index ast))
-	;; (define ele (and (is-a? index Var%) 
-	;; 		  (findf (lambda (x) 
-	;; 			   (pretty-display (format "~a vs ~a" (pack-iter x) (get-field name index)))
-	;; 			   (equal? (pack-iter x) (get-field name index))) stack)))
-	;; (pretty-display ele)
-	;; (when ele
-	;;       (if (equal? ele (car stack))
-	;; 	  ;; add 1 array
-	;; 	  (set-pack-arrays! ele (cons ast (pack-arrays ele)))
-	;; 	  ;; add 2 arrays (to exceed the optimization limit
-	;; 	  (set-pack-arrays! ele (append (list ast ast) (pack-arrays ele)))))
 
-        (define top (car stack))
-        (if (and (is-a? index Var%) (equal? (get-field name index) (pack-iter top)))
-            (set-pack-arrays! top (cons ast (pack-arrays top)))
-            (begin
-              (set! index-stack (add1 index-stack))
-              (send index accept this)
-              (set! index-stack (sub1 index-stack))))]
+        (if (and (not (empty? stack))
+		 (is-a? index Var%) 
+		 (equal? (get-field name index) (pack-iter (car stack))))
+	    (let ([top (car stack)])
+	      (set-pack-arrays! top (cons ast (pack-arrays top))))
+            (send index accept this))]
 
        [(is-a? ast Var%)
         (define ele (findf (lambda (x) (equal? (pack-iter x) (get-field name ast))) stack))
@@ -82,9 +70,9 @@
                0))]
 
        [(is-a? ast While%)
-        (+ (send (get-field pre ast) accept this)
-	   (send (get-field condition ast) accept this)
-           (send (get-field body ast) accept this))]
+	(send (get-field condition ast) accept this)
+	(send (get-field pre ast) accept this)
+	(send (get-field body ast) accept this)]
 
        [(is-a? ast For%)
 	(set! stack (cons (pack (get-field name (get-field iter ast)) (list))

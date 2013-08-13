@@ -802,7 +802,7 @@
 (define If%
   (class Scope%
     (super-new)
-    (init-field condition true-block [false-block #f])
+    (init-field condition true-block [false-block #f] [pre #f])
     (inherit print-send-path)
 
     (define/public (pretty-print-content indent)

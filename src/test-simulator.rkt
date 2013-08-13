@@ -25,7 +25,7 @@
 ;(test "while" "10" 256)
 
 ;(test "matrixmult" "72" 400) ;capacity issue
-(test "matrixmult-noio" "null" 500)
+;(test "matrixmult-noio" "null" 500)
 ;(test "cluster" "null" 256)
 
 ;(test "md5-init" "null" 1400 #:w 7 #:h 6)

@@ -202,14 +202,16 @@
 ;(compile-to-IR "../tests/run/array.cll" "array"
 ;               256 "10" 4 5 #:verbose #t)
 
+;(compile-and-optimize "../tests/run/test.cll" "test" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
 ;                      256 "null" #:opt #f)
-;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
-;                      256 "null" #:opt #f)
+(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
+                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/bug.cll" "bug" 
 ;                      256 "null" #:w 5 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/matrixmult-noio.cll" "matrix" 

@@ -226,6 +226,7 @@
 
 	[(is-a? ast While%)
 	 (send (get-field pre ast) accept this)
+	 (display indent)
 	 (display "while(")
 	 (send (get-field condition ast) accept this)
 
@@ -255,11 +256,12 @@
         
         [(is-a? ast Block%)
          (for ([stmt (get-field stmts ast)])
+	   (newline)
 	   (display indent)
            (send stmt accept this)
 	   (when (is-a? stmt Exp%)
-		 (display ";"))
-           (newline))]
+		 (display ";")))
+	 (newline)]
 
         [(is-a? ast FuncDecl%)
          (define (print-arg arg pre)

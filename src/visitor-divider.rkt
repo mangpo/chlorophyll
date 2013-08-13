@@ -13,7 +13,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #t)
+    (define debug #f)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -447,20 +447,23 @@
 	  ])]
 
        [(is-a? ast Assign%) 
-        (send (get-field lhs ast) accept this)
+	;; right before left
         (send (get-field rhs ast) accept this)
+        (send (get-field lhs ast) accept this)
 	(when debug (pretty-display (format "\nDIVIDE: Assign\n")))
         (let ([place (get-field place-type (get-field lhs ast))])
           (if (number? place)
               (begin
-                (set-field! rhs ast (pop-stack place))
+		;; pop left before right
                 (set-field! lhs ast (pop-stack place))
+                (set-field! rhs ast (pop-stack place))
                 (push-workspace place ast))
               (for ([p (list->set (get-field place-list place))])
                    (push-workspace p (new Assign% 
-                                          ;; pop rhs before lhs!
+                                          ;; pop left before right
+                                          [lhs (pop-stack p)]
                                           [rhs (pop-stack p)] 
-                                          [lhs (pop-stack p)])))))]
+					  )))))]
 
        [(is-a? ast Return%)
         (when debug (pretty-display (format "\nDIVIDE: Return\n")))

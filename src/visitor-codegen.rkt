@@ -319,10 +319,15 @@
 	]
 
        [(is-a? ast If%)
-        (when debug 
-              (pretty-display (format "\nCODEGEN: If")))
 	;; not yet support && ||
+        (when debug 
+              (pretty-display (format "\nCODEGEN: If"))
+	      (pretty-display ">>> pre")
+	      (send (get-field pre ast) pretty-print)
+	      (pretty-display "<<<")
+	      )
         (define pre-ret (send (get-field pre ast) accept this))
+	(codegen-print pre-ret)
         (define cond-ret (send (get-field condition ast) accept this))
         (define true-ret (send (get-field true-block ast) accept this))
         (define false-ret 
@@ -334,22 +339,28 @@
          [(is-a? ast If!=0%)
           (if false-ret
               (define-if (prog-append pre-ret cond-ret (list (iftf true-ret false-ret))))
-              (prog-append cond-ret (list (ift true-ret))))
+              (prog-append pre-ret cond-ret (list (ift true-ret))))
           ]
 
          [(is-a? ast If<0%)
           (if false-ret
               (define-if (prog-append pre-ret cond-ret (list (-iftf true-ret false-ret))))
-              (prog-append cond-ret (list (-ift true-ret))))
+              (prog-append pre-ret cond-ret (list (-ift true-ret))))
           ]
 
          [else
           (if false-ret
               (define-if (prog-append pre-ret cond-ret (list (iftf true-ret false-ret))))
-              (prog-append cond-ret (list (ift true-ret))))])]
+              (prog-append pre-ret cond-ret (list (ift true-ret))))])]
        
        [(is-a? ast While%)
 	(define pre (get-field pre ast))
+        (when debug 
+              (pretty-display (format "\nCODEGEN: While"))
+	      (pretty-display ">>> pre")
+	      (send pre pretty-print)
+	      (pretty-display "<<<")
+	      )
 	(define exp (get-field condition ast))
 	(define name (get-while-name))
 	(define body (get-field body ast))

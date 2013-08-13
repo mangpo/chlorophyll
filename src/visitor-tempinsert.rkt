@@ -204,7 +204,7 @@
          (define rhs-ret (send (get-field rhs ast) accept this))
          (set-field! rhs ast (cdr rhs-ret))
          
-         (list index-stmt (car rhs-ret) ast)]
+         (list (car rhs-ret) index-stmt ast)]
 
 	[(is-a? ast Return%)
 	 (set! current-p #f)
@@ -231,7 +231,7 @@
          (define cond-ret (send (get-field condition ast) accept this))
          (send (get-field body ast) accept this)
          
-	 (set-field! stmts (get-field pre ast) (car cond-ret))
+	 (set-field! stmts (get-field pre ast) (flatten (car cond-ret)))
          (set-field! condition ast (cdr cond-ret))
          (list ast)]
         

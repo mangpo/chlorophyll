@@ -7,6 +7,8 @@
 
 (provide define-repeating-code define-repeating-codes)
 
+(define debug #t)
+
 (define (list->linklist lst)
   (define (copy x)
     (if (block? x)
@@ -377,24 +379,35 @@
     (define pair (first-location exp ll))
     (define from (car pair))
     (define to (cdr pair))
-    
+    (define len (- to from))
+
     (define-values (ll-from index-from code-from org-from) (get-linklist ll from))
-    (define-values (ll-to index-to code-to org-to)         (get-linklist ll (sub1 to)))
-    (set! index-to (add1 index-to))
-    
+
     (when (> index-from 0)
+      (when debug (pretty-display "(> index-from 0)"))
       (split-linklist ll-from index-from code-from org-from)
-      (when (equal? ll-from ll-to)
-        (set! ll-to (linklist-next ll-from)))
       (set! ll-from (linklist-next ll-from))
       )
-    
+
+    (define-values (ll-to index-to code-to org-to) (get-linklist ll-from (sub1 len)))
+    (set! index-to (add1 index-to))
+
     (when (< index-to (string-length code-to))
+      (when debug (pretty-display "(< index-to)"))
       (split-linklist ll-to index-to code-to org-to)
       )
   
     (define from-prev (linklist-prev ll-from))
     (define to-next (linklist-next ll-to))
+    (when debug 
+	  (pretty-display "from-prev:")
+	  (aforth-struct-print (linklist-entry from-prev))
+	  (pretty-display "ll-from:")
+	  (aforth-struct-print (linklist-entry ll-from))
+	  (pretty-display "ll-to:")
+	  (aforth-struct-print (linklist-entry ll-to))
+	  (pretty-display "to-next:")
+	  (aforth-struct-print (linklist-entry to-next)))
     
     (define new-linklist (linklist from-prev func to-next))
     (set-linklist-next! from-prev new-linklist)
@@ -405,7 +418,7 @@
 
   (define (define-and-replace locations exp)
     (define new-name (new-def))
-    ;(pretty-display locations)
+    (pretty-display locations)
     (define res
       (car
        (for/list ([location locations])
@@ -468,9 +481,9 @@
 (define (define-repeating-code program)
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program list->linklist)])
-        ;(pretty-display ">>> EXTRACT-STRUCTURES")
+        (pretty-display ">>> EXTRACT-STRUCTURES")
 	(extract-all-structure linklist-program)
-        ;(pretty-display ">>> EXTRACT-SEQUENCES")
+        (pretty-display ">>> EXTRACT-SEQUENCES")
 	(extract-all-sequence linklist-program)
 	(reorder-definition linklist-program)
         
