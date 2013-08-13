@@ -1,4 +1,5 @@
 TODO
+- visitor-tempinsert: funccall TODO
 - fix bug, matrixmult
   = not tmp for read()!
 - test constraint on r

@@ -159,7 +159,7 @@
                     (get-field type ast) 
                     (get-field expand ast)
                     (get-field expect ast)
-		    (if my-p my-p
+		    (if my-p my-p ;; need another temp: same as signature -> my-p
 			(get-field place (get-field return (get-field signature ast))))
                     #t)])
                ;; send expect = 1 so that it doesn't get expanded in desugarin step
