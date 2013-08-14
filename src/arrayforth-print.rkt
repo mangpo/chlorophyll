@@ -70,7 +70,7 @@
     (when original (display "| cr"))
     (newline)
     (display indent)
-    (display "if ")
+    (display ".. if ")
     (print (ift-t x) (inc indent))
     (display "then ")]
    
@@ -78,7 +78,7 @@
     (when original (display "| cr"))
     (newline)
     (display indent)
-    (display "if ")
+    (display ".. if ")
     (print (iftf-t x) (inc indent))
     (display "; ] then ")
     (print (iftf-f x) (inc indent))]
@@ -87,7 +87,7 @@
     (when original (display "| cr"))
     (newline)
     (display indent)
-    (display "-if ")
+    (display ".. -if ")
     (print (-ift-t x) (inc indent))
     (display "then ")]
    
@@ -95,7 +95,7 @@
     (when original (display "| cr"))
     (newline)
     (display indent)
-    (display "-if ")
+    (display ".. -if ")
     (print (-iftf-t x) (inc indent))
     (display "; ] then ")
     (print (-iftf-f x) (inc indent))]
