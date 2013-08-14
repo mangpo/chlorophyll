@@ -1,10 +1,6 @@
 TODO
-- why is there sym-place in matrixmult-init?
-- fix bug, matrixmult
-  = not tmp for read()!
-- test constraint on r
-- repartition matrixmult, run matrix on IDE
 - optimize md5, run optimized md5 on IDE
+- generate node 900 & 902
 - merge block after define-repeating-seq
 - md5: 998, 1002, 1006 + repeat more
 - connect to rohin's interpreter

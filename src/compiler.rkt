@@ -206,16 +206,16 @@
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/array.cll" "array" 
 ;                      256 "null" #:opt #f)
-;(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
-;                      256 "null" #:opt #f)
+(compile-and-optimize "../tests/run/offset-noio.cll" "offsetnoio" 
+                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/function-noio.cll" "functionnoio" 
 ;                      256 "null" #:opt #f)
-(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
-                      256 "null" #:opt #f)
+;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/bug.cll" "bug" 
 ;                      256 "null" #:w 5 #:h 4 #:opt #f)
-;(compile-and-optimize "../tests/run/matrixmult-noio.cll" "matrix" 
-;                      256 "null" #:w 5 #:h 4 #:opt #f)
+;(compile-and-optimize "../tests/run/matrixmult2-noio.cll" "matrix" 
+;                      220 "null" #:w 5 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/md5-init.cll" "md5init" 
 ;                      600 "null" #:w 10 #:h 5 #:opt #t)
 

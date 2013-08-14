@@ -366,29 +366,31 @@
 	(define body (get-field body ast))
 	(define block (new Block% [stmts (append (get-field stmts body)
 						 (list (new FuncCall% [name name] [args (list)])))]))
+        (define empty-block (new Block% [stmts (list)]))
 
 	;; desugar into if construct
 	;; set name = while-name
 	(define if-rep
 	  (cond
 	   [(is-a? ast While!=0%) 
-	    (new If!=0% [pre pre] [condition exp] [true-block block])]
+	    (new If!=0% [pre pre] [condition exp] 
+                 [true-block block] [false-block empty-block])]
 
 	   [(is-a? ast While==0%)
 	    (new If!=0% [pre pre] [condition exp] 
-		 [true-block (new Block% [stmts (list)])]
-		 [false-block block])]
+		 [true-block empty-block] [false-block block])]
 
 	   [(is-a? ast While<0%)
-	    (new If<0% [pre pre] [condition exp] [true-block block])]
+	    (new If<0% [pre pre] [condition exp] 
+                 [true-block block] [false-block empty-block])]
 	    
 	   [(is-a? ast While>=0%) 
 	    (new If<0% [pre pre] [condition exp] 
-		 [true-block (new Block% [stmts (list)])]
-		 [false-block block])]
+		 [true-block empty-block] [false-block block])]
 
 	   [else
-	    (new If% [pre pre] [condition exp] [true-block block])]))
+	    (new If% [pre pre] [condition exp] 
+                 [true-block block] [false-block empty-block])]))
 	
 	(define if-ret (send if-rep accept this))
 	;; (pretty-display "~~~~~~~~~~~~~~~~~~~~~~")
