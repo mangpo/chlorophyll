@@ -312,7 +312,13 @@
 	     (gen-path arg param)
 	     (set! path-ret (set-union path-ret (all-path arg))))
 
-        (set-union path-ret args-ret 
+        (define io-path-ret
+          (if (and (is-a? func-sig FilterIOFuncDecl%) (equal? name "out"))
+            (let ([path (get-field output-send-path (get-field filter func-sig))])
+              (if path (list->set (drop-right path 1)) (set)))
+            (set)))
+
+        (set-union path-ret args-ret io-path-ret
 		   (get-field body-placeset (get-field signature ast)) (all-place-type))
         ]
 
@@ -405,21 +411,16 @@
         (define input-ret (send (get-field input ast) accept this))
         (define output-ret (send (get-field output ast) accept this))
 
-        (define args-ret (send (get-field args ast) accept this))
-        (define body-ret (send (get-field body ast) accept this))
-
         (define output-place (get-field place (get-field output ast)))
         (define dst-input-place (get-field place (get-field input (get-field output-dst ast))))
         (define path (get-gen-path output-place dst-input-place))
         (set-field! output-send-path ast path)
 
-        (define path-ret
-          (if path
-            (list->set (drop-right path 1))
-            (set)))
+        (define args-ret (send (get-field args ast) accept this))
+        (define body-ret (send (get-field body ast) accept this))
 
         ;(convert-placeset)
-        (let ([ret (set-union input-ret output-ret args-ret body-ret path-ret)])
+        (let ([ret (set-union input-ret output-ret args-ret body-ret)])
           (set-field! body-placeset ast ret)
           ret)
         ]
@@ -427,4 +428,4 @@
        [else (raise (format "visitor-comminsert: ~a unimplemented" ast))]
        ))
     ))
-            
+
