@@ -47,7 +47,7 @@
         (define port-id (get-field id port))
         (define small (min core port-id))
         (define large (max core port-id))
-        (+ (* 4 n) (* small n) (large))
+        (+ (* 4 n) (* small n) large)
         ]))
 
     (define (print-type type)
@@ -160,23 +160,34 @@
 	[(is-a? ast FuncCall%)
 	 (define name (get-field name ast))
 	 (define args (get-field args ast))
-	 ;; (cond
-	 ;;  [(equal? name "out")
-	 ;;   (display "printf(\"%d\\n\", ")
-	 ;;   (send (car args) accept this)
-	 ;;   (display ")")]
+         (define func-sig (get-field signature ast))
 
-	 ;;  [else
-         (if (or (equal? name "out") (equal? name "in"))
-             (display (format "~a(" name))
-             (display (format "~a_~a(" name core)))
-         (unless (empty? args)
-                 (send (car args) accept this)
-                 (for ([arg (cdr args)])
-                      (display ", ")
-                      (send arg accept this)))
-         (display ")")]
-        ;; )]
+         (cond
+           [(and (is-a? func-sig FilterIOFuncDecl%) (equal? name "in"))
+            (send (new Recv% [port (get-field input-src (get-field filter func-sig))]) accept this)
+            ]
+           [(and (is-a? func-sig FilterIOFuncDecl%) (equal? name "out"))
+            (send (new Send% [port (get-field output-dst (get-field filter func-sig))] [data (car args)]) accept this)
+            ]
+           [else
+             ;; (cond
+             ;;  [(equal? name "out")
+             ;;   (display "printf(\"%d\\n\", ")
+             ;;   (send (car args) accept this)
+             ;;   (display ")")]
+
+             ;;  [else
+             (if (or (equal? name "out") (equal? name "in"))
+                 (display (format "~a(" name))
+                 (display (format "~a_~a(" name core)))
+             (unless (empty? args)
+                     (send (car args) accept this)
+                     (for ([arg (cdr args)])
+                          (display ", ")
+                          (send arg accept this)))
+             (display ")")
+             ])
+           ]
 
 	[(is-a? ast Recv%)
 	 (display (format "read(~a)" (channel core (get-field port ast))))]
