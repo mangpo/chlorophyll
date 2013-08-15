@@ -2,8 +2,8 @@
 
 (require "header.rkt" 
          "ast.rkt"
+         "visitor-commconvert.rkt" 
          "visitor-comminsert.rkt" 
-         "visitor-filter-comminsert.rkt" 
          "visitor-unroll.rkt" 
          "visitor-divider.rkt" 
          "visitor-printer.rkt"
@@ -55,8 +55,20 @@
         ;;(send my-ast pretty-print)
         )
 
+  ;; Convert partition ID to actual core ID.
+  ;; Note: this visitor mutates AST.
+  (define comm-converter (new comm-converter%
+                              [routing-table routing-table]
+                              [part2core part2core]
+                              [n (* w h)]))
+  (send ast accept comm-converter)
+  (when verbose
+        (pretty-display "--- after convert communication ---")
+        (send ast pretty-print))
+
   ;; 1) Insert communication route to send-path field.
-  ;; 2) Convert partition ID to actual core ID.
+  ;; 2) Insert communication route to output-send-path field of filters.
+  ;; 3) Set body-placeset.
   ;; Note: given AST is mutate.
   (define commcode-inserter (new commcode-inserter% 
                                  [routing-table routing-table]
@@ -65,15 +77,6 @@
   (send ast accept commcode-inserter)
   (when verbose
         (pretty-display "--- after insert communication ---")
-        (send ast pretty-print))
-
-  ;; Insert communication route to output-send-path field of filters.
-  ;; Note: given AST is mutate.
-  (define filter-commcode-inserter
-    (new filter-commcode-inserter% [commcode-inserter commcode-inserter]))
-  (send ast accept filter-commcode-inserter)
-  (when verbose
-        (pretty-display "--- after filter insert communication ---")
         (send ast pretty-print))
 
   (define divider (new ast-divider% [w w] [h h]))
