@@ -7,7 +7,8 @@
 (provide commcode-inserter%)
 
 ;; 1) Insert communication route to send-path field.
-;; 2) Convert partition ID to actual core ID.
+;; 2) Insert communication route to output-send-path field of filters.
+;; 3) Set body-placeset.
 ;; Note: this visitor mutates AST.
 (define commcode-inserter%
   (class* object% (visitor<%>)
@@ -122,49 +123,6 @@
         ))
 
     (define/public (visit ast)
-      (define (convert-base p)
-        (cond
-         [(number? p)
-          (vector-ref part2core p)]
-         [(list? p)
-          (for ([i p])
-               (send i accept this))
-          p]
-         [(pair? p)
-          (for ([i (car p)])
-               (send i accept this))
-          p]
-         [(at-global-input? p)
-          n]
-         [(at-global-output? p)
-          (add1 n)]
-	 ;; [(is-a? p Place%)
-	 ;;  p]
-         [(and (is-a? p Place%) (equal? (get-field at p) "any"))
-          p]
-         [(is-a? p TypeExpansion%)
-          (unless (get-field convert p)
-                  (set-field! convert p #t)
-                  (set-field! place-list p
-                              (map (lambda (x) (convert-base x)) (get-field place-list p))))
-          p]
-         [else
-          (raise (format "convert-place-type: unimplemented for ~a" p))]))
-
-      (define (convert-place)
-        (set-field! place ast (convert-base (get-field place ast))))
-
-      (define (convert-place-type)
-        (set-field! place-type ast (convert-base (get-field place-type ast))))
-
-      (define (convert)
-        (unless (get-field convert ast)
-                (set-field! convert ast #t)
-                (when (field-bound? place ast)
-                      (convert-place))
-                (when (field-bound? place-type ast)
-                      (convert-place-type))))
-
       ;; (define (convert-placeset)
       ;;   (set-field! body-placeset ast
       ;;               (for/list ([p (get-field body-placeset ast)])
@@ -227,7 +185,6 @@
        [(is-a? ast Param%)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: ~a" (send ast to-string))))
-        (convert)
         (all-place)
         ]
         
@@ -236,54 +193,45 @@
               (pretty-display (format "\nCOMMINSERT: VarDecl ~a, type:~a" 
 				      (get-field var-list ast) (get-field type ast))))
         (if (equal? (get-field type ast) "void")
-            (set)
-            (begin
-              (convert)
-              (all-place)))]
+          (set)
+          (all-place))
+        ]
         
        [(is-a? ast Livable%)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Livable")))
-        (convert)
         (all-place)
         ]
 
        [(is-a? ast LivableGroup%)
         (when debug (pretty-display (format "COMMINSERT: ArrayDecl")))
-
-        (let ([place (get-field place-list ast)])
-          (if (list? place)
-              (for ([p (get-field place-list ast)])
-                   (send p accept this))
-              (when (number? place)
-                    (set-field! place-list ast (vector-ref part2core place)))))
+        (when (list? (get-field place-list ast))
+          (for ([p (get-field place-list ast)])
+               (send p accept this)))
 
         (all-place-list)
         ]
 
        [(is-a? ast For%)
-        (let ([place (get-field place-list ast)])
-          (if (list? place)
-              (for ([p (get-field place-list ast)])
-                   (send p accept this))
-              (when (number? place)
-                    (set-field! place-list ast (vector-ref part2core place)))))
+        (when (list? (get-field place-list ast))
+          (for ([p (get-field place-list ast)])
+               (send p accept this)))
 
         (let ([body-ret (send (get-field body ast) accept this)])
-              ;(convert-placeset)
-              (set-field! body-placeset ast body-ret)
-              body-ret)]
+          ;(convert-placeset)
+          (set-field! body-placeset ast body-ret)
+          body-ret)
+        ]
 
        [(is-a? ast Num%)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Num ~a" (send ast to-string))))
-        (convert)
-        (all-place-type)]
+        (all-place-type)
+        ]
 
        [(is-a? ast Array%)
         (define index (get-field index ast))
         (send index accept this)
-        (convert)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Array ~a" (send ast to-string))))
         (gen-path index ast)
@@ -298,17 +246,17 @@
        [(is-a? ast Var%)
         (when debug 
               (pretty-display (format "COMMINSERT: Var ~a" (send ast to-string))))
-        (convert)
         (all-place-type)]
 
        [(is-a? ast BinExp%)
         (define e1 (get-field e1 ast))
         (define e2 (get-field e2 ast))
         ;(define op (get-field op ast))
+
         (define e1-ret (send e1 accept this))
         (define e2-ret (send e2 accept this))
         ;(define op-ret (send op accept this))
-        (convert)
+
         (when debug 
               (pretty-display (format "COMMINSERT: BinExp ~a" (send ast to-string))))
         (gen-path e1 ast)
@@ -319,9 +267,10 @@
        [(is-a? ast UnaExp%)
         (define e1 (get-field e1 ast))
         ;(define op (get-field op ast))
+
         (define e1-ret (send e1 accept this))
         ;(define op-ret (send op accept this))
-	(convert)
+
         (when debug
               (pretty-display (format "COMMINSERT: UnaExp ~a" (send ast to-string))))
         (gen-path e1 ast)
@@ -335,6 +284,7 @@
         ;(define args-ret (send (get-field signature ast) accept this))
 	(define func-sig (get-field signature ast))
 	(define name (get-field name ast))
+
 	(define args-ret 
 	  (if (or (equal? name "in") (equal? name "out"))
 	      (send func-sig accept this)
@@ -345,7 +295,6 @@
 	     (set! args-ret (set-union args-ret (send arg accept this))))
         (when debug 
               (pretty-display (format "COMMINSERT: FuncCall ~a" (send ast to-string))))
-	(convert)
         
         (define path-ret (set))
 	;; Body-placeset of IO function is empty. Add funccall's place-type to it.
@@ -371,12 +320,12 @@
         (let ([rhs (get-field rhs ast)]
               [lhs (get-field lhs ast)])
           (when debug 
-                (pretty-display (format "COMMINSERT: Assign ~a = ~a"
-					(send lhs to-string) (send rhs to-string))))
+            (pretty-display (format "COMMINSERT: Assign ~a = ~a"
+                                    (send lhs to-string) (send rhs to-string))))
           (define lhs-ret (send lhs accept this))
           (define rhs-ret (send rhs accept this))
 	  (unless (get-field nocomm ast)
-		  (gen-path rhs lhs))
+            (gen-path rhs lhs))
           (set-union rhs-ret lhs-ret (all-path rhs))
           )
         ]
@@ -394,8 +343,8 @@
         (define true-ret (send (get-field true-block ast) accept this))
         (define false-ret
           (if (get-field false-block ast)
-              (send (get-field false-block ast) accept this)
-              (set)))
+            (send (get-field false-block ast) accept this)
+            (set)))
         ;(convert-placeset)
         (when debug 
               (pretty-display (format "COMMINSERT: If")))
@@ -442,6 +391,7 @@
         (define return-ret (send (get-field return ast) accept this))
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
+
         ;(convert-placeset)
         (let ([ret (set-union return-ret args-ret body-ret)])
           (set-field! body-placeset ast ret)
@@ -457,8 +407,19 @@
 
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
+
+        (define output-place (get-field place (get-field output ast)))
+        (define dst-input-place (get-field place (get-field input (get-field output-dst ast))))
+        (define path (get-gen-path output-place dst-input-place))
+        (set-field! output-send-path ast path)
+
+        (define path-ret
+          (if path
+            (list->set (drop-right path 1))
+            (set)))
+
         ;(convert-placeset)
-        (let ([ret (set-union input-ret output-ret args-ret body-ret)])
+        (let ([ret (set-union input-ret output-ret args-ret body-ret path-ret)])
           (set-field! body-placeset ast ret)
           ret)
         ]
