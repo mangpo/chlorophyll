@@ -326,7 +326,11 @@
 	      (send (get-field pre ast) pretty-print)
 	      (pretty-display "<<<")
 	      )
-        (define pre-ret (send (get-field pre ast) accept this))
+        (define pre-ret 
+	  (if (get-field pre ast)
+	      (send (get-field pre ast) accept this)
+	      (list (gen-block))))
+	  
 	(codegen-print pre-ret)
         (define cond-ret (send (get-field condition ast) accept this))
         (define true-ret (send (get-field true-block ast) accept this))

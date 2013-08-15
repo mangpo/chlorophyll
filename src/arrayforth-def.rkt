@@ -314,7 +314,7 @@
 	;; call itself until there is no more repeated structure found.
 	(extract-all-structure linklist-program)))
 
-(define (extract-all-sequence linklist-program)
+(define (extract-all-sequence linklist-program min-len occur)
   
   (define (get-linklist ll index)
     (define entry (linklist-entry ll))
@@ -427,7 +427,7 @@
     (insert-definition (car res) (cdr res) linklist-program new-name))
   
   (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
-  (define subseqs (sort-subsequence seqs 6 max-len))
+  (define subseqs (sort-subsequence seqs min-len max-len))
   ;(pretty-display seqs)
   
   (for ([subseq subseqs])
@@ -436,7 +436,8 @@
               [exp (regexp reformatted)]
               [matcher (new sequence-matcher% [exp exp])]
               [locations (send matcher visit linklist-program)])
-         (when (> (length locations) 1)
+         (when (>= (length locations) occur)
+	       ;; if repeat more then a certain number
                (pretty-display (format "STRING: ~a" reformatted))
                (define-and-replace locations exp)))
        )
@@ -478,13 +479,13 @@
   (set-linklist-prev! (linklist-next new-start) (linklist-prev start))
 )
 
-(define (define-repeating-code program)
+(define (define-repeating-code program [min-len 6] [occur 2])
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program list->linklist)])
         (pretty-display ">>> EXTRACT-STRUCTURES")
 	(extract-all-structure linklist-program)
         (pretty-display ">>> EXTRACT-SEQUENCES")
-	(extract-all-sequence linklist-program)
+	(extract-all-sequence linklist-program min-len occur)
 	(reorder-definition linklist-program)
         
         (define result (aforth-linklist linklist-program linklist->list))
@@ -494,9 +495,9 @@
       program)
 )
 
-(define (define-repeating-codes programs w h)
+(define (define-repeating-codes programs w h [min-len 6] [occur 2])
   (define res (make-vector (* w h)))
   (for ([i (in-range (* w h))])
-       (vector-set! res i (define-repeating-code (vector-ref programs i))))
+       (vector-set! res i (define-repeating-code (vector-ref programs i) min-len occur)))
   res)
 
