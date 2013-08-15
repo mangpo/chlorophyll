@@ -421,7 +421,11 @@
          (send output accept this)
          (when (is-a? ast ConcreteFilterDecl%)
            (declare env "in" (get-field stdin ast))
-           (declare env "out" (get-field stdout ast)))
+           (declare env "out" (get-field stdout ast))
+           (send (get-field input ast) accept this)
+           (send (get-field output ast) accept this)
+           (set! entry 1)
+           )
          
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)

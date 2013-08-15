@@ -47,45 +47,49 @@
              
              [else (raise "contruct-placelist: unimplemented")]))))
     
+    (define/public (get-gen-path x y)
+      (when debug (pretty-display `(get-gen-path ,x ,y)))
+
+      (cond
+        [(same-place? x y) #f]
+        [(and (is-a? x TypeExpansion%) (is-a? y TypeExpansion%)) #f]
+
+        [(and (number? x) (number? y))
+         (vector-2d-ref routing-table x y)]
+
+        [(and (number? x) (place-type-dist? y))
+         (cons
+           (for/list ([p (car y)])
+                     (new RangePlace% [from (get-field from p)] [to (get-field to p)]
+                          [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))
+           (cdr y))]
+
+        [(and (number? y) (place-type-dist? x))
+         (cons 
+           (for/list ([p (car x)])
+                     (let ([place (get-field place p)])
+                       (new RangePlace% [from (get-field from p)] [to (get-field to p)]
+                            [place place] [send-path (vector-2d-ref routing-table place y)])))
+           (cdr x))]
+
+        [(and (place-type-dist? x) 
+              (place-type-dist? y) 
+              (equal? (send (cdr x) to-string) (send (cdr y) to-string)))
+         (let ([x-from (get-field from (caar x))]
+               [y-from (get-field from (caar y))])
+           (unless (equal? x-from y-from) 
+             (raise "visitor-comminsert: distributions do not start at the same index"))
+           (cons (construct-placelist (car x) (car y) x-from) (cdr x)))]
+
+        [else (raise (format "gen-path: unimplemented for ~a and ~a" x y))]))
+
     (define (gen-path x-ast y-ast)
       (define x (get-field place-type x-ast))
       (define y (get-field place-type y-ast))
       (when debug
         (pretty-display `(gen-path ,(send x-ast to-string) ,x  ,(send y-ast to-string) ,y)))
 
-      (set-field! send-path x-ast
-        (cond
-         [(same-place? x y) #f]
-         [(and (is-a? x TypeExpansion%) (is-a? y TypeExpansion%)) #f]
-         
-         [(and (number? x) (number? y))
-          (vector-2d-ref routing-table x y)]
-         
-         [(and (number? x) (place-type-dist? y))
-          (cons
-           (for/list ([p (car y)])
-                     (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                          [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))
-           (cdr y))]
-         
-         [(and (number? y) (place-type-dist? x))
-          (cons 
-           (for/list ([p (car x)])
-                     (let ([place (get-field place p)])
-                       (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                            [place place] [send-path (vector-2d-ref routing-table place y)])))
-           (cdr x))]
-         
-         [(and (place-type-dist? x) 
-               (place-type-dist? y) 
-               (equal? (send (cdr x) to-string) (send (cdr y) to-string)))
-          (let ([x-from (get-field from (caar x))]
-                [y-from (get-field from (caar y))])
-            (unless (equal? x-from y-from) 
-                    (raise "visitor-comminsert: distributions do not start at the same index"))
-            (cons (construct-placelist (car x) (car y) x-from) (cdr x)))]
-         
-         [else (raise (format "gen-path: unimplemented for ~a and ~a" x y))])))
+      (set-field! send-path x-ast (get-gen-path x y)))
 
     ;; TODO turn list into tree!
     (define (get-path-one-to-many from placelist)
@@ -450,6 +454,7 @@
               (pretty-display (format "COMMINSERT: ConcreteFilterDecl ~a" (get-field name ast))))
         (define input-ret (send (get-field input ast) accept this))
         (define output-ret (send (get-field output ast) accept this))
+
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
         ;(convert-placeset)

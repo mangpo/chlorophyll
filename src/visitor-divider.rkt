@@ -115,27 +115,28 @@
       (set-field! stmts block (reverse (get-field stmts block))))
 
     (define/public (visit ast)
-      (define (gen-comm-path path)    
-        (define (intermediate path)
-          (if (>= (length path) 3)
-              (let ([a (car path)]
-                    [b (cadr path)]
-                    [c (caddr path)])
-                (push-workspace b (transfer a b c))
-		(intermediate (cdr path)))
+      (define (intermediate path #:omit-last [omit-last #f])
+        (if (>= (length path) 3)
+            (let ([a (car path)]
+                  [b (cadr path)]
+                  [c (caddr path)])
+              (push-workspace b (transfer a b c))
+              (intermediate (cdr path) #:omit-last omit-last))
+            (when (not omit-last)
               (let* ([from (car path)]
-		     [to (cadr path)]
-		     [temp (get-temp to)])
-		(push-workspace to (new Assign%
-					[lhs (new Temp% [name temp] [place-type to]
+                     [to (cadr path)]
+                     [temp (get-temp to)])
+                (push-workspace to (new Assign%
+                                        [lhs (new Temp% [name temp] [place-type to]
                                                   [type "int"])]
-					[rhs (gen-recv to from)]))
-                (push-stack to (new Temp% [name temp] [place-type to] [type "int"])))))
+                                        [rhs (gen-recv to from)]))
+                (push-stack to (new Temp% [name temp] [place-type to] [type "int"]))))))
         
+      (define (gen-comm-path path #:omit-last [omit-last #f])   
         (let ([from (car path)]
               [to (cadr path)])
           (push-workspace from (gen-send from to (top-stack from))))
-        (intermediate path))
+        (intermediate path #:omit-last omit-last))
   
       (define (gen-comm)
         (let ([path (get-field send-path ast)])
@@ -316,44 +317,62 @@
           (gen-comm))]
 
        [(is-a? ast FuncCall%)
-	(when debug (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
+        (when debug (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
+        (define sig (get-field signature ast))
         (define (func-args-at ast core)
           (filter 
-	   (lambda (x) (= (get-field place-type x) core))
-	   (get-field stmts (get-field args ast))))
+            (lambda (x) (= (get-field place-type x) core))
+            (get-field stmts (get-field args ast))))
 
-	(define (new-funccall core)
-	  (let ([args (func-args-at (get-field signature ast) core)])
-	    (new FuncCall% [name (get-field name ast)]
-		 ;; reverse order because we pop from stack
-		 [args (reverse (map (lambda (x) (pop-stack core)) args))])))
+        (define (new-funccall core)
+          (let ([args (func-args-at sig core)])
+            (new FuncCall% [name (get-field name ast)]
+                 ;; reverse order because we pop from stack
+                 [args (reverse (map (lambda (x) (pop-stack core)) args))])))
 
-	;; add expressions for arguments
+        ;; add expressions for arguments
         (for ([arg (get-field args ast)])
              (send arg accept this))
 
         (define (not-void? place type core)
           (cond
-           [(equal? type "void")
-            #f]
-           [(is-a? place TypeExpansion%)
-            (member core (get-field place-list place))]
-           [else
-            (= place core)]))
+            [(equal? type "void")
+             #f]
+            [(is-a? place TypeExpansion%)
+             (member core (get-field place-list place))]
+            [else
+              (= place core)]))
 
-	(when debug 
-              (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
-        (let* ([place (get-field place-type ast)]
-	       [sig (get-field signature ast)]
-	       [type (get-field type (get-field return sig))])
-          (for ([c (get-field body-placeset sig)])
-	       ;; body-placeset of IO function is empty
-               (if (not-void? place type c)
-		   ;; if it is here, funccall is exp
-                   (push-stack c (new-funccall c))
-		   ;; if return place is not here, funcall is statement
-                   (push-workspace c (new-funccall c))))
-          (gen-comm))]
+        (if (is-a? sig FilterIOFuncDecl%)
+          (begin
+            (cond
+              [(equal? (get-field name ast) "in")
+               (define path (get-field output-send-path (get-field input-src (get-field filter sig))))
+
+               ;; insert last leg of communication
+               (intermediate (take-right path 2))
+
+               (gen-comm)
+               ]
+              [(equal? (get-field name ast) "out")
+               (define path (get-field output-send-path (get-field filter sig)))
+
+               ;; generate communication between current #output and next #input
+               ;; omit the last leg of communication
+               (gen-comm-path path #:omit-last #t)
+               (pop-stack (car path))
+               ]))
+          (begin
+            (let* ([place (get-field place-type ast)]
+                   [type (get-field type (get-field return sig))])
+              (for ([c (get-field body-placeset sig)])
+                   ;; body-placeset of IO function is empty
+                   (if (not-void? place type c)
+                     ;; if it is here, funccall is exp
+                     (push-stack c (new-funccall c))
+                     ;; if return place is not here, funcall is statement
+                     (push-workspace c (new-funccall c))))
+              (gen-comm))))]
 
        [(is-a? ast ArrayDecl%)
 	(when debug 
@@ -618,7 +637,7 @@
 
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
-             (unless (is-a? stmt IOFuncDecl%)
+             (unless (or (is-a? stmt FilterIOFuncDecl%) (is-a? stmt GlobalIOFuncDecl%))
                (send stmt accept this)))
 
         (when (is-a? ast Program%)
@@ -629,6 +648,10 @@
 	      (define programs (make-vector n))
 	      (for ([i (in-range n)])
 		   (vector-set! programs i (get-workspace i)))
+	      (for ([i (in-range n)])
+                   (when debug
+                     (pretty-display (format "---- Inside visitor-divider: program at ~a ------" i))
+                     (send (vector-ref programs i) pretty-print)))
 
 	      (for ([i (in-range n)])
 		   (let* ([program (vector-ref programs i)]

@@ -187,12 +187,12 @@
         (define funcs (cdr filters-funcs))
 
         (set-field! output-dst (last filters) (lookup-name env "__globaloutputdst__"))
+        (set-field! input-src (lookup-name env "__globaloutputdst__") (last filters))
+
         (define stdout (get-stdout-push (lookup-name env "__globaloutputdst__")))
         (set-field! stdout (last filters) stdout)
-
-        (set-field! input-src (lookup-name env "__globaloutputdst__") (last filters))
-        (define stdin (get-stdin-pull (last filters)))
-        (set-field! stdin (lookup-name env "__globaloutputdst__") stdin)
+        (define stdin (get-stdin-pull (lookup-name env "__globalinputsrc__")))
+        (set-field! stdin (first filters) stdin)
 
         (pop-scope)
         (cons filters (append funcs (list stdout stdin)))]
@@ -226,7 +226,7 @@
         (set-field! stdout (lookup-name env "__previous__") stdout)
 
         (set-field! input-src filter (lookup-name env "__previous__"))
-        (define stdin (get-stdin-pull (lookup-name env "__previous__")))
+        (define stdin (get-stdin-made-available filter))
         (set-field! stdin filter stdin)
 
         (update-name env "__previous__" filter)

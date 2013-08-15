@@ -3,6 +3,7 @@
 (require "header.rkt" 
          "ast.rkt"
          "visitor-comminsert.rkt" 
+         "visitor-filter-comminsert.rkt" 
          "visitor-unroll.rkt" 
          "visitor-divider.rkt" 
          "visitor-printer.rkt"
@@ -64,6 +65,15 @@
   (send ast accept commcode-inserter)
   (when verbose
         (pretty-display "--- after insert communication ---")
+        (send ast pretty-print))
+
+  ;; Insert communication route to output-send-path field of filters.
+  ;; Note: given AST is mutate.
+  (define filter-commcode-inserter
+    (new filter-commcode-inserter% [commcode-inserter commcode-inserter]))
+  (send ast accept filter-commcode-inserter)
+  (when verbose
+        (pretty-display "--- after filter insert communication ---")
         (send ast pretty-print))
 
   (define divider (new ast-divider% [w w] [h h]))
