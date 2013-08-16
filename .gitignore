@@ -16,3 +16,5 @@ src/qap/sa_qap
 
 !testdata/out/*.out
 !output/communication.cpp 
+tags
+testdata/out
