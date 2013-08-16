@@ -56,6 +56,25 @@
                 [arg   (get-field args ast)]) ; actual
                (set! edges (append (cross-product param arg) edges))
                (set! edges (append (send arg accept this) edges)))
+
+          (when (is-a? func-ast FilterIOFuncDecl%)
+            (define name (get-field name ast))
+            (define filter (get-field filter func-ast))
+            (cond
+              [(equal? name "in")
+               (set! edges
+                 (append (cross-product-raw
+                           (get-field place (get-field output (get-field input-src filter)))
+                           (get-field place (get-field input filter)))
+                         edges))]
+              [(equal? name "out")
+               (set! edges
+                 (append (cross-product-raw
+                           (get-field place (get-field output filter))
+                           (get-field place (get-field input (get-field output-dst filter))))
+                         edges))]
+              )
+            )
           edges)]
 
        [(is-a? ast For%)
