@@ -11,23 +11,6 @@
 
     (define (decor-list l dec)
       (map (lambda (x) (ext-name x dec)) l))
-
-    (define (get-op exp)
-      (get-field op (get-field op exp)))
-
-    (define (get-e1 exp)
-      (get-field e1 exp))
-
-    (define (get-e2 exp)
-      (get-field e2 exp))
-
-    (define (binop-equal? exp str)
-      (and (is-a? exp BinExp%) (equal? (get-op exp) str)))
-    
-    (define (minus e1 e2 place)
-      (if (and (is-a? e2 Num%) (= 0 (get-field n (get-field n e2))))
-	  e1
-	  (new BinExp% [op (new Op% [op "-"] [place place])] [e1 e1] [e2 e2])))
     
     (define/public (visit ast)
       (cond
@@ -339,96 +322,20 @@
         [(is-a? ast If%)
          ;(pretty-display "DESUGAR: If")
 
-	 (define exp (get-field condition ast))
-	 (define t (get-field true-block ast))
-	 (define f (get-field false-block ast))
-	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
-
-	 (define new-if
-	   (cond
-	    [(binop-equal? exp "!=")
-	     (new If!=0% [condition (minus (get-e1 exp) (get-e2 exp))] 
-		  [true-block t]
-		  [false-block f])]
-	    
-	    [(binop-equal? exp "==")
-	     (new If!=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [true-block (if f f (new Block% [stmts (list)]))]
-		  [false-block t])]
-	    
-	    [(binop-equal? exp "<")
-	     (new If<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [true-block t]
-		  [false-block f])]
-	    
-	    [(binop-equal? exp ">")
-	     (new If<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
-		  [true-block t]
-		  [false-block f])]
-	    
-	    [(binop-equal? exp ">=")
-	     (new If<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [true-block (if f f (new Block% [stmts (list)]))]
-		  [false-block t])]
-	    
-	    [(binop-equal? exp "<=")
-	     (new If<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
-		  [true-block (if f f (new Block% [stmts (list)]))]
-		  [false-block t])]
-	    
-	    [else
-	     ast]))
-	   
-         (send (get-field condition new-if) accept this)
-	 (send (get-field true-block new-if) accept this)
-	 (when (get-field false-block new-if)
-	       (send (get-field false-block new-if) accept this))
+	 (send (get-field condition ast) accept this)
+	 (send (get-field true-block ast) accept this)
+	 (when (get-field false-block ast)
+	       (send (get-field false-block ast) accept this))
 	 
-	 new-if
+	 ast
          ]
         
         [(is-a? ast While%)
-
-	 (define pre (get-field pre ast))
-	 (define exp (get-field condition ast))
-	 (define t (get-field body ast))
-	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
-
-	 (define new-while
-	   (cond
-	    [(binop-equal? exp "!=")
-	     (new While!=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t] [pre pre])]
-	    
-	    [(binop-equal? exp "==")
-	     (new While==0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t] [pre pre])]
-	    
-	    [(binop-equal? exp "<")
-	     (new While<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t] [pre pre])]
-	    
-	    [(binop-equal? exp ">")
-	     (new While<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
-		  [body t] [pre pre])]
-	    
-	    [(binop-equal? exp ">=")
-	     (new While>=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
-		  [body t] [pre pre])]
-	    
-	    [(binop-equal? exp "<=")
-	     (new While>=0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
-		  [body t] [pre pre])]
-	    
-	    [else
-	     ast]))
+         (send (get-field pre ast) accept this)
+	 (send (get-field condition ast) accept this)
+	 (send (get-field body ast) accept this)
 	 
-         ;(pretty-display "DESUGAR: While")
-         (send (get-field pre new-while) accept this)
-         (send (get-field condition new-while) accept this)
-         (send (get-field body new-while) accept this)
-	 new-while
-         ]
+	 ast]
         
         [(is-a? ast For%)
          ;(pretty-display "DESUGAR: For")

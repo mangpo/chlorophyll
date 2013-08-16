@@ -37,6 +37,23 @@
 		      [place (new Place% [at "io"])])]))
   stdout)
 
+(define (get-op exp)
+  (get-field op (get-field op exp)))
+
+(define (get-e1 exp)
+  (get-field e1 exp))
+
+(define (get-e2 exp)
+  (get-field e2 exp))
+
+(define (binop-equal? exp str)
+  (and (is-a? exp BinExp%) (equal? (get-op exp) str)))
+
+(define (minus e1 e2 place)
+  (if (and (is-a? e2 Num%) (= 0 (get-field n (get-field n e2))))
+      e1
+      (new BinExp% [op (new Op% [op "-"] [place place])] [e1 e1] [e2 e2])))
+
 (define (same-place? a b)
   ;;(assert (and (place-type? a) (place-type? b)))
   

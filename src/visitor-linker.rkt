@@ -120,6 +120,7 @@
 	 (define place (get-field place ast))
 	 (when (and (> expect 1) (not (is-a? place TypeExpansion%)))
 	       (set-field! place ast (new TypeExpansion% [place-list (expand-place place expect)])))
+         ast
          ]
         
         [(is-a? ast ArrayDecl%)
@@ -144,6 +145,7 @@
 	 (define place (get-field place-list ast))
 	 (when (and (> expect 1) (not (is-a? place TypeExpansion%)))
 	       (set-field! place-list ast (new TypeExpansion% [place-list (expand-place place expect)])))
+         ast
 	 ]
         
         [(is-a? ast Num%)
@@ -205,8 +207,7 @@
 	       (define place (get-field place ast))
 	       (when (not (is-a? place TypeExpansion%))
 		     (set-field! place ast 
-				 (new TypeExpansion% [place-list (expand-place place entry)])))
-	       )
+				 (new TypeExpansion% [place-list (expand-place place entry)]))))
 	 "int"]
         
         [(is-a? ast UnaExp%)
@@ -271,6 +272,7 @@
                  (send ast args-mismatch (length params)))
          
          (define old-entry entry)
+         (set! stmt-level #f)
          (for ([arg args]
 	       [param params])
 	      (let ([param-type (get-field type param)])
@@ -281,11 +283,14 @@
 		  (set-field! known-type param (and (get-field known-type param) arg-known)))))
 	        
 	 (set! entry old-entry)
-	 #f]
+         (if (get-field is-stmt ast)
+             ast
+             #f)]
 
 	[(is-a? ast Send%)
 	 (set! entry 1)
-	 (send (get-field data ast) accept this)]
+	 (send (get-field data ast) accept this)
+         ast]
 
 	[(is-a? ast Recv%)
 	 #f]
@@ -307,7 +312,8 @@
 	 (define rhs-known (send rhs accept this))
 
 	 (when (and lhs-known (not rhs-known))
-               (set-val-known! (lookup env lhs) #f))]
+               (set-val-known! (lookup env lhs) #f))
+         ast]
 
 	[(is-a? ast Return%)
 	 (define pack (lookup-name env "#return"))
@@ -319,36 +325,118 @@
 
          (set! stmt-level #f)
 	 (send (get-field val ast) accept this)
+         ast
 	 ]
         
         [(is-a? ast If%)
          ;(pretty-display "LINKER: If")
+	 (define exp (get-field condition ast))
+	 (define t (get-field true-block ast))
+	 (define f (get-field false-block ast))
+	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
+
+         ;; modify structure of if
+         (define new-if
+	   (cond
+	    [(binop-equal? exp "!=")
+	     (new If!=0% [condition (minus (get-e1 exp) (get-e2 exp))] 
+		  [true-block t]
+		  [false-block f])]
+	    
+	    [(binop-equal? exp "==")
+	     (new If!=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [true-block (if f f (new Block% [stmts (list)]))]
+		  [false-block t])]
+	    
+	    [(binop-equal? exp "<")
+	     (new If<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [true-block t]
+		  [false-block f])]
+	    
+	    [(binop-equal? exp ">")
+	     (new If<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
+		  [true-block t]
+		  [false-block f])]
+	    
+	    [(binop-equal? exp ">=")
+	     (new If<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [true-block (if f f (new Block% [stmts (list)]))]
+		  [false-block t])]
+	    
+	    [(binop-equal? exp "<=")
+	     (new If<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
+		  [true-block (if f f (new Block% [stmts (list)]))]
+		  [false-block t])]
+	    
+	    [else
+	     ast]))
+
          (set! entry 1)
          (set! stmt-level #f)
-         (send (get-field condition ast) accept this)
+         (send (get-field condition new-if) accept this)
 
 	 (push-scope)
-	 (send (get-field true-block ast) accept this)
+	 (send t accept this)
 	 (pop-scope)
 
 	 (when (get-field false-block ast)
 	       (push-scope)
-	       (send (get-field false-block ast) accept this)
+	       (send f accept this)
 	       (pop-scope))
+
+         new-if
          ]
         
         [(is-a? ast While%)
          ;(pretty-display "LINKER: While")
+	 (define exp (get-field condition ast))
+	 (define t (get-field body ast))
+	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
+
+         (define new-while
+	   (cond
+	    [(binop-equal? exp "!=")
+	     (new While!=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [body t])]
+	    
+	    [(binop-equal? exp "==")
+	     (new While==0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [body t])]
+	    
+	    [(binop-equal? exp "<")
+	     (new While<0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [body t])]
+	    
+	    [(binop-equal? exp ">")
+	     (new While<0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
+		  [body t])]
+	    
+	    [(binop-equal? exp ">=")
+	     (new While>=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
+		  [body t])]
+	    
+	    [(binop-equal? exp "<=")
+	     (new While>=0% [condition (minus (get-e2 exp) (get-e1 exp) place)] 
+		  [body t])]
+	    
+	    [else
+	     ast]))
+
          (set! entry 1)
          (set! stmt-level #f)
-         (send (get-field condition ast) accept this)
+         (send (get-field condition new-while) accept this)
 	 (push-scope)
-         (send (get-field body ast) accept this)
+         (send t accept this)
 	 (pop-scope)
+
+         new-while
          ]
         
         [(is-a? ast For%)
          ;(pretty-display "LINKER: For")
+         (when (<= (get-field to ast) (get-field from ast))
+               (raise "useless For% at line ~a" (send ast get-line)))
+
 	 (push-scope)
 	 (declare env (get-field name (get-field iter ast)) (val "int" 1 #t))
          (send (get-field body ast) accept this)
@@ -360,6 +448,7 @@
          ;;     a[i] = ..
          ;;   } 
          ;; }
+         ast
          ]
         
         [(is-a? ast Program%)
@@ -383,12 +472,14 @@
         
         [(is-a? ast Block%)
          ;(pretty-display "LINKER: Block")
-         (for ([stmt (get-field stmts ast)])
-	      (set! entry #f)
-              (set! stmt-level #t)
-	      (send stmt accept this))
+         (set-field! stmts ast
+                     (map (lambda (stmt)
+                            (set! entry #f)
+                            (set! stmt-level #t)
+                            (send stmt accept this))
+                          (get-field stmts ast)))
+         ast
          ]
-        
         
         [(is-a? ast FuncDecl%)
 	 (push-scope)

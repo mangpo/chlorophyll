@@ -62,12 +62,18 @@
 
        [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
        [(equal? op "+") (list (gen-block "+" 2 1))]
-       [(equal? op ">>") (list (gen-block "dup" "dup" "or" "-" "+" 1 1) 
-			       (forloop (gen-block) (list (gen-block "2/" 1 1)) #f #f #f))] 
-       ;; x-1 for 2/ unext
-       [(equal? op "<<") (list (gen-block "dup" "dup" "or" "-" "+" 1 1) 
-			       (forloop (gen-block) (list (gen-block "2*" 1 1)) #f #f #f))] 
-       ;; x-1 for 2* unext
+       [(equal? op ">>") ;; x-1 for 2/ unext
+        (list (ift (list (gen-block "-1" "+" 1 1) 
+                         (forloop (gen-block) (list (gen-block "2/" 1 1)) #f #f #f)
+                         (gen-block "dup" 1 2)))
+              (gen-block "drop" 1 0))]
+
+       [(equal? op "<<") ;; x-1 for 2* unext
+        (list (ift (list (gen-block "-1" "+" 1 1) 
+                         (forloop (gen-block) (list (gen-block "2*" 1 1)) #f #f #f)
+                         (gen-block "dup" 1 2)))
+              (gen-block "drop" 1 0))]
+
        [(equal? op "&") (list (gen-block "and" 2 1))]
        [(equal? op "^") (list (gen-block "or" 2 1))]
        [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]
