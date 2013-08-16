@@ -1,0 +1,31 @@
+
+int@1->int@1 filter Halve() {
+  work blocking {
+    out(in() >> 1);
+  }
+}
+
+int@2->int@2 filter RunningSum() {
+  int@2 x;
+  x = 0;
+  work blocking {
+    x = x + in();
+    out(x);
+  }
+}
+
+int@3->int@3 filter Duplicate() {
+  work blocking {
+    int@3 x;
+    x = in();
+    out(x);
+    out(x);
+  }
+}
+
+int->int pipeline Main() {
+  add Halve();
+  add RunningSum();
+  add Duplicate();
+}
+

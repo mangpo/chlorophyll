@@ -25,9 +25,10 @@
 
 ;(test "md5-full" "md5" 1400)
 
-(test "add_stream" "300" 512)
+;(test "add_stream" "300" 512)
 ;(test "running-sum-stream" "300" 512)
 ;(test "two-streams" "300" 512)
+(test "three-streams" "300" 512)
 ;(test "multiply-by-power-stream" "300" 512)
 
 (for ([res (reverse result)])
