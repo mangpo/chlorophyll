@@ -1,0 +1,40 @@
+
+int@1->int@1 filter AddFive() {
+  work blocking {
+    out(in() +@1 5);
+  }
+}
+
+int@2->int@2 filter Double() {
+  work blocking {
+    out(in() *@2 2);
+  }
+}
+
+int->int pipeline AddFiveAndDouble() {
+  add AddFive();
+  add Double();
+}
+
+int@3->int@3 filter SubtractSeven() {
+  work blocking {
+    out(in() -@3 7);
+  }
+}
+
+int@4->int@4 filter MultiplyByEleven() {
+  work blocking {
+    out(in() *@4 11);
+  }
+}
+
+int->int pipeline SubtractSevenAndMultiplyByEleven() {
+  add SubtractSeven();
+  add MultiplyByEleven();
+}
+
+int->int pipeline Main() {
+  add AddFiveAndDouble();
+  add SubtractSevenAndMultiplyByEleven();
+}
+
