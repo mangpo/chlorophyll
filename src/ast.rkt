@@ -1014,7 +1014,7 @@
 (define PipelineDecl%
   (class StaticCallableDecl%
     (super-new)
-    (init-field input output [input-src #f] [output-dst #f])
+    (init-field input output)
     (inherit-field name args body body-placeset)
     (inherit print-body-placeset)
     

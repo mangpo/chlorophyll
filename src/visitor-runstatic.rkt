@@ -151,6 +151,15 @@
         (define filters-funcs (send main accept this))
         (define filters (car filters-funcs))
         (define funcs (cdr filters-funcs))
+
+        ;; connect global I/O to first and last filters
+        (set-field! output-dst (last filters) (lookup-name env "__globaloutputdst__"))
+        (set-field! input-src (lookup-name env "__globaloutputdst__") (last filters))
+        (define stdout (get-stdout-push (lookup-name env "__globaloutputdst__")))
+        (set-field! stdout (last filters) stdout)
+        (define stdin (get-stdin-pull (lookup-name env "__globalinputsrc__")))
+        (set-field! stdin (first filters) stdin)
+        (set! funcs (append funcs (list stdin stdout)))
         
         ;; remove abstract filter and static declarations from program
         (set! stmts
@@ -186,16 +195,8 @@
         (define filters (car filters-funcs))
         (define funcs (cdr filters-funcs))
 
-        (set-field! output-dst (last filters) (lookup-name env "__globaloutputdst__"))
-        (set-field! input-src (lookup-name env "__globaloutputdst__") (last filters))
-
-        (define stdout (get-stdout-push (lookup-name env "__globaloutputdst__")))
-        (set-field! stdout (last filters) stdout)
-        (define stdin (get-stdin-pull (lookup-name env "__globalinputsrc__")))
-        (set-field! stdin (first filters) stdin)
-
         (pop-scope)
-        (cons filters (append funcs (list stdout stdin)))]
+        (cons filters funcs)]
        
        [(is-a? ast Add%)
         (pretty-display (format "RUNSTATIC: Add ~a" ast))
@@ -204,33 +205,39 @@
         (define arg-values (map (λ (exp) (send exp accept this))
                                 (get-field args call)))
         
-        (define filter
-          (cond
-            [(is-a? decl AbstractFilterDecl%)
-             (new ConcreteFilterDecl%
-                  [abstract decl]
-                  [arg-values arg-values]
-                  ;;
-                  [name (get-field name decl)]
-                  [input (get-field input decl)]
-                  [output (get-field output decl)]
-                  [args (get-field args decl)]
-                  [body (get-field body decl)]
-                  )]
-            [(is-a? decl FuncDecl%)
-             (raise (format "visitor-runstatic: tried to add function as a stream in ~a" ast))]
-            [else (raise (format "visitor-runstatic: unimplemented add call to ~a" decl))]))
+        
+        (cond
+          [(is-a? decl AbstractFilterDecl%)
+           (define filter (new ConcreteFilterDecl%
+                               [abstract decl]
+                               [arg-values arg-values]
+                               ;;
+                               [name (get-field name decl)]
+                               [input (get-field input decl)]
+                               [output (get-field output decl)]
+                               [args (get-field args decl)]
+                               [body (get-field body decl)]
+                               ))
 
-        (set-field! output-dst (lookup-name env "__previous__") filter)
-        (define stdout (get-stdout-make-available (lookup-name env "__previous__")))
-        (set-field! stdout (lookup-name env "__previous__") stdout)
+            (set-field! output-dst (lookup-name env "__previous__") filter)
+            (define stdout (get-stdout-make-available (lookup-name env "__previous__")))
+            (set-field! stdout (lookup-name env "__previous__") stdout)
 
-        (set-field! input-src filter (lookup-name env "__previous__"))
-        (define stdin (get-stdin-made-available filter))
-        (set-field! stdin filter stdin)
+            (set-field! input-src filter (lookup-name env "__previous__"))
+            (define stdin (get-stdin-made-available filter))
+            (set-field! stdin filter stdin)
 
-        (update-name env "__previous__" filter)
-        (cons (list filter) (list stdin stdout))]
+            (update-name env "__previous__" filter)
+            (cons (list filter) (list stdin stdout))
+           ]
+          [(is-a? decl PipelineDecl%)
+           (send decl accept this)]
+          [(is-a? decl FuncDecl%)
+           (raise (format "visitor-runstatic: tried to add function as a stream in ~a" ast))]
+          [else
+           (raise (format "visitor-runstatic: unimplemented add call to ~a" decl))])
+       ]
+
        
        [(is-a? ast FuncDecl%)
         (raise "visitor-runstatic: function declarations not supported yet. TODO!")]
