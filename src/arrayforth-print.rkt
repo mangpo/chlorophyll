@@ -106,6 +106,8 @@
 
     (print (funcdecl-body x) "  ")
 
+    (when (equal? (funcdecl-name x) "main")
+	  (display "warm "))
     (when original (display "= $0 "))
     (display "; ")
     (when original (display "| cr"))
