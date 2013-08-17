@@ -708,18 +708,7 @@
 	    (send val accept this))
 	(comminfo 0 (set))]
 
-       [(is-a? ast Program%)
-
-	(define ret #f)
-	(for ([decl (get-field stmts ast)])
-	     (let ([decl-ret (send decl accept this)])
-	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
-		     (set! ret decl-ret))))
-        ;; Return main declaration
-	ret]
-
        [(is-a? ast Block%) 
-        
         (when debug
             (pretty-display ">> Block"))
         (let ([ret
@@ -773,14 +762,12 @@
                                 (comminfo-placeset input-ret))
                      (comminfo-placeset output-ret)))
         (set-field! body-placeset ast body-placeset)
-        
+
         (let ([ret (comminfo (+ (+ (+ (comminfo-msgs args-ret)
                                       (comminfo-msgs body-ret))
                                    (comminfo-msgs input-ret))
                                 (comminfo-msgs output-ret))
                              body-placeset)])
-          ;; declare function
-          (declare env (get-field name ast) ret)
           ret)]
        
        [else (raise (format "visitor-interpreter: unimplemented for ~a" ast))]))

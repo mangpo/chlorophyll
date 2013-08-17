@@ -1,12 +1,12 @@
 int@1->int@1 filter Double() {
   work blocking {
-    out(2 *@1 in());
+    out(2 * in());
   }
 }
 
 int@2->int@2 filter PlusThree() {
   work blocking {
-    out(3 +@2 in());
+    out(3 + in());
   }
 }
 

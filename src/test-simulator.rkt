@@ -29,7 +29,8 @@
 ;(test "running-sum-stream" "300" 512)
 ;(test "two-streams" "300" 512)
 ;(test "three-streams" "300" 512)
-(test "three-pipelines" "300" 512)
+;(test "three-pipelines" "300" 512)
+(test "three-large-filters" "300" 512)
 ;(test "multiply-by-power-stream" "300" 512)
 
 (for ([res (reverse result)])

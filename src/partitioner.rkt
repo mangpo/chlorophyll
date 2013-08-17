@@ -255,15 +255,8 @@
     (outter-loop)
     )
     
-  (for ([decl (get-field stmts my-ast)])
-    (if 
-     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
-     (is-a? decl ConcreteFilterDecl%)
-     ;(and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
-        (begin
-          (solve-function decl)
-          (when verbose (pretty-display "------------------------------------------------")))
-        (send decl accept interpreter)))
+  (solve-function my-ast)
+  (when verbose (pretty-display "------------------------------------------------"))
 
   (with-output-to-file #:exists 'truncate (format "~a/~a.part" outdir name)
     (lambda () (send my-ast accept concise-printer)))
