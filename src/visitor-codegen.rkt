@@ -252,7 +252,12 @@
        [(is-a? ast FuncCall%)
         (when debug 
               (pretty-display (format "\nCODEGEN: FuncCall ~a" (send ast to-string))))
-	(list (funccall (get-field name ast)))]
+        (if (car const-a)
+            (list (gen-block-r "a" "push" 0 0)
+                  (funccall (get-field name ast))
+                  (gen-block "pop" "a!" 0 0))
+            (list (funccall (get-field name ast))))
+        ]
 
        [(is-a? ast Assign%)
 	(define lhs (get-field lhs ast))

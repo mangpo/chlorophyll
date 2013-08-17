@@ -1,5 +1,5 @@
 TODO
-- md5: still buggy
+- md5: set /p and compare hash
 - redundant temp for funccall
 - optimize md5, run optimized md5 on IDE
 - generate node 900 & 902

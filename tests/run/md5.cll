@@ -52,7 +52,6 @@ int::2@(10, 25) cadd(int::2@(24,25) x, int::2@(24,25) y) {
 
 int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(14,15) b, int::2@(20,21) f, int::2@(2,3) k, int::2@(0,28) m, int@6 r) {
   return csum(b, leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r));
-  //return leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r);
 }
 
 void main() {
@@ -80,7 +79,7 @@ void main() {
     d = hash[3];
     g = 0;
     inc = 1;
-    for(i from 0 to 1) { 
+    for(i from 0 to 2) { 
       f1 = (b &@(30,31) c) |@(30,31) ((b ^@(30,31) 65535) &@(30,31) d);
       temp = sumrotate(a,b,f1,k[i],message[g],r[i]);
 	    a = d;
@@ -95,7 +94,7 @@ void main() {
   hash[2] = c;
   hash[3] = d;
 
-/*
+
   out(hash::0[0]);
   out(hash::1[0]);
   out(hash::0[1]);
@@ -105,6 +104,6 @@ void main() {
   out(hash::0[3]);
   out(hash::1[3]);
   out(g::0);
-  out(g::1);*/
+  out(g::1);
 }
 

@@ -10,12 +10,12 @@
 (define (out-space out cnstr)
   (define result
     (if (= out 0)
-	(constraint s t)
-	(constraint-data out s t)))
+	(constraint s t r)
+	(constraint-data out s t r)))
   (struct-copy progstate result 
                [memory (restrict-mem cnstr)] 
                [a (restrict-a cnstr)]
-               [r (restrict-r cnstr)]
+               ;[r (restrict-r cnstr)]
                ))
 
 (define index-map #f)
