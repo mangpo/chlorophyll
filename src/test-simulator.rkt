@@ -29,8 +29,8 @@
 ;(test "cluster" "null" 256)
 
 ;(test "md5-init" "null" 1400 #:w 7 #:h 6)
-;(test "md5" "null" 600 #:w 10 #:h 5)
-(test "debug" "null" 600 #:w 10 #:h 5)
+(test "md5" "null" 600 #:w 10 #:h 5)
+;(test "test" "null" 256 #:w 2 #:h 2)
 
 (for ([res (reverse result)])
   (pretty-display res))

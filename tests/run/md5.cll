@@ -89,8 +89,8 @@ void main() {
   hash[1] = b;
   hash[2] = c;
   hash[3] = d;
-/*
-  out(hash::0[0]);
+
+  /*out(hash::0[0]);
   out(hash::1[0]);
   out(hash::0[1]);
   out(hash::1[1]);

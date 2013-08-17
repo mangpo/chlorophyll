@@ -27,9 +27,7 @@
 ;(compile-and-optimize "../tests/run/matrixmult2-noio.cll" "matrix" 
 ;                      220 "null" #:w 5 #:h 4 #:opt #f)
 
-;(compile-and-optimize "../tests/run/md5.cll" "md5opt" 
-;                      600 "null" #:w 10 #:h 5 #:opt #f)
-(compile-and-optimize "../tests/run/debug.cll" "debug" 
+(compile-and-optimize "../tests/run/md5.cll" "md5opt" 
                       600 "null" #:w 10 #:h 5 #:opt #f)
 
 ;(compile-and-optimize "../tests/run/md5-init.cll" "md5init" 
