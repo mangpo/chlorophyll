@@ -1,19 +1,12 @@
-int::2@(28, 29) csum(int::2@(28, 29) x, int::2@(28, 29) y) {
-  int::2@(28, 29) z;
-  z::0 = x::0 +@28 y::0;
-  z::1 = x::1 +@29 y::1 +@29 (z::0 >>@28 16);
-  z::0 = z::0 &@28 65535;
-  z::1 = z::1 &@29 65535;
-  return z;
+int@0 const() {
+  return 1000;
+}
+
+int@1 pass(int@0 x) {
+  return x;
 }
 
 void main() {
-  int::2 x, y, res;
-  x::0 = 43913;
-  x::1 = 21622;
-  y::0 = 61389;
-  y::1 = 4146;
-  res = csum(x, y);
-  //out(res::0);
-  //out(res::1);
+  int@2 output;
+  output = pass(const());
 }

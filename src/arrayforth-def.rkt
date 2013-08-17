@@ -498,6 +498,7 @@
 (define (define-repeating-codes programs w h [min-len 6] [occur 2])
   (define res (make-vector (* w h)))
   (for ([i (in-range (* w h))])
+       (pretty-display (format "define-repeating ~a" i))
        (vector-set! res i (define-repeating-code (vector-ref programs i) min-len occur)))
   res)
 

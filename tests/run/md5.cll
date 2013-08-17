@@ -16,7 +16,6 @@ int::2@(28, 29) leftrotate(int::2@(17,17) x, int@17 r) {
   }
   x2 = x;
   x3 = x;
-  //out(r);
   r2 = r;
   r3 = r;
   dummy::0 = ((x3::1 >>@35 (16 -@35 r3)) |@34 (x2::0 <<@34 r2)) &@34 65535;
@@ -28,10 +27,16 @@ int::2@(28, 29) leftrotate(int::2@(17,17) x, int@17 r) {
 
 int::2@(28, 29) csum(int::2@(28, 29) x, int::2@(28, 29) y) {
   int::2@(28, 29) z;
+  /*out(x::0);
+  out(x::1);
+  out(y::0);
+  out(y::1);*/
   z::0 = x::0 +@28 y::0;
   z::1 = x::1 +@29 y::1 +@29 (z::0 >>@28 16);
   z::0 = z::0 &@28 65535;
   z::1 = z::1 &@29 65535;
+  //out(z::0);
+  //out(z::1);
   return z;
 }
 
@@ -46,8 +51,8 @@ int::2@(10, 25) cadd(int::2@(24,25) x, int::2@(24,25) y) {
 }*/
 
 int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(14,15) b, int::2@(20,21) f, int::2@(2,3) k, int::2@(0,28) m, int@6 r) {
-  //return csum(b, leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r));
-  return leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r);
+  return csum(b, leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r));
+  //return leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r);
 }
 
 void main() {
@@ -90,7 +95,8 @@ void main() {
   hash[2] = c;
   hash[3] = d;
 
-  /*out(hash::0[0]);
+/*
+  out(hash::0[0]);
   out(hash::1[0]);
   out(hash::0[1]);
   out(hash::1[1]);

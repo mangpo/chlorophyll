@@ -47,9 +47,6 @@
       (syntax-rules ()
 	[(gen-block-org (a ...) (b ...) in out)
 	 (block (list a ...) in out (restrict #t (car const-a) #f #f) (list b ...))]))
-    
-    (define (is-temp? name)
-      (regexp-match #rx"_temp" name))
       
     (define (gen-op op)
       (cond
@@ -246,7 +243,7 @@
               (pretty-display (format "\nCODEGEN: Send ~a ~a" (get-field port ast) data)))
 	(define data-ret (send data accept this))
         (define temp-ret
-          (if (is-a? data Temp%)
+          (if (and (is-a? data Temp%) (equal? (get-field name data) "_cond"))
               (list (gen-block "dup" 1 2))
               (list (gen-block))))
 	(define send-ret (list (gen-block (gen-port (get-field port ast)) "b!" "!b" 1 0)))

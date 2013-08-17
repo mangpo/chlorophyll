@@ -108,8 +108,16 @@
 		   (raise (format "@CORE ~a: ~a.\nThere is more than one function call left in the stack!" c (send e to-srting))))
 	       (set! count (add1 count))]
 
-	      [(and (is-a? e Var%) (regexp-match #rx"_tmp.*" (get-field name e)))
-	       void]))))
+	      [(and (is-a? e Var%) (regexp-match #rx"_cond.*" (get-field name e)))
+	       (if (= count 0)
+                   (set! count (add1 count))
+                   (raise (format "@CORE ~a.\nThere is more than one _cond left in the stack!" c)))
+               ]
+
+              [else
+               (raise (format "@CORE ~a: ~a.\nThere is something left in the stack!" 
+                              c (send e to-srting)))]
+              ))))
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
@@ -161,13 +169,13 @@
                   [x (cadr path)])
               (unless (set-member? visit x)
                 (set! visit (set-add visit x))
-                (push-workspace from (gen-send from x (new Temp% [name "_tmp"] [place-type from])))
+                (push-workspace from (gen-send from x (new Temp% [name "_cond"] [place-type from])))
                 (push-workspace x (new Assign% 
                                    ;; special variable
-                                   [lhs (new Temp% [name "_tmp"] [place-type x] 
+                                   [lhs (new Temp% [name "_cond"] [place-type x] 
                                              [type "int"])]
                                    [rhs (gen-recv x from)]))
-                (push-stack x (new Temp% [name "_tmp"] [place-type x] [type "int"]))))
+                (push-stack x (new Temp% [name "_cond"] [place-type x] [type "int"]))))
             (when (> (length path) 2)
                     (gen-condition-path (cdr path))))
 
@@ -176,12 +184,12 @@
 		;(pretty-display `(gen-comm-condition:push-workspace))
                 (push-workspace place (new Assign% 
                                            ;; special variable
-                                           [lhs (new Temp% [name "_tmp"] 
+                                           [lhs (new Temp% [name "_cond"] 
                                                      [place-type place] 
                                                      [type "int"])]
                                            [rhs (pop-stack place)]))
 		;(pretty-display `(gen-comm-condition:push-stack))
-                (push-stack place (new Temp% [name "_tmp"] [place-type place] [type "int"]))
+                (push-stack place (new Temp% [name "_cond"] [place-type place] [type "int"]))
                 (for ([p path])
                      (gen-condition-path p)))
         ))
@@ -290,8 +298,7 @@
 	(define old-name (get-field name ast))
 	;; clean up residual sub
         (set-field! sub ast #f)
-	;(when (or (regexp-match #rx"_temp" old-name) (regexp-match #rx"#return" old-name))
-        (when (get-field compact ast)
+	(when (get-field compact ast)
 	      (let ([full-name (regexp-match #rx"(.+)::(.+)" old-name)])
 		(when full-name
 		      ;; "a::0" -> ("a::0" "a" "0")

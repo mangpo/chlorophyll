@@ -105,7 +105,6 @@
 	       ;; this renaming is only relavent for sequential version
 	       (set! sub #f)	
                (when (get-field compact ast)
-                     ;; (or (regexp-match #rx"_temp" name) (regexp-match #rx"#return" name))
                      (let ([full-name (regexp-match #rx"(.+)::(.+)" name)])
                        (when full-name
                              ;; "a::0" -> ("a::0" "a" "0")
@@ -113,17 +112,6 @@
                                     [expand (string->number (caddr full-name))])
                                (set! name actual-name)
                                (set! sub expand))))))
-
-	 ;; (when (and (equal? name "#return")
-	 ;; 	    sub (= (add1 sub) expand))
-	 ;;       (set! print-return #t))
-
-	 ;; (if (is-return? ast)
-	 ;;     (display "return ")
-	 ;;     (begin
-	 ;;       (display (format "~a_~a" (print-name name) core))
-	 ;;       (when sub
-	 ;; 	     (display (format ".~a" (vector-ref print-sub sub))))))
 
 	 (display (format "~a_~a" (print-name name) core))
 	 (when sub
@@ -312,7 +300,7 @@
 
          ;; Declare temps
          (display indent)
-         (display (format "int _tmp_~a" core))
+         (display (format "int _cond_~a" core))
          (for ([temp (get-field temps ast)])
               (display (format ", ~a_~a" temp core)))
          (pretty-display ";")

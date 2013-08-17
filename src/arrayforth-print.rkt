@@ -143,8 +143,8 @@
     ]
 
    [(vector? x)
-    (define size (sub1 (vector-length x)))
-    (for ([i (in-range size)])
+    ;(define size (sub1 (vector-length x)))
+    (for ([i (* w h)])
          (set! id i)
 	 (print (vector-ref x i)))
     ]

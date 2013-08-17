@@ -1,20 +1,30 @@
+int@3 one() {
+  return 1;
+}
+
+int@3 two() {
+  return 2;
+}
+
+int@3 three() {
+  return 3;
+}
+
 void main() {
   int@0 x;
-  int y;
   int z;
   int j;
   
-  x = in();
-  y = in();
-  z = in();
-  j = in();
+  x = one();
+  z = three();
+  j = 4;
   
   if(j == 0) {
-    x = x +@1 y;
+    x = x +@1 two();
   } else {
-    z = y +@2 z;
+    z = two() +@2 z;
   }
 
-  out(x);
-  out(z);
+  //out(x);
+  //out(z);
 }

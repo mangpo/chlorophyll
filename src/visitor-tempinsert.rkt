@@ -9,7 +9,6 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field [count 0] [new-decls (list)])
-    (define condition #f)
     (define current-p #f)
 
     (struct entry (temp type expand))
@@ -104,11 +103,6 @@
 	 (define my-p current-p)
 	 (define place (get-field place (get-field op ast)))
 
-         ;; (define my-cond (and condition
-         ;;                      (member (get-field op (get-field op ast)) 
-         ;;                              (list "<" "<=" ">=" ">" "==" "!="))))
-         (set! condition #f)
-
 	 (set! current-p place)
          (define e1-ret (send (get-field e1 ast) accept this))
 	 (set! current-p place)
@@ -127,19 +121,6 @@
 	   (set! current-p (get-field place param)) ;; check
 	   (pretty-display (format "  param:~a place:~a" (get-field var-list param) current-p))
 	   (send arg accept this))
-	   ;; (define x (send arg accept this))
-	   ;; (define stmt (car x))
-	   ;; (define exp (cdr x))
-	   ;; (if (and (is-a? exp Var%) (regexp-match #rx"_temp" (get-field name exp)))
-	   ;;     x
-	   ;;     (let* ([new-temp (get-temp
-	   ;; 			 (get-field type param)
-	   ;; 			 (get-field expect param)
-	   ;; 			 (get-field expect param)
-	   ;; 			 (get-field place param) #f)]
-	   ;; 	      [arg-temp (send new-temp clone)])
-	   ;; 	 (cons (list stmt (new Assign% [lhs new-temp] [rhs exp] [nocomm #f]))
-	   ;; 	       arg-temp))))
 
 	 (define my-p current-p)
 	 (define params (get-field stmts (get-field args (get-field signature ast))))
@@ -214,7 +195,6 @@
         
         [(is-a? ast If%)
 	 (set! current-p #f)
-         (set! condition #t)
          (define cond-ret (send (get-field condition ast) accept this))
          (send (get-field true-block ast) accept this)
          (let ([false-block (get-field false-block ast)])
@@ -227,7 +207,6 @@
         
         [(is-a? ast While%)
 	 (set! current-p #f)
-         (set! condition #t)
          (define cond-ret (send (get-field condition ast) accept this))
          (send (get-field body ast) accept this)
          
