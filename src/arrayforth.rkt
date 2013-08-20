@@ -143,16 +143,16 @@
            (set-forloop-init! a-for
 			      (cond
 			       [(equal? addr #f)
-				(block (list bound-str) 0 1 (restrict #t #t #f) (list bound-str))]
+				(block (list bound-str) 0 1 (restrict #t #t #f #t) (list bound-str))]
 
 			       [(pair? addr)
 				(block (list (car addr) "a!" bound-str)
-				       0 1 (restrict #t #t #f)
+				       0 1 (restrict #t #t #f #t)
 				       (list (car addr-org) "a!" bound-str))]
 
 			       [else
 				(block (list (number->string from) addr "b!" "!b" bound-str)
-				       0 1 (restrict #t #t #f)
+				       0 1 (restrict #t #t #f #t)
 				       (list (number->string from) addr-org "b!" "!b" bound-str))]))
            #t)))
   

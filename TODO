@@ -1,10 +1,10 @@
 TODO
-- md5: set /p and compare hash
+- run optimized md5
+  = make it fits
+  = remove iter mem for some loops
+  = define small repeating sequences
 - redundant temp for funccall
-- optimize md5, run optimized md5 on IDE
-- generate node 900 & 902
 - merge block after define-repeating-seq
-- md5: 998, 1002, 1006 + repeat more
 - connect to rohin's interpreter
   = left, right, up, down
   = 0 , 0 , 0 ,
