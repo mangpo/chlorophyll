@@ -134,15 +134,11 @@
   (define virtual-code (generate-code program 0 w h #t))
   (codegen-print virtual-code)
 
-  (pretty-display "------------------ OPT REDUCED CODE ----------------------")
-  (define virtual-opt (superoptimize virtual-code "name" w h))
-  (codegen-print virtual-opt)
-
   (pretty-display "------------------ OPT CODE ----------------------")
-  (define real-opt (renameindex virtual-opt))
-  (codegen-print real-opt)
+  (define opt (superoptimize virtual-code "name" w h))
+  (codegen-print opt)
   
-  (aforth-syntax-print real-opt w h)
+  (aforth-syntax-print opt w h)
   )
   
 ;; compile HLP to optimized many-core machine code

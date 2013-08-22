@@ -30,18 +30,10 @@ int::2@(28, 29) leftrotate(int::2@(17,17) x, int@17 r) {
 
 int::2@(28, 29) csum(int::2@(28, 29) x, int::2@(28, 29) y) {
   int::2@(28, 29) z;
-  out(x::0);
-  out(x::1);
-  out(y::0);
-  out(y::1);
   z::0 = x::0 +@28 y::0;
   z::1 = x::1 +@29 y::1 +@29 ((z::0 >>@28 16) &@29 3);
-  out(z::0);
-  out(z::1);
   z::0 = z::0 &@28 65535;
   z::1 = z::1 &@29 65535;
-  out(z::0);
-  out(z::1);
   return z;
 }
 
@@ -79,7 +71,6 @@ void main() {
   int::2@(4,5) inc;
   
   for(t from 0 to 16) {
-    out(t);
     a = hash[0];
     b = hash[1];
     c = hash[2];
@@ -87,7 +78,6 @@ void main() {
     g = 0;
     inc = 1;
     for(i from 0 to 16) { 
-      out(i);
       f1 = (b &@(30,31) c) |@(30,31) ((b ^@(30,31) 65535) &@(30,31) d);
       //out(f1::0);
       //out(f1::1);
@@ -100,14 +90,6 @@ void main() {
       //out(b::1);
       g = (g +@(4,5) inc) &@(4,5) 15;
     }
-    out(a::0);
-    out(a::1);
-    out(b::0);
-    out(b::1);
-    out(c::0);
-    out(c::1);
-    out(d::0);
-    out(d::1);
     
     g = 1;
     inc = 5;
@@ -120,14 +102,6 @@ void main() {
 	    b = temp;
       g = (g +@(4,5) inc) &@(4,5) 15;
     }
-    out(a::0);
-    out(a::1);
-    out(b::0);
-    out(b::1);
-    out(c::0);
-    out(c::1);
-    out(d::0);
-    out(d::1);
     g = 5;
     inc = 3;
     for(i from 32 to 48) { 
@@ -139,14 +113,6 @@ void main() {
 	    b = temp;
       g = (g +@(4,5) inc) &@(4,5) 15;
     }
-    out(a::0);
-    out(a::1);
-    out(b::0);
-    out(b::1);
-    out(c::0);
-    out(c::1);
-    out(d::0);
-    out(d::1);
     g = 0;
     inc = 7;
     for(i from 48 to 64) { 
@@ -158,24 +124,16 @@ void main() {
 	    b = temp;
       g = (g +@(4,5) inc) &@(4,5) 15;
     }
-    out(a::0);
-    out(a::1);
-    out(b::0);
-    out(b::1);
-    out(c::0);
-    out(c::1);
-    out(d::0);
-    out(d::1);
     hash[0] = cadd(hash[0],a);
     hash[1] = cadd(hash[1],b);
     hash[2] = cadd(hash[2],c);
     hash[3] = cadd(hash[3],d);
   } 
 
-
+/*
   for(i from 0 to 4) {
     out(hash::0[i]);
     out(hash::1[i]);
-  }
+  }*/
 }
 

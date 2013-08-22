@@ -28,7 +28,7 @@
 ;                      220 "null" #:w 5 #:h 4 #:opt #f)
 
 (compile-and-optimize "../tests/run/md5.cll" "md5opt" 
-                      600 "null" #:w 10 #:h 5 #:opt #f)
+                      600 "null" #:w 10 #:h 5 #:opt #t)
 
 ;(compile-and-optimize "../tests/run/md5-init.cll" "md5init" 
 ;                      600 "null" #:w 10 #:h 5 #:opt #t)

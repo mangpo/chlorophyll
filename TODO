@@ -1,10 +1,11 @@
 TODO
 - run optimized md5
-  = make it fits
-  = remove iter mem for some loops
-  = define small repeating sequences
+  * print more concisely
+  * remove iter mem for some loops
+  * merge block after define-repeating-seq
+  * 1006 = define small repeating sequences (before optimize) or reduce bit or increase synthesis time/ is 40 okay?
+  * core 406, 
 - redundant temp for funccall
-- merge block after define-repeating-seq
 - connect to rohin's interpreter
   = left, right, up, down
   = 0 , 0 , 0 ,
