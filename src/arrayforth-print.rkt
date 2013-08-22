@@ -59,9 +59,9 @@
    
    [(forloop? x)
     (print (forloop-init x) indent)
-    (when original (display "| cr"))
-    (newline)
-    (display indent)
+    ;; (when original (display "| cr"))
+    ;; (newline)
+    ;; (display indent)
     (display "for ")
     (print (forloop-body x) (inc indent))
     (display "next ")]

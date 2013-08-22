@@ -427,8 +427,9 @@
     (insert-definition (car res) (cdr res) linklist-program new-name))
   
   (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
-  (define subseqs (sort-subsequence seqs min-len max-len))
-  ;(pretty-display seqs)
+  (define subseqs (sort-subsequence seqs min-len max-len 
+                                    (add1 (quotient (* 4 occur) (sub1 occur)))))
+  ;; (pretty-display subseqs)
   
   (for ([subseq subseqs])
        (let* ([str (string-join subseq)]
@@ -479,14 +480,19 @@
   (set-linklist-prev! (linklist-next new-start) (linklist-prev start))
 )
 
-(define (define-repeating-code program [min-len 6] [occur 2])
+(define (define-repeating-code program)
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program list->linklist)])
         (pretty-display ">>> EXTRACT-STRUCTURES")
 	(extract-all-structure linklist-program)
         (pretty-display ">>> EXTRACT-SEQUENCES")
-	(extract-all-sequence linklist-program min-len occur)
+	(extract-all-sequence linklist-program 6 2)
+
+        ;; TODO: if the code doesn't fit in, do this
+	;(extract-all-sequence linklist-program 3 4)
+
 	(reorder-definition linklist-program)
+        (send (new block-merger%) visit linklist-program)
         
         (define result (aforth-linklist linklist-program linklist->list))
         (aforth-struct-print result)
@@ -495,10 +501,10 @@
       program)
 )
 
-(define (define-repeating-codes programs w h [min-len 6] [occur 2])
+(define (define-repeating-codes programs w h)
   (define res (make-vector (* w h)))
   (for ([i (in-range (* w h))])
        (pretty-display (format "define-repeating ~a" i))
-       (vector-set! res i (define-repeating-code (vector-ref programs i) min-len occur)))
+       (vector-set! res i (define-repeating-code (vector-ref programs i))))
   res)
 

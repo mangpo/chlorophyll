@@ -270,6 +270,63 @@
        
        [else void]))))
 
+(define block-merger%
+  (class object%
+    (super-new)
+
+    (define/public (visit ast)
+	
+      (cond
+       [(linklist? ast)
+        (when (and (linklist-entry ast)
+                   (block? (linklist-entry ast))
+                   (linklist-entry (linklist-next ast))
+                   (block? (linklist-entry (linklist-next ast))))
+              (let* ([a-block (linklist-entry ast)]
+                     [b-linklist (linklist-next ast)]
+                     [b-block (linklist-entry b-linklist)]
+                     [a-body (block-body a-block)]
+                     [b-body (block-body b-block)]
+                     [a-list (if (string? a-body) 
+                                 (string-split a-body) a-body)]
+                     [b-list (if (string? b-body)
+                                 (string-split b-body) b-body)])
+                (when (<= (+ (length a-list) (length b-list)) block-limit)
+                      (let ([next (linklist-next b-linklist)])
+                        (merge-block a-block b-block)
+                        (set-linklist-next! ast next)
+                        (set-linklist-prev! next ast)))))
+
+        (send this visit (linklist-entry ast))
+        (send this visit (linklist-next ast))]
+
+       [(forloop? ast)
+        (send this visit (forloop-init ast))
+        (send this visit (forloop-body ast))]
+
+       [(ift? ast)
+	(send this visit (ift-t ast))]
+
+       [(iftf? ast)
+	(send this visit (iftf-t ast))
+	(send this visit (iftf-f ast))]
+
+       [(-ift? ast)
+	(send this visit (-ift-t ast))]
+
+       [(-iftf? ast)
+	(send this visit (-iftf-t ast))
+	(send this visit (-iftf-f ast))]
+
+       [(funcdecl? ast)
+	(send this visit (funcdecl-body ast))
+	]
+       
+       [(aforth? ast)
+	(send this visit (aforth-code ast))]
+
+       [else void]))))
+
 
 ;; Arg: set of sequences of instructions, 
 ;;      minimum length of output sequence of insturction
@@ -277,7 +334,20 @@
 ;; - that are subsequences of the given sequences
 ;; - whose length is >= min-len
 ;; - sorted by length
-(define (sort-subsequence seq-set min-len max-len)
+(define (sort-subsequence seq-set min-len max-len min-actual-len)
+  (pretty-display (format "MIN-ACTUAL-LEN ~a" min-actual-len))
+
+  (define (program-length program)
+    (define (occupy x)
+      (cond
+       [(member x (list "@+" "@b" "@" "!p" "!+" "!b" "!" "+*" "2*" "2/" "-" "+" "and" "or" "drop" "dup" "pop" "over" "a" "nop" "." "push" "b!" "a!"))
+        1]
+       [(or (string->number x) (member x (list "up" "down" "left" "right" "io")))
+        5]
+       [else 4]))
+
+    (foldl (lambda (x sum) (+ sum (occupy x))) 0 program))
+    
   (define filtered (filter (lambda (x) (>= (length x) min-len)) (set->list seq-set)))
   (define result (list))
 
@@ -286,4 +356,4 @@
 	 [i (in-range (add1 (- (length seq) len)))])
 	(set! result (cons (take (drop seq i) len) result)))
 
-  (reverse result))
+  (reverse (filter (lambda (x) (>= (program-length x) min-actual-len)) result)))

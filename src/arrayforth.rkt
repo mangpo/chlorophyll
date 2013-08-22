@@ -20,6 +20,7 @@
 (struct linklist (prev entry next) #:mutable)
 
 (define ga-bit 18)
+(define block-limit 16)
 
 (define (inout inst)
   (cond
@@ -102,32 +103,43 @@
     [(prog-append a b c ...)
      (prog-append (program-append a b) c ...)]))
 
+;; merge b-block into a-block
+(define (merge-block a-block b-block)
+  ;; (pretty-display "MERGE:")
+  ;; (codegen-print a-block)
+  ;; (codegen-print b-block)
+  (define a-body (block-body a-block))
+  (define b-body (block-body b-block))
+  (define a-list (if (list? a-body) a-body (string-split a-body)))
+  (define b-list (if (list? b-body) b-body (string-split b-body)))
+
+  (define a-body-org (block-org a-block))
+  (define b-body-org (block-org b-block))
+  (define a-list-org (if (list? a-body-org) a-body-org (string-split a-body-org)))
+  (define b-list-org (if (list? b-body-org) b-body-org (string-split b-body-org)))
+
+  (set-block-body! a-block (append a-list b-list))
+  (set-block-org! a-block (append a-list-org b-list-org))
+  
+  (define a-cnstr (block-cnstr a-block))
+  (define b-cnstr (block-cnstr b-block))
+  (set-block-cnstr! a-block (restrict (or (restrict-mem a-cnstr) (restrict-mem b-cnstr))
+                                      (or (restrict-a a-cnstr) (restrict-a b-cnstr))
+                                      (or (restrict-b a-cnstr) (restrict-b b-cnstr))
+                                      (or (restrict-r a-cnstr) (restrict-r b-cnstr))
+                                      ))
+  
+  (define a-in  (block-in a-block))
+  (define a-out (block-out a-block))
+  (define b-in  (block-in  b-block))
+  (define b-out (block-out  b-block))
+  (if (>= a-out b-in)
+      (set-block-out! a-block (- (+ a-out b-out) b-in))
+      (begin
+        (set-block-in! a-block (- (+ a-in b-in) a-out))
+        (set-block-out! a-block b-out))))
+
 (define (program-append a-list b-list [no-limit #f])
-  ;; merge b-block into a-block
-  (define (merge-block a-block b-block)
-    ;; (pretty-display "MERGE:")
-    ;; (codegen-print a-block)
-    ;; (codegen-print b-block)
-    (set-block-body! a-block (append (block-body a-block) (block-body b-block)))
-    (set-block-org! a-block (append (block-org a-block) (block-org b-block)))
-
-    (define a-cnstr (block-cnstr a-block))
-    (define b-cnstr (block-cnstr b-block))
-    (set-block-cnstr! a-block (restrict (or (restrict-mem a-cnstr) (restrict-mem b-cnstr))
-					(or (restrict-a a-cnstr) (restrict-a b-cnstr))
-					(or (restrict-b a-cnstr) (restrict-b b-cnstr))
-					(or (restrict-r a-cnstr) (restrict-r b-cnstr))
-                                        ))
-
-    (define a-in  (block-in a-block))
-    (define a-out (block-out a-block))
-    (define b-in  (block-in  b-block))
-    (define b-out (block-out  b-block))
-    (if (>= a-out b-in)
-	(set-block-out! a-block (- (+ a-out b-out) b-in))
-	(begin
-	  (set-block-in! a-block (- (+ a-in b-in) a-out))
-	  (set-block-out! a-block b-out))))
 
   (define (merge-forloop a-for b-for)
     ;; (pretty-display `(merge-forloop ,(forloop-body a-for) ,(forloop-body b-for)))
@@ -172,7 +184,8 @@
     (if (and (block? a-last) (block? b-first)
 	     ;; if more than 30, too big, don't merge.
              (or no-limit
-                 (<= (+ (length (block-body a-last)) (length (block-body b-first))) 16)))
+                 (<= (+ (length (block-body a-last)) (length (block-body b-first))) 
+                     block-limit)))
 	(begin
 	  (merge-block a-last b-first)
 	  (append a-list (cdr b-list)))

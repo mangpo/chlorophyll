@@ -11,7 +11,7 @@
 		;; collect iter offset to adjust for loop bound
 		[iter-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -31,8 +31,6 @@
       (meminfo p rp #t))
     
     (define (gen-iter p)
-      (when (>= p max-iter)
-	  (set! max-iter (add1 p)))
       (meminfo p p #f))
 
     (define (need-mem? name)
@@ -152,13 +150,21 @@
 	(push-scope)
 
 	(define iter-name (get-field name (get-field iter ast)))
-	(declare mem-map iter-name (gen-iter iter-p))
-	(declare iter-map iter-name (list))
+        (define iter-type (get-field iter-type ast))
+        (declare mem-map iter-name (gen-iter iter-p))
+        (declare iter-map iter-name (list))
 
-	(set-field! address ast (gen-iter iter-p)) ; set for itself
-	(set! iter-p (add1 iter-p))
+        (when (and (number? iter-type) (> iter-type 0))
+              (set-field! address ast (gen-iter iter-p)) ; set for itself
+              (set! iter-p (add1 iter-p))
+              (when (> iter-p max-iter)
+                    (set! max-iter iter-p))
+              )
+
 	(send (get-field body ast) accept this)
-	(set! iter-p (sub1 iter-p))
+
+        (when (and (number? iter-type) (> iter-type 0))
+              (set! iter-p (sub1 iter-p)))
 
 	(define arrays (lookup-name iter-map iter-name))
         ;; (pretty-display `(ITER ,iter-name ,arrays))

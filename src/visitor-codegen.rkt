@@ -4,7 +4,6 @@
          "ast.rkt" 
 	 "ast-util.rkt"
 	 "visitor-interface.rkt"
-         "visitor-arrayaccess.rkt"
          "arrayforth.rkt")
 
 (provide (all-defined-out))
@@ -27,7 +26,7 @@
     (define-syntax gen-block
       (syntax-rules ()
 	[(gen-block)
-	 (block (list) 0 0 (restrict #t (car const-a) #f #f) (list))]
+	 (block (list) 0 0 (restrict #f #f #f #f) (list))]
 	[(gen-block mem)
 	 (block (list) 0 0 (restrict mem (car const-a) #f #f) (list))]
 	[(gen-block a ... in out)
@@ -170,22 +169,22 @@
 
 	(define offset (get-field offset ast))
 	(define address (get-field address ast))
-        (define actual-addr (- (get-var address) offset))
-        (define actual-addr-org (- (meminfo-addr address) offset))
 	(define opt (get-field opt ast))
 
         (define insts
           (if opt
               (list "@+")
-              (if (= actual-addr 0)
-                  (list "b!" "@b")
-                  (list (number->string actual-addr) "+" "b!" "@b"))))
+              (let ([actual-addr (- (get-var address) offset)])
+                (if (= actual-addr 0)
+                    (list "b!" "@b")
+                    (list (number->string actual-addr) "+" "b!" "@b")))))
         (define insts-org
           (if opt
               (list "@+")
-              (if (= actual-addr-org 0)
-                  (list "b!" "@b")
-                  (list (number->string actual-addr-org) "+" "b!" "@b"))))
+              (let ([actual-addr-org (- (meminfo-addr address) offset)])
+                (if (= actual-addr-org 0)
+                    (list "b!" "@b")
+                    (list (number->string actual-addr-org) "+" "b!" "@b")))))
 
         (define array-ret
           (list (gen-block-list insts insts-org 1 1)))
@@ -427,23 +426,17 @@
 
         (define from (get-field from ast))
         (define to (get-field to ast))
-        (define address (get-iter (get-field address ast)))
-        (define address-str (number->string address))
-        (define address-org (get-iter-org (get-field address ast)))
-        (define address-org-str (number->string address-org))
-
-
-        ;; if no arrayaccess => no need to initialize
         (define addr-pair #f)
         
         ;; if no arrayaccess => no need to initialize
-        (define init-ret 
+        (define init-ret
           (cond
            [(equal? array 0)
 	    ;; same restriction on a
 	    (set! const-a (cons (car const-a) const-a))
 	    (set! addr-pair (cons #f #f))
-            (gen-block (number->string (- to from 1)) 0 1)]
+            (gen-block (number->string (- to from 1)) 0 1)
+            ]
            
            [(is-a? array Array%)
 	    ;; constraint a
@@ -462,6 +455,11 @@
 
            [else
 	    ;; same restriction on a
+            (define address (get-iter (get-field address ast)))
+            (define address-str (number->string address))
+            (define address-org (get-iter-org (get-field address ast)))
+            (define address-org-str (number->string address-org))
+
 	    (set! const-a (cons (car const-a) const-a))
 	    (set! addr-pair (cons address-str address-org-str))
             (gen-block-org
@@ -469,7 +467,8 @@
               "b!" "!b" (number->string (- to from 1)))
              ((number->string from) address-org-str
               "b!" "!b" (number->string (- to from 1)))
-             0 1)])) ;; loop bound
+             0 1)
+            ])) ;; loop bound
          
         (define body-ret (send (get-field body ast) accept this))
 	;; pop restriction on a
@@ -478,10 +477,14 @@
         (define body-decor 
           (list (if (or (equal? array 0) (is-a? array Array%))
                     (gen-block)
-                    (gen-block-org 
-                     (address-str "b!" "@b" "1" "+" "!b")
-                     (address-org-str "b!" "@b" "1" "+" "!b")
-                     0 0))))
+                    (let* ([address (get-iter (get-field address ast))]
+                           [address-str (number->string address)]
+                           [address-org (get-iter-org (get-field address ast))]
+                           [address-org-str (number->string address-org)])
+                      (gen-block-org 
+                       (address-str "b!" "@b" "1" "+" "!b")
+                       (address-org-str "b!" "@b" "1" "+" "!b")
+                       0 0)))))
 
         (list (forloop init-ret (prog-append body-ret body-decor) 
                        addr-pair from to))

@@ -4,88 +4,18 @@
 	 "arrayforth-print.rkt")
 
 (define program
-  ;; core 16
+    ;; core 19
     (aforth 
       ;; list
       (list 
-        (vardecl '(0 0 0 0))
-        (funcdecl "leftrotate"
+        (vardecl '(8961 43913 56574 21622 0))
+        (funcdecl "cadd"
           ;; list
           (list 
             (block
-              "up b! @b 1 b! !b up b! @b 2 b! !b up b! @b "
+              "down b! @b "
               0 1 (restrict #t #f #f #f)
-              "up b! @b 1 b! !b up b! @b 2 b! !b up b! @b ")
-            (block
-              "0 b! !b 2 b! @b 16 0 b! @b - 1 + + "
-              1 2 (restrict #t #f #f #f)
-              "0 b! !b 2 b! @b 16 0 b! @b - 1 + + ")
-            (ift 
-              ;; list
-              (list 
-                (block
-                  "-1 + "
-                  1 1 (restrict #t #f #f #f)
-                  "-1 + ")
-                (forloop 
-                  (block
-                    ""
-                    0 0 (restrict #t #f #f #f)
-                    "")
-                  ;; list
-                  (list 
-                    (block
-                      "2/ "
-                      1 1 (restrict #t #f #f #f)
-                      "2/ ")
-                  )
-                  #f #f #f)
-                (block
-                  "dup "
-                  1 2 (restrict #t #f #f #f)
-                  "dup ")
-              )
-            )
-            (block
-              "drop up b! !b 1 b! @b 16 0 b! @b - 1 + + "
-              2 2 (restrict #t #f #f #f)
-              "drop up b! !b 1 b! @b 16 0 b! @b - 1 + + ")
-            (ift 
-              ;; list
-              (list 
-                (block
-                  "-1 + "
-                  1 1 (restrict #t #f #f #f)
-                  "-1 + ")
-                (forloop 
-                  (block
-                    ""
-                    0 0 (restrict #t #f #f #f)
-                    "")
-                  ;; list
-                  (list 
-                    (block
-                      "2/ "
-                      1 1 (restrict #t #f #f #f)
-                      "2/ ")
-                  )
-                  #f #f #f)
-                (block
-                  "dup "
-                  1 2 (restrict #t #f #f #f)
-                  "dup ")
-              )
-            )
-            (block
-              "drop up b! !b "
-              2 0 (restrict #t #f #f #f)
-              "drop up b! !b ")
-          )
-        )
-        (funcdecl "sumrotate"
-          ;; list
-          (list 
-            (funccall "leftrotate")
+              "down b! @b ")
           )
         )
         (funcdecl "main"
@@ -93,21 +23,48 @@
           (list 
             (forloop 
               (block
-                "0 "
+                "15 "
                 0 1 (restrict #t #f #f #f)
-                "0 ")
+                "15 ")
               ;; list
               (list 
-                (funccall "sumrotate")
                 (block
-                  ""
+                  "0 b! @b down b! !b 1 b! @b up b! !b "
                   0 0 (restrict #t #f #f #f)
-                  "")
+                  "0 b! @b down b! !b 1 b! @b up b! !b ")
+                (block
+                  "2 b! @b right b! !b 3 b! @b right b! !b "
+                  0 0 (restrict #t #f #f #f)
+                  "2 b! @b right b! !b 3 b! @b right b! !b ")
+                (block
+                  "0 b! @b down b! !b "
+                  0 0 (restrict #t #f #f #f)
+                  "0 b! @b down b! !b ")
+                (funccall "cadd")
+                (block
+                  "0 b! !b 1 b! @b down b! !b dup dup dup"
+                  1 0 (restrict #t #f #f #f)
+                  "0 b! !b 1 b! @b down b! !b dup dup dup")
+                (funccall "cadd")
+                (block
+                  "1 b! !b 2 b! @b down b! !b dup dup dup"
+                  1 0 (restrict #t #f #f #f)
+                  "1 b! !b 2 b! @b down b! !b dup dup dup")
+                (funccall "cadd")
+                (block
+                  "2 b! !b 3 b! @b down b! !b dup dup dup"
+                  1 0 (restrict #t #f #f #f)
+                  "2 b! !b 3 b! @b down b! !b dup dup dup")
+                (funccall "cadd")
+                (block
+                  "3 b! !b dup dup dup"
+                  1 0 (restrict #t #f #f #f)
+                  "3 b! !b dup dup dup")
               )
-              '(#f . #f) 0 1)
+              '(#f . #f) 0 16)
           )
         )
       )
-    4 18 #hash((0 . 0) (1 . 1) (2 . 2) (3 . 3) (4 . 4))))
+    5 18 #hash((0 . 0) (2 . 4) (3 . 5))))
 
-(aforth-syntax-print (define-repeating-code program) 1 1)
+(define-repeating-code program)

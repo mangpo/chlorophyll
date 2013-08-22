@@ -1,10 +1,15 @@
 TODO
+- test MD5
+  = new unoptimized with my input
+  = new optimized with my input
+  = new unoptimized with abc
+  = new optimized with abc
+  = approx time in simulator
+- call rohin's compiler to get program size
+  = if size > 64 words -> define-repeating-code for shorter seq
 - run optimized md5
-  * print more concisely
-  * remove iter mem for some loops
-  * merge block after define-repeating-seq
-  * 1006 = define small repeating sequences (before optimize) or reduce bit or increase synthesis time/ is 40 okay?
-  * core 406, 
+  * 1006: if exceed cap after optimize => define-repeating-code for shorter seq
+
 - redundant temp for funccall
 - connect to rohin's interpreter
   = left, right, up, down

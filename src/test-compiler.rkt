@@ -10,7 +10,7 @@
 ;(compile-to-IR "../tests/run/array.cll" "array"
 ;               256 "10" 4 5 #:verbose #t)
 
-;(compile-and-optimize "../tests/run/test.cll" "test" 
+;(compile-and-optimize "../tests/run/debug.cll" "test" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/array.cll" "array" 
 ;                      256 "null" #:opt #f)
