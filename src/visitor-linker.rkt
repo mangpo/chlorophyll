@@ -413,21 +413,28 @@
 	 (pop-scope)
          ]
         
+        [(is-a? ast ConcreteFilterDecl%)
+         (push-scope)
+         (send (get-field input-vardecl ast) accept this)
+         (send (get-field output-vardecl ast) accept this)
+
+         (for ([i (in-naturals)] [func (get-field input-funcs ast)])
+           (declare env (format "in##~a" i) func))
+         (for ([i (in-naturals)] [func (get-field output-funcs ast)])
+           (declare env (format "out##~a" i) func))
+         (declare env "in" (first (get-field input-funcs ast)))
+         (declare env "out" (first (get-field output-funcs ast)))
+
+         (set! entry 1)
+
+	 (send (get-field args ast) accept this)
+         (send (get-field body ast) accept this)
+         (pop-scope)
+         ]
+
         [(is-a? ast CallableDecl%)
          (push-scope)
-         (define input (get-field input ast))
-         (define output (get-field output ast))
-         (send input accept this)
-         (send output accept this)
-         (when (is-a? ast ConcreteFilterDecl%)
-           (declare env "in" (get-field stdin ast))
-           (declare env "out" (get-field stdout ast))
-           (send (get-field input ast) accept this)
-           (send (get-field output ast) accept this)
-           (set! entry 1)
-           )
-         
-	 (send (get-field args ast) accept this)
+         (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
          (pop-scope)
          ]

@@ -283,10 +283,9 @@
 	;; recurse on signature
         ;(define args-ret (send (get-field signature ast) accept this))
 	(define func-sig (get-field signature ast))
-	(define name (get-field name ast))
 
 	(define args-ret 
-	  (if (or (equal? name "in") (equal? name "out"))
+	  (if (is-a? func-sig IOFuncDecl%)
 	      (send func-sig accept this)
 	      (get-field body-placeset func-sig)))
 
@@ -313,8 +312,8 @@
 	     (set! path-ret (set-union path-ret (all-path arg))))
 
         (define io-path-ret
-          (if (and (is-a? func-sig FilterIOFuncDecl%) (equal? name "out"))
-            (let ([path (get-field output-send-path (get-field filter func-sig))])
+          (if (is-a? func-sig FilterOutputFuncDecl%)
+            (let ([path (get-field output-send-path func-sig)])
               (if path (list->set (drop-right path 1)) (set)))
             (set)))
 
@@ -408,13 +407,16 @@
         (when debug 
 	      (pretty-display "\n--------------------------------------------")
               (pretty-display (format "COMMINSERT: ConcreteFilterDecl ~a" (get-field name ast))))
-        (define input-ret (send (get-field input ast) accept this))
-        (define output-ret (send (get-field output ast) accept this))
+        (define input-ret (send (get-field input-vardecl ast) accept this))
+        (define output-ret (send (get-field output-vardecl ast) accept this))
 
-        (define output-place (get-field place (get-field output ast)))
-        (define dst-input-place (get-field place (get-field input (get-field output-dst ast))))
-        (define path (get-gen-path output-place dst-input-place))
-        (set-field! output-send-path ast path)
+        (for ([func (get-field output-funcs ast)]
+              #:when (is-a? func FilterOutputFuncDecl%))
+          (define this-filter (get-field this-filter func))
+          (define destination-filter (get-field destination-filter func))
+          (set-field! output-send-path func
+                      (get-gen-path (get-field place (get-field output-vardecl this-filter))
+                                    (get-field place (get-field input-vardecl destination-filter)))))
 
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))

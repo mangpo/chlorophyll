@@ -236,24 +236,24 @@
                            (car (get-field var-list arg)))))
          
          ;; Print signature
-         (let* ([input (get-field input ast)]
-		[input-type (get-field type input)]
-                [output (get-field input ast)]
-		[output-type (get-field type output)]
+         (let* ([input-vardecl (get-field input-vardecl ast)]
+		[input-type (get-field type input-vardecl)]
+                [output-vardecl (get-field output-vardecl ast)]
+		[output-type (get-field type output-vardecl)]
 		[name (get-field name ast)])
            (if (pair? input-type)
                (display (format "~a::~a@~a"
                                 (car input-type) (cdr input-type)
-				(place-to-string (get-field place input))))
-               (display (format "~a@~a" input-type (send input get-place))))
+				(place-to-string (get-field place input-vardecl))))
+               (display (format "~a@~a" input-type (send input-vardecl get-place))))
            
            (display " -> ")
            
            (if (pair? output-type)
                (display (format "~a::~a@~a"
                                 (car output-type) (cdr output-type)
-				(place-to-string (get-field place output))))
-               (display (format "~a@~a" output-type (send input get-place))))
+				(place-to-string (get-field place output-vardecl))))
+               (display (format "~a@~a" output-type (send input-vardecl get-place))))
            (display (format "~a(" name)))
            
          ;; TODO: Print arguments?

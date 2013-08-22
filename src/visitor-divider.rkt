@@ -327,6 +327,7 @@
         (define (new-funccall core)
           (let ([args (func-args-at sig core)])
             (new FuncCall% [name (get-field name ast)]
+                 [signature (get-field signature ast)]
                  ;; reverse order because we pop from stack
                  [args (reverse (map (lambda (x) (pop-stack core)) args))])))
 
@@ -343,36 +344,35 @@
             [else
               (= place core)]))
 
-        (if (is-a? sig FilterIOFuncDecl%)
-          (begin
-            (cond
-              [(equal? (get-field name ast) "in")
-               (define path (get-field output-send-path (get-field input-src (get-field filter sig))))
+        (cond
+          [(is-a? sig FilterInputFuncDecl%)
+           (define path (get-field output-send-path (get-field source-output-func sig)))
 
-               ;; insert last leg of communication
-               (intermediate (take-right path 2))
+           ;; insert last leg of communication
+           (intermediate (take-right path 2))
 
-               (gen-comm)
-               ]
-              [(equal? (get-field name ast) "out")
-               (define path (get-field output-send-path (get-field filter sig)))
+           (gen-comm)
+           ]
+          [(is-a? sig FilterOutputFuncDecl%)
+           (define path (get-field output-send-path sig))
 
-               ;; generate communication between current #output and next #input
-               ;; omit the last leg of communication
-               (gen-comm-path path #:omit-last #t)
-               (pop-stack (car path))
-               ]))
-          (begin
-            (let* ([place (get-field place-type ast)]
-                   [type (get-field type (get-field return sig))])
-              (for ([c (get-field body-placeset sig)])
-                   ;; body-placeset of IO function is empty
-                   (if (not-void? place type c)
-                     ;; if it is here, funccall is exp
-                     (push-stack c (new-funccall c))
-                     ;; if return place is not here, funcall is statement
-                     (push-workspace c (new-funccall c))))
-              (gen-comm))))]
+           ;; generate communication between current #output and next #input
+           ;; omit the last leg of communication
+           (gen-comm-path path #:omit-last #t)
+           (pop-stack (car path))
+           ]
+          [else
+           (let* ([place (get-field place-type ast)]
+                  [type (get-field type (get-field return sig))])
+             (for ([c (get-field body-placeset sig)])
+                  ;; body-placeset of IO function is empty
+                  (if (not-void? place type c)
+                    ;; if it is here, funccall is exp
+                    (push-stack c (new-funccall c))
+                    ;; if return place is not here, funcall is statement
+                    (push-workspace c (new-funccall c))))
+             (gen-comm))
+           ])]
 
        [(is-a? ast ArrayDecl%)
 	(when debug 

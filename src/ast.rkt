@@ -940,14 +940,30 @@
 
     ))
 
-(define FilterIOFuncDecl%
+(define IOFuncDecl%
   (class FuncDecl%
     (super-new)
-    (init-field [filter #f])
+    (init-field)
     ))
 
+(define FilterIOFuncDecl%
+  (class IOFuncDecl%
+    (super-new)
+    (init-field this-filter)
+    ))
+
+(define FilterInputFuncDecl%
+  (class FilterIOFuncDecl%
+    (super-new)
+    (init-field source-filter [source-output-func #f])))
+
+(define FilterOutputFuncDecl%
+  (class FilterIOFuncDecl%
+    (super-new)
+    (init-field destination-filter [destination-input-func #f] [output-send-path #f])))
+
 (define GlobalIOFuncDecl%
-  (class FuncDecl%
+  (class IOFuncDecl%
     (super-new)
     (init-field)
     ))
@@ -968,20 +984,20 @@
 (define FilterDecl%
   (class RuntimeCallableDecl%
     (super-new)
-    (init-field input output)
+    (init-field input-vardecl output-vardecl)
     ))
 
 (define AbstractFilterDecl%
   (class FilterDecl%
     (super-new)
-    (inherit-field input output name args body temps body-placeset)
+    (inherit-field input-vardecl output-vardecl name args body temps body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(ABSTRACTFILTER ~a" name))
       (print-body-placeset indent)
-      (send input pretty-print (inc indent))
-      (send output pretty-print (inc indent))
+      (send input-vardecl pretty-print (inc indent))
+      (send output-vardecl pretty-print (inc indent))
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
     ))
@@ -989,23 +1005,23 @@
 (define ConcreteFilterDecl%
   (class FilterDecl%
     (super-new)
-    (init-field abstract arg-values [id #f] [input-src #f] [output-dst #f]
-                [stdin #f] [stdout #f] [output-send-path #f])
-    (inherit-field input output name args body body-placeset)
+    (init-field abstract arg-values [id #f] [input-filters #f] [output-filters #f]
+                [input-funcs #f] [output-funcs #f])
+    (inherit-field input-vardecl output-vardecl name args body body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "(CONCRETEFILTER ~a (output-send-path=~a)" 
-                              name output-send-path))
+      (pretty-display (format "(CONCRETEFILTER ~a" name))
       (print-body-placeset indent)
 
-      ;(when input-src
-        ;(pretty-display "(input-src ")
-        ;(send input-src pretty-print (inc indent))
-        ;(pretty-display ")\n"))
+      (send input-vardecl pretty-print (inc indent))
+      (send output-vardecl pretty-print (inc indent))
 
-      (send input pretty-print (inc indent))
-      (send output pretty-print (inc indent))
+      (for ([input-func input-funcs])
+        (send input-func pretty-print (inc indent)))
+
+      (for ([output-func output-funcs])
+        (send output-func pretty-print (inc indent)))
 
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))
@@ -1014,15 +1030,14 @@
 (define PipelineDecl%
   (class StaticCallableDecl%
     (super-new)
-    (init-field input output)
+    (init-field input-type output-type)
     (inherit-field name args body body-placeset)
     (inherit print-body-placeset)
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "(PIPELINE ~a" name))
+      (pretty-display (format "(PIPELINE ~a (input-type=~a output-type=~a)"
+                              name input-type output-type))
       (print-body-placeset indent)
-      (send input pretty-print (inc indent))
-      (send output pretty-print (inc indent))
       (send args pretty-print (inc indent))
       (send body pretty-print (inc indent)))))
 

@@ -153,7 +153,7 @@
 	(define func-sig (get-field signature ast))
 	(define name (get-field name ast))
 
-        (when (or (equal? name "in") (equal? name "out"))
+        (when (is-a? func-sig IOFuncDecl%)
           (send func-sig accept this))
 
 	;; recurse on arguments
@@ -224,8 +224,8 @@
         (when debug 
 	      (pretty-display "\n--------------------------------------------")
               (pretty-display (format "COMMCONVERT: ConcreteFilterDecl ~a" (get-field name ast))))
-        (send (get-field input ast) accept this)
-        (send (get-field output ast) accept this)
+        (send (get-field input-vardecl ast) accept this)
+        (send (get-field output-vardecl ast) accept this)
 
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)

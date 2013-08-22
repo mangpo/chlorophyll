@@ -7,13 +7,13 @@
 (define (ext-name name ext)
   (format "~a::~a" name ext))
 
-(define stdio-uid 0)
+(define io-uid 0)
 
-(define (get-stdin-pull src)
-  (set! stdio-uid (add1 stdio-uid))
-  (define output-vardecl (get-field output src))
+(define (get-input-func-pull src)
+  (set! io-uid (add1 io-uid))
+  (define output-vardecl (get-field output-vardecl src))
   (define stdin
-    (new GlobalIOFuncDecl% [name (format "in#from#~a#~a" (get-field name src) stdio-uid)] 
+    (new GlobalIOFuncDecl% [name (format "in#from#~a#~a" (get-field name src) io-uid)] 
 	 [args (new Block% [stmts (list)])] 
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set (get-field place output-vardecl))]
@@ -24,23 +24,28 @@
                       )]))
   stdin)
 
-(define (get-stdin-made-available this)
-  (set! stdio-uid (add1 stdio-uid))
-  (define input-vardecl (get-field input this))
+(define (get-input-func-made-available this source)
+  (set! io-uid (add1 io-uid))
+  (define input-vardecl (get-field input-vardecl this))
   (define stdin
-    (new FilterIOFuncDecl% [name (format "in#inside#~a#~a" (get-field name this) stdio-uid)] 
+    (new FilterInputFuncDecl%
+         [name (format "in#from#~a#inside#~a#~a"
+                       (get-field name source)
+                       (get-field name this)
+                       io-uid)] 
 	 [args (new Block% [stmts (list)])] 
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set (get-field place input-vardecl))]
-         [filter this]
-	 [return input-vardecl])) ;; TODO Might not work
+         [this-filter this]
+         [source-filter source]
+	 [return input-vardecl]))
   stdin)
 
-(define (get-stdout-push dst)
-  (set! stdio-uid (add1 stdio-uid))
-  (define input-vardecl (get-field input dst))
+(define (get-output-func-push dst)
+  (set! io-uid (add1 io-uid))
+  (define input-vardecl (get-field input-vardecl dst))
   (define stdout
-    (new GlobalIOFuncDecl% [name (format "out#to#~a#~a" (get-field name dst) stdio-uid)] 
+    (new GlobalIOFuncDecl% [name (format "out#to#~a#~a" (get-field name dst) io-uid)] 
 	 [args (new Block% [stmts (list (new Param%
                                              [var-list (list "data")]
                                              [type (get-field type input-vardecl)]
@@ -57,11 +62,15 @@
                       )]))
   stdout)
 
-(define (get-stdout-make-available this)
-  (set! stdio-uid (add1 stdio-uid))
-  (define output-vardecl (get-field output this))
+(define (get-output-func-make-available this destination)
+  (set! io-uid (add1 io-uid))
+  (define output-vardecl (get-field output-vardecl this))
   (define stdout
-    (new FilterIOFuncDecl% [name (format "out#inside#~a#~a" (get-field name this) stdio-uid)] 
+    (new FilterOutputFuncDecl%
+         [name (format "out#to#~a#inside#~a#~a"
+                       (get-field name destination)
+                       (get-field name this)
+                       io-uid)] 
 	 [args (new Block% [stmts (list (new Param%
                                              [var-list (list "data")]
                                              [type (get-field type output-vardecl)]
@@ -71,7 +80,8 @@
                                              ))])]
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set (get-field place output-vardecl))]
-         [filter this]
+         [this-filter this]
+         [destination-filter destination]
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]

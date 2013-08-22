@@ -24,10 +24,6 @@
     (define debug #f)
     (define debug-sym #f)
     
-    ;; Declare IO function: in(), out(data)
-    (declare env "in" (comminfo 0 (set)))
-    (declare env "out" (comminfo 0 (set)))
-    
     ;; find actual place for @place(exp)
     (define (find-place ast [modify #t])
       ;(pretty-display `(find-place ,ast))
@@ -747,8 +743,16 @@
        
        [(is-a? ast ConcreteFilterDecl%)
         (push-scope)
-        (define input-ret (send (get-field input ast) accept this))
-        (define output-ret (send (get-field output ast) accept this))
+        (define input-vardecl-ret (send (get-field input-vardecl ast) accept this))
+        (define output-vardecl-ret (send (get-field output-vardecl ast) accept this))
+
+        (for ([i (in-naturals)] [func (get-field input-funcs ast)])
+             (declare env (format "in##~a" i) (comminfo 0 (set))))
+        (for ([i (in-naturals)] [func (get-field output-funcs ast)])
+             (declare env (format "out##~a" i) (comminfo 0 (set))))
+        (declare env "in" (comminfo 0 (set)))
+        (declare env "out" (comminfo 0 (set)))
+
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
         (pop-scope)
@@ -757,16 +761,16 @@
           (pretty-display (format ">> ConcreteFilterDecl ~a" (get-field name ast))))
         
         (define body-placeset
-          (set-union (set-union (set-union (comminfo-placeset args-ret)
-                                           (comminfo-placeset body-ret))
-                                (comminfo-placeset input-ret))
-                     (comminfo-placeset output-ret)))
+          (set-union (comminfo-placeset args-ret)
+                     (comminfo-placeset body-ret)
+                     (comminfo-placeset input-vardecl-ret)
+                     (comminfo-placeset output-vardecl-ret)))
         (set-field! body-placeset ast body-placeset)
 
-        (let ([ret (comminfo (+ (+ (+ (comminfo-msgs args-ret)
-                                      (comminfo-msgs body-ret))
-                                   (comminfo-msgs input-ret))
-                                (comminfo-msgs output-ret))
+        (let ([ret (comminfo (+ (comminfo-msgs args-ret)
+                                (comminfo-msgs body-ret)
+                                (comminfo-msgs input-vardecl-ret)
+                                (comminfo-msgs output-vardecl-ret))
                              body-placeset)])
           ret)]
        

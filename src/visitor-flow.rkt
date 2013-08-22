@@ -57,23 +57,24 @@
                (set! edges (append (cross-product param arg) edges))
                (set! edges (append (send arg accept this) edges)))
 
-          (when (is-a? func-ast FilterIOFuncDecl%)
-            (define name (get-field name ast))
-            (define filter (get-field filter func-ast))
-            (cond
-              [(equal? name "in")
-               (set! edges
-                 (append (cross-product-raw
-                           (get-field place (get-field output (get-field input-src filter)))
-                           (get-field place (get-field input filter)))
-                         edges))]
-              [(equal? name "out")
-               (set! edges
-                 (append (cross-product-raw
-                           (get-field place (get-field output filter))
-                           (get-field place (get-field input (get-field output-dst filter))))
-                         edges))]
-              )
+          (cond
+            [(is-a? func-ast FilterInputFuncDecl%)
+             (define this-filter (get-field this-filter func-ast))
+             (define source-filter (get-field source-filter func-ast))
+             (set! edges
+               (append (cross-product-raw
+                         (get-field place (get-field output-vardecl source-filter))
+                         (get-field place (get-field input-vardecl this-filter)))
+                       edges))]
+
+            [(is-a? func-ast FilterOutputFuncDecl%)
+             (define this-filter (get-field this-filter func-ast))
+             (define destination-filter (get-field destination-filter func-ast))
+             (set! edges
+               (append (cross-product-raw
+                         (get-field place (get-field output-vardecl this-filter))
+                         (get-field place (get-field input-vardecl destination-filter)))
+                       edges))]
             )
           edges)]
 

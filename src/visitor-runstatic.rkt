@@ -21,11 +21,11 @@
                   [arg-values (list)]
                   [body (new Block% [stmts (list)])]
                   [abstract (void)]
-                  [input (new VarDecl%
+                  [input-vardecl (new VarDecl%
                               [var-list (list)]
                               [type "void"]
                               [known #f])]
-                  [output (new VarDecl% [var-list (list "#output")]
+                  [output-vardecl (new VarDecl% [var-list (list "#output")]
                                [type "int"] ;; TODO: make it generic
                                [place (new Place% [at "input"])]
                                [known #f])]))
@@ -35,15 +35,15 @@
                   [arg-values (list)]
                   [body (new Block% [stmts (list)])]
                   [abstract (void)]
-                  [input (new VarDecl% [var-list (list "#output")]
+                  [input-vardecl (new VarDecl% [var-list (list "#output")]
                               [type "int"] ;; TODO: make it generic
                               [place (new Place% [at "output"])]
                               [known #f])]
-                  [output (new VarDecl%
+                  [output-vardecl (new VarDecl%
                                [var-list (list)]
                                [type "void"]
                                [known #f])]))
-    (declare env "__previous__" (lookup-name env "__globalinputsrc__"))
+    (declare env "__previous__" (list (lookup-name env "__globalinputsrc__")))
     
     ;; IO functions are not available in static code
                  
@@ -153,13 +153,13 @@
         (define funcs (cdr filters-funcs))
 
         ;; connect global I/O to first and last filters
-        (set-field! output-dst (last filters) (lookup-name env "__globaloutputdst__"))
-        (set-field! input-src (lookup-name env "__globaloutputdst__") (last filters))
-        (define stdout (get-stdout-push (lookup-name env "__globaloutputdst__")))
-        (set-field! stdout (last filters) stdout)
-        (define stdin (get-stdin-pull (lookup-name env "__globalinputsrc__")))
-        (set-field! stdin (first filters) stdin)
-        (set! funcs (append funcs (list stdin stdout)))
+        (set-field! output-filters (last filters) (list (lookup-name env "__globaloutputdst__")))
+        (set-field! input-filters (lookup-name env "__globaloutputdst__") (list (last filters)))
+        (define output-funcs (list (get-output-func-push (lookup-name env "__globaloutputdst__"))))
+        (set-field! output-funcs (last filters) output-funcs)
+        (define input-funcs (list (get-input-func-pull (lookup-name env "__globalinputsrc__"))))
+        (set-field! input-funcs (first filters) input-funcs)
+        (set! funcs (append funcs input-funcs output-funcs))
         
         ;; remove abstract filter and static declarations from program
         (set! stmts
@@ -208,27 +208,38 @@
         
         (cond
           [(is-a? decl AbstractFilterDecl%)
-           (define filter (new ConcreteFilterDecl%
+           (define new-filter (new ConcreteFilterDecl%
                                [abstract decl]
                                [arg-values arg-values]
                                ;;
                                [name (get-field name decl)]
-                               [input (get-field input decl)]
-                               [output (get-field output decl)]
+                               [input-vardecl (get-field input-vardecl decl)]
+                               [output-vardecl (get-field output-vardecl decl)]
                                [args (get-field args decl)]
                                [body (get-field body decl)]
                                ))
 
-            (set-field! output-dst (lookup-name env "__previous__") filter)
-            (define stdout (get-stdout-make-available (lookup-name env "__previous__")))
-            (set-field! stdout (lookup-name env "__previous__") stdout)
+           (define all-output-funcs (list))
+           (for ([previous-filter (lookup-name env "__previous__")])
+             (set-field! output-filters previous-filter (list new-filter))
+             (define output-funcs (list (get-output-func-make-available previous-filter new-filter)))
+             (set-field! output-funcs previous-filter output-funcs)
+             (set! all-output-funcs (append all-output-funcs output-funcs))
+           )
 
-            (set-field! input-src filter (lookup-name env "__previous__"))
-            (define stdin (get-stdin-made-available filter))
-            (set-field! stdin filter stdin)
+           (set-field! input-filters new-filter (lookup-name env "__previous__"))
+           (define all-input-funcs
+             (for/list ([previous-filter (lookup-name env "__previous__")])
+               (get-input-func-made-available new-filter previous-filter)))
+           (set-field! input-funcs new-filter all-input-funcs)
 
-            (update-name env "__previous__" filter)
-            (cons (list filter) (list stdin stdout))
+           (for ([output-func all-output-funcs]
+                 [input-func all-input-funcs])
+             (set-field! source-output-func input-func output-func)
+             (set-field! destination-input-func output-func input-func))
+
+           (update-name env "__previous__" (list new-filter))
+           (cons (list new-filter) (append all-input-funcs all-output-funcs))
            ]
           [(is-a? decl PipelineDecl%)
            (send decl accept this)]

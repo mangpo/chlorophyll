@@ -412,19 +412,16 @@
     (filter-decl
         ((data-place-type -> data-place-type FILTER VAR LPAREN params RPAREN LBRACK block RBRACK)
          (new AbstractFilterDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
-              [input  (new InputDecl% [var-list (list "#input")] 
-                           [type (car $1)] [place (cdr $1)])]
-              [output (new OutputDecl% [var-list (list "#output")] 
-                           [type (car $3)] [place (cdr $3)])]
+              [input-vardecl  (new InputDecl% [var-list (list "#input")] 
+                                   [type (car $1)] [place (cdr $1)])]
+              [output-vardecl (new OutputDecl% [var-list (list "#output")] 
+                                   [type (car $3)] [place (cdr $3)])]
               )))
     
     (pipeline-decl
-        ((data-place-type -> data-place-type PIPELINE VAR LPAREN params RPAREN LBRACK block RBRACK)
+        ((data-type -> data-type PIPELINE VAR LPAREN params RPAREN LBRACK block RBRACK)
          (new PipelineDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
-              [input  (new InputDecl% [var-list (list "#input")] 
-                           [type (car $1)] [place (cdr $1)])]
-              [output (new OutputDecl% [var-list (list "#output")] 
-                           [type (car $3)] [place (cdr $3)])]
+              [input-type $1] [output-type $3]
               )))
     
     (block ((stmts) (new Block% [stmts $1])))

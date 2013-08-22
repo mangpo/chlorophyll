@@ -103,17 +103,17 @@
 	 (union-set-from-list (get-field stmts ast))]
 
         [(is-a? ast FuncDecl%)
-         (let ([return-set (send (get-field return ast) accept this)]
-               [args-set (send (get-field args ast) accept this)]
-               [body-set (send (get-field body ast) accept this)])
-           (set-union (set-union return-set args-set) body-set))]
+         (set-union (send (get-field return ast) accept this)
+                    (send (get-field args ast) accept this)
+                    (send (get-field body ast) accept this))
+         ]
         
         [(is-a? ast ConcreteFilterDecl%)
-         (let ([input-set (send (get-field input ast) accept this)]
-               [output-set (send (get-field output ast) accept this)]
-               [args-set (send (get-field args ast) accept this)]
-               [body-set (send (get-field body ast) accept this)])
-           (set-union (set-union (set-union input-set output-set) args-set) body-set))]
+         (set-union (send (get-field input-vardecl ast) accept this)
+                    (send (get-field output-vardecl ast) accept this)
+                    (send (get-field args ast) accept this)
+                    (send (get-field body ast) accept this))
+         ]
         
         [else (raise (format "Error: visitor-collector unimplemented for ~a" ast))]
 	))))
