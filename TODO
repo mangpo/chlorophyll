@@ -1,10 +1,6 @@
 TODO
 - test MD5
-  = new unoptimized with my input
-  = new optimized with my input
-  = new unoptimized with abc
-  = new optimized with abc
-  = approx time in simulator
+  = my algo is wrong :(
 - call rohin's compiler to get program size
   = if size > 64 words -> define-repeating-code for shorter seq
 - run optimized md5

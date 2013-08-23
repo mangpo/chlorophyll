@@ -73,7 +73,7 @@
   (foldl (lambda (inst res)
            (cond 
 	    [(equal? inst "a!") #t]
-	    [(member insts (list "@" "@+" "!" "!+" "a")) #f]
+	    [(member inst (list "@" "@+" "!" "!+" "a")) #f]
 	    [else res]))
          #f insts))
 
@@ -83,7 +83,7 @@
   (foldl (lambda (inst res)
            (cond 
 	    [(equal? inst "b!") #t]
-	    [(member insts (list "@b" "!b")) #f]
+	    [(member inst (list "@b" "!b")) #f]
 	    [else res]))
          #f insts))
 
@@ -125,7 +125,7 @@
   (define b-cnstr (block-cnstr b-block))
   (set-block-cnstr! a-block (restrict (or (restrict-mem a-cnstr) (restrict-mem b-cnstr))
                                       (or (restrict-a a-cnstr) (restrict-a b-cnstr))
-                                      (or (restrict-b a-cnstr) (restrict-b b-cnstr))
+                                      (restrict-b b-cnstr)
                                       (or (restrict-r a-cnstr) (restrict-r b-cnstr))
                                       ))
   

@@ -7,7 +7,7 @@
 
 (provide define-repeating-code define-repeating-codes)
 
-(define debug #t)
+(define debug #f)
 
 (define (list->linklist lst)
   (define (copy x)
@@ -418,7 +418,7 @@
 
   (define (define-and-replace locations exp)
     (define new-name (new-def))
-    (pretty-display locations)
+    (when debug (pretty-display locations))
     (define res
       (car
        (for/list ([location locations])
@@ -439,7 +439,7 @@
               [locations (send matcher visit linklist-program)])
          (when (>= (length locations) occur)
 	       ;; if repeat more then a certain number
-               (pretty-display (format "STRING: ~a" reformatted))
+               (when debug (pretty-display (format "STRING: ~a" reformatted)))
                (define-and-replace locations exp)))
        )
   
@@ -483,9 +483,9 @@
 (define (define-repeating-code program)
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program list->linklist)])
-        (pretty-display ">>> EXTRACT-STRUCTURES")
+        (when debug (pretty-display ">>> EXTRACT-STRUCTURES"))
 	(extract-all-structure linklist-program)
-        (pretty-display ">>> EXTRACT-SEQUENCES")
+        (when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
 	(extract-all-sequence linklist-program 6 2)
 
         ;; TODO: if the code doesn't fit in, do this

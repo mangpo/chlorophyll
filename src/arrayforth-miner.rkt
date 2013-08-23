@@ -335,7 +335,6 @@
 ;; - whose length is >= min-len
 ;; - sorted by length
 (define (sort-subsequence seq-set min-len max-len min-actual-len)
-  (pretty-display (format "MIN-ACTUAL-LEN ~a" min-actual-len))
 
   (define (program-length program)
     (define (occupy x)
