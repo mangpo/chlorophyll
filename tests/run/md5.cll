@@ -1,16 +1,13 @@
 // 2**16-1 = 65535
 // 2**32-1 = 4294967295
 
-int::2@(28, 29) leftrotate(int::2@(17,17) x, int@17 r) {
-  int::2@(28, 29) ret;
+/*int::2@(28, 28) leftrotate(int::2@(17,17) x, int@17 r) {
+  int::2@(28, 28) ret;
   int@17 swap;
   int@34 r2;
   int::2@(34,34) x2;
   int@35 r3;
   int::2@(35,35) x3;
-  /*out(x::0);
-  out(x::1);
-  out(r);*/
   if(r >@17 16) {
     swap = x::0;
     x::0 = x::1;
@@ -23,8 +20,28 @@ int::2@(28, 29) leftrotate(int::2@(17,17) x, int@17 r) {
   r3 = r;
   ret::0 = ((x3::1 >>@35 (16 -@35 r3)) |@34 (x2::0 <<@34 r2)) &@34 65535;
   ret::1 = ((x3::0 >>@35 (16 -@35 r3)) |@34 (x2::1 <<@34 r2)) &@34 65535;
-  //out(ret::0);
-  //out(ret::1);
+  return ret;
+}*/
+
+int::2@(28, 29) leftrotate(int::2@(17,17) x, int@17 r) {
+  int::2@(28, 29) ret;
+  int@17 swap;
+  /*int@34 r2;
+  int::2@(34,34) x2;
+  int@35 r3;
+  int::2@(35,35) x3;*/
+  if(r >@place(r) 16) {
+    swap = x::0;
+    x::0 = x::1;
+    x::1 = swap;
+    r = r -@place(r) 16;
+  }
+  /*x2 = x;
+  x3 = x;
+  r2 = r;
+  r3 = r;*/
+  ret::0 = ((x::1 >>@17 (16 -@place(r) r)) |@17 (x::0 <<@17 r)) &@28 65535;
+  ret::1 = ((x::0 >>@17 (16 -@place(r) r)) |@17 (x::1 <<@17 r)) &@29 65535;
   return ret;
 }
 
@@ -37,17 +54,17 @@ int::2@(28, 29) csum(int::2@(28, 29) x, int::2@(28, 29) y) {
   return z;
 }
 
-int::2@(10, 25) cadd(int::2@(24,25) x, int::2@(24,25) y) {
-  int::2@(24,25) z;
+int::2@(24,24) cadd(int::2@(24,24) x, int::2@(24,24) y) {
+  int::2@(24,24) z;
   z::0 = x::0 +@24 y::0;
-  z::1 = x::1 +@25 y::1 +@25 ((z::0 >>@24 16) &@25 3);
+  z::1 = x::1 +@24 y::1 +@24 ((z::0 >>@24 16) &@24 3);
   z::0 = z::0 &@24 65535;
-  z::1 = z::1 &@25 65535;
+  z::1 = z::1 &@24 65535;
   return z;
 }
 
-int::2@(0,1) sumrotate(int::2@(20,21) a, int::2@(14,15) b, int::2@(20,21) f, int::2@(2,3) k, int::2@(0,28) m, int@6 r) {
-  return csum(b, leftrotate(csum(a +@(20,21) f +@(28,21) k, m), r));
+int::2@(14,15) sumrotate(int::2@(28,29) a, int::2@(14,15) b, int::2@(30,31) f, int::2@(2,3) k, int::2@(4,5) m, int@6 r) {
+  return csum(b, leftrotate(csum(a +@(28,29) f +@(28,29) k, m), r));
 }
 
 void main() {
@@ -55,13 +72,12 @@ void main() {
 
   int[]@{[0:16]=6,[16:32]=16,[32:48]=18,[48:64]=19} r[64] = { 7 , 12 , 17 , 22 , 7 , 12 , 17 , 22 , 7 , 12 , 17 , 22 , 7 , 12 , 17 , 22 , 5 , 9 , 14 , 20 , 5 , 9 , 14 , 20 , 5 , 9 , 14 , 20 , 5 , 9 , 14 , 20 , 4 , 11 , 16 , 23 , 4 , 11 , 16 , 23 , 4 , 11 , 16 , 23 , 4 , 11 , 16 , 23 , 6 , 10 , 15 , 21 , 6 , 10 , 15 , 21 , 6 , 10 , 15 , 21 , 6 , 10 , 15 , 21 };
   
-  int::2@(20,21) a;
+  int::2@(0,1) a;
   int::2@(14,15) b;
-  int::2@(26,27) c;
-  int::2@(22,23) d;
+  int::2@(14,15) c;
+  int::2@(0,1) d;
   int::2@(30,31) f1;
-  int::2@(32,33) f2;
-  int::2@(0,1) temp;
+  int::2@(14,15) temp;
   int::2[]@({[0:4]=10},{[0:4]=9}) hash[4] = { ( 8961 , 26437 ) , ( 43913 , 61389 ) , ( 56574 , 39098 ) , ( 21622 , 4146 )};
 
   
@@ -107,8 +123,8 @@ void main() {
     g = 5;
     inc = 3;
     for(i from 32 to 48) { 
-      f2 = b ^@(32,33) c ^@(32,33) d;
-      temp = sumrotate(a,b,f2,k[i],message[g],r[i]);
+      f1 = b ^@(30,31) c ^@(30,31) d;
+      temp = sumrotate(a,b,f1,k[i],message[g],r[i]);
 	    a = d;
 	    d = c;
 	    c = b;
@@ -118,8 +134,8 @@ void main() {
     g = 0;
     inc = 7;
     for(i from 48 to 64) { 
-      f2 = c ^@(32,33) (b |@(32,33) (d ^@(32,33) 65535));
-      temp = sumrotate(a,b,f2,k[i],message[g],r[i]);
+      f1 = c ^@(30,31) (b |@(30,31) (d ^@(30,31) 65535));
+      temp = sumrotate(a,b,f1,k[i],message[g],r[i]);
 	    a = d;
 	    d = c;
 	    c = b;
@@ -133,9 +149,54 @@ void main() {
   //} 
 
 
-  for(i from 0 to 4) {
+  /*for(i from 0 to 4) {
     out(hash::0[i]);
     out(hash::1[i]);
-  }
+  }*/
 }
+
+/*
+core = 0, space = 272, ops = #<set:>
+core = 1, space = 272, ops = #<set:>
+core = 2, space = 327, ops = #<set:>
+core = 3, space = 327, ops = #<set:>
+core = 4, space = 343, ops = #<set:>
+core = 5, space = 343, ops = #<set:>
+core = 6, space = 327, ops = #<set:>
+core = 7, space = 260, ops = #<set:>
+core = 8, space = 260, ops = #<set:>
+core = 9, space = 280, ops = #<set:>
+core = 10, space = 280, ops = #<set:>
+core = 11, space = 0, ops = #<set:>
+core = 12, space = 324, ops = #<set:>
+core = 13, space = 324, ops = #<set:>
+core = 14, space = 319, ops = #<set:>
+core = 15, space = 319, ops = #<set:>
+core = 16, space = 260, ops = #<set:>
+core = 17, space = 339, ops = #<set:>
+core = 18, space = 260, ops = #<set:>
+core = 19, space = 260, ops = #<set:>
+core = 20, space = 0, ops = #<set:>
+core = 21, space = 0, ops = #<set:>
+core = 22, space = 0, ops = #<set:>
+core = 23, space = 0, ops = #<set:>
+core = 24, space = 283, ops = #<set:>
+core = 25, space = 0, ops = #<set:>
+core = 26, space = 0, ops = #<set:>
+core = 27, space = 0, ops = #<set:>
+core = 28, space = 322, ops = #<set:>
+core = 29, space = 313, ops = #<set:>
+core = 30, space = 319, ops = #<set:>
+core = 31, space = 319, ops = #<set:>
+core = 32, space = 0, ops = #<set:>
+core = 33, space = 0, ops = #<set:>
+core = 34, space = 0, ops = #<set:>
+core = 35, space = 0, ops = #<set:>
+core = 36, space = 0, ops = #<set:>
+core = 37, space = 0, ops = #<set:>
+core = 38, space = 0, ops = #<set:>
+core = 39, space = 0, ops = #<set:>
+core = 40, space = 0, ops = #<set:>
+core = 41, space = 0, ops = #<set:>
+*/
 

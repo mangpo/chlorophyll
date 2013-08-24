@@ -139,6 +139,11 @@
         (set-block-in! a-block (- (+ a-in b-in) a-out))
         (set-block-out! a-block b-out))))
 
+
+(define (empty-block? x)
+  (and (block? x) 
+       (or (equal? (block-body x) "") (empty? (block-body x)))))
+
 (define (program-append a-list b-list [no-limit #f])
 
   (define (merge-forloop a-for b-for)
@@ -171,6 +176,10 @@
   (cond
    [(empty? a-list) b-list]
    [(empty? b-list) a-list]
+   [(and (= (length a-list) 1) (empty-block? (car a-list)))
+    b-list]
+   [(and (= (length b-list) 1) (empty-block? (car b-list)))
+    a-list]
 
    [(and (forloop? (last a-list)) (forloop? (car b-list)))
     (define merge (merge-forloop (last a-list) (car b-list)))

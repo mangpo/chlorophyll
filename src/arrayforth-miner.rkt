@@ -167,6 +167,7 @@
   
   (define-values (next insts) 
     (collect-from-block (contain-block-funccall ast)))
+  (pretty-display `(first-location ,(string-join insts) ,exp ,(car (regexp-match-positions exp (string-join insts)))))
   (car (regexp-match-positions exp (string-join insts))))
 
 (define sequence-matcher%

@@ -81,7 +81,12 @@
         (when debug
               (pretty-display (format "\nACCESS: Return ~a" 
                                       (send (get-field val ast) to-string))))
-        (send (get-field val ast) accept this)
+
+	(define val (get-field val ast))
+	(if (list? val)
+	    (for ([v val])
+		 (send v accept this))
+	    (send val accept this))
         0]
 
        [(is-a? ast If%)

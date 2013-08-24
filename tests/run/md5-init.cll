@@ -65,7 +65,7 @@ void main() {
   int::2@(4,5) g;
   int::2@(4,5) inc;
   
-  for(t from 0 to 16) {
+  //for(t from 0 to 16) {
     a = hash[0];
     b = hash[1];
     c = hash[2];
@@ -118,11 +118,55 @@ void main() {
     hash[1] = cadd(hash[1],b);
     hash[2] = cadd(hash[2],c);
     hash[3] = cadd(hash[3],d);
-  } 
+  //} 
 
-  for(i from 0 to 4) {
+/*  for(i from 0 to 4) {
     out(hash::0[i]);
     out(hash::1[i]);
-  }
+  }*/
 }
+
+/*
+core = 0, space = 233, ops = #<set:>
+core = 1, space = 188, ops = #<set:>
+core = 2, space = 321, ops = #<set:>
+core = 3, space = 321, ops = #<set:>
+core = 4, space = 340, ops = #<set:>
+core = 5, space = 340, ops = #<set:>
+core = 6, space = 321, ops = #<set:>
+core = 7, space = 260, ops = #<set:>
+core = 8, space = 260, ops = #<set:>
+core = 9, space = 280, ops = #<set:>
+core = 10, space = 272, ops = #<set:>
+core = 11, space = 0, ops = #<set:>
+core = 12, space = 324, ops = #<set:>
+core = 13, space = 324, ops = #<set:>
+core = 14, space = 281, ops = #<set:>
+core = 15, space = 281, ops = #<set:>
+core = 16, space = 260, ops = #<set:>
+core = 17, space = 277, ops = #<set:>
+core = 18, space = 260, ops = #<set:>
+core = 19, space = 260, ops = #<set:>
+core = 20, space = 248, ops = #<set:>
+core = 21, space = 258, ops = #<set:>
+core = 22, space = 252, ops = #<set:>
+core = 23, space = 252, ops = #<set:>
+core = 24, space = 135, ops = #<set:>
+core = 25, space = 150, ops = #<set:>
+core = 26, space = 244, ops = #<set:>
+core = 27, space = 244, ops = #<set:>
+core = 28, space = 310, ops = #<set:>
+core = 29, space = 246, ops = #<set:>
+core = 30, space = 174, ops = #<set:>
+core = 31, space = 174, ops = #<set:>
+core = 32, space = 146, ops = #<set:>
+core = 33, space = 146, ops = #<set:>
+core = 34, space = 262, ops = #<set:>
+core = 35, space = 254, ops = #<set:>
+core = 36, space = 0, ops = #<set:>
+core = 37, space = 0, ops = #<set:>
+core = 38, space = 0, ops = #<set:>
+core = 39, space = 0, ops = #<set:>
+core = 40, space = 0, ops = #<set:>
+core = 41, space = 0, ops = #<set:>*/
 

@@ -24,7 +24,10 @@
             (set-linklist-prev! rest me))
           me)))
   
-  (define start (inner lst))
+  ;; why not working?
+  (define non-empty
+    (filter (lambda (x) (not (empty-block? x))) lst))
+  (define start (inner non-empty))
   (define head (linklist #f #f start))
   (set-linklist-prev! start head)
   head)
@@ -318,6 +321,9 @@
   
   (define (get-linklist ll index)
     (define entry (linklist-entry ll))
+    (if (block? entry)
+	(pretty-display `(get-linklist ,(block-body entry) ,index))
+	(pretty-display `(get-linklist ,(funccall-name entry) ,index)))
     (define insts 
       (if (block? entry)
           (if (string? (block-body entry))
@@ -333,12 +339,14 @@
     
     (if (> (string-length insts) index)
         (values ll index insts org)
-        (get-linklist (linklist-next ll) (- index (string-length insts) 1)))) ;; minus 1 for space
+	(if (equal? insts "")
+	    (get-linklist (linklist-next ll) index)
+	    (get-linklist (linklist-next ll) (- index (string-length insts) 1))))) ;; minus 1 for space
     
   ;; Split linklist ll into 2 linklists by inserting a new linklist
   ;; after the splitted one.
   (define (split-linklist ll index code org)
-    ;; (pretty-display `(split-linklist ,(substring code 0 index) ,(substring code index)))
+    (when debug (pretty-display `(split-linklist ,(substring code 0 index) ,(substring code index))))
     ;; (pretty-display `(org ,org))
     (let* ([insts (substring code 0 index)]
            [fst-org (substring org 0 index)]
@@ -390,11 +398,20 @@
       )
 
     (define-values (ll-to index-to code-to org-to) (get-linklist ll-from (sub1 len)))
+    (when debug
+	  (pretty-display "----------------------")
+	  (pretty-display "ll-from:")
+	  (aforth-struct-print (linklist-entry ll-from))
+	  (pretty-display `(len ,len))
+	  (pretty-display "ll-to:")
+	  (aforth-struct-print (linklist-entry ll-to))
+	  (pretty-display `(,index-to ,code-to ,org-to)))
     (set! index-to (add1 index-to))
 
     (when (< index-to (string-length code-to))
       (when debug (pretty-display "(< index-to)"))
       (split-linklist ll-to index-to code-to org-to)
+      (when debug (pretty-display "(< index-to) done"))
       )
   
     (define from-prev (linklist-prev ll-from))

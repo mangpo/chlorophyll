@@ -153,12 +153,12 @@
 	(simulate-multicore name input))
 
   (define real-codes (generate-codes programs w h #f))
-  (define shorter-codes (define-repeating-codes real-codes w h))
-  (define real-opts shorter-codes)
-  
   
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen1.rkt" outdir name)
     (lambda () (aforth-struct-print real-codes)))
+  
+  (define shorter-codes (define-repeating-codes real-codes w h))
+  (define real-opts shorter-codes)
   
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen2.rkt" outdir name)
     (lambda () (aforth-struct-print shorter-codes)))

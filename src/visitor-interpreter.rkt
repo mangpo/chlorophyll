@@ -804,6 +804,10 @@
                 (send return accept this)
                 (comminfo 0 (set))))
           (define args-ret (send (get-field args ast) accept this))
+
+	  (for ([p (comminfo-placeset args-ret)])
+	       (inc-space p est-initparam)
+)
           (define body-ret (send (get-field body ast) accept this))
           (pop-scope)
           
