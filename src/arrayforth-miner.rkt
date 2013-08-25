@@ -167,7 +167,8 @@
   
   (define-values (next insts) 
     (collect-from-block (contain-block-funccall ast)))
-  (pretty-display `(first-location ,(string-join insts) ,exp ,(car (regexp-match-positions exp (string-join insts)))))
+
+  ;(pretty-display `(first-location ,(string-join insts) ,exp ,(car (regexp-match-positions exp (string-join insts)))))
   (car (regexp-match-positions exp (string-join insts))))
 
 (define sequence-matcher%
@@ -179,13 +180,18 @@
 
     (define/public (visit ast)
       (define (add-to-result insts)
-	(define matches (regexp-match-positions* exp (string-join insts)))
+        (define str (string-join insts))
+        (define len (string-length str))
+	(define matches (regexp-match-positions* exp str))
 	
         ;; add prev pointers to result list
 	(for ([pos matches])
              ;; (pretty-display "ADD TO RESULT:")
              ;; (aforth-struct-print (linklist-prev ast))
-	     (set! result (cons (linklist-prev ast) result))))
+             (let ([to (cdr pos)])
+               (when (or (= (cdr pos) len) 
+                         (equal? (substring str to (add1 to)) " "))
+                     (set! result (cons (linklist-prev ast) result))))))
 	
       (cond
        [(linklist? ast)

@@ -176,9 +176,6 @@
             (set-block-org! b (string-join (drop org (- (length org) (length x-code))))))
         )))
 
-
-
-
   ;; the first common entries
   (define froms lst)
   ;; the last common entries
@@ -321,9 +318,10 @@
   
   (define (get-linklist ll index)
     (define entry (linklist-entry ll))
-    (if (block? entry)
-	(pretty-display `(get-linklist ,(block-body entry) ,index))
-	(pretty-display `(get-linklist ,(funccall-name entry) ,index)))
+    (when debug
+          (if (block? entry)
+              (pretty-display `(get-linklist ,(block-body entry) ,index))
+              (pretty-display `(get-linklist ,(funccall-name entry) ,index))))
     (define insts 
       (if (block? entry)
           (if (string? (block-body entry))
@@ -346,7 +344,10 @@
   ;; Split linklist ll into 2 linklists by inserting a new linklist
   ;; after the splitted one.
   (define (split-linklist ll index code org)
-    (when debug (pretty-display `(split-linklist ,(substring code 0 index) ,(substring code index))))
+    (when debug 
+          (pretty-display `(split-linklist ,(substring code 0 index) ,(substring code index)))
+          (pretty-display "ll:")
+          (aforth-struct-print (linklist-entry ll)))
     ;; (pretty-display `(org ,org))
     (let* ([insts (substring code 0 index)]
            [fst-org (substring org 0 index)]
@@ -456,8 +457,11 @@
               [locations (send matcher visit linklist-program)])
          (when (>= (length locations) occur)
 	       ;; if repeat more then a certain number
-               (when debug (pretty-display (format "STRING: ~a" reformatted)))
-               (define-and-replace locations exp)))
+               ;(pretty-display (format "STRING: ~a" reformatted))
+               (define-and-replace locations exp)
+               ;(aforth-syntax-print linklist-program 2 2)
+               )
+         )
        )
   
   ;(aforth-struct-print linklist-program)
@@ -512,7 +516,7 @@
         (send (new block-merger%) visit linklist-program)
         
         (define result (aforth-linklist linklist-program linklist->list))
-        (aforth-struct-print result)
+        ;(aforth-struct-print result)
 	result
 	)
       program)

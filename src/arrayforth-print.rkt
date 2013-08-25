@@ -28,6 +28,13 @@
     (for ([i x])
          (print i indent))
     ]
+
+   [(linklist? x)
+    (when (linklist-entry x)
+          (print (linklist-entry x) indent))
+    (when (linklist-next x)
+          (print (linklist-next x) indent))]
+    
    
    [(block? x)
     (when original (display "| cr"))

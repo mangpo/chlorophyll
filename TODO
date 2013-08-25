@@ -1,22 +1,26 @@
 TODO
-- test MD5
-  = my algo is wrong :(
+- merge-block
+  1) <= 11 merge
+  2) don't merge (or <= 6) , then sliding window opt!
+  3) superoptimizer
+     = all blank, timeout -> guide the first 2 slots, no sol -> guid the last 2 slots
+- measure time & energy
+- more benchmarks
+  = vs expert
+  = vs unopt
+  = vs manual code
 - call rohin's compiler to get program size
   = if size > 64 words -> define-repeating-code for shorter seq
-- run optimized md5
-  * 1006: if exceed cap after optimize => define-repeating-code for shorter seq
-
-- redundant temp for funccall
 - connect to rohin's interpreter
   = left, right, up, down
   = 0 , 0 , 0 ,
 - or tikhon's
   = word for starting to execute
-
-- kill z3 when user break happens
-- longest subsequence
-- nop is less than everything, @ < @+
 - stat report
+
+- redundant temp for funccall
+- kill z3 when user break happens
+- nop is less than everything, @ < @+
 - 3 a! @ 32 - 1 . + . + 0 . + a! @
   = implement an abstract interpreter to just figure how many send and recv we need
   = no need to generate first pair from the interpreter
@@ -24,43 +28,31 @@ TODO
 - reset rosette when solving new problem (see compiler.rkt)
 - known type interpreter
   = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
-
-- dependency analysis to do parallel loop
 - data type check (x[i] + y) when y is array
 - visitor-divider can't handle nested indexes (eg. +@place(x[i*n+j]))
 
 - refactoring interpretor & flow & comminsert
-- master/slave block,function,array (tests/for-array2)
-
 - topological sort
 - recursion
 - general for?
 - for-array-fancy.cll
-- @h inside for (x[i] +@h y[i])
 - do we have to support int@any x?
   might need one more pass to get inferred place (e.g. @any)
-- check if printing for @any make sense
-- really need to be careful about for/parfor
-  need better data dependency analysis (prefixsum, convolution)
-- space estimator: if local var inside a loop -> no space required
-- annotation that says split array into x chunks without specify the partitions.
-   int[]@{split=4} x; 
-- should we allow a == b? Right now, no.
-   int[]@{[0:30]=a,[30:50]=b}
+
+FASTER PARTITIONER
+- infer each function first (see issue about racket)
+- incremental solving on num-msg
 
 ISSUE ABOUT RACKET
-- branch master
+- branch debug
 - email emina about smaller example
 - after the error is gone, do perf test again (partial vs no partial)
 
-SYMBOLIC DICT
+BETTER ESTIMATION
 - symbolic set or lower space to 4
   vector v of set s
   (vector-ref v i) -> (ite cond (set *) (set * /))
   (set-add (vector-ref v i) %) => ERROR
-
-MINI-PROJECTS
-- optimization: SSE, dead code elimiation
 
 MEMO
 - same VarDecl => same sym-place!!!
