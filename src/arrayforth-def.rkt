@@ -5,7 +5,7 @@
          "arrayforth-print.rkt"
          "arrayforth-miner.rkt")
 
-(provide define-repeating-code define-repeating-codes)
+(provide define-repeating-code define-repeating-codes aforth-linklist list->linklist)
 
 (define debug #f)
 
@@ -49,19 +49,19 @@
    [(list? ast)
     (proc (for/list ([x ast]) (aforth-linklist x proc)))]
 
-   [(linklist? ast)
-    (define (inner lst)
-      (if (linklist-entry lst)
-	  (cons (aforth-linklist (linklist-entry lst) proc) 
-		(inner (linklist-next lst)))
-	  (if (linklist-next lst)
-	      (raise "Invalid linklist: inproper tail.")
-	      (list))))
+   ;; [(linklist? ast)
+   ;;  (define (inner lst)
+   ;;    (if (linklist-entry lst)
+   ;;        (cons (aforth-linklist (linklist-entry lst) proc) 
+   ;;      	(inner (linklist-next lst)))
+   ;;        (if (linklist-next lst)
+   ;;            (raise "Invalid linklist: inproper tail.")
+   ;;            (list))))
     
-    (if (linklist-entry ast)
-	(raise "Invalid linklist: no head.")
-	(inner (linklist-next ast)))
-    ]
+   ;;  (if (linklist-entry ast)
+   ;;      (raise "Invalid linklist: no head.")
+   ;;      (inner (linklist-next ast)))
+   ;;  ]
 
    [(forloop? ast)
     (forloop (forloop-init ast) 
@@ -513,11 +513,12 @@
 	;(extract-all-sequence linklist-program 3 4)
 
 	(reorder-definition linklist-program)
-        (send (new block-merger%) visit linklist-program)
+        ;(send (new block-merger%) visit linklist-program)
         
-        (define result (aforth-linklist linklist-program linklist->list))
+        ;(define result (aforth-linklist linklist-program linklist->list))
         ;(aforth-struct-print result)
-	result
+	;result
+        linklist-program
 	)
       program)
 )

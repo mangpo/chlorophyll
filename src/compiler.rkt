@@ -48,9 +48,12 @@
   (send program accept (new arrayaccess%))
   
   (let* ([data-iter (send program accept (new memory-mapper%))]
+         ;; only generated reduced version if mem > 5
+         [reduce (and virtual (> (+ (meminfo-addr (car data-iter)) (cdr data-iter)) 
+                                 reduce-limit))]
          [code-gen (new code-generator% [data-size (car data-iter)]
                         [iter-size (cdr data-iter)]
-                        [core i] [w w] [h h] [virtual virtual])])
+                        [core i] [w w] [h h] [virtual reduce])])
     (pretty-display ">>> code gen")
     (define res (send program accept code-gen))
     (pretty-display ">>> result")
@@ -174,7 +177,7 @@
       (aforth-syntax-print shorter-codes w h)))
   
   (when opt
-    ;; genreate code
+    ;; genreate reduced code
     (define virtual-codes (define-repeating-codes (generate-codes programs w h #t) w h))
     
     (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)

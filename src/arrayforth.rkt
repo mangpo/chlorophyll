@@ -20,7 +20,8 @@
 (struct linklist (prev entry next) #:mutable)
 
 (define ga-bit 18)
-(define block-limit 16)
+(define block-limit 12)
+(define reduce-limit 5)
 
 (define (inout inst)
   (cond
@@ -137,7 +138,8 @@
       (set-block-out! a-block (- (+ a-out b-out) b-in))
       (begin
         (set-block-in! a-block (- (+ a-in b-in) a-out))
-        (set-block-out! a-block b-out))))
+        (set-block-out! a-block b-out)))
+  a-block)
 
 
 (define (empty-block? x)
@@ -190,15 +192,16 @@
    [else
     (define a-last (last a-list))
     (define b-first (car b-list))
-    (if (and (block? a-last) (block? b-first)
-	     ;; if more than 30, too big, don't merge.
-             (or no-limit
-                 (<= (+ (length (block-body a-last)) (length (block-body b-first))) 
-                     block-limit)))
-	(begin
-	  (merge-block a-last b-first)
-	  (append a-list (cdr b-list)))
-	(append a-list b-list))]))
+    ;; (if (and (block? a-last) (block? b-first)
+    ;;          (or no-limit
+    ;;              (<= (+ (length (block-body a-last)) (length (block-body b-first))) 
+    ;;                  block-limit)))
+    ;;     (begin
+    ;;       (merge-block a-last b-first)
+    ;;       (append a-list (cdr b-list)))
+    ;;     (append a-list b-list))]))
+
+    (append a-list b-list)]))
 
 (define (aforth-eq? a b)
   ;; (pretty-display `(aforth-eq? ,a ,b ,(block? a) ,(block? b)))
@@ -235,6 +238,12 @@
     (for ([i x])
 	 (codegen-print i indent))]
    
+   [(linklist? x)
+    (when (linklist-entry x)
+          (codegen-print (linklist-entry x) indent))
+    (when (linklist-next x)
+          (codegen-print (linklist-next x) indent))]
+
    [(block? x)
     (pretty-display (format "~a(block" indent))
     (display (format "~acode:" (inc indent)))

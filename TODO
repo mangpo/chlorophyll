@@ -1,7 +1,9 @@
 TODO
+- remove debug files
 - merge-block
-  1) <= 11 merge
-  2) don't merge (or <= 6) , then sliding window opt!
+  1) 2 b! @b down b! !b 3 b! @b right b! !b (md1: 105)
+     - 1 . + . + 0 b! !b => - 0 b! 1 . + . + !b (md1: 974)
+  2) test constrain on a
   3) superoptimizer
      = all blank, timeout -> guide the first 2 slots, no sol -> guid the last 2 slots
 - measure time & energy
