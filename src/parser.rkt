@@ -11,7 +11,8 @@
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
-                               -> FILTER WORK BLOCKING PIPELINE ADD FOREVER
+                               -> FILTER WORK BLOCKING FOREVER
+                               PIPELINE SPLITJOIN SPLIT JOIN ROUNDROBIN ADD
 			       READ WRITE
                                PLACE HERE ANY))
 
@@ -63,9 +64,13 @@
    ("filter" (token-FILTER))
    ("work" (token-WORK))
    ("blocking" (token-BLOCKING))
-   ("pipeline" (token-PIPELINE))
-   ("add" (token-ADD))
    ("forever" (token-FOREVER))
+   ("pipeline" (token-PIPELINE))
+   ("splitjoin" (token-SPLITJOIN))
+   ("split" (token-SPLIT))
+   ("join" (token-JOIN))
+   ("roundrobin" (token-ROUNDROBIN))
+   ("add" (token-ADD))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -403,6 +408,16 @@
          ; stream-related statements
          ((WORK BLOCKING LBRACK block RBRACK) (new WorkBlocking% [block $4]))
          ((ADD funccall SEMICOL) (new Add% [call $2]))
+
+         ((SPLIT ROUNDROBIN LPAREN RPAREN SEMICOL)
+          (new RoundRobinSplit% [place (get-sym)]))
+         ((SPLIT @ place-exp ROUNDROBIN LPAREN RPAREN SEMICOL)
+          (new RoundRobinSplit% [place $3]))
+
+         ((JOIN ROUNDROBIN LPAREN RPAREN SEMICOL)
+          (new RoundRobinJoin% [place (get-sym)]))
+         ((JOIN @ place-exp ROUNDROBIN LPAREN RPAREN SEMICOL)
+          (new RoundRobinJoin% [place $3]))
          )
     
     (stmts
@@ -424,6 +439,12 @@
               [input-type $1] [output-type $3]
               )))
     
+    (splitjoin-decl
+        ((data-type -> data-type SPLITJOIN VAR LPAREN params RPAREN LBRACK block RBRACK)
+         (new SplitJoinDecl% [name $5] [args (new Block% [stmts $7])] [body $10]
+              [input-type $1] [output-type $3]
+              )))
+    
     (block ((stmts) (new Block% [stmts $1])))
 
     (func-decl
@@ -437,7 +458,8 @@
           ;((var-decl) $1)
           ((func-decl) $1)
           ((filter-decl) $1)
-          ((pipeline-decl) $1))
+          ((pipeline-decl) $1)
+          ((splitjoin-decl) $1))
 
     (decls
          ((decl) (list $1))

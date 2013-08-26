@@ -7,13 +7,15 @@
 (define (ext-name name ext)
   (format "~a::~a" name ext))
 
-(define io-uid 0)
+(define get-uid
+  (let ([uid 0])
+    (λ () (set! uid (add1 uid)) uid)
+    ))
 
 (define (get-input-func-pull src)
-  (set! io-uid (add1 io-uid))
   (define output-vardecl (get-field output-vardecl src))
   (define stdin
-    (new GlobalIOFuncDecl% [name (format "in#from#~a#~a" (get-field name src) io-uid)] 
+    (new GlobalIOFuncDecl% [name (format "in#from#~a#~a" (get-field name src) (get-uid))] 
 	 [args (new Block% [stmts (list)])] 
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set (get-field place output-vardecl))]
@@ -25,14 +27,13 @@
   stdin)
 
 (define (get-input-func-made-available this source)
-  (set! io-uid (add1 io-uid))
   (define input-vardecl (get-field input-vardecl this))
   (define stdin
     (new FilterInputFuncDecl%
          [name (format "in#from#~a#inside#~a#~a"
                        (get-field name source)
                        (get-field name this)
-                       io-uid)] 
+                       (get-uid))] 
 	 [args (new Block% [stmts (list)])] 
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set (get-field place input-vardecl))]
@@ -42,10 +43,9 @@
   stdin)
 
 (define (get-output-func-push dst)
-  (set! io-uid (add1 io-uid))
   (define input-vardecl (get-field input-vardecl dst))
   (define stdout
-    (new GlobalIOFuncDecl% [name (format "out#to#~a#~a" (get-field name dst) io-uid)] 
+    (new GlobalIOFuncDecl% [name (format "out#to#~a#~a" (get-field name dst) (get-uid))] 
 	 [args (new Block% [stmts (list (new Param%
                                              [var-list (list "data")]
                                              [type (get-field type input-vardecl)]
@@ -63,14 +63,13 @@
   stdout)
 
 (define (get-output-func-make-available this destination)
-  (set! io-uid (add1 io-uid))
   (define output-vardecl (get-field output-vardecl this))
   (define stdout
     (new FilterOutputFuncDecl%
          [name (format "out#to#~a#inside#~a#~a"
                        (get-field name destination)
                        (get-field name this)
-                       io-uid)] 
+                       (get-uid))] 
 	 [args (new Block% [stmts (list (new Param%
                                              [var-list (list "data")]
                                              [type (get-field type output-vardecl)]
@@ -88,6 +87,66 @@
 		      [place (new Place% [at "output"])]
                       )]))
   stdout)
+
+(define (get-empty-filter type place)
+  (new ConcreteFilterDecl%
+       [name (format "#roundrobin#~a" (get-uid))]
+       [args (new Block% [stmts (list)])]
+       [input-vardecl (new InputDecl% [var-list (list "#input")]
+                           [type type] [place place])]
+       [output-vardecl (new OutputDecl% [var-list (list "#output")]
+                           [type type] [place place])]
+       [body (new Block% [stmts (list)])]
+       ))
+
+(define (get-add-call callable)
+  (new Add% [call (new FuncCall%
+                       [name (get-field name callable)]
+                       [args (list)]
+                       [signature callable]
+                       )]))
+
+(define (get-global-input-filter type)
+  (new GlobalIOConcreteFilterDecl% [name "__globalinputsrc__"]
+       [input-vardecl (new VarDecl%
+                           [var-list (list)]
+                           [type "void"]
+                           [known #f])]
+       [output-vardecl (new VarDecl% [var-list (list "#output")]
+                            [type type]
+                            [place (new Place% [at "input"])]
+                            [known #f])]))
+
+(define (get-global-output-filter type)
+  (new GlobalIOConcreteFilterDecl% [name "__globaloutputdst__"]
+       [input-vardecl (new VarDecl% [var-list (list "#output")]
+                           [type type]
+                           [place (new Place% [at "output"])]
+                           [known #f])]
+       [output-vardecl (new VarDecl%
+                            [var-list (list)]
+                            [type "void"]
+                            [known #f])]))
+
+(define (get-roundrobin-split-body n)
+  (define stmts
+    (for/list ([i (in-range n)])
+      (new FuncCall%
+           [name (format "out##~a" i)]
+           [args (list (new FuncCall% [name "in"] [args (list)]))]
+           )))
+  (define forever (new Forever% [body (new Block% [stmts stmts])]))
+  (new Block% [stmts (list forever)]))
+
+(define (get-roundrobin-join-body n)
+  (define stmts
+    (for/list ([i (in-range n)])
+      (new FuncCall%
+           [name "out"]
+           [args (list (new FuncCall% [name (format "in##~a" i)] [args (list)]))]
+           )))
+  (define forever (new Forever% [body (new Block% [stmts stmts])]))
+  (new Block% [stmts (list forever)]))
 
 (define (same-place? a b)
   ;;(assert (and (place-type? a) (place-type? b)))
@@ -211,4 +270,13 @@
       (assert (= (sub1 other-y) me-y) `(= (sub1 other-y) me-y))
       (assert (= other-x me-x) `(= other-x me-x))
       `E])))
+
+(define-syntax-rule (append-field! id obj-exp expr ...)
+  (set-field! id obj-exp (append (get-field id obj-exp) expr ...)))
+
+(define-syntax-rule (append! id expr ...)
+  (set! id (append id expr ...)))
+
+(define-syntax-rule (append-name env id expr ...)
+  (update-name env id (append (lookup-name env id) expr ...)))
 

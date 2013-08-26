@@ -1005,8 +1005,9 @@
 (define ConcreteFilterDecl%
   (class FilterDecl%
     (super-new)
-    (init-field abstract arg-values [id #f] [input-filters #f] [output-filters #f]
-                [input-funcs #f] [output-funcs #f])
+    (init-field [abstract #f] [arg-values #f] [id #f]
+                [input-filters (list)] [output-filters (list)]
+                [input-funcs (list)] [output-funcs (list)])
     (inherit-field input-vardecl output-vardecl name args body body-placeset)
     (inherit print-body-placeset)
     
@@ -1027,6 +1028,13 @@
       (send body pretty-print (inc indent)))
     ))
 
+(define GlobalIOConcreteFilterDecl%
+  (class ConcreteFilterDecl%
+    (super-new
+      [args (new Block% [stmts (list)])]
+      [body (new Block% [stmts (list)])]
+      )))
+
 (define PipelineDecl%
   (class StaticCallableDecl%
     (super-new)
@@ -1036,6 +1044,20 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "(PIPELINE ~a (input-type=~a output-type=~a)"
+                              name input-type output-type))
+      (print-body-placeset indent)
+      (send args pretty-print (inc indent))
+      (send body pretty-print (inc indent)))))
+
+(define SplitJoinDecl%
+  (class StaticCallableDecl%
+    (super-new)
+    (init-field input-type output-type)
+    (inherit-field name args body body-placeset)
+    (inherit print-body-placeset)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "(SPLITJOIN ~a (input-type=~a output-type=~a)"
                               name input-type output-type))
       (print-body-placeset indent)
       (send args pretty-print (inc indent))
@@ -1058,6 +1080,24 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ADD" indent))
       (send call pretty-print (inc indent)))))
+
+(define RoundRobinSplit%
+  (class Base%
+    (super-new)
+    (init-field place)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(SPLIT ROUNDROBIN" indent))
+      )))
+
+(define RoundRobinJoin%
+  (class Base%
+    (super-new)
+    (init-field place)
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(JOIN ROUNDROBIN" indent))
+      )))
 
 (define Program%
   (class Block%

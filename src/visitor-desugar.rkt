@@ -236,6 +236,9 @@
          (define call-ret (send (get-field call ast) accept this))
          (set-field! call ast call-ret)
          ast]
+
+        [(is-a? ast RoundRobinSplit%) ast]
+        [(is-a? ast RoundRobinJoin%) ast]
         
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))

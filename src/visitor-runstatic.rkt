@@ -8,6 +8,9 @@
 
 (provide static-runner%)
 
+(struct ret (previous-filters all-filters all-funcs)
+  #:constructor-name make-ret)
+
 (define static-runner%
   (class* object% (visitor<%>)
     (super-new)
@@ -15,38 +18,7 @@
                 )
 
     (define debug #f)
-    (declare env "__globalinputsrc__" 
-             (new ConcreteFilterDecl% [name "__globalinputsrc__"]
-                  [args (new Block% [stmts (list)])]
-                  [arg-values (list)]
-                  [body (new Block% [stmts (list)])]
-                  [abstract (void)]
-                  [input-vardecl (new VarDecl%
-                              [var-list (list)]
-                              [type "void"]
-                              [known #f])]
-                  [output-vardecl (new VarDecl% [var-list (list "#output")]
-                               [type "int"] ;; TODO: make it generic
-                               [place (new Place% [at "input"])]
-                               [known #f])]))
-    (declare env "__globaloutputdst__"
-             (new ConcreteFilterDecl% [name "__globaloutputdst__"]
-                  [args (new Block% [stmts (list)])]
-                  [arg-values (list)]
-                  [body (new Block% [stmts (list)])]
-                  [abstract (void)]
-                  [input-vardecl (new VarDecl% [var-list (list "#output")]
-                              [type "int"] ;; TODO: make it generic
-                              [place (new Place% [at "output"])]
-                              [known #f])]
-                  [output-vardecl (new VarDecl%
-                               [var-list (list)]
-                               [type "void"]
-                               [known #f])]))
-    (declare env "__previous__" (list (lookup-name env "__globalinputsrc__")))
-    
-    ;; IO functions are not available in static code
-                 
+
     (define (push-scope)
       ;(pretty-display `(push-scope))
       (let ([new-env (make-hash)])
@@ -104,7 +76,7 @@
         (for ([var var-list])
           (declare env var (cons type (void))))
         
-        (list)]
+        (make-ret (list) (list) (list))]
 
        [(is-a? ast ArrayDecl%)
         (raise "visitor-runstatic: arrays not supported yet. TODO!")]
@@ -130,76 +102,127 @@
         (define value (send rhs accept this))
         (update env var value)
         
-        (list)]
+        (make-ret (list) (list) (list))]
 
        [(is-a? ast Return%)
         (raise "visitor-runstatic: return not supported yet. TODO!")]
 
        [(is-a? ast Program%)
+        (when debug (pretty-display "RUNSTATIC: Program"))
         (define stmts (get-field stmts ast))
         
         ;; update env front to back
-        (for ([stmt stmts])
-          (when (is-a? stmt CallableDecl%)
-              (declare env (get-field name stmt) stmt)))
+        (for ([stmt stmts]
+              #:when (is-a? stmt CallableDecl%))
+          (declare env (get-field name stmt) stmt))
         
-        ;; run Main()
-        (define main
-          (first (filter (λ (stmt) (and (is-a? stmt StaticCallableDecl%)
-                                        (equal? (get-field name stmt) "Main")))
-                         stmts)))
-        (define filters-funcs (send main accept this))
-        (define filters (car filters-funcs))
-        (define funcs (cdr filters-funcs))
+        (define main (lookup-name env "Main"))
+        (define input-filter
+          (get-global-input-filter (get-field input-type main)))
+        (define output-filter
+          (get-global-output-filter (get-field output-type main)))
 
-        ;; connect global I/O to first and last filters
-        (set-field! output-filters (last filters) (list (lookup-name env "__globaloutputdst__")))
-        (set-field! input-filters (lookup-name env "__globaloutputdst__") (list (last filters)))
-        (define output-funcs (list (get-output-func-push (lookup-name env "__globaloutputdst__"))))
-        (set-field! output-funcs (last filters) output-funcs)
-        (define input-funcs (list (get-input-func-pull (lookup-name env "__globalinputsrc__"))))
-        (set-field! input-funcs (first filters) input-funcs)
-        (set! funcs (append funcs input-funcs output-funcs))
-        
-        ;; remove abstract filter and static declarations from program
-        (set! stmts
-              (filter (λ (stmt)
-                        (not (or (is-a? stmt AbstractFilterDecl%)
-                                 (is-a? stmt StaticCallableDecl%))))
-                      stmts))
-        (set-field! stmts ast stmts)
+        (declare env "__previous__" (list input-filter))
+        (declare env "__method__" 'pipeline)
+        (define ret
+          (send (new Block% [stmts (list (get-add-call main) output-filter)])
+                accept this))
+
+        ;; remove static declarations
+        (set-field! stmts ast
+          (for/list ([stmt stmts]
+                     #:unless (is-a? stmt AbstractFilterDecl%)
+                     #:unless (is-a? stmt StaticCallableDecl%))
+            stmt))
         
         ;; add concrete filter declarations
-        (set! stmts (append stmts filters funcs))
-        (set-field! stmts ast stmts)
+        (append-field! stmts ast
+                       (drop-right (ret-all-filters ret) 1)
+                       (ret-all-funcs ret))
         
 	(void)]
 
        [(is-a? ast Block%) 
-        (define pairs
-          (for/list ([stmt (get-field stmts ast)])
-                    (send stmt accept this)))
-        (define filters (list))
-        (define funcs (list))
+        (when debug (pretty-display "RUNSTATIC: Block"))
+        (define previous-filters (list))
+        (define all-filters (list))
+        (define all-funcs (list))
 
-        (for ([pair pairs])
-          (set! filters (append filters (car pair)))
-          (set! funcs (append funcs (cdr pair))))
+        (declare env "__previous_so_far__" (list))
+        (for ([stmt (get-field stmts ast)])
+          (define ret (send stmt accept this))
+          (append! all-filters (ret-all-filters ret))
+          (append! all-funcs (ret-all-funcs ret))
+          (cond
+            [(equal? (lookup-name env "__method__") 'pipeline)
+             (update-name env "__previous__" (ret-previous-filters ret))
+             (set! previous-filters (ret-previous-filters ret))
+             ]
+            [(equal? (lookup-name env "__method__") 'splitjoin)
+             (append-name env "__previous_so_far__" (ret-previous-filters ret))
+             (append! previous-filters (ret-previous-filters ret))
+             ]
+          ))
 
-        (cons filters funcs)]
+        (make-ret previous-filters all-filters all-funcs)]
 
        [(is-a? ast PipelineDecl%)
-        (pretty-display (format "RUNSTATIC: PipelineDecl ~a" ast))
+        (when debug (pretty-display (format "RUNSTATIC: PipelineDecl ~a" (get-field name ast))))
         (push-scope)
-        (define filters-funcs (send (get-field body ast) accept this))
-        (define filters (car filters-funcs))
-        (define funcs (cdr filters-funcs))
+
+        (declare env "__method__" 'pipeline)
+        (define ret (send (get-field body ast) accept this))
 
         (pop-scope)
-        (cons filters funcs)]
+        ret]
        
+       [(is-a? ast SplitJoinDecl%)
+        (when debug (pretty-display (format "RUNSTATIC: SplitJoinDecl ~a" (get-field name ast))))
+        (push-scope)
+        (declare env "__input_type__" (get-field input-type ast))
+        (declare env "__output_type__" (get-field output-type ast))
+
+        (declare env "__method__" 'splitjoin)
+        (define ret (send (get-field body ast) accept this))
+        (update-name env "__previous__" (ret-previous-filters ret))
+
+        (define join (lookup-name env "__join__"))
+        (define split (lookup-name env "__split__"))
+
+        (define n (length (ret-previous-filters ret)))
+        (set-field! body split (get-roundrobin-split-body n))
+        (set-field! body join (get-roundrobin-join-body n))
+
+        (pop-scope)
+        (make-ret (list join)
+                  (append (ret-all-filters ret))
+                  (append (ret-all-funcs ret)))]
+
+       [(is-a? ast RoundRobinSplit%)
+        (when debug (pretty-display "RUNSTATIC: RoundRobinSplit"))
+
+        (define split (get-empty-filter (lookup-name env "__input_type__")
+                                        (get-field place ast)))
+        (define ret (send split accept this))
+        (update-name env "__previous__" (ret-previous-filters ret))
+        (declare env "__split__" split)
+
+        (make-ret (list) (ret-all-filters ret) (ret-all-funcs ret))]
+
+       [(is-a? ast RoundRobinJoin%)
+        (when debug (pretty-display "RUNSTATIC: RoundRobinJoin"))
+
+        (update-name env "__previous__" (lookup-name env "__previous_so_far__"))
+        (define join (get-empty-filter (lookup-name env "__output_type__")
+                                       (get-field place ast)))
+        (define ret (send join accept this))
+        (update-name env "__previous__" (ret-previous-filters ret))
+        (declare env "__join__" join)
+
+        (make-ret (list) (ret-all-filters ret) (ret-all-funcs ret))]
+
        [(is-a? ast Add%)
-        (pretty-display (format "RUNSTATIC: Add ~a" ast))
+        (when debug (pretty-display (format "RUNSTATIC: Add ~a" ast)))
         (define call (get-field call ast))
         (define decl (get-field signature call))
         (define arg-values (map (λ (exp) (send exp accept this))
@@ -218,30 +241,10 @@
                                [args (get-field args decl)]
                                [body (get-field body decl)]
                                ))
-
-           (define all-output-funcs (list))
-           (for ([previous-filter (lookup-name env "__previous__")])
-             (set-field! output-filters previous-filter (list new-filter))
-             (define output-funcs (list (get-output-func-make-available previous-filter new-filter)))
-             (set-field! output-funcs previous-filter output-funcs)
-             (set! all-output-funcs (append all-output-funcs output-funcs))
-           )
-
-           (set-field! input-filters new-filter (lookup-name env "__previous__"))
-           (define all-input-funcs
-             (for/list ([previous-filter (lookup-name env "__previous__")])
-               (get-input-func-made-available new-filter previous-filter)))
-           (set-field! input-funcs new-filter all-input-funcs)
-
-           (for ([output-func all-output-funcs]
-                 [input-func all-input-funcs])
-             (set-field! source-output-func input-func output-func)
-             (set-field! destination-input-func output-func input-func))
-
-           (update-name env "__previous__" (list new-filter))
-           (cons (list new-filter) (append all-input-funcs all-output-funcs))
-           ]
+           (send new-filter accept this)]
           [(is-a? decl PipelineDecl%)
+           (send decl accept this)]
+          [(is-a? decl SplitJoinDecl%)
            (send decl accept this)]
           [(is-a? decl FuncDecl%)
            (raise (format "visitor-runstatic: tried to add function as a stream in ~a" ast))]
@@ -249,6 +252,41 @@
            (raise (format "visitor-runstatic: unimplemented add call to ~a" decl))])
        ]
 
+       [(is-a? ast ConcreteFilterDecl%)
+        (when debug (pretty-display (format "RUNSTATIC: ConcreteFilterDecl ~a" (get-field name ast))))
+        (define new-filter ast)
+
+        (define all-output-funcs (list))
+        (for ([previous-filter (lookup-name env "__previous__")])
+          (append-field! output-filters previous-filter (list new-filter))
+          (define output-funcs
+            (if (is-a? new-filter GlobalIOConcreteFilterDecl%)
+              (list (get-output-func-push new-filter))
+              (list (get-output-func-make-available previous-filter new-filter))
+              ))
+          (append-field! output-funcs previous-filter output-funcs)
+          (set! all-output-funcs (append all-output-funcs output-funcs))
+          )
+
+        (set-field! input-filters new-filter (lookup-name env "__previous__"))
+        (define all-input-funcs
+          (for/list ([previous-filter (lookup-name env "__previous__")])
+            (if (is-a? previous-filter GlobalIOConcreteFilterDecl%)
+              (get-input-func-pull previous-filter)
+              (get-input-func-made-available new-filter previous-filter)
+              )))
+        (set-field! input-funcs new-filter all-input-funcs)
+
+        (for ([output-func all-output-funcs]
+              [input-func all-input-funcs])
+          (when (is-a? input-func FilterIOFuncDecl%)
+            (set-field! source-output-func input-func output-func))
+          (when (is-a? output-func FilterIOFuncDecl%)
+            (set-field! destination-input-func output-func input-func))
+          )
+
+        (make-ret (list new-filter) (list new-filter) (append all-input-funcs all-output-funcs))
+        ]
        
        [(is-a? ast FuncDecl%)
         (raise "visitor-runstatic: function declarations not supported yet. TODO!")]
