@@ -101,19 +101,17 @@
         (define body (block-body block-noopt))
         (pretty-display `(optimize-loop ,len ,body))
         (define cnstr (block-cnstr block-noopt))
-        (define result (optimize (if (string? body)
-                                         body
-                                         (string-join body))
-                                     #:f18a #f
-                                     #:num-bits bit #:name name
-                                     #:constraint (out-space out cnstr)
-                                     #:mem mem-size #:start mem-size))
+        (define result (optimize (string-join body)
+				 #:f18a #f
+				 #:num-bits bit #:name name
+				 #:constraint (out-space out cnstr)
+				 #:mem mem-size #:start mem-size))
 
         (if (equal? result 'timeout)
             (let* ([last-block (linklist-entry (linklist-prev next))]
                    [last-body (block-body last-block)]
                    [last-list (if (string? last-body) (string-split last-body) last-body)])
-              (optimize-loop (- len (length last-list))))
+              (optimize-loop (- (length body) (min 1 (length last-list)))))
 
             (begin
               (set-block-body! block-noopt result)
