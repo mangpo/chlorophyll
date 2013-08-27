@@ -10,134 +10,85 @@
 
 (define program
   (vector
-    ;; core 23
+    ;; core 12
     (aforth 
       ;; linklist
       (list 
-        (funcdecl "68rep"
+        (vardecl '(0 32867 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0))
+        (funcdecl "sumrotate"
           ;; linklist
           (list 
             (block
-              "drop "
+              "0 a! !+ "
               1 0 (restrict #t #f #f #f)
-              "drop ")
+              "0 a! !+ ")
             (block
-              "over - and + "
-              2 1 (restrict #t #f #f #f)
-              "over - and + ")
-            (block
-              "65535 "
+              "0 b! @b "
               0 1 (restrict #t #f #f #f)
-              "65535 ")
+              "0 b! @b ")
             (block
-              "and "
-              2 1 (restrict #t #f #f #f)
-              "and ")
+              "right b! !b "
+              1 0 (restrict #t #f #f #f)
+              "right b! !b ")
+          )
+        )
+        (funcdecl "57rep"
+          ;; linklist
+          (list 
             (block
               ""
               0 0 (restrict #t #f #f #f)
               "")
-          )
-        )
-        (funcdecl "leftrotate"
-          ;; linklist
-          (list 
             (block
-              "right b! @b "
-              0 1 (restrict #t #f #f #f)
-              "right b! @b ")
-            (block
-              "1 "
-              0 1 (restrict #t #f #f #f)
-              "1 ")
-            (funccall "69rep")
-            (block
-              " b! !b"
-              2 0 (restrict #t #f #f #f)
-              " b! !b")
-            (block
-              "right b! @b "
-              0 1 (restrict #t #f #f #f)
-              "right b! @b ")
-            (block
-              "0 b! !b "
+              "4 b! !b "
               1 0 (restrict #t #f #f #f)
-              "0 b! !b ")
-            (block
-              "right b! @b "
-              0 1 (restrict #t #f #f #f)
-              "right b! @b ")
-            (block
-              "1 "
-              0 1 (restrict #t #f #f #f)
-              "1")
-            (funccall "68rep")
-            (block
-              "down "
-              0 1 (restrict #t #f #f #f)
-              "down ")
-            (funccall "69rep")
-            (funccall "68rep")
-            (block
-              "up b! !b "
-              1 0 (restrict #t #f #f #f)
-              "up b! !b")
-          )
-        )
-        (funcdecl "csum"
-          ;; linklist
-          (list 
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "up b! !b "
-              1 0 (restrict #t #f #f #f)
-              "up b! !b ")
-          )
-        )
-        (funcdecl "sumrotate"
-          ;; linklist
-          (list 
-            (funccall "csum")
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "right b! !b "
-              1 0 (restrict #t #f #f #f)
-              "right b! !b ")
-            (block
-              "up b! @b "
-              0 1 (restrict #t #f #f #f)
-              "up b! @b ")
-            (block
-              "right b! !b "
-              1 0 (restrict #t #f #f #f)
-              "right b! !b ")
-            (funccall "leftrotate")
-            (funccall "csum")
-          )
-        )
-        (funcdecl "main"
-          ;; linklist
-          (list 
+              "18 b! !b ")
             (forloop 
               (block
-                "63 "
-                0 1 (restrict #t #t #f #t)
-                "63 ")
+                "15 "
+                0 1 (restrict #t #f #f #f)
+                "15 ")
               ;; linklist
               (list 
+                (block
+                  "3 b! @b "
+                  0 1 (restrict #t #f #f #f)
+                  "17 b! @b ")
+                (block
+                  "1 + b! @b "
+                  1 1 (restrict #t #f #f #f)
+                  "1 + b! @b ")
                 (funccall "sumrotate")
+                (block
+                  "3 b! @b "
+                  0 1 (restrict #t #f #f #f)
+                  "17 b! @b ")
+                (block
+                  "4 b! @b "
+                  0 1 (restrict #t #f #f #f)
+                  "18 b! @b ")
+                (block
+                  "+ "
+                  2 1 (restrict #t #f #f #f)
+                  "+ ")
+                (block
+                  "15 "
+                  0 1 (restrict #t #f #f #f)
+                  "15 ")
+                (block
+                  "and "
+                  2 1 (restrict #t #f #f #f)
+                  "and ")
+                (block
+                  "3 b! !b "
+                  1 0 (restrict #t #f #f #f)
+                  "17 b! !b ")
               )
-              '(#f . #f) 0 64)
+              '(#f . #f) 48 64)
           )
         )
       )
-    3 18 #hash((0 . 0) (1 . 1) (2 . 2) (3 . 3)))
+    5 18 #hash((0 . 0) (1 . 1) (3 . 17) (4 . 18) (5 . 19)))
     #f))
 
 ;(define-repeating-code program)
