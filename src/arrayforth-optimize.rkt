@@ -111,7 +111,7 @@
             (let* ([last-block (linklist-entry (linklist-prev next))]
                    [last-body (block-body last-block)]
                    [last-list (if (string? last-body) (string-split last-body) last-body)])
-              (optimize-loop (- (length body) (min 1 (length last-list)))))
+              (optimize-loop (- (length body) (max 1 (length last-list)))))
 
             (begin
               (set-block-body! block-noopt result)
