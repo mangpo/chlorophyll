@@ -287,6 +287,6 @@
         (block org (block-in ast) (block-out ast) (block-cnstr ast) org)
         (block (string-join new-body) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))
   
-  (if (> (dict-ref index-map mem-size) reduce-limit)
+  (if index-map
       (renameindex-inner)
       (block (block-body ast) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))

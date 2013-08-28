@@ -524,7 +524,7 @@
                               main-funcs) 
                       (+ (get-var data-size) iter-size) 
                       (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
-                      index-map)))
+                      (if virtual index-map #f))))
         ]
 
        [(is-a? ast Block%)
