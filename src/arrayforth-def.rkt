@@ -510,7 +510,7 @@
 	(extract-all-sequence linklist-program 6 2)
 
         ;; TODO: if the code doesn't fit in, do this
-	;(extract-all-sequence linklist-program 3 4)
+	(extract-all-sequence linklist-program 3 4)
 
 	(reorder-definition linklist-program)
         ;(send (new block-merger%) visit linklist-program)

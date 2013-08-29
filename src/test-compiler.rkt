@@ -23,9 +23,9 @@
 ;                      220 "null" #:w 5 #:h 4 #:opt #f)
 
 (compile-and-optimize "../tests/run/md5.cll" "md1" 
-                     400 "null" #:w 10 #:h 5 #:opt #t)
-(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
-                     400 "null" #:w 10 #:h 5 #:opt #t)
+                     400 "null" #:w 10 #:h 5 #:opt #f)
+;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
+;                     400 "null" #:w 10 #:h 5 #:opt #t)
 ;(compile-and-optimize "../tests/run/debug.cll" "debug" 
 ;                     256 "null" #:w 2 #:h 2 #:opt #f)
 

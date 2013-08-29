@@ -37,9 +37,9 @@
     
    
    [(block? x)
-    (when original (display "| cr"))
-    (newline)
-    (display indent)
+    ;; (when original (display "| cr"))
+    ;; (newline)
+    ;; (display indent)
 
     (define inst-list
       (if (list? (block-body x))

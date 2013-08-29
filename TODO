@@ -1,5 +1,8 @@
 TODO
-- remove debug files
+- modify cegis
+- md5-opt2 # 102 3 b! @b (17 b! @b)
+- md1 # 405 (no swaping comm order!)
+  : sumrotate = $0 0 a! !+ 0 b! @b up b! !b right b! @b = $0 ; | cr
 - merge-block
   1) 2 b! @b down b! !b 3 b! @b right b! !b (md1: 105)
      - 1 . + . + 0 b! !b => - 0 b! 1 . + . + !b (md1: 974)
