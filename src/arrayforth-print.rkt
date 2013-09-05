@@ -23,6 +23,35 @@
   (define (inc indent)
     (string-append indent "  "))
 
+  (define (micro-next loopbody)
+    ;(pretty-display `(micro-next ,loopbody))
+
+    (define (list-length a)
+      (define (linklist-length l)
+	;(pretty-display `(linklist-length ,l))
+	(if l
+	    (if (linklist-entry l)
+		(add1 (linklist-length (linklist-next l)))
+		(linklist-length (linklist-next l)))
+	    0))
+      (if (list? a) (length a) (linklist-length a)))
+      
+    (and (= (list-length loopbody) 1) 
+	 ; head linklist is empty
+	 (let ([entry (if (list? loopbody) 
+			  (car loopbody)
+			  (linklist-entry (linklist-next loopbody)))])
+	   (and (block? entry)
+		(let* ([program (block-body entry)]
+		       [inst-list (if (string? program) (string-split program) program)]
+		       [total (length inst-list)]
+		       [count-number 
+			(count (lambda (x)
+				 (or (string->number x)
+				     (member x (list "up" "down" "left" "right" "io"))))
+			       inst-list)])
+		  (< (+ total (* 4 count-number)) 4))))))
+
   (cond
    [(list? x)
     (for ([i x])
@@ -74,8 +103,13 @@
     (when original (display "| cr"))
     (newline)
     (display (inc indent))
+    ;(pretty-display `(forloop-body ,(forloop-body x)))
+    ;(aforth-struct-print x)
     (print (forloop-body x) (inc indent))
-    (display "next ")]
+    ;(pretty-display `(forloop-body ,(forloop-body x)))
+    (if (micro-next (forloop-body x))
+	(display "unext ")
+	(display "next "))]
    
    [(ift? x)
     (when original (display "| cr"))

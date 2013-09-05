@@ -1,21 +1,4 @@
 TODO
-1) unext
-
-2) 17 not 3!
-{block 1016}
-( -) # 403 ( mem 5) 0 org | cr
-0 , 25185 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 24 , 0 , 0 , 0 , | br
-: store 17 b! !b ; | cr
-: sumrotate = $0 325 b! dup 0 a! !b !+ @b left b! !b = $0 ; | cr
-: 85rep = $0 18 b! !b | cr
-  15 for | cr
-    3 ( 17 ) b! @b 1 . + b! @b sumrotate 17 a! @+ @+ . + 15 and store next = $0 ; | cr
-: main = $0 
-  0 store 1 85rep 
-  1 store 5 85rep 
-  5 store 3 85rep 
-  0 store 7 85rep warm = $0 ; | cr
-
 3) replace 0 with dup dup or
 4)
 ;(optimize "65535 and 4 b! !b 5 b! @b 65535" 

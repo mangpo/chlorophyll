@@ -140,7 +140,10 @@
                       (string-trim (string-join (block-org renamed)))))
 
       (if (and (equal? res org) (block? (linklist-entry next)))
-          (superoptimize-inner (linklist-next ast))
+	  (let ([entry (linklist-entry ast)])
+	    ;; change to original in case the we do memory compression
+	    (set-block-body! entry (block-org entry))
+	    (superoptimize-inner (linklist-next ast)))
           (begin
             (set-linklist-entry! ast renamed)
             (set-linklist-next! ast next)
@@ -273,6 +276,7 @@
                     (number->string (dict-ref index-map (string->number inst)))
                     inst)))
     (define new-mem-size (dict-ref index-map mem-size))
+    (pretty-display `(compare ,new-body ,org mem-size ,new-mem-size bit ,bit))
     (define diff (program-diff? org new-body
                                 new-mem-size (out-space (block-out ast) (block-cnstr ast)) bit))
     
