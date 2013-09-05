@@ -1,8 +1,9 @@
+int::2 a() {
+  int::2 x;
+  return x;
+}
+
 void main() {
-  int x;
-  x = 1;
-  while(x != 0) {
-    out(42);
-    x = in();
-  }
+  int::2 y;
+  y = a();
 }
