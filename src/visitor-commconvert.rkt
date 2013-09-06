@@ -11,7 +11,7 @@
 (define comm-converter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field routing-table part2core n)
+    (init-field part2core n)
 
     (define debug #f)
     

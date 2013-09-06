@@ -83,6 +83,7 @@ int in() {
   int data;
   // exit on EOF or non-integer
   if(scanf("%d", &data) != 1) {
+    fprintf(stderr, "found EOF or non-integer, exiting in 5 seconds\n");
     sleep(5);
     exit(0);
   }

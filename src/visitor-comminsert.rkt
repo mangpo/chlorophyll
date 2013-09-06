@@ -2,22 +2,32 @@
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt"
-         "visitor-interface.rkt")
+         "visitor-interface.rkt"
+         (rename-in "routing.rkt" [route route-explicit]))
 
 (provide commcode-inserter%)
 
-;; 1) Insert communication route to send-path field.
-;; 2) Insert communication route to output-send-path field of filters.
-;; 3) Set body-placeset.
+;; First pass [insert-routes #f]:
+;;  1) Set body-placeset.
+;;
+;; Second pass [insert-routes #t]:
+;;  1) Insert communication route to send-path field.
+;;  2) Insert communication route to output-send-path field of filters.
+;;  3) Set body-placeset.
+;;
 ;; Note: this visitor mutates AST.
 (define commcode-inserter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field routing-table part2core n)
+    (init-field w h insert-routes)
 
     (define debug #f)
 
-    (define (construct-placelist x-placelist y-placelist index)
+    (define current-filter #f)
+    (define all-filters (set))
+    (define used-routes (set))
+
+    (define (construct-placelist x-placelist y-placelist index [connected-filter #f])
       (if (and (empty? x-placelist) (empty? y-placelist))
           (list)
           (let* ([x-first (car x-placelist)]
@@ -31,38 +41,63 @@
              [(equal? x-to y-to)
               (cons (new RangePlace% [from index] [to x-to] 
                          [place x-place]
-                         [send-path (vector-2d-ref routing-table x-place y-place)])
-                    (construct-placelist (cdr x-placelist) (cdr y-placelist) x-to))]
+                         [send-path (route x-place y-place connected-filter)])
+                    (construct-placelist (cdr x-placelist) (cdr y-placelist) x-to connected-filter))]
              
              [(< x-to y-to)
               (cons (new RangePlace% [from index] [to x-to]
                          [place x-place]
-                         [send-path (vector-2d-ref routing-table x-place y-place)])
-                    (construct-placelist (cdr x-placelist) y-placelist x-to))]
+                         [send-path (route x-place y-place connected-filter)])
+                    (construct-placelist (cdr x-placelist) y-placelist x-to connected-filter))]
              
              [(> x-to y-to)
               (cons (new RangePlace% [from index] [to y-to]
                          [place x-place]
-                         [send-path (vector-2d-ref routing-table x-place y-place)])
-                    (construct-placelist x-placelist (cdr y-placelist) y-to))]
+                         [send-path (route x-place y-place connected-filter)])
+                    (construct-placelist x-placelist (cdr y-placelist) y-to connected-filter))]
              
              [else (raise "contruct-placelist: unimplemented")]))))
-    
-    (define/public (get-gen-path x y)
+
+    (define (get-obstacles [connected-filter #f])
+      (when debug (pretty-display `(get-obstacles (used-routes ,used-routes)
+                                      (all-filters ,(for/list ([f all-filters])
+                                                     (get-field name f)))
+                                      (current-filter ,(get-field name current-filter))
+                                      (connected-filter ,(if connected-filter
+                                                           (get-field name connected-filter)
+                                                           #f)))))
+      (set-union
+        (for*/set ([route used-routes]
+                   [place route])
+          place)
+        (for*/set ([filter all-filters]
+                   #:unless (equal? filter current-filter)
+                   #:unless (equal? filter connected-filter)
+                   [place (get-field body-placeset filter)])
+          place)))
+
+    (define (route a b [connected-filter #f])
+      (define ret (route-explicit a b w h (get-obstacles connected-filter)))
+      (when debug (pretty-display (list 'route-returns ret)))
+      ret
+      )
+
+    (define/public (get-gen-path x y [connected-filter #f])
       (when debug (pretty-display `(get-gen-path ,x ,y)))
 
       (cond
         [(same-place? x y) #f]
+
         [(and (is-a? x TypeExpansion%) (is-a? y TypeExpansion%)) #f]
 
         [(and (number? x) (number? y))
-         (vector-2d-ref routing-table x y)]
+         (route x y connected-filter)]
 
         [(and (number? x) (place-type-dist? y))
          (cons
            (for/list ([p (car y)])
                      (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                          [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))
+                          [place x] [send-path (route x (get-field place p) connected-filter)]))
            (cdr y))]
 
         [(and (number? y) (place-type-dist? x))
@@ -70,7 +105,7 @@
            (for/list ([p (car x)])
                      (let ([place (get-field place p)])
                        (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                            [place place] [send-path (vector-2d-ref routing-table place y)])))
+                            [place place] [send-path (route place y connected-filter)])))
            (cdr x))]
 
         [(and (place-type-dist? x) 
@@ -80,7 +115,7 @@
                [y-from (get-field from (caar y))])
            (unless (equal? x-from y-from) 
              (raise "visitor-comminsert: distributions do not start at the same index"))
-           (cons (construct-placelist (car x) (car y) x-from) (cdr x)))]
+           (cons (construct-placelist (car x) (car y) x-from connected-filter) (cdr x)))]
 
         [else (raise (format "gen-path: unimplemented for ~a and ~a" x y))]))
 
@@ -98,7 +133,7 @@
         (pretty-display `(get-path-one-to-many ,from ,placelist)))
       (let* ([filtered-list (filter (lambda (x) (not (equal? x from))) (set->list placelist))]
              [ret (for/list ([p filtered-list])
-                            (vector-2d-ref routing-table from p))])
+                            (route from p))])
              (if (empty? ret)
                  #f
                  ret)))
@@ -234,7 +269,7 @@
         (send index accept this)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Array ~a" (send ast to-string))))
-        (gen-path index ast)
+        (when insert-routes (gen-path index ast))
         ;; (define index-sp (get-field send-path index))
         ;; (pretty-display `(Index send-path ,index-sp))
         ;; (when (place-type-dist? index-sp)
@@ -259,8 +294,8 @@
 
         (when debug 
               (pretty-display (format "COMMINSERT: BinExp ~a" (send ast to-string))))
-        (gen-path e1 ast)
-        (gen-path e2 ast)
+        (when insert-routes (gen-path e1 ast))
+        (when insert-routes (gen-path e2 ast))
         (set-union e1-ret e2-ret (all-place-type) (all-path e1) (all-path e2))
         ]
 
@@ -273,7 +308,7 @@
 
         (when debug
               (pretty-display (format "COMMINSERT: UnaExp ~a" (send ast to-string))))
-        (gen-path e1 ast)
+        (when insert-routes (gen-path e1 ast))
         (set-union e1-ret (all-place-type) (all-path e1))
         ]
 
@@ -308,7 +343,7 @@
 	;; Generate path for argument to parameter.
 	(for ([param (get-field stmts (get-field args func-sig))]
 	      [arg (get-field args ast)])
-	     (gen-path arg param)
+	     (when insert-routes (gen-path arg param))
 	     (set! path-ret (set-union path-ret (all-path arg))))
 
         (define io-path-ret
@@ -330,7 +365,7 @@
           (define lhs-ret (send lhs accept this))
           (define rhs-ret (send rhs accept this))
 	  (unless (get-field nocomm ast)
-            (gen-path rhs lhs))
+            (when insert-routes (gen-path rhs lhs)))
           (set-union rhs-ret lhs-ret (all-path rhs))
           )
         ]
@@ -357,7 +392,7 @@
         (define body-ret (set-union true-ret false-ret))
         (set-field! body-placeset ast body-ret)
         
-        (gen-path-condition ast)
+        (when insert-routes (gen-path-condition ast))
         (set-union body-ret cond-ret (all-path ast))
         ]
 
@@ -372,7 +407,7 @@
         (define ret (set-union cond-ret body-ret))
         (set-field! body-placeset ast ret)
 
-        (gen-path-condition ast)
+        (when insert-routes (gen-path-condition ast))
         (set-union ret (all-path ast))
         ]
 
@@ -381,9 +416,19 @@
         (set-field! body-placeset ast body-ret)
         (set-union body-ret (all-path ast))]
 
+
        [(is-a? ast Block%) 
         (when debug 
               (pretty-display (format "COMMINSERT: Block")))
+        (when (is-a? ast Program%)
+          (when debug 
+            (pretty-display (format "COMMINSERT: That Block was a Program")))
+          (when insert-routes
+            (for ([decl (get-field stmts ast)]
+                  #:when (is-a? decl ConcreteFilterDecl%))
+              (set! all-filters (set-add all-filters decl))
+            )))
+        
         (define ret (set))
         (for ([stmt (get-field stmts ast)])
              (set! ret (set-union ret (send stmt accept this))))
@@ -407,20 +452,31 @@
         (when debug 
 	      (pretty-display "\n--------------------------------------------")
               (pretty-display (format "COMMINSERT: ConcreteFilterDecl ~a" (get-field name ast))))
+        (set! current-filter ast)
         (define input-ret (send (get-field input-vardecl ast) accept this))
         (define output-ret (send (get-field output-vardecl ast) accept this))
 
-        (for ([func (get-field output-funcs ast)]
-              #:when (is-a? func FilterOutputFuncDecl%))
-          (define this-filter (get-field this-filter func))
-          (define destination-filter (get-field destination-filter func))
-          (set-field! output-send-path func
-                      (get-gen-path (get-field place (get-field output-vardecl this-filter))
-                                    (get-field place (get-field input-vardecl destination-filter)))))
+        (when insert-routes
+          (for ([func (get-field output-funcs ast)]
+                #:when (is-a? func FilterOutputFuncDecl%))
+            (define this-filter (get-field this-filter func))
+            (define destination-filter (get-field destination-filter func))
+            (define path (get-gen-path (get-field place (get-field output-vardecl this-filter))
+                                       (get-field place (get-field input-vardecl destination-filter))
+                                       destination-filter))
+            (set-field! output-send-path func path)
+            (when path
+              (define path-obstacle
+                (for/list ([place path]
+                           #:unless (set-member? (get-field body-placeset this-filter) place)
+                           #:unless (set-member? (get-field body-placeset destination-filter) place))
+                  place))
+              (set! used-routes (set-add used-routes path-obstacle)))))
 
         (define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
 
+        (set! current-filter #f)
         ;(convert-placeset)
         (let ([ret (set-union input-ret output-ret args-ret body-ret)])
           (set-field! body-placeset ast ret)

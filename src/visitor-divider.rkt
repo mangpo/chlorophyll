@@ -116,6 +116,7 @@
 
     (define/public (visit ast)
       (define (intermediate path #:omit-last [omit-last #f])
+        (when debug (pretty-display `(intermediate ,path #:omit-last ,omit-last)))
         (if (>= (length path) 3)
             (let ([a (car path)]
                   [b (cadr path)]
@@ -133,22 +134,24 @@
                 (push-stack to (new Temp% [name temp] [place-type to] [type "int"]))))))
         
       (define (gen-comm-path path #:omit-last [omit-last #f])   
+        (when debug (pretty-display `(gen-comm-path ,path #:omit-last ,omit-last)))
         (let ([from (car path)]
               [to (cadr path)])
           (push-workspace from (gen-send from to (top-stack from))))
         (intermediate path #:omit-last omit-last))
   
       (define (gen-comm)
+        (when debug (pretty-display `(gen-comm)))
         (let ([path (get-field send-path ast)])
           (when path
-                ;; (if (list? (car path))
-                ;;     (begin
-                ;;       (for ([p path])
-                ;;            (gen-comm-path p))
-                ;;       (pop-stack (caar path)))
-                ;;     (begin
-                      (gen-comm-path path)
-                      (pop-stack (car path)))))
+            ;; (if (list? (car path))
+            ;;     (begin
+            ;;       (for ([p path])
+            ;;            (gen-comm-path p))
+            ;;       (pop-stack (caar path)))
+            ;;     (begin
+            (gen-comm-path path)
+            (pop-stack (car path)))))
 
       (define (gen-comm-condition)
 	(when debug (pretty-display `(gen-comm-condition)))
@@ -451,6 +454,7 @@
                                           [lhs (pop-stack p)])))))]
 
        [(is-a? ast Return%)
+	(when debug (pretty-display (format "\nDIVIDE: Return\n")))
         (define val (get-field val ast))
         (if (list? val)
             ;; list

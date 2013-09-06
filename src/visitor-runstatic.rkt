@@ -148,7 +148,6 @@
         (define all-filters (list))
         (define all-funcs (list))
 
-        (declare env "__previous_so_far__" (list))
         (for ([stmt (get-field stmts ast)])
           (define ret (send stmt accept this))
           (append! all-filters (ret-all-filters ret))
@@ -159,7 +158,6 @@
              (set! previous-filters (ret-previous-filters ret))
              ]
             [(equal? (lookup-name env "__method__") 'splitjoin)
-             (append-name env "__previous_so_far__" (ret-previous-filters ret))
              (append! previous-filters (ret-previous-filters ret))
              ]
           ))
@@ -179,24 +177,27 @@
        [(is-a? ast SplitJoinDecl%)
         (when debug (pretty-display (format "RUNSTATIC: SplitJoinDecl ~a" (get-field name ast))))
         (push-scope)
+        (declare env "__previous__" (lookup-name env "__previous__"))
         (declare env "__input_type__" (get-field input-type ast))
         (declare env "__output_type__" (get-field output-type ast))
 
         (declare env "__method__" 'splitjoin)
         (define ret (send (get-field body ast) accept this))
+
         (update-name env "__previous__" (ret-previous-filters ret))
-
         (define join (lookup-name env "__join__"))
-        (define split (lookup-name env "__split__"))
+        (define ret-join (send join accept this))
+        (update-name env "__previous__" (ret-previous-filters ret-join))
 
+        (define split (lookup-name env "__split__"))
         (define n (length (ret-previous-filters ret)))
         (set-field! body split (get-roundrobin-split-body n))
         (set-field! body join (get-roundrobin-join-body n))
 
         (pop-scope)
-        (make-ret (list join)
-                  (append (ret-all-filters ret))
-                  (append (ret-all-funcs ret)))]
+        (make-ret (ret-previous-filters ret-join)
+                  (append (ret-all-filters ret) (ret-all-filters ret-join))
+                  (append (ret-all-funcs ret) (ret-all-funcs ret-join)))]
 
        [(is-a? ast RoundRobinSplit%)
         (when debug (pretty-display "RUNSTATIC: RoundRobinSplit"))
@@ -211,15 +212,10 @@
 
        [(is-a? ast RoundRobinJoin%)
         (when debug (pretty-display "RUNSTATIC: RoundRobinJoin"))
-
-        (update-name env "__previous__" (lookup-name env "__previous_so_far__"))
-        (define join (get-empty-filter (lookup-name env "__output_type__")
-                                       (get-field place ast)))
-        (define ret (send join accept this))
-        (update-name env "__previous__" (ret-previous-filters ret))
-        (declare env "__join__" join)
-
-        (make-ret (list) (ret-all-filters ret) (ret-all-funcs ret))]
+        (declare env "__join__"
+                 (get-empty-filter (lookup-name env "__output_type__")
+                                   (get-field place ast)))
+        (make-ret (list) (list) (list))]
 
        [(is-a? ast Add%)
         (when debug (pretty-display (format "RUNSTATIC: Add ~a" ast)))

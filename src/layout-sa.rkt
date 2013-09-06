@@ -2,86 +2,18 @@
 
 (require "header.rkt" "ast-util.rkt" "visitor-flow.rkt")
 
-(provide (all-defined-out) (struct-out layoutinfo))
-
-(struct layoutinfo (routes part2core))
+(provide (all-defined-out))
 
 (define (display-edges edges n w h)
   (pretty-display (format "~a ~a ~a" n w h))
   (for ([e edges])
        (pretty-display (format "~a ~a ~a" (edge-x e) (edge-y e) (edge-w e)))))
 
-(define (index x y w)
-  (+ (* x w) y))
-
-(define (route core-a core-b w)
-  (let ([a-x (floor (/ core-a w))]
-        [a-y (modulo core-a w)]
-        [b-x (floor (/ core-b w))]
-        [b-y (modulo core-b w)])
-    
-    (define (move-y x y)
-      (cond 
-        [(< y b-y)
-         (cons (index x y w) (move-y x (add1 y)))]
-        [(> y b-y)
-         (cons (index x y w) (move-y x (sub1 y)))]
-        [else
-         (list (index x y w))]))
-    
-    (define (move-x x y)
-      (cond 
-        [(< x b-x)
-         (cons (index x y w) (move-x (add1 x) y))]
-        [(> x b-x)
-         (cons (index x y w) (move-x (sub1 x) y))]
-        [else
-         (move-y x y)]))
-    
-    (move-x a-x a-y)))
-  
-;; Gnerate (w x h + 1) x (w x h + 1) table
-;; w x h corresponds to io
-(define (gen-route flow-graph part2core w h)
-  ;; Mapping partitions to cores in form of x*w + y
-  (define n-2 (* w h))
-  (define n-1 (add1 n-2))
-  (define n   (add1 n-1))
-  
-  ;; Mapping pair of partitions to route
-  (define core2route (make-vector n #f))
-  (for ([i (in-range n-2)])
-    (vector-set! core2route i (make-vector n #f))
-    (for ([j (in-range n-2)])
-      (unless (= i j)
-        (vector-2d-set! core2route n i j (route i j w)))))
-  #|
-  (for ([comm flow-graph])
-    (let* ([a-core (vector-ref part2core (edge-x comm))]
-           [b-core (vector-ref part2core (edge-y comm))]
-           [path (route a-core b-core w)])
-      (unless (vector-ref core2route a-core)
-        (vector-set! core2route a-core (make-vector n #f)))
-      (unless (vector-ref core2route b-core)
-        (vector-set! core2route b-core (make-vector n #f)))
-      
-      (vector-2d-set! core2route n a-core b-core path)
-      (vector-2d-set! core2route n b-core a-core (reverse path))))|#
-
-  (vector-set! core2route n-2 (make-vector n #f))
-  (for ([i (in-range n)])
-       (vector-2d-set! core2route n i n-2 (list i n-2))
-       (vector-2d-set! core2route n i n-1 (list i n-1))
-       (vector-2d-set! core2route n n-2 i (list n-2 i))
-       (vector-2d-set! core2route n n-1 i (list n-1 i)))
-  
-  core2route)
-
 ;;test
 ;;(gen-route (list (edge 0 1 1) (edge 1 2 1) (edge 2 3 1))
 ;;           (list 0 1 2 3) 2 2)
 
-(define (layout ast num-cores w h name)
+(define (gen-part2core ast num-cores w h name)
   ;; Generate flow graph represented by a list of edges
   (define flow-gen (new flow-generator%))
   (define flow-graph (send ast accept flow-gen))
@@ -113,8 +45,5 @@
         [index (range n)])
        (vector-set! part2core partition index))
   
-  ;; Create map from pair of core (x1,y1) (x2,y2) to routing
-  (define routing-table (gen-route flow-graph part2core w h))
-
-  (layoutinfo routing-table part2core)
+  part2core
   )

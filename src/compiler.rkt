@@ -60,7 +60,7 @@
 
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile file name capacity input [w 5] [h 4] 
-                       #:verbose [verbose #t])
+                       #:verbose [verbose #f])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -78,13 +78,13 @@
                                    #:name name
                                    #:cores 20 
                                    #:capacity capacity 
-                                   #:verbose #f))
+                                   #:verbose #t))
   (when verbose
     (pretty-display "--- after partition ---")
     (send my-ast pretty-print))
   
   ;; layout
-  (define layout-res (layout my-ast
+  (define part2core (gen-part2core my-ast
                              n w h name))
   
   (when verbose
@@ -92,8 +92,7 @@
 
   ;; generate multicore ASTs and output equivalent cpp simuation code to file
   (define programs (sep-and-insertcomm name my-ast w h 
-                                       (layoutinfo-routes layout-res)
-                                       (layoutinfo-part2core layout-res)
+                                       part2core
                                        #:verbose #t))
   ;; generate machine code for each core
   (generate-codes programs w h)

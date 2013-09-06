@@ -42,7 +42,7 @@
   (pretty-display "  return 0;")
   (pretty-display "}"))
   
-(define (sep-and-insertcomm name ast w h routing-table part2core #:verbose [verbose #f])
+(define (sep-and-insertcomm name ast w h part2core #:verbose [verbose #f])
   (define concise-printer (new printer% [out #t]))
   
   ;; Unroll for loop according to array distributions of variables inside its body.
@@ -58,7 +58,6 @@
   ;; Convert partition ID to actual core ID.
   ;; Note: this visitor mutates AST.
   (define comm-converter (new comm-converter%
-                              [routing-table routing-table]
                               [part2core part2core]
                               [n (* w h)]))
   (send ast accept comm-converter)
@@ -66,17 +65,26 @@
         (pretty-display "--- after convert communication ---")
         (send ast pretty-print))
 
+  ;; 1) Set body-placeset.
+  ;; Note: given AST is mutated.
+  (define commcode-inserter-first-pass (new commcode-inserter% 
+                                            [w w] [h h]
+                                            [insert-routes #f]))
+  (send ast accept commcode-inserter-first-pass)
+  (when verbose
+        (pretty-display "--- after insert communication (first pass) ---")
+        (send ast pretty-print))
+  
   ;; 1) Insert communication route to send-path field.
   ;; 2) Insert communication route to output-send-path field of filters.
   ;; 3) Set body-placeset.
-  ;; Note: given AST is mutate.
-  (define commcode-inserter (new commcode-inserter% 
-                                 [routing-table routing-table]
-                                 [part2core part2core]
-                                 [n (* w h)]))
-  (send ast accept commcode-inserter)
+  ;; Note: given AST is mutated.
+  (define commcode-inserter-second-pass (new commcode-inserter% 
+                                             [w w] [h h]
+                                             [insert-routes #t]))
+  (send ast accept commcode-inserter-second-pass)
   (when verbose
-        (pretty-display "--- after insert communication ---")
+        (pretty-display "--- after insert communication (second pass) ---")
         (send ast pretty-print))
 
   (define divider (new ast-divider% [w w] [h h]))

@@ -31,7 +31,8 @@
 ;(test "three-streams" "300" 512)
 ;(test "three-pipelines" "300" 512)
 ;(test "three-large-filters" "300" 512)
-(test "splitjoin" "300" 512)
+;(test "splitjoin" "300" 512)
+(test "nested-splitjoin" "300" 512)
 ;(test "multiply-by-power-stream" "300" 512)
 
 (for ([res (reverse result)])
