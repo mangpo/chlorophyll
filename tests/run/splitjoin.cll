@@ -1,0 +1,38 @@
+
+int@1->int@1 filter AddFive() {
+  work blocking {
+    out(in() + 5);
+  }
+}
+
+int@2->int@2 filter SubtractSeven() {
+  work blocking {
+    out(in() - 7);
+  }
+}
+
+int@3->int@3 filter Halve() {
+  work blocking {
+    out(in() >> 1);
+  }
+}
+
+int@4->int@4 filter Double() {
+  work blocking {
+    out(in() * 2);
+  }
+}
+
+int->int splitjoin HalveOrDouble() {
+  split@5 roundrobin();
+  add Halve();
+  add Double();
+  join@6 roundrobin();
+}
+
+int->int pipeline Main() {
+  add AddFive();
+  add HalveOrDouble();
+  add SubtractSeven();
+}
+
