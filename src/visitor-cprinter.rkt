@@ -244,12 +244,12 @@
         
         [(is-a? ast Block%)
          (for ([stmt (get-field stmts ast)])
-	   (newline)
-	   (display indent)
+	   (unless (is-a? stmt Block%)
+                   (newline)
+                   (display indent))
            (send stmt accept this)
 	   (when (is-a? stmt Exp%)
-		 (display ";")))
-	 (newline)]
+		 (display ";")))]
 
         [(is-a? ast FuncDecl%)
          (define (print-arg arg pre)

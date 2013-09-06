@@ -159,7 +159,7 @@
     ;; Used in body inside for and if.
     (define (inc-space-placeset placeset add-space)
       (define (loop placelist)
-        (when (not (empty? placelist))
+        (unless (empty? placelist)
           (let* ([others (cdr placelist)]
                  [me (car placelist)])
             (loop others)
@@ -167,6 +167,21 @@
                   (inc-space me add-space)))))
         
       (loop (set->list placeset)))
+
+    (define (inc-space-return returns)
+      (define (loop placelist)
+        (unless (empty? placelist)
+          (let* ([others (cdr placelist)]
+                 [me (car placelist)])
+            (loop others)
+            (when (andmap (lambda (x) (not (equal? x me))) others)
+                  (let ([occur (count (lambda (x) (equal? x me)) returns)])
+                    (when (>= occur 2)
+                          (when debug
+                                (pretty-display 
+                                 `(inc-space-return ,me ,(* occur est-funcreturn))))
+                          (inc-space me (* occur est-funcreturn))))))))
+      (loop returns))
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
     (define (count-msg-place-type x y x-ast [y-ast #f])
@@ -347,22 +362,6 @@
            (set-union (comminfo-placeset index-ret) (to-place-set places)))
           ]
 
-       [(is-a? ast Temp%)
-        (define place-type (get-field place-type ast))
-        (if place-type
-            (set-field! place-type ast (find-place-type ast ast))
-            (let ([link (lookup env ast)])
-              (when debug 
-                    (pretty-display (format ">> Temp ~a (decl ~a)" 
-                                            (send ast to-string) link)))
-              (if (is-a? link AssignTemp%)
-                  (begin
-                    (set-field! link ast link)
-                    (set-field! place-type ast 
-                                (get-field place-type (get-field lhs link))))
-                  (set-field! place-type ast link))))
-        (comminfo 0 (set))]
-
        [(is-a? ast Var%)
         (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
             
@@ -419,6 +418,10 @@
           (define place-type (find-place-type ast op))
 	  (set-field! place-type ast place-type)
 
+          (when debug
+                (pretty-display (format ">> BinOp ~a ~a (before)" (send ast to-string) place-type))
+                (send ast pretty-print))
+
           ;; Infer place-type
           (send e1 infer-place place-type)
           (send e2 infer-place place-type)
@@ -429,7 +432,8 @@
 	  (inc-space place-type (hash-ref space-map (get-field op op))) ; increase space
 
           (when debug
-                (pretty-display (format ">> BinOp ~a ~a" (send ast to-string) place-type)))
+                (pretty-display (format ">> BinOp ~a ~a (after)" (send ast to-string) place-type))
+                (send ast pretty-print))
 
           (when (and debug-sym
                  (symbolic? (+ (comminfo-msgs e1-ret) 
@@ -465,27 +469,33 @@
           ;; increase space
           (inc-space-placeset placeset est-funccall)
 
-	  ;; infer place-type
-	  (define returns
-	    (for/list ([param (get-field stmts (get-field args func-ast))]
-		       [arg (flatten-arg (get-field args ast))])
-		      (send arg infer-place (get-field place-type param))
-		      (get-field place-type arg)))
+          ;; infer place-type
+	  (for ([param (get-field stmts (get-field args func-ast))]
+                [arg (flatten-arg (get-field args ast))])
+               (send arg infer-place (get-field place-type param))
+               )
 
-	  ;; TODO: inc-space for some returns
+          ;; visit children
+	  (for ([arg (get-field args ast)])
+               (let ([arg-ret (send arg accept this)])
+                 (set! msgs (+ msgs (comminfo-msgs arg-ret)))
+                 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
 
-	  (for ([[arg (get-field args ast)])
-		(let ([arg-ret (send arg accept this)])
-		  (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
-		  (set! placeset (set-union placeset (comminfo-placeset arg-ret))))))
+          ;; count msg
+	  (for ([param (get-field stmts (get-field args func-ast))]
+                [arg (flatten-arg (get-field args ast))])
+               ;; infer place-type
+               (set! msgs (+ msgs (count-msg param arg)))
+               )
           
-	  ;; set place-type
-	  (let ([return (get-field return func-ast)])
-            ;; only set place-type when function returns non-expanded type
-            ;; when it returns non-expanded type, temp = func(), 
-            ;; and temp is already at the same place ast func()
-            (when (is-a? return VarDecl%)
-                  (set-field! place-type ast (typeexpansion->list (get-field place return)))))
+          ;; set place-type
+	  (define return (get-field return func-ast))
+          (when return
+                (let ([expanded-return (typeexpansion->list (get-field place return))])
+                  ;; remove this if it takes very long
+                  (when (get-field might-need-storage ast)
+                        (inc-space-return (map (lambda (x) (get-field place-type x))
+                                               expanded-return)))))
 		 
 	  (comminfo msgs placeset)]
 
@@ -498,14 +508,10 @@
               (pretty-display (format ">> TempDecl ~a @ ~a" temp place)))
 
 	(if (string? type)
-            ;; put ast into env when place is #f to link tempdecl to assigntemp
-            ;; to be used in infer-place for tempdecl
-            (declare env temp (if place place ast))
+            (declare env temp place)
 	    (let* ([entry (cdr type)]
 		   [actual-type (car type)]
-		   [place-expand (if (get-field place ast)
-                                     (get-field place-list (get-field place ast))
-                                     (for/list ([i (in-range entry)]) #f))])
+		   [place-expand (get-field place-list (get-field place ast))])
 	      (for ([i (in-range entry)]
 		    [p place-expand])
 		   (declare env (ext-name temp i) p))))
@@ -515,30 +521,30 @@
 	]
                 
        [(is-a? ast VarDecl%) 
-          (define place (find-place ast))
-          (define var-list (get-field var-list ast))
+        (define place (find-place ast))
+        (define var-list (get-field var-list ast))
+        
+        ;; Param% only
+        (when (is-a? ast Param%)
+              (set-field! place-type ast place))
+        
+        ;; put vars into env
+        (for ([var var-list])
+             (declare env var place))
 
-	  ;; Param% only
-	  (when (is-a? ast Param%)
-		(set-field! place-type ast place))
-          
-          ;; put vars into env
-          (for ([var var-list])
-               (declare env var place))
-
-          (when debug
-                (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
-
-          (inc-space place (* (length var-list) 
-                              (if (is-a? ast Param%)
-                                  (add1 est-data)
-                                  est-data))) ; increase space
-          
-	  (when debug
-                (pretty-display (format ">> VarDecl ~a (after)" var-list)))
-          
-          (comminfo 0 (set place))
-          ]
+        (when debug
+              (pretty-display (format ">> VarDecl ~a ~a" var-list place)))
+        
+        (inc-space place (* (length var-list) 
+                            (if (is-a? ast Param%)
+                                (add1 est-data)
+                                est-data))) ; increase space
+        
+        (when debug
+              (pretty-display (format ">> VarDecl ~a (after)" var-list)))
+        
+        (comminfo 0 (set place))
+        ]
 
        [(is-a? ast ArrayDecl%)
           (define place-list (get-field place-list ast)) ; don't support place(x)
@@ -606,8 +612,6 @@
           (define body-place-set (comminfo-placeset body-ret))
           (set-field! body-placeset ast body-place-set)
           
-          ;(for ([p body-place-set])
-          ;     (inc-space p est-for)) ; increase space (already accounts for i here)
           (inc-space-placeset body-place-set est-for)
 
           ;; Remove scope.

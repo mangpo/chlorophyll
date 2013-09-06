@@ -282,9 +282,9 @@
     ;(send my-ast pretty-print)
     )
   
-   (when verbose
+  (when verbose
     (pretty-display "\n=== After evaluate ===")
-     (send my-ast pretty-print))
+    (send my-ast accept concise-printer))
   
   (result (evaluate-with-sol num-msg) 
           cores 

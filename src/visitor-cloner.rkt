@@ -101,7 +101,13 @@
              ;[signature (send (get-field signature ast) accept this)]
              [signature (get-field signature ast)]
              [known-type (get-known-type)]
-             [place-type (get-place-type)])]
+             [place-type (get-place-type)]
+             [return (and (get-field return ast)
+                          (map (lambda (x) (send x accept this)) 
+                               (get-field return ast)))])]
+
+       [(is-a? ast ProxyReturn%)
+        (new ProxyReturn% [place-type (get-field place-type ast)])]
 
        [(is-a? ast Param%)
         (new Param%

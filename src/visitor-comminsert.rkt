@@ -353,7 +353,7 @@
 	
 	;; Generate path for argument to parameter.
 	(for ([param (get-field stmts (get-field args func-sig))]
-	      [arg (get-field args ast)])
+	      [arg (flatten-arg (get-field args ast))])
 	     (gen-path arg param)
 	     (set! path-ret (set-union path-ret (all-path arg))))
 

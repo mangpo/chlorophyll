@@ -241,7 +241,9 @@
         [(is-a? ast FuncCall%)
          ;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
          (define func-ast (lookup env ast))
-         (define type (get-field type (get-field return func-ast)))
+         (define type (if (get-field return func-ast)
+                          (get-field type (get-field return func-ast))
+                          "void"))
 
          ;; set signature
          (set-field! signature ast func-ast)

@@ -1,9 +1,20 @@
-int::2 a() {
-  int::2 x;
+int::3@(1,0,1) a() {
+  int::3@(1,0,1) x;
   return x;
 }
 
-void main() {
-  int::2 y;
-  y = a();
+void b(int::3@(1,0,1) x) {
+  int::3@(2,2,2) a;
+  a = 0;
 }
+
+void main() {
+  b(a());
+}
+
+/*
+core = 0, space = 23, ops = #<set:>
+core = 1, space = 23, ops = #<set:>
+core = 2, space = 13, ops = #<set:>
+core = 3, space = 0, ops = #<set:>
+*/

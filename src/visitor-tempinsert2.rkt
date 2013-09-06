@@ -3,61 +3,14 @@
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
 
-(provide (all-defined-out))
-
 (define temp-inserter%
   (class* object% (visitor<%>)
     (super-new)
     (init-field [count 0] [new-decls (list)])
-    (define is-arg #f)
     (define debug #f)
 
-    (struct entry (temp type expand))
-
-    (define (get-temp type expand expect place-type compact)
-      (let* ([temp (format "_temp~a" count)]
-	     [temp-decl (if (> expand 1)
-			    ;; no expansion in desugar step
-			    (new TempDecl% [var-list (list temp)]
-				 [type (cons type expand)] ; packed type
-				 [place place-type] 
-				 [expect expand]
-                                 [compact compact]) 
-			    (new TempDecl% [var-list (list temp)]
-				 [type type] ; native type
-				 [place place-type] 
-				 [expect expand]
-                                 [compact compact]))])
-	
-        (set! count (add1 count))
-        (set! new-decls (cons temp-decl new-decls))
-        
-        ;; temp for funccall:
-        ;; let func() -> int::2
-        ;; temp = func() 
-        ;; type(temp) = (cons int 2)
-        ;; expect(temp) = 1
-
-        ;; don't set known-type
-        (let* ([tmp1 (new Temp% [name temp] [type type] [expand expand] [expect expand] 
-                          [place-type place-type] [compact compact])]
-               [tmp2 (new Temp% [name temp] [type type] [expand expand] [expect expect]
-                          [place-type place-type] [compact compact])])
-        (values tmp1 tmp2))))
-
     (define/public (visit ast)
-      (define (temp-stmt-exp place [x ast])
-        (let-values ([(tmp1 tmp2) 
-                      (get-temp (get-field type x) 
-                                (get-field expect x)
-                                (get-field expect x)
-                                place #f)])
-          ;(pretty-display `(temp-stmt-exp ,(send x to-string) ,(get-field place-type x)))
-          (values (list (new Assign% [lhs tmp1] [rhs x]))
-                  tmp2)))
-
-
-      (cond
+     (cond
         [(or (is-a? ast Num%)
              (is-a? ast Var%))
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
@@ -66,14 +19,12 @@
         
         [(is-a? ast UnaExp%)
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
-         (set! is-arg #f)
          (define e1-ret (send (get-field e1 ast) accept this))
          (cons (car e1-ret) ast)
 	 ]
         
         [(is-a? ast BinExp%)
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
-         (set! is-arg #f)
          (define e1-ret (send (get-field e1 ast) accept this))
          (define e2-ret (send (get-field e2 ast) accept this))
          (set-field! e1 ast (cdr e1-ret))
@@ -82,50 +33,30 @@
         
         [(is-a? ast FuncCall%)
          (when debug (pretty-display (format "TEMPINSERT: FuncCall ~a" (send ast to-string))))
-	 (define (tempify arg param)
-	   (set! is-arg #t)
-	   (pretty-display (format "  param:~a" (get-field var-list param)))
-	   (send arg accept this))
 
          ;; my-arg is ture if this funcall is an argument to another funccall.
-	 (define my-arg is-arg)
          (define signature (get-field signature ast))
-         (define return-place (and (get-field return signature)
-                                   (get-field place (get-field return signature))))
+         ;; (define return-place (and (get-field return signature)
+         ;;                           (get-field place (get-field return signature))))
 	 (define params (get-field stmts (get-field args (get-field signature ast))))
-	 (define tempified (map tempify (get-field args ast) params))
+	 (define tempified (map (lambda (x) (send x accept this)) 
+                                (get-field args ast) params))
          (define new-stmts (map car tempified))
-         (define new-args  (map cdr tempified))
-         (set-field! args ast new-args)
 
-         ;; mark to inc-space in visitor-interpreter
-         (when (and my-arg (is-a? return-place TypeExpansion%))
-               (let ([expanded-return (typeexpansion->list return-place)])
-                 (set-field! place-type ast expanded-return)
-                 (set-field! might-need-storage ast #t))
-               )
-         
-         ;; only insert temp for function call that is not an argument of another
-         ;; function call AND return type is a tuple type.
-         (if (get-field is-stmt ast)
-             (list new-stmts ast)
-             (if (and (not my-arg) 
-                      (is-a? return-place TypeExpansion%))
-                 ;; return (list of stmts . ast)
-                 (let-values 
-                     ([(tmp1 tmp2) 
-                       (get-temp
-                        (get-field type ast) 
-                        (get-field expand ast)
-                        (get-field expect ast)
-                        return-place
-                        #t)])
-                   ;; send expect = 1 so that it doesn't get expanded in desugarin step
-                   (set-field! expect tmp1 1)
-                   (let ([stmt1 (new AssignTemp% [lhs tmp1] [rhs ast])])
-                     (cons (list new-stmts stmt1) tmp2)))
-                 ;; return list of stmts
-                 (cons new-stmts ast)))]
+         (define new-args
+           (for/list ([arg (map cdr tempified)])
+             (if (get-field might-need-storage arg)
+                 (let ([mismatch (count (lambda (x y) (not (equal? x y)))
+                                        (get-field return arg)
+                                        (take param (length (get-field return arg))))])
+                   (if (> mismatch 0)
+                       (insertemp) ;; TODO
+                       arg))
+                 arg)))
+           
+              
+         (set-field! args ast new-args)
+         (cons new-stmts ast)]
                
 
 	[(is-a? ast Recv%)
@@ -207,5 +138,3 @@
          (raise (format "visitor-tempinsert: unimplemented for ~a" ast))]
         
         ))))
-
-       

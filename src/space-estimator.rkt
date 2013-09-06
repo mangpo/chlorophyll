@@ -12,6 +12,7 @@
 (define est-while 8) ;; :while _ if _ while ; then ;
 (define est-funccall 4)
 (define est-initparam 6)
+(define est-funcreturn 18) ;; data & 0 a! ! 0 a! @
 
 (define space-map 
   #hash(("~" . 1)

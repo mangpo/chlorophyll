@@ -105,11 +105,13 @@
 (define (typeexpansion->list place)
   (if (is-a? place TypeExpansion%)
       (for/list ([p (get-field place-list place)])
-		(new ProxyReturn [place-type p]))
+		(new ProxyReturn% [place-type p]))
       place))
 
 (define (flatten-arg args)
-  (flatten (map (lambda (x) (if (list? (get-field place-type x)) (get-field place-type) x)) 
+  (flatten (map (lambda (x) (if (list? (get-field place-type x)) 
+                                (get-field place-type x) 
+                                x)) 
 		args)))
 
 ;; evaluate place
@@ -146,6 +148,11 @@
     (evaluate-with-sol place)]
    
    [(is-a? place Place%) 
+    place]
+
+   [(and (list? place) (not (empty? place)) (is-a? (car place) ProxyReturn%))
+    (for ([p place])
+         (set-field! place-type p (evaluate-with-sol (get-field place-type p))))
     place]
    
    [(list? place)
@@ -474,9 +481,9 @@
 
     (define/override (infer-place p)
       (when (and p (at-any? place-type))
-            (set! place-type p))
-      (send e1 infer-place p)
-      (send e2 infer-place p))
+            (set! place-type p)
+            (send e1 infer-place p)
+            (send e2 infer-place p)))
 
     (define/override (to-string)
       (format "(~a ~a ~a)" (send e1 to-string) (send op to-string) (send e2 to-string)))
@@ -505,8 +512,8 @@
 
     (define/override (infer-place p)
       (when (and p (at-any? place-type))
-            (set! place-type p))
-      (send e1 infer-place p))
+            (set! place-type p)
+            (send e1 infer-place p)))
 
     (define/override (to-string)
       (format "(~a ~a)" (send op to-string) (send e1 to-string)))
@@ -517,7 +524,7 @@
   (class Exp%
     (super-new)
     (inherit-field known-type place-type pos expand expect)
-    (init-field name args [signature #f] [is-stmt #f])
+    (init-field name args [signature #f] [is-stmt #f] [might-need-storage #f])
     (inherit print-send-path)
 
     (define/override (clone)
@@ -540,6 +547,7 @@
 			      indent name (evaluate-with-sol place-type)
                               expand expect))
       (print-send-path indent)
+      (pretty-display `(args ,args))
       (for ([arg args])
 	   (send arg pretty-print (inc indent)))
       (pretty-display (format "~a)" indent)))
@@ -724,7 +732,17 @@
 
 (define ProxyReturn%
   (class Exp%
-    (super-new)))
+    (super-new)
+    (inherit-field place-type)
+
+    (define/override (clone)
+      (new ProxyReturn% [place-type place-type]))
+
+    (define/override (to-string) (format "~a" place-type))
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(ProxyReturn @~a)" place-type)))
+    ))
 
 (define For%
   (class Scope%

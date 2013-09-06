@@ -53,7 +53,7 @@
         (let ([edges (list)]
               [func-ast (get-field signature ast)])
           (for ([param (get-field stmts (get-field args func-ast))] ; signature
-                [arg   (get-field args ast)]) ; actual
+                [arg   (flatten-arg (get-field args ast))]) ; actual
                (set! edges (append (cross-product param arg) edges))
                (set! edges (append (send arg accept this) edges)))
           edges)]

@@ -45,16 +45,17 @@
         (evaluate-placeset)]
 
        [(is-a? ast Num%)
-	 (send (get-field n ast) accept this)
-         (send ast to-concrete)
-         ]
+        (send ast to-concrete)
+        ]
 
        [(is-a? ast Array%)
         (send ast to-concrete)
         (send (get-field index ast) accept this)
         (send (get-field index ast) infer-place (get-field place-type ast))]
 
-       [(is-a? ast Var%) 
+       [(or (is-a? ast Num%)
+            (is-a? ast Var%) 
+            (is-a? ast ProxyReturn%))
         (send ast to-concrete)]
 
        [(is-a? ast UnaExp%)
@@ -75,15 +76,14 @@
         ]
 
        [(is-a? ast FuncCall%)
-        (for ([arg (get-field args ast)])
+        (for ([arg (flatten-arg (get-field args ast))])
 	     (send arg accept this))
-	;(send (get-field signature ast) accept this)
         (send ast to-concrete)
 
 	;; infer
 	(define func-ast (get-field signature ast))
 	(for ([param (get-field stmts (get-field args func-ast))] ; signature
-              [arg   (get-field args ast)]) ; actual
+              [arg   (flatten-arg (get-field args ast))]) ; actual
           (send arg infer-place (get-field place-type param))
           (send param infer-place (get-field place-type arg)))
 	
