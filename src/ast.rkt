@@ -102,6 +102,16 @@
    [else
     (raise (format "send-path-to-string: unimplemented for ~a" path))]))
 
+(define (typeexpansion->list place)
+  (if (is-a? place TypeExpansion%)
+      (for/list ([p (get-field place-list place)])
+		(new ProxyReturn [place-type p]))
+      place))
+
+(define (flatten-arg args)
+  (flatten (map (lambda (x) (if (list? (get-field place-type x)) (get-field place-type) x)) 
+		args)))
+
 ;; evaluate place
 (define (concrete-place place)
   ;; (define (all-equal? ref l)
@@ -711,6 +721,10 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Place-type-expansion ~a)" place-list)))))
+
+(define ProxyReturn%
+  (class Exp%
+    (super-new)))
 
 (define For%
   (class Scope%

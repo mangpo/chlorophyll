@@ -465,15 +465,19 @@
           ;; increase space
           (inc-space-placeset placeset est-funccall)
 
-	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
-		[arg   (get-field args ast)]) ; actual
-	       ;; infer place-type
-	       (send arg infer-place (get-field place-type param))
-	       (let ([arg-ret (send arg accept this)])
-		 ;; infer place-type
-		 (send param infer-place (get-field place-type arg))
-		 (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
-		 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
+	  ;; infer place-type
+	  (define returns
+	    (for/list ([param (get-field stmts (get-field args func-ast))]
+		       [arg (flatten-arg (get-field args ast))])
+		      (send arg infer-place (get-field place-type param))
+		      (get-field place-type arg)))
+
+	  ;; TODO: inc-space for some returns
+
+	  (for ([[arg (get-field args ast)])
+		(let ([arg-ret (send arg accept this)])
+		  (set! msgs (+ msgs (+ (count-msg param arg) (comminfo-msgs arg-ret))))
+		  (set! placeset (set-union placeset (comminfo-placeset arg-ret))))))
           
 	  ;; set place-type
 	  (let ([return (get-field return func-ast)])
@@ -481,7 +485,7 @@
             ;; when it returns non-expanded type, temp = func(), 
             ;; and temp is already at the same place ast func()
             (when (is-a? return VarDecl%)
-                  (set-field! place-type ast (get-field place return))))
+                  (set-field! place-type ast (typeexpansion->list (get-field place return)))))
 		 
 	  (comminfo msgs placeset)]
 
