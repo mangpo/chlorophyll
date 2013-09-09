@@ -5,17 +5,19 @@
 
 (provide (all-defined-out))
 
+;; Insert temp for a function call whose return type is a tuple 
+;; that is NOT an argument to another function.
 (define temp-inserter%
   (class* object% (visitor<%>)
     (super-new)
     (init-field [count 0] [new-decls (list)])
-    (define is-arg #f)
+    (define replace #f)
     (define debug #f)
 
     (struct entry (temp type expand))
 
     (define (get-temp type expand expect place-type compact)
-      (let* ([temp (format "_temp~a" count)]
+      (let* ([temp (format "_temp1_~a" count)]
 	     [temp-decl (if (> expand 1)
 			    ;; no expansion in desugar step
 			    (new TempDecl% [var-list (list temp)]
@@ -46,16 +48,6 @@
         (values tmp1 tmp2))))
 
     (define/public (visit ast)
-      (define (temp-stmt-exp place [x ast])
-        (let-values ([(tmp1 tmp2) 
-                      (get-temp (get-field type x) 
-                                (get-field expect x)
-                                (get-field expect x)
-                                place #f)])
-          ;(pretty-display `(temp-stmt-exp ,(send x to-string) ,(get-field place-type x)))
-          (values (list (new Assign% [lhs tmp1] [rhs x]))
-                  tmp2)))
-
 
       (cond
         [(or (is-a? ast Num%)
@@ -66,14 +58,14 @@
         
         [(is-a? ast UnaExp%)
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
-         (set! is-arg #f)
+         (set! replace #f)
          (define e1-ret (send (get-field e1 ast) accept this))
          (cons (car e1-ret) ast)
 	 ]
         
         [(is-a? ast BinExp%)
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
-         (set! is-arg #f)
+         (set! replace #f)
          (define e1-ret (send (get-field e1 ast) accept this))
          (define e2-ret (send (get-field e2 ast) accept this))
          (set-field! e1 ast (cdr e1-ret))
@@ -83,12 +75,12 @@
         [(is-a? ast FuncCall%)
          (when debug (pretty-display (format "TEMPINSERT: FuncCall ~a" (send ast to-string))))
 	 (define (tempify arg param)
-	   (set! is-arg #t)
+	   (set! replace #t)
 	   (pretty-display (format "  param:~a" (get-field var-list param)))
 	   (send arg accept this))
 
          ;; my-arg is ture if this funcall is an argument to another funccall.
-	 (define my-arg is-arg)
+	 (define my-arg replace)
          (define signature (get-field signature ast))
          (define return-place (and (get-field return signature)
                                    (get-field place (get-field return signature))))
@@ -99,11 +91,10 @@
          (set-field! args ast new-args)
 
          ;; mark to inc-space in visitor-interpreter
+         (define expanded-return (typeexpansion->list return-place))
+         (set-field! place-type ast expanded-return)
          (when (and my-arg (is-a? return-place TypeExpansion%))
-               (let ([expanded-return (typeexpansion->list return-place)])
-                 (set-field! place-type ast expanded-return)
-                 (set-field! might-need-storage ast #t))
-               )
+               (set-field! might-need-storage ast #t))
          
          ;; only insert temp for function call that is not an argument of another
          ;; function call AND return type is a tuple type.
@@ -133,7 +124,7 @@
 	 ]
 
 	[(is-a? ast Send%)
-	 (set! is-arg #f)
+	 (set! replace #f)
 	 (define data-ret (send (get-field data ast) accept this))
 	 (set-field! data ast (cdr data-ret))
 	 (list (car data-ret) ast)]
@@ -144,7 +135,9 @@
         
         [(is-a? ast Assign%)
          (when debug (pretty-display (format "TEMPINSERT: Assign")))
-	 (set! is-arg #f)
+         ;; No need to add temp in the case the return value of the function
+         ;; will be store in an variable.
+	 (set! replace #f)
          (define lhs-ret (send (get-field lhs ast) accept this))
          (define rhs-ret (send (get-field rhs ast) accept this))
          
@@ -154,13 +147,13 @@
          (list (car lhs-ret) (car rhs-ret) ast)]
 
 	[(is-a? ast Return%)
-	 (set! is-arg #f)
+	 (set! replace #f)
          (define val-ret (send (get-field val ast) accept this))
          (set-field! val ast (cdr val-ret))
          (list (car val-ret) ast)]
         
         [(is-a? ast If%)
-	 (set! is-arg #f)
+	 (set! replace #f)
          (define cond-ret (send (get-field condition ast) accept this))
          (send (get-field true-block ast) accept this)
          (let ([false-block (get-field false-block ast)])
@@ -172,7 +165,7 @@
          (list (car cond-ret) ast)]
         
         [(is-a? ast While%)
-	 (set! is-arg #f)
+	 (set! replace #f)
          (define cond-ret (send (get-field condition ast) accept this))
          (send (get-field body ast) accept this)
          

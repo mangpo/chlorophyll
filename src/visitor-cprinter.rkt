@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
+(require "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-tempinsert2.rkt")
 
 (provide (all-defined-out))
 
@@ -101,17 +101,17 @@
 	 (define name (get-field name ast))
 	 (define sub (get-field sub ast))
 
-	 (when (not thread)
-	       ;; this renaming is only relavent for sequential version
-	       (set! sub #f)	
-               (when (get-field compact ast)
-                     (let ([full-name (regexp-match #rx"(.+)::(.+)" name)])
-                       (when full-name
-                             ;; "a::0" -> ("a::0" "a" "0")
-                             (let* ([actual-name (cadr full-name)]
-                                    [expand (string->number (caddr full-name))])
-                               (set! name actual-name)
-                               (set! sub expand))))))
+	 (unless thread
+           ;; this renaming is only relavent for sequential version
+           ;(set! sub #f)	
+           (when (get-field compact ast)
+                 (let ([full-name (regexp-match #rx"(.+)::(.+)" name)])
+                   (when full-name
+                         ;; "a::0" -> ("a::0" "a" "0")
+                         (let* ([actual-name (cadr full-name)]
+                                [expand (string->number (caddr full-name))])
+                           (set! name actual-name)
+                           (set! sub expand))))))
 
 	 (display (format "~a_~a" (print-name name) core))
 	 (when sub
@@ -241,6 +241,23 @@
 	 (dec-indent)
 	 (pretty-display (format "~a}" indent))
          ]
+
+        [(is-a? ast Program%)
+         (pretty-display "/*")
+         (send ast pretty-print)
+         (pretty-display "*/")
+         ;; Clone the program AST and replace funccall with temps
+         (define new-ast (send ast clone))
+         (send new-ast accept (new temp-inserter2% [replace-all #t]))
+
+         (for ([stmt (get-field stmts new-ast)])
+	   (unless (is-a? stmt Block%)
+                   (newline)
+                   (display indent))
+           (send stmt accept this)
+	   (when (is-a? stmt Exp%)
+		 (display ";")))
+         (newline)]
         
         [(is-a? ast Block%)
          (for ([stmt (get-field stmts ast)])
@@ -249,7 +266,8 @@
                    (display indent))
            (send stmt accept this)
 	   (when (is-a? stmt Exp%)
-		 (display ";")))]
+		 (display ";")))
+         (newline)]
 
         [(is-a? ast FuncDecl%)
          (define (print-arg arg pre)

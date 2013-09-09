@@ -1,5 +1,5 @@
-int sum(int a, int b, int c, int d) {
-  return a + b + c + d;
+int@2 sum(int@1 a,int@1 b,int@2 c,int@2 d) {
+  return a +@1 b +@2 c +@2 d;
 }
 
 void main() {
@@ -8,5 +8,5 @@ void main() {
   int@2 c;
   int@2 d;
   int@0 ret;
-  ret = sum(a,b,c,sum(a,b,c,d));
+  ret = sum(a,b,sum(a,b,c,d),sum(a,b,c,d));
 }

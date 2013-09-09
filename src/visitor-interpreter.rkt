@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -191,17 +191,17 @@
 
       ;; Return the place that a resides if a only lives in one place. 
       ;; Otherwise, return string representation of a.
-      (define (get-str-rep a)
-        ;(assert (place-type? a))
-	(if (number? a)
-	    a
-            (let ([place-list (car a)]
-                  [index (cdr a)])
-              (if (= (length place-list) 1)
-                  (get-field place (car place-list))
-                  (format "~a . ~a" 
-                          (place-list-to-string place-list)
-                          (send index to-string))))))
+      ;; (define (get-str-rep a)
+      ;;   ;(assert (place-type? a))
+      ;;   (if (number? a)
+      ;;       a
+      ;;       (let ([place-list (car a)]
+      ;;             [index (cdr a)])
+      ;;         (if (= (length place-list) 1)
+      ;;             (get-field place (car place-list))
+      ;;             (format "~a . ~a" 
+      ;;                     (place-list-to-string place-list)
+      ;;                     (send index to-string))))))
 
       ;; Add comm space to cores
       (define (add-comm x)
@@ -693,56 +693,7 @@
 	  ]
 
        [(is-a? ast AssignTemp%)
-        (when debug (newline))
-          (define lhs (get-field lhs ast))
-          (define rhs (get-field rhs ast))
-
-          ;; Visit lhs
-          (when debug
-                (pretty-display ">> AssignTemp (lhs)"))
-          ;(define lhs-ret (send lhs accept this))
-          (define lhs-place-type (get-field place-type lhs))
-
-          ;; Visit rhs
-          (when debug
-                (pretty-display ">> AssignTemp (rhs)"))
-          (define rhs-ret (send rhs accept this))
-          (define rhs-place-type (get-field place-type rhs))
-
-          ;; put temp itself into env for infering later
-          ;; (unless lhs-place-type
-          ;;   (define decl (lookup env lhs))
-          ;;   (cond 
-          ;;    [(is-a? decl TempDecl%)
-          ;;     (set-field! place-type lhs rhs-place-type)
-          ;;     ;; get tempdecl ast
-          ;;     (set-field! place decl (to-place rhs-place-type))
-          ;;     ;; store inside lhs for furuther infer
-          ;;     (set-field! decl lhs decl)
-          ;;     (update env lhs ast)]
-
-          ;;    [(is-a? decl AssignTemp%)
-          ;;     (set-field! place-type ast 
-          ;;                 (get-field place-type (get-field lhs decl)))]
-
-          ;;    [else
-          ;;     (set-field! place-type decl)]))
-
-	  (when (not lhs-place-type)
-		(define decl (lookup env lhs))
-		(when (is-a? decl TempDecl%)
-		      (set-field! place-type lhs rhs-place-type)
-		      ;; Get tempdecl ast
-		      (set-field! place decl (to-place rhs-place-type))
-		      ;; Store inside lhs for furuther infer
-		      (set-field! decl lhs decl)
-		      ;; Update env to point to first AssignTemp% we found.
-		      ;; There can be > AssignTemp% in case of While%.
-		      (update env lhs ast)))
-
-          ;; don't increse space
-
-          rhs-ret]
+        (send (get-field rhs ast) accept this)]
 
        [(is-a? ast Assign%) 
           (when debug (newline))

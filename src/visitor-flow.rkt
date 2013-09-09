@@ -56,7 +56,12 @@
                 [arg   (flatten-arg (get-field args ast))]) ; actual
                (set! edges (append (cross-product param arg) edges))
                (set! edges (append (send arg accept this) edges)))
-          edges)]
+          edges)
+        ;; TODO + funcdecl here
+        ]
+
+       [(is-a? ast ProxyReturn%)
+        (list)]
 
        [(is-a? ast For%)
         (multiply (send (get-field body ast) accept this) 
@@ -89,6 +94,9 @@
 		   (cross-product-raw (get-field place-type condition) 
 				      (get-field body-placeset ast)))
 	   bound))]
+       
+       [(is-a? ast AssignTemp%)
+        (send (get-field rhs ast) accept this)]
 
        [(is-a? ast Assign%)
         (let ([lhs (get-field lhs ast)]

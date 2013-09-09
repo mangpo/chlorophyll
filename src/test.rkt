@@ -49,8 +49,8 @@
 ;(test-num-msgs "add"           100 #:cores 8 #:max-msgs 200 #:capacity 300)
 ;(test-num-msgs "add-pair"      100 #:cores 8 #:max-msgs 200 #:capacity 300)
 ;(test-num-msgs "function"      2 #:capacity 512)
-;(test-num-msgs "function2"     2)
-(test-num-msgs "while"         300 #:max-msgs 800)
+(test-num-msgs "function2"     4)
+;(test-num-msgs "while"         300 #:max-msgs 800)
 
 ;(test-consistent "space")
 ;(test-consistent "if")

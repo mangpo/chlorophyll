@@ -25,6 +25,6 @@ void main() {
     z = two() +@2 z;
   }
 
-  //out(x);
-  //out(z);
+  out(x);
+  out(z);
 }

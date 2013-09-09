@@ -245,6 +245,9 @@
                           (get-field type (get-field return func-ast))
                           "void"))
 
+         (when (and entry (equal? type "void"))
+               (send ast type-error))
+
          ;; set signature
          (set-field! signature ast func-ast)
          (set-field! is-stmt ast stmt-level)

@@ -88,7 +88,6 @@
           (send param infer-place (get-field place-type arg)))
 	
         ;; return can't be at any, so we don't need to infer return
-	;; (send (get-field return func-ast) infer-place (get-field place-type ast))
         ]
 
        [(is-a? ast Assign%)

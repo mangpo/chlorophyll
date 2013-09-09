@@ -138,7 +138,8 @@
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
                (when sub
-                     (set-field! name ast (ext-name (get-field name ast) sub)))
+                     (set-field! name ast (ext-name (get-field name ast) sub))
+                     (set-field! sub ast #f))
                ast
                )
              
@@ -184,7 +185,8 @@
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
                (when sub
-                     (set-field! name ast (ext-name (get-field name ast) sub)))
+                     (set-field! name ast (ext-name (get-field name ast) sub))
+                     (set-field! sub ast #f))
                ast)
              
              ;; list of ASTs
@@ -275,7 +277,9 @@
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))
          (define rhs (get-field rhs ast))
-         ;(pretty-display (format "DESUGAR: Assign ~a ~a" lhs rhs))
+         (pretty-display (format "DESUGAR: Assign ~a ~a" 
+                                 (send lhs to-string) 
+                                 (send rhs to-string)))
          
          ;; visit lhs & rhs
          (define lhs-ret (send lhs accept this))
@@ -345,12 +349,6 @@
         
         [(is-a? ast FuncDecl%)
          ;(pretty-display (format "DESUGAR: FuncDecl ~a (return)" (get-field name ast)))
-
-         ;; (let* ([return (get-field return ast)]
-         ;;        [return-ret (send return accept this)])
-         ;;   (when (list? return-ret)
-         ;;         (set-field! return ast (new Block% [stmts return-ret]))
-         ;;         (set-field! return-print ast return)))
 
          (when (get-field return ast)
                (send (get-field return ast) accept this))

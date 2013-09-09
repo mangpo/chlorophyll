@@ -14,7 +14,7 @@
     (super-new)
     (init-field routing-table part2core n)
 
-    (define debug #f)
+    (define debug #t)
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -142,6 +142,7 @@
                   (set-field! place-list p
                               (map (lambda (x) (convert-base x)) (get-field place-list p))))
           p]
+         [(not p) p]
          [else
           (raise (format "convert-place-type: unimplemented for ~a" p))]))
 
@@ -159,10 +160,6 @@
                 (when (field-bound? place-type ast)
                       (convert-place-type))))
 
-      ;; (define (convert-placeset)
-      ;;   (set-field! body-placeset ast
-      ;;               (for/list ([p (get-field body-placeset ast)])
-      ;;                         (vector-ref part2core p))))
       (define (all-place-from place)
         (cond
          
@@ -172,13 +169,19 @@
          [(place-type-dist? place)
           (list->set (map (lambda (x) (get-field place x)) (car place)))]
 
-         [(list? place)
+         [(and (list? place) (field-bound? place (car place)))
           (list->set (map (lambda (x) (get-field place x)) place))]
+
+         [(and (list? place) (field-bound? place-type (car place)))
+          (list->set (map (lambda (x) (get-field place-type x)) place))]
 
 	 [(at-any? place)
 	  (set)]
 
          [(is-a? place TypeExpansion%)
+          (set)]
+
+         [(not place)
           (set)]
 
          [else
@@ -213,8 +216,8 @@
       (define (all-path my-ast)
         (let ([path (get-field send-path my-ast)])
           (if path
-                (all-path-from path)
-                (set))))
+              (all-path-from path)
+              (set))))
                     
 
       (cond
@@ -298,10 +301,11 @@
        [(is-a? ast BinExp%)
         (define e1 (get-field e1 ast))
         (define e2 (get-field e2 ast))
-        ;(define op (get-field op ast))
+        (define op (get-field op ast))
         (define e1-ret (send e1 accept this))
         (define e2-ret (send e2 accept this))
-        ;(define op-ret (send op accept this))
+        (send op accept this)
+
         (convert)
         (when debug 
               (pretty-display (format "COMMINSERT: BinExp ~a" (send ast to-string))))
@@ -312,15 +316,20 @@
 
        [(is-a? ast UnaExp%)
         (define e1 (get-field e1 ast))
-        ;(define op (get-field op ast))
+        (define op (get-field op ast))
         (define e1-ret (send e1 accept this))
-        ;(define op-ret (send op accept this))
+        (send op accept this)
+
 	(convert)
         (when debug
               (pretty-display (format "COMMINSERT: UnaExp ~a" (send ast to-string))))
         (gen-path e1 ast)
         (set-union e1-ret (all-place-type) (all-path e1))
         ]
+
+       [(is-a? ast ProxyReturn%)
+        (convert)
+        (all-place-type)]
 
        [(is-a? ast FuncCall%)
 	(when debug 
@@ -361,6 +370,13 @@
 		   (get-field body-placeset (get-field signature ast)) (all-place-type))
         ]
 
+       [(is-a? ast AssignTemp%)
+        (when debug 
+              (pretty-display (format "COMMINSERT: AssignTemp ~a = ~a"
+                                      (send (get-field lhs ast) to-string) 
+                                      (send (get-field rhs ast) to-string))))
+        (send (get-field rhs ast) accept this)]
+
        [(is-a? ast Assign%) 
         (let ([rhs (get-field rhs ast)]
               [lhs (get-field lhs ast)])
@@ -369,8 +385,7 @@
 					(send lhs to-string) (send rhs to-string))))
           (define lhs-ret (send lhs accept this))
           (define rhs-ret (send rhs accept this))
-	  (unless (get-field nocomm ast)
-		  (gen-path rhs lhs))
+          (gen-path rhs lhs)
           (set-union rhs-ret lhs-ret (all-path rhs))
           )
         ]
@@ -441,7 +456,7 @@
           ret)
         ]
 
-       [else (raise (format "Error: in partition-to-number, ~a unimplemented!" ast))]
+       [else (raise (format "Error: in comm-inserter, ~a unimplemented!" ast))]
        ))
     ))
             

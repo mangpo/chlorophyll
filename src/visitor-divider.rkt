@@ -13,7 +13,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -53,15 +53,15 @@
 
     (define (push-stack i x)
       (let ([id (vector-ref cores i)])
-	(when debug (pretty-display `(push-stack ,i ,(send x to-string))))
+	(when debug (pretty-display `(push-stack ,i ,(send x to-string) ,(core-stack id))))
         (set-core-stack! id (cons x (core-stack id)))
 	))
 
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
              [stack (core-stack id)])
-	(when debug (pretty-display `(pop-stack ,i)))
 	(when debug (pretty-display `(pop-stack ,i -> ,(send (car stack) to-string))))
+	(when debug (pretty-display `(pop-stack ,i remain: ,(cdr stack))))
         (set-core-stack! id (cdr stack))
         (car stack)))
 
@@ -105,7 +105,7 @@
 	      [(is-a? e FuncCall%)
 	       (if (= count 0)
 		   (push-workspace c e)
-		   (raise (format "@CORE ~a: ~a.\nThere is more than one function call left in the stack!" c (send e to-srting))))
+		   (raise (format "@CORE ~a: ~a.\nThere is more than one function call left in the stack!" c (send e to-string))))
 	       (set! count (add1 count))]
 
 	      [(and (is-a? e Var%) (regexp-match #rx"_cond.*" (get-field name e)))
@@ -117,7 +117,8 @@
               [else
                (raise (format "@CORE ~a: ~a.\nThere is something left in the stack!" 
                               c (send e to-srting)))]
-              ))))
+              ))
+        (set-core-stack! (vector-ref cores c) (list))))
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
@@ -146,6 +147,14 @@
         (intermediate path))
   
       (define (gen-comm)
+        ;; When place-type of function call is a list of ProxyReturn, send-path is false.
+        ;; In such case, we gauruntee that there is no communication.
+        ;; Scenario 1: tuple places of function call return match with params'
+        ;;             => no comm.
+        ;; Scenario 2: tuple places of function call return don't match
+        ;;             => temp = func()
+        ;;     
+        ;; Therefore, we don't have to worry about such case in gen-comm.
         (let ([path (get-field send-path ast)])
           (when path
                 ;; (if (list? (car path))
@@ -307,6 +316,9 @@
 			     [index-vec (dict-ref expand-map actual-name)])
 			(set-field! name ast actual-name)
 			(set-field! sub ast (vector-ref index-vec expand))))))
+
+        (when debug
+              (pretty-display (format "NAME: ~a ~a" (get-field name ast) (get-field sub ast))))
 	
         (if (number? place)
 	    ;; native type
@@ -348,44 +360,69 @@
           (gen-comm))]
 
        [(is-a? ast FuncCall%)
-	(when debug (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
+        (define return-place (get-field place-type ast))
+        (define type (get-field type ast))
+	(when debug 
+              (pretty-display (format "\nDIVIDE: FuncCall ~a, return-place ~a, type ~a\n" 
+                                      (send ast to-string) return-place type)))
+
         (define (func-args-at ast core)
           (filter 
 	   (lambda (x) (= (get-field place-type x) core))
 	   (get-field stmts (get-field args ast))))
 
 	(define (new-funccall core)
-	  (let ([args (func-args-at (get-field signature ast) core)])
-	    (new FuncCall% [name (get-field name ast)]
-		 ;; reverse order because we pop from stack
-		 [args (reverse (map (lambda (x) (pop-stack core)) args))])))
+          (when debug
+                (pretty-display `(new-funccall ,core)))
+	  (define params (func-args-at (get-field signature ast) core))
+          (define return (if (list? return-place)
+                             (filter (lambda (x) (= (get-field place-type x) core))
+                                     return-place)
+                             (if (and return-place (= return-place core))
+                                 return-place
+                                 #f)))
+          (define new-return-place (and (not (empty? return)) return))
+          
+          (define (get-args n)
+            (if (= n 0)
+                (list)
+                (let* ([top (pop-stack core)]
+                       [place-type (get-field place-type top)]
+                       [return-count (if (list? place-type) (length place-type) 1)])
+                  (when debug
+                        (pretty-display `(get-args n ,n top ,(send top to-string) 
+                                                   count ,return-count)))
+                  (cons top (get-args (- n return-count))))))
+
+          (new FuncCall% [name (get-field name ast)]
+               ;; reverse order because we pop from stack
+               [args (reverse (get-args (length params)))]
+               [place-type new-return-place]
+               [type (if new-return-place type "void")]
+               ))
 
 	;; add expressions for arguments
         (for ([arg (get-field args ast)])
              (send arg accept this))
 
-        (define (not-void? place type core)
-          (cond
-           [(equal? type "void")
-            #f]
-           [(is-a? place TypeExpansion%)
-            (member core (get-field place-list place))]
-           [else
-            (= place core)]))
-
 	(when debug 
               (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
+
         (let* ([place (get-field place-type ast)]
 	       [sig (get-field signature ast)]
-	       [type (get-field type (get-field return sig))])
+	       [type (if (get-field return sig)
+                         (get-field type (get-field return sig))
+                         "void")])
           (for ([c (get-field body-placeset sig)])
 	       ;; body-placeset of IO function is empty
-               (if (not-void? place type c)
-		   ;; if it is here, funccall is exp
-                   (push-stack c (new-funccall c))
-		   ;; if return place is not here, funcall is statement
-                   (push-workspace c (new-funccall c))))
-          (gen-comm))]
+               (let ([func (new-funccall c)])
+                 (if (equal? (get-field type func) "void") ;(not (get-field place-type func))
+		   ;; if place-type is empty, funcall is statement
+                   (push-workspace c func)
+		   ;; if place-type is not empty, funccall is exp
+                   (push-stack c func)
+                   ))))
+        (gen-comm)]
 
        [(is-a? ast ArrayDecl%)
 	(when debug 
@@ -449,6 +486,8 @@
 
 	  ;; update expand-map
 	  (let ([index-vec (gen-index-vec place-list)])
+            (when debug
+                  `(INDEX-VEC ,index-vec))
 	    (for ([name (get-field var-list ast)])
 		 (dict-set! expand-map name index-vec)))
 	  ])]

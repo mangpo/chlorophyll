@@ -16,6 +16,7 @@
          "visitor-printer.rkt"
          "visitor-linker.rkt" 
          "visitor-tempinsert.rkt" 
+         "visitor-tempinsert2.rkt" 
          "visitor-desugar.rkt"
          "visitor-memory.rkt"
          "visitor-codegen.rkt")
@@ -76,14 +77,15 @@
 
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile-to-IR file name capacity input [w 5] [h 4] 
-                       #:verbose [verbose #t])
+                       #:verbose [verbose #t]
+                       #:run [run #f])
   
   (define n (* w h))
   (define my-ast (parse file))
   (define concise-printer (new printer% [out #t]))
   
   ;; generate sequantial simulation code
-  (when input (simulate-onecore my-ast name input))
+  (when run (simulate-onecore my-ast name input))
   
   (when verbose
     (pretty-display "--- before partition ---")
@@ -95,8 +97,15 @@
                                    #:cores (* w h) 
                                    #:capacity capacity 
                                    #:verbose #t))
+  
   (when verbose
     (pretty-display "--- after partition ---")
+    (send my-ast pretty-print))
+  
+  (send my-ast accept (new temp-inserter2% [replace-all #f]))
+  
+  (when verbose
+    (pretty-display "--- after temp insert2 ---")
     (send my-ast pretty-print))
   
   ;; layout
@@ -200,7 +209,8 @@
 (define testdir "../tests/run")
 
 (define (test-simulate name input capacity w h)
-  (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input w h)
+  (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input w h
+                 #:run #t)
   (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))
   

@@ -110,7 +110,12 @@
        
        [(is-a? ast FuncCall%)
 	(for ([arg (get-field args ast)])
-	     (send arg accept this))]
+	     (send arg accept this))
+        (check-place-type)
+        ]
+
+       [(is-a? ast ProxyReturn%)
+        (check-place-type)]
 
        [(is-a? ast Assign%) 
 	(send (get-field lhs ast) accept this)

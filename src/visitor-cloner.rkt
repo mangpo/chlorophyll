@@ -101,10 +101,7 @@
              ;[signature (send (get-field signature ast) accept this)]
              [signature (get-field signature ast)]
              [known-type (get-known-type)]
-             [place-type (get-place-type)]
-             [return (and (get-field return ast)
-                          (map (lambda (x) (send x accept this)) 
-                               (get-field return ast)))])]
+             [place-type (get-place-type)])]
 
        [(is-a? ast ProxyReturn%)
         (new ProxyReturn% [place-type (get-field place-type ast)])]
@@ -160,6 +157,11 @@
 		       (get-field bound ast)
 		       (get-field body-placeset ast)
 		       (send (get-field pre ast) accept this))]
+
+       [(is-a? ast AssignTemp%)
+        (new AssignTemp%
+             [lhs (send (get-field lhs ast) accept this)]
+             [rhs (send (get-field rhs ast) accept this)])]
 
        [(is-a? ast Assign%)
         (new Assign%
