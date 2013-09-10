@@ -13,7 +13,7 @@
 ;(test "simple" "null" 256)
 
 ;(test "assign" "null" 512)
-(test "if"       "4_1" 512)
+;(test "if"       "4_1" 512)
 ;(test "offset"   "4_1" 256)
 ;(test "add"       "200" 1024)
 ;(test "add2"       "200" 1024)
@@ -29,7 +29,7 @@
 ;(test "matrixmult-noio" "null" 500)
 ;(test "cluster" "null" 256)
 
-;(test "md5" "null" 600 #:w 10 #:h 5)
+(test "md5" "null" 600 #:w 10 #:h 5)
 
 (for ([res (reverse result)])
   (pretty-display res))

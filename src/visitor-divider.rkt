@@ -135,12 +135,16 @@
               (let* ([from (car path)]
 		     [to (cadr path)]
 		     [temp (get-temp to)])
-		;; (push-workspace to (new Assign%
-		;; 			[lhs (new Temp% [name temp] [place-type to]
-                ;;                                   [type "int"])]
-		;; 			[rhs (gen-recv to from)]))
-                ;; (push-stack to (new Temp% [name temp] [place-type to] [type "int"]))
-                (push-stack to (gen-recv to from)))))
+                ;; Need to introduce them here. 
+                ;; Consider: sum1(a@1, sum2(a@1, b@0))
+                ;; at core 2
+                ;; sum2(read(1)); sum1(read(1));
+                ;; notice that the order of reading from 1 is swaped.
+		(push-workspace to (new Assign%
+					[lhs (new Temp% [name temp] [place-type to]
+                                                  [type "int"])]
+					[rhs (gen-recv to from)]))
+                (push-stack to (new Temp% [name temp] [place-type to] [type "int"])))))
         
         (let ([from (car path)]
               [to (cadr path)])
