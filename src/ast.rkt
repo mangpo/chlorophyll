@@ -386,9 +386,9 @@
            [expand expand] [expect expect] [type type] [compact compact] [sub sub]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Var:~a @~a (expand=~a/~a))" 
+      (pretty-display (format "~a(Var:~a @~a (expand=~a/~a) (type=~a))" 
                               indent name (place-to-string place-type)
-                              expand expect))
+                              expand expect type))
       (print-send-path indent))
 
     (define/override (to-string) name)
@@ -427,8 +427,8 @@
                   (send decl infer-place (to-place p)))))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Temp:~a place-type:~a compact:~a)" indent name 
-                              (place-to-string place-type) compact)))))
+      (pretty-display (format "~a(Temp:~a place-type:~a compact:~a sub:~a)" indent name 
+                              (place-to-string place-type) compact sub)))))
 
 (define Array%
   (class Var%

@@ -135,11 +135,12 @@
               (let* ([from (car path)]
 		     [to (cadr path)]
 		     [temp (get-temp to)])
-		(push-workspace to (new Assign%
-					[lhs (new Temp% [name temp] [place-type to]
-                                                  [type "int"])]
-					[rhs (gen-recv to from)]))
-                (push-stack to (new Temp% [name temp] [place-type to] [type "int"])))))
+		;; (push-workspace to (new Assign%
+		;; 			[lhs (new Temp% [name temp] [place-type to]
+                ;;                                   [type "int"])]
+		;; 			[rhs (gen-recv to from)]))
+                ;; (push-stack to (new Temp% [name temp] [place-type to] [type "int"]))
+                (push-stack to (gen-recv to from)))))
         
         (let ([from (car path)]
               [to (cadr path)])
@@ -157,14 +158,8 @@
         ;; Therefore, we don't have to worry about such case in gen-comm.
         (let ([path (get-field send-path ast)])
           (when path
-                ;; (if (list? (car path))
-                ;;     (begin
-                ;;       (for ([p path])
-                ;;            (gen-comm-path p))
-                ;;       (pop-stack (caar path)))
-                ;;     (begin
-                      (gen-comm-path path)
-                      (pop-stack (car path)))))
+                (gen-comm-path path)
+                (pop-stack (car path)))))
 
       (define (gen-comm-condition)
 	(when debug (pretty-display `(gen-comm-condition)))
@@ -306,16 +301,20 @@
 	
 	(define old-name (get-field name ast))
 	;; clean up residual sub
-        (set-field! sub ast #f)
+        ;(set-field! sub ast #f)
 	(when (get-field compact ast)
-	      (let ([full-name (regexp-match #rx"(.+)::(.+)" old-name)])
-		(when full-name
-		      ;; "a::0" -> ("a::0" "a" "0")
-		      (let* ([actual-name (cadr full-name)]
-			     [expand (string->number (caddr full-name))]
-			     [index-vec (dict-ref expand-map actual-name)])
-			(set-field! name ast actual-name)
-			(set-field! sub ast (vector-ref index-vec expand))))))
+              (let ([full-name (regexp-match #rx"(.+)::(.+)" old-name)])
+                (when full-name
+                      ;; "a::0" -> ("a::0" "a" "0")
+                      (let ([actual-name (cadr full-name)]
+                            [expand (string->number (caddr full-name))])
+                        (set-field! name ast actual-name)
+                        (set-field! sub ast expand))))
+              
+              (when (get-field sub ast)
+                    (let* ([name (get-field name ast)]
+                           [index-vec (dict-ref expand-map name)])
+                      (set-field! sub ast (vector-ref index-vec (get-field sub ast))))))
 
         (when debug
               (pretty-display (format "NAME: ~a ~a" (get-field name ast) (get-field sub ast))))

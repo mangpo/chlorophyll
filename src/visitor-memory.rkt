@@ -7,8 +7,13 @@
 (define memory-mapper%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] [max-iter 0]
-		;; collect iter offset to adjust for loop bound
+    ;; mem-p = data mem pointer
+    ;; mem-rp = data mem reduced pointer
+    ;; max-temp = number of temp mem neede
+    (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] 
+                [max-temp 0] [max-iter 0]
+		;; Collect iter offset to adjust for loop bound (offset).
+                ;; This is not for address field.
 		[iter-map (make-hash)])
 
     (define debug #t)
@@ -28,9 +33,17 @@
       )
 
     (define (gen-mem p rp)
+      ;; #t indicates that this is data
       (meminfo p rp #t))
+
+    (define (gen-temp sub)
+      ;; treat temp as data
+      (if sub
+          (meminfo (+ mem-p sub) (+ mem-rp sub) #t)
+          (meminfo mem-p mem-rp #t)))
     
     (define (gen-iter p)
+      ;; #f indicates that this is temp
       (meminfo p p #f))
 
     (define (need-mem? name)
@@ -38,6 +51,9 @@
 	       (regexp-match #rx"_tmp" name)
 	       (regexp-match #rx"_cond" name)
 	       (regexp-match #rx"#return" name))))
+
+    (define (need-temp-mem? name)
+      (regexp-match #rx"_temp" name))
     
     (define/public (visit ast)
       (cond
@@ -45,11 +61,21 @@
         (when debug 
               (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast))))
 	(for ([var (get-field var-list ast)])
-	     (when (need-mem? var)
-		   (dict-set! mem-map var (gen-mem mem-p mem-rp))
-                   (set-field! address ast (gen-mem mem-p mem-rp))
-		   (set! mem-p (add1 mem-p))
-                   (set! mem-rp (add1 mem-rp))))
+             (cond 
+              [(need-mem? var)
+               (dict-set! mem-map var (gen-mem mem-p mem-rp))
+               (set-field! address ast (gen-mem mem-p mem-rp))
+               (set! mem-p (add1 mem-p))
+               (set! mem-rp (add1 mem-rp))]
+              [(need-temp-mem? var)
+               (define type (get-field type ast))
+               (if (pair? type)
+                   (when (> (cdr type) 0)
+                         (set! max-temp (cdr type)))
+                   (when (= max-temp 0)
+                         (set! max-temp 1)))
+                       
+               ]))
 	]
 
        [(is-a? ast ArrayDecl%)
@@ -81,8 +107,14 @@
         (when debug 
               (pretty-display (format "\nMEMORY: Var ~a" (send ast to-string))))
 	;; (pretty-display `(need-mem? ,(need-mem? (get-field name ast))))
-	(when (need-mem? (get-field name ast))
-	      (set-field! address ast (lookup mem-map ast)))]
+	(cond
+         [(need-mem? (get-field name ast))
+          (set-field! address ast (lookup mem-map ast))]
+
+         [(need-temp-mem? (get-field name ast))
+          (set-field! address ast (gen-temp (get-field sub ast)))
+          ]
+         )]
         
        [(is-a? ast UnaExp%)
         (when debug 
@@ -195,7 +227,7 @@
         (when debug (pretty-display (format "MEMORY: Program")))
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))
-	(cons (meminfo mem-p mem-rp null) max-iter)]
+	(cons (meminfo (+ mem-p max-temp) (+ mem-rp max-temp) null) max-iter)]
 
        [(is-a? ast Block%)
 	(for ([stmt (get-field stmts ast)])

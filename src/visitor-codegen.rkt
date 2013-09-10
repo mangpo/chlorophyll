@@ -46,6 +46,24 @@
       (syntax-rules ()
 	[(gen-block-org (a ...) (b ...) in out)
 	 (block (list a ...) in out (restrict #t (car const-a) #f #f) (list b ...))]))
+    
+    (define (gen-block-store addr addr-org in)
+      (if (= in 1)
+          (block (list addr "b!" "!b") in 0 (restrict #t (car const-a) #f #f) 
+                 (list addr-org "b!" "!b"))
+          (if (car const-a)
+              (block (append (list "a" "push" addr "a!") 
+                             (for/list ([i (in-range in)]) "!+")
+                             (list "pop" "a!"))
+                     in 0 (restrict #t (car const-a) #f #f)
+                     (append (list "a" "push" addr-org "a!") 
+                             (for/list ([i (in-range in)]) "!+")
+                             (list "pop" "a!")))
+              (block (append (list addr "a!") 
+                             (for/list ([i (in-range in)]) "!+"))
+                     in 0 (restrict #t (car const-a) #f #f)
+                     (append (list addr-org "a!") 
+                             (for/list ([i (in-range in)]) "!+"))))))
       
     (define (gen-op op)
       (cond
@@ -251,11 +269,16 @@
        [(is-a? ast FuncCall%)
         (when debug 
               (pretty-display (format "\nCODEGEN: FuncCall ~a" (send ast to-string))))
-        (if (car const-a)
-            (list (gen-block-r "a" "push" 0 0)
-                  (funccall (get-field name ast))
-                  (gen-block "pop" "a!" 0 0))
-            (list (funccall (get-field name ast))))
+        (define arg-code 
+          (foldl (lambda (x all) (prog-append all (send x accept this)))
+                 (list) (get-field args ast)))
+        (define call-code
+          (if (car const-a)
+              (list (gen-block-r "a" "push" 0 0)
+                    (funccall (get-field name ast))
+                    (gen-block "pop" "a!" 0 0))
+              (list (funccall (get-field name ast)))))
+        (prog-append arg-code call-code)
         ]
 
        [(is-a? ast Assign%)
@@ -294,11 +317,16 @@
 		   (if address
 		       (if (meminfo-data address)
 			   ;; data
-			   (list (gen-block-org 
-                                  ((number->string (get-var address)) "b!" "!b")
-                                  ((number->string (meminfo-addr address)) "b!" "!b")
-                                  1 0
-                                  ))
+                           (if (pair? (get-field type lhs))
+                               ;; need to expand
+                               (list 
+                                (gen-block-store (number->string (get-var address))
+                                                 (number->string (meminfo-addr address))
+                                                 (cdr (get-field type lhs))))
+                               (list
+                                (gen-block-store (number->string (get-var address))
+                                                 (number->string (meminfo-addr address))
+                                                 1)))
 			   ;; iter
 			   (list (gen-block-org
                                   ((number->string (get-iter address)) "b!" "!b")
