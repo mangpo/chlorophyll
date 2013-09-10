@@ -61,6 +61,7 @@
        [(is-a? ast Array%)
 	(define place-offset (get-place-offset))
         (new Array% [name (get-field name ast)] 
+             [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
 	     [offset (cdr place-offset)] ;; need this to substract from the index
 	     [cluster (get-field cluster ast)]
@@ -68,12 +69,15 @@
 
        [(is-a? ast Temp%)
         (new Temp% [name (get-field name ast)]
+             [type (get-field type ast)]
              [place-type (get-place-type)] [known-type (get-known-type)]
              [compact (get-field compact ast)])]
        
 
        [(is-a? ast Var%)
         (new Var% [name (get-field name ast)]
+             [type (get-field type ast)]
+             [compact (get-field compact ast)]
              [place-type (get-place-type)] [known-type (get-known-type)])]
 
        [(is-a? ast Op%)
@@ -83,6 +87,7 @@
         (new UnaExp% 
              [op (send (get-field op ast) accept this)]
              [e1 (send (get-field e1 ast) accept this)]
+             [type (get-field type ast)]
              [known-type (get-known-type)]
              [place-type (get-place-type)])]
 
@@ -91,6 +96,7 @@
              [op (send (get-field op ast) accept this)]
              [e1 (send (get-field e1 ast) accept this)]
              [e2 (send (get-field e2 ast) accept this)]
+             [type (get-field type ast)]
              [known-type (get-known-type)]
              [place-type (get-place-type)])]
 
@@ -98,7 +104,7 @@
         (new FuncCall%
              [name (get-field name ast)]
              [args (map (lambda (x) (send x accept this)) (get-field args ast))]
-             ;[signature (send (get-field signature ast) accept this)]
+             [type (get-field type ast)]
              [signature (get-field signature ast)]
              [known-type (get-known-type)]
              [place-type (get-place-type)])]

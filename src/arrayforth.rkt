@@ -192,6 +192,16 @@
    [else
     (define a-last (last a-list))
     (define b-first (car b-list))
+
+    ;; remove "pop a! a push"
+    (when (and (block? a-last) (block? b-first))
+	  (define a-code (block-body a-last))
+	  (define b-code (block-body b-first))
+	  (when (and (>= (length a-code) 2) (equal? (take-right a-code 2) (list "pop" "a!"))
+		     (>= (length b-code) 2) (equal? (take b-code 2) (list "a" "push")))
+		(set-block-body! a-last (take a-code (- (length a-code) 2)))
+		(set-block-body! b-first (take-right b-code (- (length b-code) 2)))))
+
     ;; (if (and (block? a-last) (block? b-first)
     ;;          (or no-limit
     ;;              (<= (+ (length (block-body a-last)) (length (block-body b-first))) 

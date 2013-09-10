@@ -14,6 +14,7 @@
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
     (define debug #t)
+    (define is-lhs #f)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -57,6 +58,21 @@
         (set-core-stack! id (cons x (core-stack id)))
 	))
 
+    (define (push-stack-temp c x)
+      (let* ([place-type (get-field place-type x)]
+	     [temp (get-temp c (if (list? place-type) (length place-type) 1))])
+	(push-workspace c (new Assign% 
+			       [lhs (new Temp% [name temp] [place-type place-type] 
+					 [type (get-field type x)])]
+			       [rhs x]))
+	(if (and (list? place-type) (> (length place-type) 1))
+	    (for ([i (in-range (length place-type))])
+		 (push-stack c (new Temp% [name temp] [place-type c] 
+				    [sub i] [compact #t]
+				    [type (get-field type x)])))
+	    (push-stack c (new Temp% [name temp] [place-type c]
+			       [type (get-field type x)])))))
+
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
              [stack (core-stack id)])
@@ -77,14 +93,14 @@
     (define (set-func i func)
       (set-core-func! (vector-ref cores i) func))
 
-    (define (get-temp i)
+    (define (get-temp i entry)
       (when debug (pretty-display `(get-temp ,i)))
       (let* ([id (vector-ref cores i)]
 	     [n (core-temp id)])
 	(set-core-temp! id (add1 n))
-	(let ([new-temp (format "_tmp~a" n)]
+	(let ([new-temp (format "_dummy~a" n)]
               [func (get-func i)])
-          (set-field! temps func (cons new-temp (get-field temps func)))
+          (set-field! temps func (cons (cons new-temp entry) (get-field temps func)))
           new-temp)))
 
     (define (gen-send x to data)
@@ -116,7 +132,7 @@
 
               [else
                (raise (format "@CORE ~a: ~a.\nThere is something left in the stack!" 
-                              c (send e to-srting)))]
+                              c (send e to-string)))]
               ))
         (set-core-stack! (vector-ref cores c) (list))))
 
@@ -134,7 +150,7 @@
 		(intermediate (cdr path)))
               (let* ([from (car path)]
 		     [to (cadr path)]
-		     [temp (get-temp to)])
+		     [temp (get-temp to 1)])
                 ;; Need to introduce them here. 
                 ;; Consider: sum1(a@1, sum2(a@1, b@0))
                 ;; at core 2
@@ -277,12 +293,15 @@
       (cond
        [(is-a? ast Num%)
 	(when debug (pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string))))
-        (push-stack (get-field place-type ast) ast)
+        (push-stack-temp (get-field place-type ast) ast)
         (gen-comm)
         ]
 
        [(is-a? ast Array%)
+	(define my-lhs is-lhs)
+	(set! is-lhs #f)
 	(send (get-field index ast) accept this)
+	(set! is-lhs my-lhs)
 
         (when debug
               (pretty-display (format "\nDIVIDE: Array ~a (known=~a)\n" 
@@ -294,7 +313,8 @@
 
 	(let ([place (get-field place-type ast)])
 	  (set-field! index ast (pop-stack place))
-	  (push-stack place ast)
+	  (unless is-lhs
+		  (push-stack-temp place ast))
 	  (gen-comm))]
 
        [(is-a? ast Var%)
@@ -323,21 +343,22 @@
         (when debug
               (pretty-display (format "NAME: ~a ~a" (get-field name ast) (get-field sub ast))))
 	
-        (if (number? place)
-	    ;; native type
-            (push-stack (get-field place-type ast) ast)
-            ;; TypeExpansion
-            (let ([place-list (get-field place-list place)])
-              (for ([p (list->set place-list)])
-                (define occur (count (lambda (x) (= x p)) place-list))
-                (define type (get-field type ast))
-
-                ;; push
-                (push-stack
-                 p
-                 (new Var% [name (get-field name ast)] [sub (get-field sub ast)]
-                      [place-type p]
-                      [type (if (= occur 1) type (cons type occur))])))))
+	(unless is-lhs
+		(if (number? place)
+		    ;; native type
+		    (push-stack-temp (get-field place-type ast) ast)
+		    ;; TypeExpansion
+		    (let ([place-list (get-field place-list place)])
+		      (for ([p (list->set place-list)])
+			   (define occur (count (lambda (x) (= x p)) place-list))
+			   (define type (get-field type ast))
+			   
+			   ;; push
+			   (push-stack-temp
+			    p
+			    (new Var% [name (get-field name ast)] [sub (get-field sub ast)]
+				 [place-type p]
+				 [type (if (= occur 1) type (cons type occur))]))))))
 
         (gen-comm)]
 
@@ -350,7 +371,7 @@
           ;; pop in the reverse order
           (set-field! e2 ast (pop-stack place))
           (set-field! e1 ast (pop-stack place))
-          (push-stack place ast)
+          (push-stack-temp place ast)
           (gen-comm))]
        
        [(is-a? ast UnaExp%)
@@ -359,7 +380,7 @@
 	  (when debug 
                 (pretty-display (format "\nDIVIDE: UnaExp ~a\n" (send ast to-string))))
           (set-field! e1 ast (pop-stack place))
-          (push-stack place ast)
+          (push-stack-temp place ast)
           (gen-comm))]
 
        [(is-a? ast FuncCall%)
@@ -423,7 +444,7 @@
 		   ;; if place-type is empty, funcall is statement
                    (push-workspace c func)
 		   ;; if place-type is not empty, funccall is exp
-                   (push-stack c func)
+                   (push-stack-temp c func)
                    ))))
         (gen-comm)]
 
@@ -496,23 +517,37 @@
 	  ])]
 
        [(is-a? ast Assign%) 
-	;; right before left
-        (send (get-field rhs ast) accept this)
-        (send (get-field lhs ast) accept this)
+	(define lhs (get-field lhs ast))
+	(define rhs (get-field rhs ast))
+
+	(set! is-lhs #t)
+	(send lhs accept this)
+	(set! is-lhs #f)
+        (send rhs accept this)
+
 	(when debug (pretty-display (format "\nDIVIDE: Assign\n")))
         (let ([place (get-field place-type (get-field lhs ast))])
           (if (number? place)
               (begin
 		;; pop left before right
-                (set-field! lhs ast (pop-stack place))
+                ;; (set-field! lhs ast (pop-stack place))
                 (set-field! rhs ast (pop-stack place))
                 (push-workspace place ast))
-              (for ([p (list->set (get-field place-list place))])
-                   (push-workspace p (new Assign% 
-                                          ;; pop left before right
-                                          [lhs (pop-stack p)]
-                                          [rhs (pop-stack p)] 
-					  )))))]
+	      ;; _temp1 = bbb(); tuple type
+              ;; (for ([p (list->set (get-field place-list place))])
+	      (let ([place-list (get-field place-list place)])
+		(for ([p (list->set place-list)])
+		     (let ([occur (count (lambda (x) (= x p)) place-list)])
+		       (for ([i (in-range occur)])
+			    (push-workspace p (new Assign% 
+						   ;; pop left before right
+						   [lhs (new Temp% [name (get-field name lhs)]
+							     [place-type p]
+							     [type (get-field type lhs)]
+							     [compact (> occur 1)]
+							     [sub (and (> occur 1) (- occur i 1))])]
+						   [rhs (pop-stack p)]))))))))
+	]
 
        [(is-a? ast Return%)
         (when debug (pretty-display (format "\nDIVIDE: Return\n")))

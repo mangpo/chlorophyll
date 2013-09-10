@@ -101,7 +101,7 @@
 	 (define name (get-field name ast))
 	 (define sub (get-field sub ast))
 
-	 (unless thread
+	 ;(unless thread
            ;; this renaming is only relavent for sequential version
            ;(set! sub #f)	
            (when (get-field compact ast)
@@ -111,7 +111,8 @@
                          (let* ([actual-name (cadr full-name)]
                                 [expand (string->number (caddr full-name))])
                            (set! name actual-name)
-                           (set! sub expand))))))
+                           (set! sub expand)))))
+	   ;)
 
 	 (display (format "~a_~a" (print-name name) core))
 	 (when sub
@@ -318,10 +319,11 @@
 
          ;; Declare temps
          (display indent)
-         (display (format "int _cond_~a" core))
+         (display (format "int _cond_~a; " core))
          (for ([temp (get-field temps ast)])
-              (display (format ", ~a_~a" temp core)))
-         (pretty-display ";")
+              (display (format "int~a ~a_~a; " 
+			       (if (> (cdr temp) 1) (cdr temp) "")
+			       (car temp) core)))
 
          ;; Body
          (send (get-field body ast) accept this)

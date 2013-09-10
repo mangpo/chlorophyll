@@ -214,6 +214,16 @@
    
    [else (raise (format "to-place-type: unimplemented for ~a" place))]))
 
+(define (filter-place place p)
+  (cond
+   [(is-a? place TypeExpansion%)
+    (new TypeExpansion% [place-list (filter (lambda (x) (= x p)) (get-field place-list place))])]
+   [(list? place)
+    (filter (lambda (x) (= (get-field place-type x) p)) place)]
+   [else
+    (raise (format "ast: filter-place: unimplemented for ~a" place))]))
+      
+
 (define (get-new-if ast c t f body-placeset [parent #f])
   (let ([constructor (cond
 		      [(is-a? ast If!=0%) If!=0%]
@@ -384,11 +394,17 @@
     (define/override (clone)
       (new Var% [name name] [known-type known-type] [place-type place-type] [pos pos]
            [expand expand] [expect expect] [type type] [compact compact] [sub sub]))
+    
+    (define/public (clone-at p)
+      (new Var% [name name] [known-type known-type] 
+	   [place-type (filter-place place-type p)] 
+	   [pos pos]
+           [expand expand] [expect expect] [type type] [compact compact] [sub sub]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Var:~a @~a (expand=~a/~a) (type=~a))" 
+      (pretty-display (format "~a(Var:~a @~a (expand=~a/~a) (type=~a) (compact=~a))" 
                               indent name (place-to-string place-type)
-                              expand expect type))
+                              expand expect type compact))
       (print-send-path indent))
 
     (define/override (to-string) name)
@@ -552,9 +568,9 @@
     (define/override (pretty-print [indent ""])
       ;; (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
       ;;   		      indent name (evaluate-with-sol place-type) known-type))
-      (pretty-display (format "~a(FuncCall: ~a @~a (expand=~a/~a)" 
+      (pretty-display (format "~a(FuncCall: ~a @~a (expand=~a/~a) (type=~a)" 
 			      indent name (evaluate-with-sol place-type)
-                              expand expect))
+                              expand expect type))
       (print-send-path indent)
       (for ([arg args])
 	   (send arg pretty-print (inc indent)))

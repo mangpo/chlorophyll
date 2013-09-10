@@ -48,7 +48,7 @@
 
     (define (need-mem? name)
       (not (or (regexp-match #rx"_temp" name)
-	       (regexp-match #rx"_tmp" name)
+	       (regexp-match #rx"_dummy" name)
 	       (regexp-match #rx"_cond" name)
 	       (regexp-match #rx"#return" name))))
 
