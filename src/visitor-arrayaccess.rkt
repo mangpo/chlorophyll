@@ -79,8 +79,7 @@
 
        [(is-a? ast Return%)
         (when debug
-              (pretty-display (format "\nACCESS: Return ~a" 
-                                      (send (get-field val ast) to-string))))
+              (pretty-display (format "\nACCESS: Return")))
 
 	(define val (get-field val ast))
 	(if (list? val)
@@ -109,12 +108,16 @@
 
        [(is-a? ast For%)
         (when debug
-              (pretty-display (format "\nACCESS: For")))
+              (pretty-display (format "\nACCESS: For (begin)")))
 	(set! stack (cons (pack (get-field name (get-field iter ast)) (list))
                           stack))
         (define children-count (send (get-field body ast) accept this))
 	(define arrays (pack-arrays (car stack)))
 	(define my-count (length arrays))
+        (when debug
+              (pretty-display (format "\nACCESS: For (middle)"))
+	      (pretty-display `(my-count ,my-count children-count ,children-count))
+	      )
 
 	(set! stack (cdr stack))
         (cond 

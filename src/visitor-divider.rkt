@@ -6,6 +6,13 @@
 
 (provide ast-divider%)
 
+;; 1) Separate program IR into multiple IRs for multiple cores.
+;; 2) Insert communication code at appropriate places.
+;; 3) Insert "ghost" temporary variables whose names start with _dummy
+;;    to enforce the same order of execution of expressions.
+;;    EXCEPTION: no "ghost" temp for 
+;;               - lhs variable
+;;               - index of array when it is Var%
 (define ast-divider%
   (class* object% (visitor<%>)
     (struct core (program workspace stack temp func) #:mutable)
@@ -14,7 +21,11 @@
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
     (define debug #t)
+
+    ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
+    ;; When is-index-var is true, no ghost temp for Var%
+    (define is-index #f)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -300,7 +311,9 @@
        [(is-a? ast Array%)
 	(define my-lhs is-lhs)
 	(set! is-lhs #f)
+	(set! is-index #t)
 	(send (get-field index ast) accept this)
+	(set! is-index #f)
 	(set! is-lhs my-lhs)
 
         (when debug
@@ -325,7 +338,7 @@
 	
 	(define old-name (get-field name ast))
 	;; clean up residual sub
-        ;(set-field! sub ast #f)
+        ;; (set-field! sub ast #f)
 	(when (get-field compact ast)
               (let ([full-name (regexp-match #rx"(.+)::(.+)" old-name)])
                 (when full-name
@@ -346,7 +359,8 @@
 	(unless is-lhs
 		(if (number? place)
 		    ;; native type
-		    (push-stack-temp (get-field place-type ast) ast)
+		    ((if is-index push-stack push-stack-temp)
+		     (get-field place-type ast) ast)
 		    ;; TypeExpansion
 		    (let ([place-list (get-field place-list place)])
 		      (for ([p (list->set place-list)])
@@ -354,7 +368,7 @@
 			   (define type (get-field type ast))
 			   
 			   ;; push
-			   (push-stack-temp
+			   ((if is-index push-stack push-stack-temp)
 			    p
 			    (new Var% [name (get-field name ast)] [sub (get-field sub ast)]
 				 [place-type p]
@@ -363,6 +377,7 @@
         (gen-comm)]
 
        [(is-a? ast BinExp%)
+	(set! is-index #f)
         (send (get-field e1 ast) accept this)
         (send (get-field e2 ast) accept this)
         (let ([place (get-field place-type ast)])
@@ -375,6 +390,7 @@
           (gen-comm))]
        
        [(is-a? ast UnaExp%)
+	(set! is-index #f)
         (send (get-field e1 ast) accept this)
         (let ([place (get-field place-type ast)])
 	  (when debug 
@@ -384,6 +400,7 @@
           (gen-comm))]
 
        [(is-a? ast FuncCall%)
+	(set! is-index #f)
         (define return-place (get-field place-type ast))
         (define type (get-field type ast))
 	(when debug 
@@ -520,10 +537,10 @@
 	(define lhs (get-field lhs ast))
 	(define rhs (get-field rhs ast))
 
+        (send rhs accept this)
 	(set! is-lhs #t)
 	(send lhs accept this)
 	(set! is-lhs #f)
-        (send rhs accept this)
 
 	(when debug (pretty-display (format "\nDIVIDE: Assign\n")))
         (let ([place (get-field place-type (get-field lhs ast))])

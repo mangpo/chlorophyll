@@ -244,9 +244,9 @@
          ]
 
         [(is-a? ast Program%)
-         (pretty-display "/*")
-         (send ast pretty-print)
-         (pretty-display "*/")
+         ;; (pretty-display "/*")
+         ;; (send ast pretty-print)
+         ;; (pretty-display "*/")
          ;; Clone the program AST and replace funccall with temps
          (define new-ast (send ast clone))
          (send new-ast accept (new temp-inserter2% [replace-all #t]))

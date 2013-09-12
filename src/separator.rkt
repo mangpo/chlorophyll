@@ -5,39 +5,14 @@
          "visitor-unroll.rkt" 
          "visitor-divider.rkt" 
          "visitor-printer.rkt"
+	 "visitor-tempremove.rkt"
          "visitor-cprinter.rkt")
 
 (provide (all-defined-out))
 
 (define (sep-and-insertcomm name ast w h routing-table part2core #:verbose [verbose #f])
+
   (define concise-printer (new printer% [out #t]))
-  
-  ;; Unroll for loop according to array distributions of variables inside its body.
-  ;; Note: given AST is mutated.
-  (define for-unroller (new loop-unroller%))
-  (send ast accept for-unroller)  
-  (when verbose
-        (pretty-display "--- after unroll ---")
-        ;(send ast accept concise-printer)
-        (send ast pretty-print)
-        )
-
-  ;; 1) Insert communication route to send-path field.
-  ;; 2) Convert partition ID to actual core ID.
-  ;; Note: given AST is mutate.
-  (define commcode-inserter (new commcode-inserter% 
-                                 [routing-table routing-table]
-                                 [part2core part2core]
-                                 [n (* w h)]))
-  (send ast accept commcode-inserter)
-  (when verbose
-        (pretty-display "--- after insert communication ---")
-        (send ast pretty-print))
-
-  (define divider (new ast-divider% [w w] [h h]))
-  (define programs (send ast accept divider))
-  (when verbose (pretty-display "--- after dividing ---"))
-  
   (define cprinter (new cprinter% [thread #t] [w w] [h h]))
   (define n (add1 (* w h)))
 
@@ -72,23 +47,52 @@
     (pretty-display "  return 0;")
     (pretty-display "}"))
 
-
-  (with-output-to-file #:exists 'truncate (format "~a/~a.cpp" outdir name)
-    (lambda ()
-      (pretty-display "#include \"communication.cpp\"\n")
-      (for ([i (in-range n)])
-        (pretty-display (format "//----------------------- CORE ~a(~a,~a) ------------------------"
-                                i (floor (/ i w)) (modulo i w)))
-        (send cprinter set-core i)
-        (send (vector-ref programs i) accept cprinter)
-        (newline))
-      (print-main)
-      ))
+  (define (print-to-file programs [ext ""])
+    (with-output-to-file #:exists 'truncate (format "~a/~a~a.cpp" outdir name ext)
+      (lambda ()
+	(pretty-display "#include \"communication.cpp\"\n")
+	(for ([i (in-range n)])
+	     (pretty-display (format "//-------------------- CORE ~a(~a,~a) ---------------------"
+				     i (floor (/ i w)) (modulo i w)))
+	     (send cprinter set-core i)
+	     (send (vector-ref programs i) accept cprinter)
+	     (newline))
+	(print-main)
+	)))
   
-  #|
-  (for ([i (in-range (* w h))])
-    (pretty-display (format ">>>>>>>>>>>>>>>> ~a: after divide" i))
-    (send (vector-ref programs i) pretty-print))|#
+  ;; Unroll for loop according to array distributions of variables inside its body.
+  ;; Note: given AST is mutated.
+  (define for-unroller (new loop-unroller%))
+  (send ast accept for-unroller)  
+  (when verbose
+        (pretty-display "--- after unroll ---")
+        ;(send ast accept concise-printer)
+        (send ast pretty-print)
+        )
+
+  ;; 1) Insert communication route to send-path field.
+  ;; 2) Convert partition ID to actual core ID.
+  ;; Note: given AST is mutate.
+  (define commcode-inserter (new commcode-inserter% 
+                                 [routing-table routing-table]
+                                 [part2core part2core]
+                                 [n (* w h)]))
+  (send ast accept commcode-inserter)
+  (when verbose
+        (pretty-display "--- after insert communication ---")
+        (send ast pretty-print))
+
+  (define divider (new ast-divider% [w w] [h h]))
+  (define programs (send ast accept divider))
+  (when verbose (pretty-display "--- after dividing ---"))
+  (print-to-file programs "_temp")
+  
+  (define temp-remover (new temp-remover%))
+  (for ([i (in-range n)])
+       (send (vector-ref programs i) accept temp-remover))
+
+  (when verbose (pretty-display "--- after removing temp ---"))
+  (print-to-file programs)
   
   programs
   )
