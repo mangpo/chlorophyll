@@ -44,6 +44,7 @@
 			       (equal? (get-field sub def) (get-field sub use)))
 			  (begin
 			    (pretty-display "REMOVE!")
+                            (set! removed (cons (get-field name def) removed))
 			    (cons (new Assign% [lhs (get-field lhs next)] [rhs (get-field rhs me)])
 				  (cdr rest)))
 			  (cons me rest))))
@@ -55,7 +56,16 @@
 
        [(is-a? ast FuncDecl%)
 	(set! removed (list))
+        (define body (get-field body ast))
+        ;; Remove unnecesssy temps in the body.
 	(send (get-field body ast) accept this)
+        ;; Remove declarations associated to those temps.
+        (set-field! stmts body
+                    (filter (lambda (x) 
+                              (not (and (is-a? x VarDecl%)
+                                        (string? (get-field type x)) ;; not tuple type
+                                        (member (car (get-field var-list x)) removed))))
+                            (get-field stmts body)))
 	]
 
        ))))
