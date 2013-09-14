@@ -15,6 +15,7 @@
   (struct-copy progstate result 
                [memory (restrict-mem cnstr)] 
                [a (restrict-a cnstr)]
+               [b (restrict-b cnstr)]
                ;[r (restrict-r cnstr)]
                ))
 

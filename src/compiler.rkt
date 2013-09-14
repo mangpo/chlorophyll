@@ -192,8 +192,13 @@
     (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
       (lambda () 
         (aforth-struct-print virtual-codes)
-        (pretty-display (format "(superoptimize programs \"~a\" ~a ~a)" name w h))
-        ))
+        (pretty-display (format "(define name \"~a_cont\")" name))
+        (pretty-display (format "(define real-opts (superoptimize programs name ~a ~a))" 
+                                w h))
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.rkt\"  name) (lambda () (aforth-struct-print real-opts)))")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.aforth\"  name)")
+        (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a)))" w h))
+        ))             
     
     ;; superoptimize
     (set! real-opts (superoptimize virtual-codes name w h))
