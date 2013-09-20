@@ -1,23 +1,27 @@
-int::3@(1,0,1) a() {
-  int::3@(1,0,1) x;
-  return x;
+int@0 add(int@1 x, int@2 y) {
+  return x +@0 y;
 }
 
-void b(int::3@(1,0,1) x) {
-  int::3@(2,2,2) y;
-  y = x;
+int@1 aaa() {
+  return 0;
+}
+
+int@1 bbb() {
+  return 0;
 }
 
 void main() {
-  int::3@(0,0,0) output, dummy;
-  dummy = a();
-  output = dummy + a();
-  b(a());
+  int@0 sum;
+  sum = add(aaa(), add(bbb(),1));
 }
 
 /*
-core = 0, space = 23, ops = #<set:>
-core = 1, space = 23, ops = #<set:>
-core = 2, space = 13, ops = #<set:>
-core = 3, space = 0, ops = #<set:>
+void *main_1(void *dummy) {
+  int _cond_1; int _dummy6_1; int _dummy5_1; 
+  _dummy5_1 = aaa_1();
+  _dummy6_1 = bbb_1();
+  add_1(_dummy6_1);
+  add_1(_dummy5_1);
+  return NULL;
+}
 */

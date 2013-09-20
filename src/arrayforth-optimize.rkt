@@ -3,6 +3,7 @@
 (require "header.rkt" "arrayforth.rkt" "arrayforth-print.rkt" "arrayforth-def.rkt" 
          "../../forth-interpreter/machine/cegis.rkt" 
          "../../forth-interpreter/machine/state.rkt" 
+         "../../forth-interpreter/machine/programs.rkt" 
          "../../forth-interpreter/machine/track-constant.rkt")
 
 (provide superoptimize renameindex)
@@ -27,12 +28,17 @@
 (define w #f)
 (define h #f)
 (define id #f)
+(define before 0)
+(define after 0)
 
 (define (superoptimize ast my-name my-w my-h)
   (set! name my-name)
   (set! w my-w)
   (set! h my-h)
   (set! id 0)
+  (set! before 0)
+  (set! after 0)
+  (system (format "rm ~a/~a-stat.log" outdir name))
   (system (format "rm ~a/~a-work.rkt" outdir name))
   (system (format "rm ~a/~a-work.aforth" outdir name))
   (superoptimize-inner ast))
@@ -139,6 +145,16 @@
       (define org (if (string? (block-org renamed)) 
                       (block-org renamed)
                       (string-trim (string-join (block-org renamed)))))
+
+      (define res-len (length-with-literal res #:f18a #f))
+      (define org-len (length-with-literal org #:f18a #f))
+      (set! before (+ before res-len))
+      (set! after (+ after org-len))
+    
+      (with-output-to-file #:exists 'append 
+                           (format "~a/~a-stat.log" outdir name)
+                           (lambda () 
+			     (pretty-display (format "~a ~a \"~a\" \"~a\"" org-len res-len org res))))
 
       (if (and (equal? res org) (block? (linklist-entry next)))
 	  (let ([entry (linklist-entry ast)])
@@ -257,6 +273,11 @@
          (let* ([program (aforth-linklist (vector-ref ast i) list->linklist)]
                 [result (superoptimize-inner program)])
            (vector-set! output-programs i result)))
+    
+      (with-output-to-file #:exists 'append 
+                           (format "~a/~a-stat.log" outdir name)
+                           (lambda () 
+			     (pretty-display (format "~a ~a (TOTAL)" before after))))
     
     output-programs]
 
