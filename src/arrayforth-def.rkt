@@ -218,6 +218,7 @@
   (define prefix #f)
   (define prefix-org #f)
   (define prefix-cnstr #f)
+  (define prefix-incnstr #f)
   ;; check that it is a linklist that contains block
   (when (and is-gap
              (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
@@ -236,11 +237,13 @@
 	(set! prefix (reverse (car pair)))
         (set! prefix-org (drop first-insts (- (length first-insts) (length prefix))))
 	(set! prefix-cnstr (block-cnstr entry))
+	(set! prefix-incnstr (block-incnstr entry))
         ))
   
   (define suffix #f)
   (define suffix-org #f)
   (define suffix-cnstr #f)
+  (define suffix-incnstr #f)
   ;; check that it is a linklist that contains block
   (when (and is-gap
              (andmap (lambda (x) (and (linklist? x) (block? (linklist-entry x)))) 
@@ -260,6 +263,7 @@
 	(set! suffix (car pair))
         (set! suffix-org (take first-insts (length suffix)))
 	(set! suffix-cnstr (block-cnstr entry))
+	(set! suffix-incnstr (block-incnstr entry))
         ))
   
   (define new-name (new-def))
@@ -283,10 +287,11 @@
           )
       (set! from (linklist #f 
                            (new-block prefix (car inout) (cdr inout) 
-                                  (restrict (restrict-mem prefix-cnstr) 
-					    (or (restrict-a prefix-cnstr) a) 
-                                            b r)
-				  prefix-org)
+                                      (restrict (restrict-mem prefix-cnstr) 
+                                                (or (restrict-a prefix-cnstr) a) 
+                                                b r)
+                                      prefix-incnstr
+                                      prefix-org)
                            from))))
   
   (when suffix
@@ -296,10 +301,11 @@
 	   [r (estimate-r suffix)]
            [suffix-linklist (linklist to 
                                       (new-block suffix (car inout) (cdr inout)
-					     (restrict (restrict-mem suffix-cnstr) 
-						       (or (restrict-a suffix-cnstr) a) 
-                                                       b r)
-                                             suffix-org)
+                                                 (restrict (restrict-mem suffix-cnstr) 
+                                                           (or (restrict-a suffix-cnstr) a) 
+                                                           b r)
+                                                 suffix-incnstr
+                                                 suffix-org)
                                       #f)])
       (set-linklist-next! to suffix-linklist)
       (set! to suffix-linklist)))
@@ -365,12 +371,13 @@
            [snd-a     (estimate-a snd-insts)]
            [snd-b     (estimate-b snd-insts)]
            [snd-r     (estimate-r snd-insts)]
+           [snd-in    (block-incnstr entry)]
            [new-linklist (linklist ll
                                    (if snd-org
                                        (new-block snd-insts (car snd-inout) (cdr snd-inout)
 					      ;; need to handle a special because of @+/!+ opt
-                                              (restrict mem 
-                                                        (or org-a snd-a) snd-b snd-r)
+                                              (restrict mem (or org-a snd-a) snd-b snd-r)
+                                              snd-in
                                               snd-org)
                                        (funccall snd-insts))
                                    (linklist-next ll))])

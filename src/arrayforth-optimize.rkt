@@ -87,8 +87,10 @@
                              #:f18a #f
                              #:num-bits bit #:name name
                              #:constraint (out-space out (block-cnstr ast))
-                             #:start-state (in-constraint (block-incnstr ast) 
-                                                          (car body-list))
+                             #:start-state (if (empty? body-list) 
+                                               (default-state)
+                                               (in-constraint (block-incnstr ast) 
+                                                              (car body-list)))
                              #:mem mem-size #:start mem-size))
 
     (define opt (if (equal? result 'timeout)
@@ -129,8 +131,11 @@
 				 #:f18a #f
 				 #:num-bits bit #:name name
 				 #:constraint (out-space out cnstr)
-                                 #:start-state (in-constraint (block-incnstr block-noopt)
-                                                              (car body))
+                                 #:start-state (if (empty? body)
+                                                   (default-state)
+                                                   (in-constraint 
+                                                    (block-incnstr block-noopt)
+                                                    (car body)))
 				 #:mem mem-size #:start mem-size))
 
         (if (equal? result 'timeout)
@@ -274,9 +279,9 @@
     (define n (vector-length ast))
     (define output-programs (make-vector n))
   
-    (vector-set! output-programs (sub1 n) (vector-ref ast (sub1 n)))
+    ;(vector-set! output-programs (sub1 n) (vector-ref ast (sub1 n)))
 
-    (for ([i (in-range (sub1 n))])
+    (for ([i (in-range n)])
 
          (with-output-to-file #:exists 'append 
            (format "~a/~a-work.rkt" outdir name)
