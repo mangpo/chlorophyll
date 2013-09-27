@@ -11,6 +11,8 @@ TODO
 5) temp order for return (DONE)
 6) test md2
 
+node # 104 !b down b! @b 0 => !b a! a 277 a! @ @b dup or
+
 - measure time & energy
 - more benchmarks
   = vs expert
