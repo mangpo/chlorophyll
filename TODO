@@ -1,16 +1,4 @@
 TODO
-1) get rid of vardecl _temp1_0_1 (function-pair1.cpp)
-  _temp1_0_1 = _dummy5_1;
-  _dummy6_1 = _temp1_0_1;
-3) replace 0 with dup dup or (DONE)
-4) DONE
-;(optimize "65535 and 4 b! !b 5 b! @b 65535" 
-;          #:constraint (constraint s t memory) #:f18a #f
-;          #:mem 6 #:num-bits 18)
-; i want: 65535 dup push . and 4 a! . !+ @ pop
-5) temp order for return (DONE)
-6) test md2
-
 - measure time & energy
 - more benchmarks
   = vs expert
@@ -65,10 +53,22 @@ MEMO
 - same VarDecl => same sym-place!!!
 
 BENCHMARKS
+- md5
+
+- matrix multiply
 - insertion sort
-- add
-- md5 (RUNNING: no partial, RUN: partial)
-- matrix multiply (2D?)
+- SSD
+- transpose
+
+- DP (activity scheduling)
+- fibonacci 
+
+- shortest path
+- MST
+- DFS, BFS
+- heap
+
+- bit hack benchmarks
 
 RUN
 - 1D convolution (better analysis)
