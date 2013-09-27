@@ -285,25 +285,6 @@
 	
       (cond
        [(linklist? ast)
-        (when (and (linklist-entry ast)
-                   (block? (linklist-entry ast))
-                   (linklist-entry (linklist-next ast))
-                   (block? (linklist-entry (linklist-next ast))))
-              (let* ([a-block (linklist-entry ast)]
-                     [b-linklist (linklist-next ast)]
-                     [b-block (linklist-entry b-linklist)]
-                     [a-body (block-body a-block)]
-                     [b-body (block-body b-block)]
-                     [a-list (if (string? a-body) 
-                                 (string-split a-body) a-body)]
-                     [b-list (if (string? b-body)
-                                 (string-split b-body) b-body)])
-                (when (<= (+ (length a-list) (length b-list)) block-limit)
-                      (let ([next (linklist-next b-linklist)])
-                        (merge-block a-block b-block)
-                        (set-linklist-next! ast next)
-                        (set-linklist-prev! next ast)))))
-
         (send this visit (linklist-entry ast))
         (send this visit (linklist-next ast))]
 

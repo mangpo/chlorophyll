@@ -26,40 +26,46 @@
     (define-syntax gen-block
       (syntax-rules ()
 	[(gen-block)
-	 (block (list) 0 0 (restrict #f #f #f #f) (list))]
+	 (new-block (list) 0 0 (restrict #f #f #f #f) (list))]
 	[(gen-block mem)
-	 (block (list) 0 0 (restrict mem (car const-a) #f #f) (list))]
+	 (new-block (list) 0 0 (restrict mem (car const-a) #f #f) (list))]
 	[(gen-block a ... in out)
-	 (block (list a ...) in out (restrict #t (car const-a) #f #f) (list a ...))]))
+	 (new-block (list a ...) in out (restrict #t (car const-a) #f #f) (list a ...))]))
+
+    (define-syntax gen-block-in
+      (syntax-rules ()
+	[(gen-block a ... in out incnstr)
+	 (new-block (list a ...) in out (restrict #t (car const-a) #f #f) incnstr 
+                    (list a ...))]))
 
     (define-syntax gen-block-r
       (syntax-rules ()
 	[(gen-block-r a ... in out)
-         (block (list a ...) in out (restrict #t (car const-a) #f #t) (list a ...))]))
+         (new-block (list a ...) in out (restrict #t (car const-a) #f #t) (list a ...))]))
     
     (define-syntax gen-block-list
       (syntax-rules ()
 	[(gen-block-list insts insts-org in out)
-	 (block insts in out (restrict #t (car const-a) #f #f) insts-org)]))
+	 (new-block insts in out (restrict #t (car const-a) #f #f) insts-org)]))
     
     (define-syntax gen-block-org
       (syntax-rules ()
 	[(gen-block-org (a ...) (b ...) in out)
-	 (block (list a ...) in out (restrict #t (car const-a) #f #f) (list b ...))]))
+	 (new-block (list a ...) in out (restrict #t (car const-a) #f #f) (list b ...))]))
     
     (define (gen-block-store addr addr-org in)
       (if (= in 1)
-          (block (list addr "b!" "!b") in 0 (restrict #t (car const-a) #f #f) 
+          (new-block (list addr "b!" "!b") in 0 (restrict #t (car const-a) #f #f) 
                  (list addr-org "b!" "!b"))
           (if (car const-a)
-              (block (append (list "a" "push" addr "a!") 
+              (new-block (append (list "a" "push" addr "a!") 
                              (for/list ([i (in-range in)]) "!+")
                              (list "pop" "a!"))
                      in 0 (restrict #t (car const-a) #f #f)
                      (append (list "a" "push" addr-org "a!") 
                              (for/list ([i (in-range in)]) "!+")
                              (list "pop" "a!")))
-              (block (append (list addr "a!") 
+              (new-block (append (list addr "a!") 
                              (for/list ([i (in-range in)]) "!+"))
                      in 0 (restrict #t (car const-a) #f #f)
                      (append (list addr-org "a!") 
@@ -252,7 +258,8 @@
        [(is-a? ast Recv%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Recv ~a" (get-field port ast))))
-        (list (gen-block (gen-port (get-field port ast)) "b!" "@b" 0 1))]
+        (define port (gen-port (get-field port ast)))
+        (list (gen-block-in port "b!" "@b" 0 1 port))]
 
        [(is-a? ast Send%)
         (define data (get-field data ast))
@@ -263,7 +270,8 @@
           (if (and (is-a? data Temp%) (equal? (get-field name data) "_cond"))
               (list (gen-block "dup" 1 2))
               (list (gen-block))))
-	(define send-ret (list (gen-block (gen-port (get-field port ast)) "b!" "!b" 1 0)))
+        (define port (gen-port (get-field port ast)))
+	(define send-ret (list (gen-block-in port "b!" "!b" 1 0 port)))
         (prog-append data-ret temp-ret send-ret)]
 
        [(is-a? ast FuncCall%)

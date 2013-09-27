@@ -4,7 +4,7 @@
 
 (provide (all-defined-out))
 
-(struct block (body in out cnstr org) #:mutable)
+(struct block (body in out cnstr incnstr org) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body) #:mutable)
@@ -19,9 +19,16 @@
 
 (struct linklist (prev entry next) #:mutable)
 
-(define ga-bit 18)
+(define ga-bit 1)
 (define block-limit 12)
 (define reduce-limit 5)
+
+(define-syntax new-block
+  (syntax-rules ()
+    [(new-block body in out cnstr org)
+     (block body in out cnstr #f org)]
+    [(new-block body in out cnstr incnstr org)
+     (block body in out cnstr incnstr org)]))
 
 (define (inout inst)
   (cond
@@ -129,6 +136,9 @@
                                       (restrict-b b-cnstr)
                                       (or (restrict-r a-cnstr) (restrict-r b-cnstr))
                                       ))
+
+  (when (empty? a-list)
+        (set-block-incnstr! a-block (block-incnstr b-block)))
   
   (define a-in  (block-in a-block))
   (define a-out (block-out a-block))
@@ -162,15 +172,15 @@
            (set-forloop-init! a-for
 			      (cond
 			       [(equal? addr #f)
-				(block (list bound-str) 0 1 (restrict #t #t #f #t) (list bound-str))]
+				(new-block (list bound-str) 0 1 (restrict #t #t #f #t) (list bound-str))]
 
 			       [(pair? addr)
-				(block (list (car addr) "a!" bound-str)
+				(new-block (list (car addr) "a!" bound-str)
 				       0 1 (restrict #t #t #f #t)
 				       (list (car addr-org) "a!" bound-str))]
 
 			       [else
-				(block (list (number->string from) addr "b!" "!b" bound-str)
+				(new-block (list (number->string from) addr "b!" "!b" bound-str)
 				       0 1 (restrict #t #t #f #t)
 				       (list (number->string from) addr-org "b!" "!b" bound-str))]))
            #t)))
@@ -366,12 +376,17 @@
     (pretty-display "\"")
 
     (define cnstr (block-cnstr x))
-    (pretty-display (format "~a~a ~a (restrict ~a ~a ~a ~a)" (inc indent) 
-                            (block-in x) (block-out x)
-			    (restrict-mem cnstr) 
-                            (restrict-a cnstr) (restrict-b cnstr)
-                            (restrict-r cnstr)
-                            ))
+    (display (format "~a~a ~a (restrict ~a ~a ~a ~a) " (inc indent) 
+                     (block-in x) (block-out x)
+                     (restrict-mem cnstr) 
+                     (restrict-a cnstr) (restrict-b cnstr)
+                     (restrict-r cnstr)
+                     ))
+
+    (define incnstr (block-incnstr x))
+    (if (string? incnstr)
+        (pretty-display (format "\"~a\"" incnstr))
+        (pretty-display incnstr))
 
     (display (format "~a\"" (inc indent)))
     (if (list? (block-org x))

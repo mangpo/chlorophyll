@@ -20,6 +20,20 @@
                ;[r (restrict-r cnstr)]
                ))
 
+(define (in-constraint data inst)
+  (cond
+   [(equal? data #f) 
+    (default-state)]
+   [(or (equal? inst "b!") (equal? inst "a!")) 
+    (default-state (t (port-number data)))]
+   [(or (equal? inst "!b") (equal? inst "@b")) 
+    (default-state (b (port-number data)))]
+   [(or (equal? inst "!") (equal? inst "@")) 
+    (default-state (a (port-number data)))]
+   [else
+    (default-state)]))
+  
+
 (define index-map #f)
 (define mem-size #f)
 (define bit #f)
@@ -65,18 +79,21 @@
     ;(pretty-display "superoptimize: block")
     ;; (raise "superoptimizer: optimize via linklist not block!")
     (define out (block-out ast))
-
-    (define result (optimize (if (string? (block-body ast))
-                                 (block-body ast)
-                                 (string-join (block-body ast)))
+    (define body-list (if (string? (block-body ast)) 
+                          (string-split (block-body ast))
+                          (block-body ast)))
+                     
+    (define result (optimize (string-join body-list)
                              #:f18a #f
                              #:num-bits bit #:name name
                              #:constraint (out-space out (block-cnstr ast))
+                             #:start-state (in-constraint (block-incnstr ast) 
+                                                          (car body-list))
                              #:mem mem-size #:start mem-size))
 
     (define opt (if (equal? result 'timeout)
                     ast
-                    (block result (block-in ast) out (block-cnstr ast) (block-org ast))))
+                    (new-block result (block-in ast) out (block-cnstr ast) (block-org ast))))
 
     (define renamed (renameindex opt mem-size bit index-map))
     
@@ -102,7 +119,7 @@
       ;; if getting result => return the optimized block
       (define (optimize-loop len)
         (define-values (next block-noopt) 
-          (collect-code ast (block (list) 0 0 (restrict #f #f #f #f) (list)) len))
+          (collect-code ast (new-block (list) 0 0 (restrict #f #f #f #f) (list)) len))
         
         (define out (block-out block-noopt))
         (define body (block-body block-noopt))
@@ -112,6 +129,8 @@
 				 #:f18a #f
 				 #:num-bits bit #:name name
 				 #:constraint (out-space out cnstr)
+                                 #:start-state (in-constraint (block-incnstr block-noopt)
+                                                              (car body))
 				 #:mem mem-size #:start mem-size))
 
         (if (equal? result 'timeout)
@@ -157,6 +176,7 @@
 			     (pretty-display (format "~a ~a \"~a\" \"~a\"" org-len res-len org res))))
 
       (if (and (equal? res org) (block? (linklist-entry next)))
+          ;; sliding window: skip one superoptimizable unit
 	  (let ([entry (linklist-entry ast)])
 	    ;; change to original in case the we do memory compression
 	    (set-block-body! entry (block-org entry))
@@ -310,9 +330,9 @@
         (pretty-display "VALIDATE: same"))
     
     (if diff
-        (block org (block-in ast) (block-out ast) (block-cnstr ast) org)
-        (block (string-join new-body) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))
+        (new-block org (block-in ast) (block-out ast) (block-cnstr ast) org)
+        (new-block (string-join new-body) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))
   
   (if index-map
       (renameindex-inner)
-      (block (block-body ast) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))
+      (new-block (block-body ast) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))

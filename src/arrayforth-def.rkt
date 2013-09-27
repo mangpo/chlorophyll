@@ -282,7 +282,7 @@
 	  [r (estimate-r prefix)]
           )
       (set! from (linklist #f 
-                           (block prefix (car inout) (cdr inout) 
+                           (new-block prefix (car inout) (cdr inout) 
                                   (restrict (restrict-mem prefix-cnstr) 
 					    (or (restrict-a prefix-cnstr) a) 
                                             b r)
@@ -295,7 +295,7 @@
 	   [b (estimate-b suffix)]
 	   [r (estimate-r suffix)]
            [suffix-linklist (linklist to 
-                                      (block suffix (car inout) (cdr inout)
+                                      (new-block suffix (car inout) (cdr inout)
 					     (restrict (restrict-mem suffix-cnstr) 
 						       (or (restrict-a suffix-cnstr) a) 
                                                        b r)
@@ -367,7 +367,7 @@
            [snd-r     (estimate-r snd-insts)]
            [new-linklist (linklist ll
                                    (if snd-org
-                                       (block snd-insts (car snd-inout) (cdr snd-inout)
+                                       (new-block snd-insts (car snd-inout) (cdr snd-inout)
 					      ;; need to handle a special because of @+/!+ opt
                                               (restrict mem 
                                                         (or org-a snd-a) snd-b snd-r)
