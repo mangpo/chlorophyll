@@ -45,11 +45,11 @@
 (define before 0)
 (define after 0)
 
-(define (superoptimize ast my-name my-w my-h)
+(define (superoptimize ast my-name my-w my-h #:id [id 0])
   (set! name my-name)
   (set! w my-w)
   (set! h my-h)
-  (set! id 0)
+  (set! id id)
   (set! before 0)
   (set! after 0)
   (system (format "rm ~a/~a-stat.log" outdir name))
@@ -266,11 +266,11 @@
         (pretty-display ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
         ))
 
-    (with-output-to-file #:exists 'append 
-      (format "~a/~a-work.aforth" outdir name)
-      (lambda () 
-        (aforth-syntax-print ret w h #:id id)
-        ))
+    ;; (with-output-to-file #:exists 'append 
+    ;;   (format "~a/~a-work.aforth" outdir name)
+    ;;   (lambda () 
+    ;;     (aforth-syntax-print ret w h #:id id)
+    ;;     ))
 
     ret
     ]

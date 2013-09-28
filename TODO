@@ -1,5 +1,10 @@
 TODO
-node # 104 !b down b! @b 0 => !b a! a 277 a! @ @b dup or
+1) node # 104 !b down b! @b 0 => !b a! a 277 a! @ @b dup or
+2) parallel z3: optimize-distributor.rkt
+   - bug
+   - shared temp file
+3) 930 -> 800
+4) benchmarks
 
 - measure time & energy
 - more benchmarks

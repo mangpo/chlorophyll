@@ -16,6 +16,8 @@
 
 (define max-bit 18)
 (define n-bit 16)
+(define procs 4)
+(define check-interval 600)
 
 (define outdir "/home/mangpo/work/greensyn/output")
 (define outdir-rel "../output")

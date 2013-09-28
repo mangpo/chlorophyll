@@ -450,8 +450,6 @@
 			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x)))]
 
    [(vector? x)
-    (pretty-display "#lang racket")
-    (pretty-display "(require \"../src/arrayforth.rkt\" \"../src/arrayforth-optimize.rkt\" \"../src/arrayforth-print.rkt\")")
     (pretty-display "(define programs")
     (pretty-display "  (vector")
     (define size (vector-length x))
