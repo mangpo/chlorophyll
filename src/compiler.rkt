@@ -7,6 +7,7 @@
          "partitioner.rkt" 
          "layout-sa.rkt" 
          "separator.rkt"
+         "optimize-distributor.rkt"
          "arrayforth.rkt"
 	 "arrayforth-def.rkt"
          "arrayforth-optimize.rkt"
@@ -189,26 +190,26 @@
     ;; genreate reduced code
     (define virtual-codes (define-repeating-codes (generate-codes programs w h #t) w h))
     
-    (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
-      (lambda () 
-        (aforth-struct-print virtual-codes)
-        (pretty-display (format "(define name \"~a_cont\")" name))
-        (pretty-display (format "(define real-opts (superoptimize programs name ~a ~a))" 
-                                w h))
-        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.rkt\"  name) (lambda () (aforth-struct-print real-opts)))")
-        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.aforth\"  name)")
-        (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a)))" w h))
-        ))             
-    
-    ;; superoptimize
-    (set! real-opts (superoptimize virtual-codes name w h))
-    (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
-      (lambda () (aforth-struct-print real-opts))))
+    (define start (current-seconds))
+    (if distributed
+        (distribute-and-optimize virtual-codes name w h)
+        (begin
+          (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
+                               (lambda () 
+                                 (print-header)
+                                 (aforth-struct-print virtual-codes)
+                                 (print-optimize name w h)))
+          ;; superoptimize
+          (set! real-opts (superoptimize virtual-codes name w h))
+          (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
+                               (lambda () (aforth-struct-print real-opts)))
+          ;; superoptimized arrayforth
+          (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
+                               (lambda ()
+                                 (aforth-syntax-print real-opts w h)))))
+    (pretty-display (format "optimizing time: ~a s" (- (current-seconds) start)))
+    )
   
-  ;; superoptimized arrayforth
-  (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
-    (lambda ()
-      (aforth-syntax-print real-opts w h)))
   )
 
 (define testdir "../tests/run")

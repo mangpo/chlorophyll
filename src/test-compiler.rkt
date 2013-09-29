@@ -6,7 +6,7 @@
 ;               343 "null" 7 6 #:verbose #t)
 
 (compile-and-optimize "../examples/test.cll" "test" 
-                      256 "null" #:opt #f)
+                      256 "null" #:w 4 #:h 2 #:opt #t)
 ;(compile-and-optimize "../tests/run/function-pair1-noio.cll" "function_pair" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 

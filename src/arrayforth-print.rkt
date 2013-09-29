@@ -173,7 +173,7 @@
 
     (if original
         (begin
-          (pretty-display (format "{block ~a}" (+ 930 (* 2 id))))
+          (pretty-display (format "{block ~a}" (+ 800 (* 2 id))))
           (pretty-display (format "( -) # ~a ( mem ~a) 0 org | cr" node memsize)))
         (begin
           (pretty-display (format "yellow ~a node" node))

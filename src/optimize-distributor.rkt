@@ -1,34 +1,41 @@
 #lang racket
 
 (require "arrayforth.rkt" "header.rkt")
+(provide distribute-and-optimize)
 
 (struct task (sp o i e))
 
+;; Print optimizing file for each core
 (define (print-file program name core w h)
   (with-output-to-file #:exists 'truncate (format "~a/~a-~a-gen-red.rkt" outdir name core)
     (lambda () 
-    (pretty-display "#lang racket")
-    (pretty-display "(require \"../src/header.rkt\" \"../src/arrayforth.rkt\" \"../src/arrayforth-optimize.rkt\" \"../src/arrayforth-print.rkt\")")
-
+      (print-header)
       (pretty-display "(define program")
       (aforth-struct-print program)
       (pretty-display ")")
-      (pretty-display (format "(define name \"~a-~a\")" name core))
-      (pretty-display (format "(define real-opts (superoptimize program name ~a ~a #:id ~a))" w h core))
-      (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.rkt\" outdir name) (lambda () (aforth-struct-print real-opts)))")
-      (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.aforth\" outdir name)")
-      (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a #:id ~a)))" w h core))
-      )))
+      (print-optimize name w h core))))
 
+(define (close-ports i e o)
+  (close-output-port i)
+  (close-input-port e)
+  (close-output-port o))
+
+;; Execute racket on the optimize file
 (define (exec-racket name)
   (define out-port (open-output-file (format "~a/~a.log" outdir name) #:exists 'truncate))
+  
   (let-values ([(sp o i e) 
                 (subprocess out-port 
                             #f #f 
                             (find-executable-path "racket") 
                             (format "~a/~a-gen-red.rkt" outdir name))])
-    (task sp out-port i e)))
 
+    (with-handlers* ([exn:break? (lambda (e)
+                                   (close-ports i e out-port)
+                                   (raise e))])
+                    (task sp out-port i e))))
+
+;; Remove terminating subprocess from the running list
 (define (finish queue runnings)
   (unless (empty? runnings)
     (sync/timeout check-interval (task-sp (last runnings)))
@@ -36,26 +43,63 @@
                            (if (equal? (subprocess-status (task-sp t)) 'running)
                                #t
                                (begin
-                                 (close-output-port (task-i t))
-                                 (close-input-port (task-e t))
-                                 (close-output-port (task-o t))
+                                 (close-ports (task-i t) (task-e t) (task-o t))
                                  #f)))
                          runnings)])
       (run queue still))))
 
+;; Execute more file. Remove from queue to runnings
 (define (run queue runnings)
-  (if (and (not (empty? queue)) (< (length runnings) procs))
-      (run (cdr queue) (cons (exec-racket (car queue)) runnings))
-      (finish queue runnings)))
+  (define (cleanup e)
+    (for ([t runnings])
+         (when (equal? (subprocess-status (task-sp t)) 'running)
+               (subprocess-kill (task-sp t) #t))
+         (close-ports (task-i t) (task-e t) (task-o t)))
+    (raise "user break"))
+
+  (with-handlers* ([exn:break? cleanup])
+    (if (and (not (empty? queue)) (< (length runnings) procs))
+        (run (cdr queue) (cons (exec-racket (car queue)) runnings))
+        (finish queue runnings)))
+  )
 	       
+;; Read file
+(define (read-port in)
+  (let ([next (read-line in)])
+    (unless (eof-object? next)
+      (pretty-display next)
+      (read-port in))))
   
+;; Create file for each core and optimize each core on a subprocess.
+;; Combine result to one file.
 (define (distribute-and-optimize programs name w h)
+  ;; Create file for each core.
   (define files
     (for/list ([i (in-range (* w h))])
 	      (print-file (vector-ref programs i) name i w h)
 	      (format "~a-~a" name i)))
   
+  ;; Run each core file.
   (run files (list))
+  
+  ;; Aggregate results.
+  (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
+    (lambda () 
+      (for ([i (in-range (* w h))])
+        (let ([port (open-input-file (format "~a/~a-~a-opt.aforth" outdir name i))])
+          (read-port port)))
+      ))
+  
+  ;; Aggregate stat.
+  (with-output-to-file #:exists 'truncate (format "~a/~a.stat" outdir name)
+    (lambda () 
+      (for ([i (in-range (* w h))])
+           (let ([file (format "~a/~a-~a.stat" outdir name i)])
+             (when (file-exists? file)
+                   (let ([port (open-input-file file)])
+                     (read-port port)))))
+      ))
+      
   )
 
 (define programs
@@ -72,18 +116,6 @@
               "right b! @b "
               0 1 (restrict #t #f #f #f) "right"
               "right b! @b ")
-            (block
-              "1 "
-              0 1 (restrict #t #f #f #f) #f
-              "1 ")
-            (block
-              "+ "
-              2 1 (restrict #t #f #f #f) #f
-              "+ ")
-            (block
-              "right b! !b "
-              1 0 (restrict #t #f #f #f) "right"
-              "right b! !b ")
           )
         )
       )
@@ -92,29 +124,17 @@
     (aforth 
       ;; linklist
       (list 
-        (vardecl '(0))
+        (vardecl '(0 0 0 0 0 0 0 0 0 0 0))
         (funcdecl "main"
           ;; linklist
           (list 
             (block
-              "0 b! @b "
+              "2 b! @b "
               0 1 (restrict #t #f #f #f) #f
-              "0 b! @b ")
-            (block
-              "right b! !b "
-              1 0 (restrict #t #f #f #f) "right"
-              "right b! !b ")
-            (block
-              "right b! @b "
-              0 1 (restrict #t #f #f #f) "right"
-              "right b! @b ")
-            (block
-              "0 b! !b "
-              1 0 (restrict #t #f #f #f) #f
-              "0 b! !b ")
+              "10 b! @b ")
           )
         )
       )
-    1 2 #f)))
+    3 2 #hash((2 . 10) (3 . 11)))))
 
-(distribute-and-optimize programs "test" 2 1)
+;(distribute-and-optimize programs "test" 2 1)

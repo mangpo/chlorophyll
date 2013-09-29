@@ -52,10 +52,15 @@
   (set! id id)
   (set! before 0)
   (set! after 0)
-  (system (format "rm ~a/~a-stat.log" outdir name))
+  (system (format "rm ~a/~a.stat" outdir name))
   (system (format "rm ~a/~a-work.rkt" outdir name))
   (system (format "rm ~a/~a-work.aforth" outdir name))
-  (superoptimize-inner ast))
+  (let ([result (superoptimize-inner ast)])
+    ;; (with-output-to-file #:exists 'append 
+    ;;                      (format "~a/~a.stat" outdir name)
+    ;;                      (lambda () 
+    ;;                        (pretty-display (format "~a ~a (TOTAL)" before after))))
+    result))
 
 ;; optimize per-core program
 (define (superoptimize-inner ast)
@@ -172,11 +177,11 @@
 
       (define res-len (length-with-literal res #:f18a #f))
       (define org-len (length-with-literal org #:f18a #f))
-      (set! before (+ before res-len))
-      (set! after (+ after org-len))
+      (set! before (+ before org-len))
+      (set! after (+ after res-len))
     
       (with-output-to-file #:exists 'append 
-                           (format "~a/~a-stat.log" outdir name)
+                           (format "~a/~a.stat" outdir name)
                            (lambda () 
 			     (pretty-display (format "~a ~a \"~a\" \"~a\"" org-len res-len org res))))
 
@@ -247,6 +252,7 @@
 
    [(aforth? ast)
     ;(pretty-display "superoptimize: aforth")
+    (set! ast (aforth-linklist ast list->linklist))
     (set! bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
     (set! mem-size (aforth-memsize ast))
     (set! index-map (aforth-indexmap ast))
@@ -299,10 +305,6 @@
                 [result (superoptimize-inner program)])
            (vector-set! output-programs i result)))
     
-      (with-output-to-file #:exists 'append 
-                           (format "~a/~a-stat.log" outdir name)
-                           (lambda () 
-			     (pretty-display (format "~a ~a (TOTAL)" before after))))
     
     output-programs]
 

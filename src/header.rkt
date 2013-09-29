@@ -18,6 +18,7 @@
 (define n-bit 16)
 (define procs 4)
 (define check-interval 600)
+(define distributed #t)
 
 (define outdir "/home/mangpo/work/greensyn/output")
 (define outdir-rel "../output")

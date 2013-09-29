@@ -461,4 +461,26 @@
    
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))
 
+(define (print-header)
+  (pretty-display "#lang racket")
+  (pretty-display "(require \"../src/header.rkt\" \"../src/arrayforth.rkt\" \"../src/arrayforth-optimize.rkt\" \"../src/arrayforth-print.rkt\")"))
 
+(define (print-optimize name w h [core #f])
+  (if core
+      (begin
+        (pretty-display (format "(define name \"~a-~a\")" name core))
+        (pretty-display (format "(define real-opts (superoptimize program name ~a ~a #:id ~a))" w h core))
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.rkt\" outdir name) (lambda () (aforth-struct-print real-opts)))")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.aforth\" outdir name)")
+        (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a #:id ~a)))" w h core)))
+      (begin
+        (pretty-display (format "(define name \"~a_cont\")" name))
+        (pretty-display (format "(define real-opts (superoptimize programs name ~a ~a))" 
+                                w h))
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.rkt\"  name) (lambda () (aforth-struct-print real-opts)))")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.aforth\"  name)")
+        (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a)))" w h))
+        )))    
+        
+        
+  
