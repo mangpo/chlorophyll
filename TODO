@@ -1,7 +1,9 @@
 TODO
-1) parallel z3: optimize-distributor.rkt
-   - database for superopt
-2) benchmarks
+0) log error
+1) test more: run simple examples again
+2) support IO
+3) benchmarks
+4) unrolling synthesizer
 
 - measure time & energy
 - more benchmarks

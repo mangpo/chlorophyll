@@ -175,8 +175,8 @@
                       (block-org renamed)
                       (string-trim (string-join (block-org renamed)))))
 
-      (define res-len (length-with-literal res #:f18a #f))
-      (define org-len (length-with-literal org #:f18a #f))
+      (define res-len (length-with-literal res))
+      (define org-len (length-with-literal org))
       (set! before (+ before org-len))
       (set! after (+ after res-len))
     
