@@ -3,7 +3,7 @@
 (require "arrayforth.rkt" "header.rkt")
 (provide distribute-and-optimize)
 
-(struct task (sp o i e))
+(struct task (sp o i))
 
 ;; Print optimizing file for each core
 (define (print-file program name core w h)
@@ -15,9 +15,8 @@
       (pretty-display ")")
       (print-optimize name w h core))))
 
-(define (close-ports i e o)
+(define (close-ports i o)
   (close-output-port i)
-  (close-input-port e)
   (close-output-port o))
 
 ;; Execute racket on the optimize file
@@ -25,15 +24,14 @@
   (define out-port (open-output-file (format "~a/~a.log" outdir name) #:exists 'truncate))
   
   (let-values ([(sp o i e) 
-                (subprocess out-port 
-                            #f #f 
+                (subprocess out-port #f out-port
                             (find-executable-path "racket") 
                             (format "~a/~a-gen-red.rkt" outdir name))])
 
-    (with-handlers* ([exn:break? (lambda (e)
-                                   (close-ports i e out-port)
-                                   (raise e))])
-                    (task sp out-port i e))))
+    (with-handlers* ([exn:break? (lambda (err)
+                                   (close-ports i out-port)
+                                   (raise err))])
+                    (task sp out-port i))))
 
 ;; Remove terminating subprocess from the running list
 (define (finish queue runnings)
@@ -43,7 +41,7 @@
                            (if (equal? (subprocess-status (task-sp t)) 'running)
                                #t
                                (begin
-                                 (close-ports (task-i t) (task-e t) (task-o t))
+                                 (close-ports (task-i t) (task-o t))
                                  #f)))
                          runnings)])
       (run queue still))))
@@ -54,7 +52,7 @@
     (for ([t runnings])
          (when (equal? (subprocess-status (task-sp t)) 'running)
                (subprocess-kill (task-sp t) #t))
-         (close-ports (task-i t) (task-e t) (task-o t)))
+         (close-ports (task-i t) (task-o t)))
     (raise "user break"))
 
   (with-handlers* ([exn:break? cleanup])
