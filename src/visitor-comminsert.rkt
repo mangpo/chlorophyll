@@ -131,6 +131,7 @@
                (send i accept this))
           p]
          [(at-io? p)
+          (raise "visitor-comminsert: io should be converted at visitor-evaluator!")
           n]
 	 ;; [(is-a? p Place%)
 	 ;;  p]

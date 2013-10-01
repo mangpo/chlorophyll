@@ -54,7 +54,7 @@
        (if (symbolic? i)                     ; <-- optimization
            (let ([len max-cores])
              (assert (<= 0 i) `(<= 0 i))
-             (assert (< i len) `(< i len))
+             (assert (< i (sub1 len)) `(< i len))
              (for ([j (in-range 0 len)])
                (let ([val-space (vector-ref space j)])
                  (vector-set! space j (if (= i j) 
@@ -79,7 +79,7 @@
            (if (symbolic? i)                     ; <-- optimization
                (let ([len max-cores])
                  (assert (<= 0 i) `(<= 0 i))
-                 (assert (< i len) `(< i len))
+                 (assert (< i (sub1 len)) `(< i len))
                  (for ([j (in-range 0 len)])
                    (let* ([val-space (vector-ref space j)]
                           [val-ops (vector-ref costly-op j)])

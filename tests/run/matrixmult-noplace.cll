@@ -1,0 +1,19 @@
+void main() {
+  int[]@{[0:36]=5} A[36];
+  int[]@{[0:36]=13} B[36];
+  int[]@{[0:36]=16} C[36];
+  int@13 sum;
+
+  for(i from 0 to 6)@any {
+    for(j from 0 to 6)@any {
+      sum = 0;
+      for(k from 0 to 6)@any {
+        sum = (sum + (A[((6 * i) + k)] * B[((6 * k) + j)]));
+      }
+
+      C[((6 * i) + j)] = sum;
+    }
+
+  }
+}
+

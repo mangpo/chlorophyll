@@ -90,6 +90,14 @@
   (with-output-to-string 
    (lambda () (system (format "./qap/graph2matrix.py ~a/~a.graph > ~a/~a.dat" outdir name outdir name))))
   
+  (with-output-to-file #:exists 'append (format "~a/~a.dat" outdir name)
+    (lambda () 
+      (define fix (make-vector (* w h)))
+      (vector-set! fix w (* w h))
+      (for ([i (in-range (* w h))])
+           (display (vector-ref fix i)) (display " "))
+      (newline)))
+  
   ;; Mapping from cores to partitions
   (define core2part
     ;; Output of sa_qap starts from 1, but we want to start from 0.

@@ -12,12 +12,13 @@
   (define result
     (if (= out 0)
 	(constraint s t r)
-	(constraint-data out s t r)))
+	(constraint (data out) s t r)))
   (struct-copy progstate result 
                [memory (restrict-mem cnstr)] 
                [a (restrict-a cnstr)]
                [b (restrict-b cnstr)]
-               ;[r (restrict-r cnstr)]
+               [r #t]
+               [return (if (restrict-r cnstr) 2 1)]
                ))
 
 (define (in-constraint data inst)
@@ -81,7 +82,7 @@
    [(equal? ast #f) #f]
 
    [(block? ast)
-    ;(pretty-display "superoptimize: block")
+    (pretty-display "superoptimize: block")
     ;; (raise "superoptimizer: optimize via linklist not block!")
     (define out (block-out ast))
     (define body-list (if (string? (block-body ast)) 
@@ -103,6 +104,8 @@
                     (new-block result (block-in ast) out (block-cnstr ast) (block-org ast))))
 
     (define renamed (renameindex opt mem-size bit index-map))
+    (pretty-display "CASE 3")
+    (aforth-syntax-print renamed 1 1)
     
     (with-output-to-file #:exists 'append 
       (format "~a/~a-work.rkt" outdir name)
@@ -118,7 +121,7 @@
     ]
 
    [(linklist? ast)
-    ;(pretty-display (format "superoptimize: linklist ~a" (linklist-entry ast)))
+    (pretty-display (format "superoptimize: linklist ~a" (linklist-entry ast)))
     (cond
      [(and (linklist-entry ast) (block? (linklist-entry ast)))
       ;; optimize code in group of blocks whose length <= len
@@ -189,16 +192,20 @@
           ;; sliding window: skip one superoptimizable unit
 	  (let ([entry (linklist-entry ast)])
 	    ;; change to original in case the we do memory compression
+            (pretty-display "CASE 1")
 	    (set-block-body! entry (block-org entry))
+            (pretty-display `(set-block-body! ,(block-org entry)))
 	    (superoptimize-inner (linklist-next ast)))
           (begin
+            (pretty-display "CASE 2")
+            (aforth-syntax-print renamed 1 1)
             (set-linklist-entry! ast renamed)
             (set-linklist-next! ast next)
             (set-linklist-prev! next ast)
             (superoptimize-inner next)))]
 
      [(linklist-entry ast)
-      (superoptimize-inner (linklist-entry ast))
+      (set-linklist-entry! ast (superoptimize-inner (linklist-entry ast)))
       (superoptimize-inner (linklist-next ast))]
 
      [(linklist-next ast)

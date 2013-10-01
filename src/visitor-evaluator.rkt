@@ -7,6 +7,7 @@
 (define symbolic-evaluator%
   (class* object% (visitor<%>)
     (super-new)
+    (init-field num-cores)
     
     (define/public (visit ast)
 
@@ -21,6 +22,10 @@
        [(is-a? ast Livable%)
         ;(set-field! place ast (send ast get-place))
         (send ast to-concrete)
+        (when (at-io? (get-field place ast))
+              (set-field! place ast (sub1 num-cores))
+              (when (is-a? ast Param%)
+                    (set-field! place-type ast (sub1 num-cores))))
         ]
 
        [(is-a? ast LivableGroup%)
@@ -76,16 +81,36 @@
         ]
 
        [(is-a? ast FuncCall%)
+        (pretty-display (format "EVALUATOR: FuncCall ~a" (get-field name ast)))
+	(define func-ast (get-field signature ast))
+        (define params (get-field stmts (get-field args func-ast)))
+	(define name (get-field name ast))
         (for ([arg (flatten-arg (get-field args ast))])
 	     (send arg accept this))
         (send ast to-concrete)
 
+        
+        (pretty-display (format "EVALUATOR: FuncCall ~a (2)" (get-field name ast)))
+        ;; convert io                      
+        (when (at-io? (get-field place-type ast))
+              (set-field! place-type ast (sub1 num-cores)))
+        
+        ;; (for ([param params])
+        ;;      (when (at-io? (get-field place-type param))
+        ;;            (set-field! place param (sub1 num-cores))
+        ;;            (set-field! place-type param (sub1 num-cores))))
+        (when (or (equal? name "in") (equal? name "out"))
+              (pretty-display "VISIT func-sig")
+              (send func-ast accept this))
+
+        (pretty-display (format "EVALUATOR: FuncCall ~a (3)" (get-field name ast)))
+
 	;; infer
-	(define func-ast (get-field signature ast))
-	(for ([param (get-field stmts (get-field args func-ast))] ; signature
+	(for ([param params] ; signature
               [arg   (flatten-arg (get-field args ast))]) ; actual
           (send arg infer-place (get-field place-type param))
-          (send param infer-place (get-field place-type arg)))
+          ;(send param infer-place (get-field place-type arg))
+          )
 	
         ;; return can't be at any, so we don't need to infer return
         ]
@@ -128,6 +153,7 @@
 
        [(is-a? ast FuncDecl%)
         (when (get-field return ast)
+              (pretty-display "VISIT return")
               (send (get-field return ast) accept this))
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)
