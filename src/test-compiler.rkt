@@ -11,14 +11,14 @@
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 
 ;                      256 "null" #:opt #f)
-(compile-and-optimize "../tests/run/function-out.cll" "function" 
-                      256 "null" #:opt #f)
+;(compile-and-optimize "../tests/run/function-out.cll" "function" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/function-pair1.cll" "function_pair" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
 ;                      256 "null" #:opt #f)
-;(compile-and-optimize "../tests/run/matrixmult4-dup.cll" "matrix" 
-;                      220 "null" #:w 5 #:h 4 #:opt #f)
+(compile-and-optimize "../tests/run/matrixmult4-dup.cll" "matrix" 
+                      220 "null" #:w 5 #:h 4 #:opt #t)
 
 ;(compile-and-optimize "../examples/leftrotate.cll" "leftrotate" 
 ;                     256 "null" #:w 10 #:h 5 #:opt #t)

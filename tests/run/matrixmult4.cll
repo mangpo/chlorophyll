@@ -27,6 +27,7 @@ ae b0 fd 3a
     }
   }
 
+  out(C[0]);
   /*for(i from 0 to 4)@any {
     for(j from 0 to 4)@any {
       out(C[(4 * i) + j]);
