@@ -25,8 +25,8 @@
 ;(test "pair2" "null" 512)
 ;(test "while" "10" 256)
 
-;(test "matrixmult" "72" 400) ;capacity issue
-;(test "matrixmult-noio" "null" 500)
+(test "matrixmult6" "72" 400) ;capacity issue
+(test "matrixmult4-dup" "null" 500)
 ;(test "cluster" "null" 256)
 
 (test "md5" "null" 600 #:w 10 #:h 5)

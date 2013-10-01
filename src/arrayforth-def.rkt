@@ -7,7 +7,7 @@
 
 (provide define-repeating-code define-repeating-codes aforth-linklist list->linklist)
 
-(define debug #f)
+(define debug #t)
 
 (define (list->linklist lst)
   (define (copy x)
@@ -454,7 +454,8 @@
   (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
   (define subseqs (sort-subsequence seqs min-len max-len 
                                     (add1 (quotient (* 4 occur) (sub1 occur)))))
-  ;; (pretty-display subseqs)
+  
+  (when debug (pretty-display subseqs))
   
   (for ([subseq subseqs])
        (let* ([str (string-join subseq)]
@@ -464,13 +465,14 @@
               [locations (send matcher visit linklist-program)])
          (when (>= (length locations) occur)
 	       ;; if repeat more then a certain number
-               ;(pretty-display (format "STRING: ~a" reformatted))
+               (when debug (pretty-display (format "STRING: ~a" reformatted)))
                (define-and-replace locations exp)
                ;(aforth-syntax-print linklist-program 2 2)
                )
          )
        )
   
+  (pretty-display "DONE")
   ;(aforth-struct-print linklist-program)
   )
 
@@ -486,6 +488,7 @@
 
   ;; Return a topo sorted list of funcdecls
   (define (topo-sort lst)
+    (when debug (pretty-display `(topo-sort ,lst)))
     (if (empty? lst)
 	lst
 	(let* ([fst (findf (lambda (pair) (set-empty? (cdr pair))) lst)]
@@ -497,9 +500,6 @@
 						  (set-remove (cdr pair) name)))
 			     rst)])
           (cons func (topo-sort updated)))))
-  
-  ;; (define (topo-sort-fake lst)
-  ;;   (map car lst))
 
   (define start (first-funcdecl-linklist (aforth-code program)))
   (define funcdecls (topo-sort (get-funcdecl start)))

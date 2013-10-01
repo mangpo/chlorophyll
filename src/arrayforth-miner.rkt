@@ -272,7 +272,10 @@
 	]
 
        [(funccall? ast)
-	(unless (equal? func (funccall-name ast))
+        (define name (funccall-name ast))
+	(unless (or (equal? func name)
+                    (equal? "in" name)
+                    (equal? "out" name))
 		(set! result (set-add result (funccall-name ast))))]
        
        [else void]))))

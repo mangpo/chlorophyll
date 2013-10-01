@@ -1,0 +1,36 @@
+void main() {
+  int[]@{[0:16]=0} A[16] = {0 , 9 , 10 , 10 , 0 , 0 , 4 , 8 , 3 , 1 , 10 , 8 , 3 , 10 , 3 , 9};
+  int[]@{[0:16]=1} B[16] = {0 , 5 , 8 , 9 , 6 , 4 , 7 , 2 , 7 , 6 , 10 , 4 , 5 , 8 , 9 , 0};
+  int[]@{[0:16]=2} C[16];
+
+/*
+174 176 253  58
+ 68  88 112  16
+116 143 203  69
+126 145 205  59
+
+ae b0 fd 3a
+44 58 70 10
+74 8f cb 45
+7e 91 cd 3b
+*/
+
+  int sum;
+
+  for(i from 0 to 4)@any {
+    for(j from 0 to 4)@any {
+      sum = 0;
+      for(k from 0 to 4)@any {
+        sum = (sum + (A[4 *@place(A[i]) i +@place(A[i]) k] * B[((4 *@place(B[k]) k) +@place(B[k]) j)]));
+      }
+      C[((4 *@place(C[i]) i) +@place(C[i]) j)] = sum;
+    }
+  }
+
+  /*for(i from 0 to 4)@any {
+    for(j from 0 to 4)@any {
+      out(C[(4 * i) + j]);
+    }
+  }*/
+}
+
