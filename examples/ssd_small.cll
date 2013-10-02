@@ -1,0 +1,54 @@
+void main() {
+  int[] l[45]; // 3 x 15
+  int[] r[45];
+  int[] ssd[9];
+  int pl;
+  int pr;
+
+  l[0] = in();
+  pr = 0;
+
+  int[] local_l[9];
+  int[] local_r[9];
+
+  for(t from 0 to 9) { // 15-(3+5-2)
+    // init for each round
+    pl = pr;
+    for(i from 0 to 9) {
+      local_l[i] = l[pl + i];
+    }
+    for(i from 0 to 9) {
+      local_r[i] = r[pr + i];
+    }
+    pr = pr + 3;
+    pl = pl + 9;
+    
+    local_p = 0;
+    min = 65536;
+    for(i from 0 to 5) {
+      // SSD
+      sum = 0;
+      for(j from 0 to 9) {
+        diff = local_l[i] - local_r[i];
+        sum = sum + diff * diff;
+      }
+      if(sum < min) {
+        min = sum;
+        index = i;
+      }
+      
+      // get a column of data for l
+      local_l[local_p] = l[pl];
+      local_l[local_p+1] = l[pl+1];
+      local_l[local_p+2] = l[pl+2];
+      local_p = local_p + 3;
+      if(local_p > 9) { local_p = 0 }
+      pl = pl + 3;
+      
+    }
+    ssd[t] = index;
+
+  }
+
+  out(ssd[0]);
+}

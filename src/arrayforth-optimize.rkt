@@ -91,7 +91,7 @@
                      
     (define result (optimize (string-join body-list)
                              #:f18a #f
-                             #:num-bits bit #:name name
+                             #:num-bits max-bit #:name name
                              #:constraint (out-space out (block-cnstr ast))
                              #:start-state (if (empty? body-list) 
                                                (default-state)
@@ -103,7 +103,7 @@
                     ast
                     (new-block result (block-in ast) out (block-cnstr ast) (block-org ast))))
 
-    (define renamed (renameindex opt mem-size bit index-map))
+    (define renamed (renameindex opt mem-size index-map))
     (pretty-display "CASE 3")
     (aforth-syntax-print renamed 1 1)
     
@@ -137,7 +137,7 @@
         (define cnstr (block-cnstr block-noopt))
         (define result (optimize (string-join body)
 				 #:f18a #f
-				 #:num-bits bit #:name name
+				 #:num-bits max-bit #:name name
 				 #:constraint (out-space out cnstr)
                                  #:start-state (if (empty? body)
                                                    (default-state)
@@ -158,7 +158,7 @@
 
       (define-values (next opt) (optimize-loop block-limit))
       (pretty-display "OPTMIZE: DONE")
-      (define renamed (renameindex opt mem-size bit index-map))
+      (define renamed (renameindex opt mem-size index-map))
       (pretty-display "RENAME: DONE")
     
       (with-output-to-file #:exists 'append 
@@ -318,7 +318,7 @@
    [else
     (raise (format "arrayforth: superoptimize: unimplemented for ~a" ast))]))
 
-(define (renameindex ast mem-size bit index-map)
+(define (renameindex ast mem-size index-map)
   (define (renameindex-inner)
     (define body (string-split (block-body ast)))
     (define org (block-org ast))
@@ -332,9 +332,9 @@
                     (number->string (dict-ref index-map (string->number inst)))
                     inst)))
     (define new-mem-size (dict-ref index-map mem-size))
-    (pretty-display `(compare ,new-body ,org mem-size ,new-mem-size bit ,bit))
+    (pretty-display `(compare ,new-body ,org mem-size ,new-mem-size bit))
     (define diff (program-diff? org new-body
-                                new-mem-size (out-space (block-out ast) (block-cnstr ast)) bit))
+                                new-mem-size (out-space (block-out ast) (block-cnstr ast)) max-bit))
     
     (if diff
         (begin

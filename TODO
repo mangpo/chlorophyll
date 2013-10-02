@@ -1,9 +1,7 @@
 TODO
-0) log error
-1) test more: run simple examples again
-2) support IO
-3) benchmarks
-4) unrolling synthesizer
+3) benchmarks: ssd_simple, ssd_small, bit hack
+4) polyforth: timing for general program
+5) unrolling synthesizer
 
 - measure time & energy
 - more benchmarks
