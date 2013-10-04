@@ -45,6 +45,7 @@
         
         [(is-a? ast UnaExp%)
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
+                                             
          (define e1-ret (send (get-field e1 ast) accept this))
          (cons (car e1-ret) ast)
 	 ]
@@ -113,20 +114,27 @@
          (cons new-stmts ast)]
                
 	[(is-a? ast Recv%)
+         (when debug (pretty-display (format "TEMPINSERT: Recv")))
          (cons (list) ast)
 	 ]
 
 	[(is-a? ast Send%)
+         (when debug (pretty-display (format "TEMPINSERT: Send")))
 	 (define data-ret (send (get-field data ast) accept this))
 	 (set-field! data ast (cdr data-ret))
 	 (list (car data-ret) ast)]
         
         [(or (is-a? ast VarDecl%)
              (is-a? ast ArrayDecl%))
+         (when debug (pretty-display (format "TEMPINSERT: VarDecl & ArrayDecl")))
          ast]
         
         [(is-a? ast Assign%)
-         (when debug (pretty-display (format "TEMPINSERT: Assign")))
+         (when debug (pretty-display (format "TEMPINSERT: Assign ~a ~a"
+                                             (get-field lhs ast)
+                                             (get-field rhs ast)))
+               (send ast pretty-print)
+               )
          (define lhs-ret (send (get-field lhs ast) accept this))
          (define rhs-ret (send (get-field rhs ast) accept this))
          
@@ -136,9 +144,11 @@
          (list (car lhs-ret) (car rhs-ret) ast)]
 
 	[(is-a? ast Return%)
+         (when debug (pretty-display (format "TEMPINSERT: Return")))
          (list ast)]
         
         [(is-a? ast If%)
+         (when debug (pretty-display (format "TEMPINSERT: If")))
          (define cond-ret (send (get-field condition ast) accept this))
          (send (get-field true-block ast) accept this)
          (let ([false-block (get-field false-block ast)])
@@ -150,6 +160,7 @@
          (list (car cond-ret) ast)]
         
         [(is-a? ast While%)
+         (when debug (pretty-display (format "TEMPINSERT: While")))
          (define pre (get-field pre ast))
          (send pre accept this)
          (define cond-ret (send (get-field condition ast) accept this))
@@ -162,11 +173,13 @@
          (list ast)]
         
         [(is-a? ast For%)
+         (when debug (pretty-display (format "TEMPINSERT: For")))
          (send (get-field body ast) accept this)
          ast]
         
         [(is-a? ast FuncDecl%)
-         (when debug (pretty-display (format "TEMPINSERT: FuncDecl ~a" (get-field name ast))))
+         (when debug (pretty-display (format "TEMPINSERT: FuncDecl ~a" (get-field name ast)))
+               )
          (define body (get-field body ast))
          (send body accept this)
          (define parts (get-field stmts body))
@@ -180,6 +193,8 @@
          ast]
         
         [(is-a? ast Block%)
+         (when debug (pretty-display (format "TEMPINSERT: Block"))
+               )
          (set-field! stmts ast
                      (flatten (map (lambda (x) 
                                      (send x accept this))
@@ -190,6 +205,6 @@
          ]
         
         [else
-         (raise (format "visitor-tempinsert: unimplemented for ~a" ast))]
+         (raise (format "visitor-tempinsert2: unimplemented for ~a" ast))]
         
         ))))

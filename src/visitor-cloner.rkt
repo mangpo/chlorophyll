@@ -32,23 +32,6 @@
                      (car place-type))
               place-type)))
         
-      (define (get-place-offset)
-        (let ([place-type (get-field place-type ast)])
-          (if (and (place-type-dist? place-type) 
-                   (equal? (get-field name (cdr place-type)) index))
-	      (let ([here (ormap (lambda (x) 
-				   (and (<= (get-field from x) (get-field from range))
-					(>= (get-field to x) (get-field to range))
-					(get-field place x)))
-				 (car place-type))]
-		    [count 0])
-		(for ([p (car place-type)])
-		     (when (and (<= (get-field to p) (get-field from range))
-				(not (= (get-field place p) here)))
-			   (set! count (+ count (- (get-field to p) (get-field from p))))))
-		(cons here count))
-              (cons place-type 0))))
-        
       (cond
        [(is-a? ast Const%)
         (new Const% [n (get-field n ast)] [place (get-field place ast)])]
@@ -59,13 +42,12 @@
         ]
 
        [(is-a? ast Array%)
-	(define place-offset (get-place-offset))
         (new Array% [name (get-field name ast)] 
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
-	     [offset (cdr place-offset)] ;; need this to substract from the index
+	     ;[offset (cdr place-offset)] ;; need this to substract from the index
 	     [cluster (get-field cluster ast)]
-             [place-type (car place-offset)] [known-type (get-known-type)])]
+             [place-type (get-place-type)] [known-type (get-known-type)])]
 
        [(is-a? ast Temp%)
         (new Temp% [name (get-field name ast)]

@@ -1,7 +1,11 @@
 TODO
-3) benchmarks: ssd_simple, ssd_small, bit hack
+0) test after readjust offset
+1) gen bithack
+2) move unroll up before interpreter
 4) polyforth: timing for general program
 5) unrolling synthesizer
+
+benchmarks: ssd_simple, ssd_small, bit hack
 
 - measure time & energy
 - more benchmarks

@@ -30,6 +30,9 @@
     [(new-block body in out cnstr incnstr org)
      (block body in out cnstr incnstr org)]))
 
+(define (core-id id w)
+  (+ (* 100 (floor (/ id w))) (modulo id w) node-offset))
+
 (define (inout inst)
   (cond
    [(or (member inst (list "@+" "@b" "@" "pop" "a" "up" "down" "left" "right"))

@@ -521,7 +521,7 @@
     (inherit print-send-path)
 
     (define/override (clone)
-      (new UnaExp% [op (send op clone)] [e1 (send op clone)] [known-type known-type] 
+      (new UnaExp% [op (send op clone)] [e1 (send e1 clone)] [known-type known-type] 
 	   [place-type place-type] [pos pos] [type type]))
     
     (define/override (pretty-print [indent ""])
@@ -807,7 +807,8 @@
   (class LivableGroup%
     (super-new)
     (inherit-field pos place-list)
-    (init-field var type bound cluster init [known #t] [compress (min 2 bound)] [address #f])
+    (init-field var type bound cluster init [known #t] [compress (min 2 bound)] 
+                [address #f] [offset 0])
     (inherit print-send-path)
 
     (define/override (clone)

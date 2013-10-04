@@ -83,9 +83,36 @@
   ;; Aggregate results.
   (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
     (lambda () 
+      ;; Collect which blocks are empty
+      (define empty-content (make-vector (* w h)))
+      (for ([id (in-range (* w h))])
+        (let ([port (open-input-file (format "~a/~a-~a-opt.aforth" outdir name id))])
+          (vector-set! empty-content id (eof-object? (read-line port)))
+          (close-input-port port)
+          ))
+
+      ;; Linker
+      (pretty-display "{block 790}")
+      (pretty-display "host target | cr")
+      (for ([id (* w h)])
+           (unless (vector-ref empty-content id)
+                   (pretty-display (format "~a node ~a load"
+                                           (core-id id w) (+ block-offset (* 2 id))))))
+
+      ;; Loader
+      (newline)
+      (pretty-display "{block 792}")
+      (pretty-display ": /node dup +node /ram ; | cr")
+      (for ([id (* w h)])
+           (unless (vector-ref empty-content id)
+                   (pretty-display (format "~a /node $0 /p" (core-id id w)))))
+      (newline)
+
       (for ([i (in-range (* w h))])
         (let ([port (open-input-file (format "~a/~a-~a-opt.aforth" outdir name i))])
-          (read-port port)))
+          (read-port port)
+          (close-input-port port)
+          ))
       ))
   
   ;; Aggregate stat.

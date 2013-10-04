@@ -17,8 +17,8 @@
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
 ;                      256 "null" #:opt #f)
-(compile-and-optimize "../tests/run/matrixmult4-dup.cll" "matrix" 
-                      220 "null" #:w 5 #:h 4 #:opt #t)
+;(compile-and-optimize "../tests/run/matrixmult4-dup.cll" "matrix" 
+;                      220 "null" #:w 5 #:h 4 #:opt #t)
 
 ;(compile-and-optimize "../examples/leftrotate.cll" "leftrotate" 
 ;                     256 "null" #:w 10 #:h 5 #:opt #t)
@@ -28,3 +28,8 @@
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)
 ;(compile-and-optimize "../tests/run/debug.cll" "debug" 
 ;                     256 "null" #:w 2 #:h 2 #:opt #f)
+
+;(compile-and-optimize "../tests/run/ssd_simple2.cll" "ssd_simple2" 
+;                     300 "null" #:w 8 #:h 5 #:opt #f)
+(compile-and-optimize "../tests/run/swap.cll" "swap" 
+                      210 "null" #:w 8 #:h 8 #:opt #f)
