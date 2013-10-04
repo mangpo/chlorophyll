@@ -472,7 +472,6 @@
          )
        )
   
-  (pretty-display "DONE")
   ;(aforth-struct-print linklist-program)
   )
 

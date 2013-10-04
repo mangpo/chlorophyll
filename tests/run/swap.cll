@@ -37,10 +37,10 @@ void main() {
   //int::2@(16,17) temp2;
   //int::2@(18,19) temp3;
 
-  x[0] = in();
+  /*x[0] = in();
   x[15] = in();
   x[30] = in();
-  x[45] = in();
+  x[45] = in();*/
  
 
   for(i from 0 to 60) {

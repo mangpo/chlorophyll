@@ -30,7 +30,8 @@
 ;(test "cluster" "null" 256)
 
 ;(test "md5" "null" 600 #:w 10 #:h 5)
-(test "ssd_simple" "null" 256 #:w 8 #:h 5)
+;(test "ssd_simple" "null" 256 #:w 8 #:h 5)
+(test "swap" "null" 256 #:w 8 #:h 8)
 
 (for ([res (reverse result)])
   (pretty-display res))
