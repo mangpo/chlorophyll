@@ -159,7 +159,7 @@
 ;; compile HLP to optimized many-core machine code
 (define (compile-and-optimize file name capacity input 
                               #:w [w 5] #:h [h 4] 
-                              #:verbose [verbose #f]
+                              #:verbose [verbose #t]
                               #:opt [opt #t]
 			      #:run [run #f])
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose))

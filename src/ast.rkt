@@ -376,7 +376,7 @@
       ;; (pretty-display (format "~a(Num:~a @~a (known=~a))" 
       ;;   		      indent (get-field n n) (place-to-string place-type) known-type))
       (pretty-display (format "~a(Num:~a @~a @~a (expand=~a/~a))" 
-			      indent (get-field n n) (place-to-string place-type) 
+			      indent (get-field n n) place-type
                               (get-field place n)
                               expand expect))
       (print-send-path indent))
@@ -494,7 +494,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
-			      indent (place-to-string place-type) known-type))
+			      indent place-type known-type))
       (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
@@ -526,7 +526,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
-			      indent (place-to-string place-type) known-type))
+			      indent place-type known-type))
       (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))

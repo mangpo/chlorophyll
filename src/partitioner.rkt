@@ -7,8 +7,11 @@
          "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
          "visitor-rename.rkt"
+         "visitor-placetype.rkt"
          "visitor-printer.rkt"
-         "visitor-evaluator.rkt")
+         "visitor-evaluator.rkt"
+         "visitor-unroll.rkt"
+         )
 
 (provide optimize-comm (struct-out result))
 
@@ -29,28 +32,38 @@
   ;; Define printer
   (define concise-printer (new printer% [out #t]))
   
-  ;; Easy inference happens here
-  (when verbose
-    (pretty-display "=== Original AST ===")
-    (send my-ast pretty-print)
-    )
-  
   ;; Collect real physical places
-  (define collector (new place-collector% 
-                         [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
-  (define place-set (send my-ast accept collector))
-  (when verbose
-    (pretty-display "\n=== Places ===")
-    (pretty-print place-set))
+  ;; (define collector (new place-collector% 
+  ;;                        [collect? (lambda(x) (and (number? x) (not (symbolic? x))))]))
+  ;; (define place-set (send my-ast accept collector))
+  ;; (when verbose
+  ;;   (pretty-display "\n=== Places ===")
+  ;;   (pretty-print place-set))
   
   ;; Convert distinct abstract partitions into distinct numbers
   ;; and different symbolic vars for different holes
-  (define converter (new partition-to-number% [num-core num-core] [real-place-set place-set]))
-  (send my-ast accept converter)
+  ;; (define converter (new partition-to-number% [num-core num-core] [real-place-set place-set]))
+  ;; (send my-ast accept converter)
+  ;; (when verbose
+  ;;   (pretty-display "\n=== After string -> number ===")
+  ;;   (send my-ast pretty-print)
+  ;;   (send my-ast accept concise-printer))
+
+  ;; Place type linker
+  (send my-ast accept (new placetype-linker%))
   (when verbose
-    (pretty-display "\n=== After string -> number ===")
+    (pretty-display "=== After placetype linker  ===")
     (send my-ast pretty-print)
-    (send my-ast accept concise-printer))
+    )
+
+  ;; Unroll
+  (send my-ast accept (new loop-unroller%))
+  ;(raise "DONE")
+  (when verbose
+    (pretty-display "=== After unroll  ===")
+    (send my-ast pretty-print)
+    )
+
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))

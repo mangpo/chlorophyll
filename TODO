@@ -1,5 +1,5 @@
 TODO
-2) move unroll up before interpreter
+0) look at QAP graph of ssd & swap
 4) polyforth: timing for general program
 5) unrolling synthesizer
 

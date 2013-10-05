@@ -11,7 +11,8 @@
 (define loop-unroller%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [index-map (make-hash)] [cloner (new range-cloner%)])
+    (init-field [index-map (make-hash)])
+    (define debug #f)
 
     ;; We don't care about place here. We just need ranges.dict
     (define (construct-placelist x-placelist y-placelist index)
@@ -81,13 +82,18 @@
 
     (define/public (visit ast)
       (define (check)
-        ;(pretty-display `(check ,(send ast to-string)))
         (let ([place-type (get-field place-type ast)])
+          (when debug (pretty-display `(check ,(send ast to-string) ,place-type)))
           (when (and (place-type-dist? place-type)
                      (lookup (cdr place-type)))
             (update (cdr place-type) (car place-type)))))
 
       (cond
+       [(is-a? ast Array%)
+        (send (get-field index ast) accept this)
+        (check)
+        ast]
+       
        [(or (is-a? ast Num%)
             (is-a? ast Var%)
             (is-a? ast Param%))
@@ -106,7 +112,7 @@
         ast]
 
        [(is-a? ast FuncCall%)
-        (send (get-field signature ast) accept this)
+        ;(send (get-field signature ast) accept this)
         (for ([arg (get-field args ast)])
              (send arg accept this))
         (check)
@@ -151,15 +157,19 @@
         (let ([rangeplace-list (adjust (lookup iter) (get-field from ast) (get-field to ast))])
           ;(undeclare index-map iter-name)
           (pop-scope)
-          ;(pretty-display "UNROLL: For (after lookup)")
-          ;(pretty-display `(rangeplace-list ,rangeplace-list))
+          (when debug
+                (pretty-display "UNROLL: For (after lookup)")
+                (pretty-display `(rangeplace-list ,rangeplace-list)))
           (if (empty? rangeplace-list)
               ast
               (for/list ([rangeplace rangeplace-list])
-                        (send cloner set-range rangeplace iter-name)
+                        (define body-clone (send body accept (new range-cloner% 
+                                                                  [range rangeplace]
+                                                                  [index iter-name])))
+                        ;(send body-clone pretty-print)
                         (new For% 
                              [iter (send iter clone)] 
-                             [body (send body accept cloner)]
+                             [body body-clone]
                              [from (get-field from rangeplace)]
                              [to (get-field to rangeplace)]
                              [known (get-field known ast)]
@@ -199,6 +209,8 @@
         (set-field! stmts ast
                     (flatten (map (lambda (x) (send x accept this)) 
                                   (get-field stmts ast))))
+        ;(pretty-display "UNROLL: Block (after)")
+        ;(send ast pretty-print)
         ast
         ]
 

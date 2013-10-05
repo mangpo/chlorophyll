@@ -10,7 +10,7 @@
     ;; Collect iter offset to adjust for loop bound (offset).
     ;; This is not for address field.
     (init-field [iter-map (make-hash)] [offset-map (make-hash)])
-    (define debug #t)
+    (define debug #f)
 
     (define (push-scope)
       (let ([new-env (make-hash)])

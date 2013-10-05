@@ -5,7 +5,7 @@ void main() {
   out(y[0]);
   out(y[2]);
   for(i from 0 to 4) {
-    x[i] = y[i];
+    x[i] = y[i] + 1;
   }
 
   for(i from 0 to 4) {
