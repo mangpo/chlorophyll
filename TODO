@@ -1,6 +1,7 @@
 TODO
-0) look at QAP graph of ssd & swap
-4) polyforth: timing for general program
+0) rosette using racket
+1) optimize & test: ssd, swap, md5(no unroll)
+2) optimize: md5-3 (more compact & precise flow)
 5) unrolling synthesizer
 
 benchmarks: ssd_simple, ssd_small, bit hack

@@ -49,5 +49,5 @@
 ;(test-num-msgs "function2"     4)
 ;(test-num-msgs "while"         300 #:max-msgs 800)
 
-(test-consistent "space")
-(test-consistent "if")
+;(test-consistent "space")
+;(test-consistent "if")
