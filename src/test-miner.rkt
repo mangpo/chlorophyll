@@ -11,186 +11,46 @@
 (define program
   (vector
     ;; core 14
-    (aforth 
-      ;; list
+(aforth 
+  ;; linklist
+  (list 
+    (vardecl '(0 0 0 0 0 0))
+    (funcdecl "53rep"
+      ;; linklist
       (list 
-        (vardecl '(0 0 0))
-        (funcdecl "leftrotate"
-          ;; list
-          (list 
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "1 b! !b "
-              1 0 (restrict #t #f #f #f)
-              "1 b! !b ")
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "2 b! !b "
-              1 0 (restrict #t #f #f #f)
-              "2 b! !b ")
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "up b! !b "
-              1 0 (restrict #t #f #f #f)
-              "up b! !b ")
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "up b! !b "
-              1 0 (restrict #t #f #f #f)
-              "up b! !b ")
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "0 b! !b "
-              1 0 (restrict #t #f #f #f)
-              "0 b! !b ")
-            (block
-              "down b! @b "
-              0 1 (restrict #t #f #f #f)
-              "down b! @b ")
-            (block
-              "up b! !b "
-              1 0 (restrict #t #f #f #f)
-              "up b! !b ")
-            (block
-              "up b! @b "
-              0 1 (restrict #t #f #f #f)
-              "up b! @b ")
-            (block
-              "1 b! @b "
-              0 1 (restrict #t #f #f #f)
-              "1 b! @b ")
-            (block
-              "0 b! @b "
-              0 1 (restrict #t #f #f #f)
-              "0 b! @b ")
-            (ift 
-              ;; list
-              (list 
-                (block
-                  "-1 + "
-                  1 1 (restrict #t #f #f #f)
-                  "-1 + ")
-                (forloop 
-                  (block
-                    ""
-                    0 0 (restrict #f #f #f #f)
-                    "")
-                  ;; list
-                  (list 
-                    (block
-                      "2* "
-                      1 1 (restrict #t #f #f #f)
-                      "2* ")
-                  )
-                  #f #f #f)
-                (block
-                  "dup "
-                  1 2 (restrict #t #f #f #f)
-                  "dup ")
-              )
-            )
-            (block
-              "drop "
-              1 0 (restrict #t #f #f #f)
-              "drop ")
-            (block
-              "over - and + "
-              2 1 (restrict #t #f #f #f)
-              "over - and + ")
-            (block
-              "65535 "
-              0 1 (restrict #t #f #f #f)
-              "65535 ")
-            (block
-              "and "
-              2 1 (restrict #t #f #f #f)
-              "and ")
-            (block
-              "left b! !b "
-              1 0 (restrict #t #f #f #f)
-              "left b! !b ")
-            (block
-              "up b! @b "
-              0 1 (restrict #t #f #f #f)
-              "up b! @b ")
-            (block
-              "2 b! @b "
-              0 1 (restrict #t #f #f #f)
-              "2 b! @b ")
-            (block
-              "0 b! @b "
-              0 1 (restrict #t #f #f #f)
-              "0 b! @b ")
-            (ift 
-              ;; list
-              (list 
-                (block
-                  "-1 + "
-                  1 1 (restrict #t #f #f #f)
-                  "-1 + ")
-                (forloop 
-                  (block
-                    ""
-                    0 0 (restrict #f #f #f #f)
-                    "")
-                  ;; list
-                  (list 
-                    (block
-                      "2* "
-                      1 1 (restrict #t #f #f #f)
-                      "2* ")
-                  )
-                  #f #f #f)
-                (block
-                  "dup "
-                  1 2 (restrict #t #f #f #f)
-                  "dup ")
-              )
-            )
-            (block
-              "drop "
-              1 0 (restrict #t #f #f #f)
-              "drop ")
-            (block
-              "over - and + "
-              2 1 (restrict #t #f #f #f)
-              "over - and + ")
-            (block
-              "65535 "
-              0 1 (restrict #t #f #f #f)
-              "65535 ")
-            (block
-              "and "
-              2 1 (restrict #t #f #f #f)
-              "and ")
-            (block
-              "right b! !b "
-              1 0 (restrict #t #f #f #f)
-              "right b! !b ")
-          )
-        )
+        (block
+          "right b! @b "
+          0 1 (restrict #t #f #f #f) "right"
+          "right b! @b ")
+        (block
+          "0 b! !b "
+          1 0 (restrict #t #f #f #f) #f
+          "0 b! !b ")
+        (block
+          "0 b! @b dup"
+          0 2 (restrict #t #f #f #f) #f
+          "0 b! @b dup")
       )
-    3 18 #f)
-    #f))
-
-(aforth-struct-print (define-repeating-codes program 1 1))
-;(aforth-syntax-print (superoptimize program "foo" 2 1) 2 1)
-#|(program-diff? "down b! @b right b! !b down nop b! @b" 
-               "277 b! @b 469 a! ! @b nop"
-               1
-               (constraint s t memory) 18)|#
+    )
+    (funcdecl "leftrotate"
+      ;; linklist
+      (list 
+        (block
+          "left b! @b "
+          0 1 (restrict #t #f #f #f) "left"
+          "left b! @b ")
+        (block
+          "0 b! !b "
+          1 0 (restrict #t #f #f #f) #f
+          "0 b! !b ")
+        (block
+          "0 b! @b over"
+          1 3 (restrict #t #f #f #f) #f
+          "0 b! @b over")
+      )
+    ))
+6 17 #hash((0 . 0) (1 . 1) (2 . 2) (3 . 3) (4 . 4) (5 . 5) (6 . 6)))))
+(set! program (define-repeating-codes program 1 1))
+(aforth-struct-print program)
+(define real-opts (superoptimize program "test" 1 1))
+(aforth-syntax-print real-opts 1 1)

@@ -169,7 +169,7 @@
 
    [(aforth? x)
     (define memsize (aforth-memsize x))
-    (define node (+ (* 100 (floor (/ id w))) (modulo id w)))
+    (define node (+ (* 208 (floor (/ id w))) (modulo id w)))
 
     (if original
         (begin

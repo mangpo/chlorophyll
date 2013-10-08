@@ -444,11 +444,23 @@
   (define (define-and-replace locations exp)
     (define new-name (new-def))
     (when debug (pretty-display locations))
-    (define res
-      (car
-       (for/list ([location locations])
-         (replace-with location (funccall new-name) exp))))
-    
+    (define res-list
+      (for/list ([location locations])
+		(replace-with location (funccall new-name) exp)))
+
+    (define res (car res-list))
+
+    (when (block? (linklist-entry (car res)))
+      ;; If initial state constraints of the repeating seqeunces are different,
+      ;; need to set it to false.
+      (let* ([def-block (linklist-entry (car res))]
+	     [incnstr (block-incnstr def-block)]
+	     [same
+	      (for/and ([x (cdr res-list)])
+		       (equal? (block-incnstr (linklist-entry (car x))) incnstr))])
+	(unless same
+		(set-block-incnstr! def-block #f))))
+
     (insert-definition (car res) (cdr res) linklist-program new-name))
   
   (define-values (seqs max-len) (send (new sequence-miner%) visit linklist-program))
