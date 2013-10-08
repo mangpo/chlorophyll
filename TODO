@@ -1,7 +1,10 @@
 TODO
-3) benchmarks: ssd_simple, ssd_small, bit hack
-4) polyforth: timing for general program
+0) rosette using racket
+1) optimize & test: ssd, swap, md5(no unroll)
+2) optimize: md5-3 (more compact & precise flow)
 5) unrolling synthesizer
+
+benchmarks: ssd_simple, ssd_small, bit hack
 
 - measure time & energy
 - more benchmarks

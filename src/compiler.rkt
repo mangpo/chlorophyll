@@ -45,10 +45,12 @@
 (define (generate-code program i w h virtual)
   (pretty-display `(-------------------- ,i -----------------------))
   (pretty-display program)
-  
+
   ;; mark forloop and array for optimization
+  (pretty-display ">>> arrayaccess")
   (send program accept (new arrayaccess%))
   
+  (pretty-display ">>> memory-mapper")
   (let* ([data-iter (send program accept (new memory-mapper%))]
          ;; only generated reduced version if mem > 5
          [reduce (and virtual (> (+ (meminfo-addr (car data-iter)) (cdr data-iter)) 
@@ -157,7 +159,7 @@
 ;; compile HLP to optimized many-core machine code
 (define (compile-and-optimize file name capacity input 
                               #:w [w 5] #:h [h 4] 
-                              #:verbose [verbose #f]
+                              #:verbose [verbose #t]
                               #:opt [opt #t]
 			      #:run [run #f])
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose))

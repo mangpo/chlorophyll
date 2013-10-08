@@ -11,10 +11,7 @@
     ;; mem-rp = data mem reduced pointer
     ;; max-temp = number of temp mem neede
     (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] 
-                [max-temp 0] [max-iter 0]
-		;; Collect iter offset to adjust for loop bound (offset).
-                ;; This is not for address field.
-		[iter-map (make-hash)])
+                [max-temp 0] [max-iter 0])
 
     (define debug #f)
 
@@ -22,14 +19,10 @@
       (let ([new-env (make-hash)])
         (dict-set! new-env "__up__" mem-map)
         (set! mem-map new-env))
-      (let ([new-env (make-hash)])
-        (dict-set! new-env "__up__" iter-map)
-        (set! iter-map new-env))
       )
 
     (define (pop-scope)
       (set! mem-map (dict-ref mem-map "__up__"))
-      (set! iter-map (dict-ref iter-map "__up__"))
       )
 
     (define (gen-mem p rp)
@@ -95,12 +88,6 @@
 	(define index (get-field index ast))
 	(define index-ret (send index accept this))
 	(set-field! address ast (lookup mem-map ast))
-        
-        ;; (pretty-display `(INDEX ,index ,(is-a? index Var%) 
-        ;;                         ,(has-var? iter-map (get-field name ast))))
-	(when (and (is-a? index Var%) (has-var? iter-map (get-field name index)))
-              ;; (pretty-display "add to index-map!!!")
-	      (update iter-map index (cons ast (lookup iter-map index))))
 	]
         
        [(is-a? ast Var%)
@@ -184,7 +171,6 @@
 	(define iter-name (get-field name (get-field iter ast)))
         (define iter-type (get-field iter-type ast))
         (declare mem-map iter-name (gen-iter iter-p))
-        (declare iter-map iter-name (list))
 
         (when (and (number? iter-type) (> iter-type 0))
               (set-field! address ast (gen-iter iter-p)) ; set for itself
@@ -197,19 +183,6 @@
 
         (when (and (number? iter-type) (> iter-type 0))
               (set! iter-p (sub1 iter-p)))
-
-	(define arrays (lookup-name iter-map iter-name))
-        ;; (pretty-display `(ITER ,iter-name ,arrays))
-	(unless (empty? arrays)
-		(define min-offset (foldl (lambda (x min-so-far) 
-                                            (min (get-field offset x) min-so-far))
-					  (get-field to ast) arrays))
-                ;; (pretty-display `(min-offset ,min-offset))
-		(when (> min-offset 0)
-		      (for ([array arrays])
-			   (set-field! offset array (- (get-field offset array) min-offset)))
-		      (set-field! from ast (- (get-field from ast) min-offset))
-		      (set-field! to ast (- (get-field to ast) min-offset))))
 	     
 	(pop-scope)
 	]

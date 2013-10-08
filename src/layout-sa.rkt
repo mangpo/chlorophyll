@@ -93,7 +93,7 @@
   (with-output-to-file #:exists 'append (format "~a/~a.dat" outdir name)
     (lambda () 
       (define fix (make-vector (* w h)))
-      (vector-set! fix w (* w h))
+      (vector-set! fix (* w 2) (* w h))
       (for ([i (in-range (* w h))])
            (display (vector-ref fix i)) (display " "))
       (newline)))

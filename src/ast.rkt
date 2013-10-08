@@ -376,7 +376,7 @@
       ;; (pretty-display (format "~a(Num:~a @~a (known=~a))" 
       ;;   		      indent (get-field n n) (place-to-string place-type) known-type))
       (pretty-display (format "~a(Num:~a @~a @~a (expand=~a/~a))" 
-			      indent (get-field n n) (place-to-string place-type) 
+			      indent (get-field n n) place-type
                               (get-field place n)
                               expand expect))
       (print-send-path indent))
@@ -494,7 +494,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(BinExp: @~a (known=~a)" 
-			      indent (place-to-string place-type) known-type))
+			      indent place-type known-type))
       (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
@@ -521,12 +521,12 @@
     (inherit print-send-path)
 
     (define/override (clone)
-      (new UnaExp% [op (send op clone)] [e1 (send op clone)] [known-type known-type] 
+      (new UnaExp% [op (send op clone)] [e1 (send e1 clone)] [known-type known-type] 
 	   [place-type place-type] [pos pos] [type type]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(UnaOp: @~a (known=~a)" 
-			      indent (place-to-string place-type) known-type))
+			      indent place-type known-type))
       (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))
@@ -807,7 +807,8 @@
   (class LivableGroup%
     (super-new)
     (inherit-field pos place-list)
-    (init-field var type bound cluster init [known #t] [compress (min 2 bound)] [address #f])
+    (init-field var type bound cluster init [known #t] [compress (min 2 bound)] 
+                [address #f] [offset 0])
     (inherit print-send-path)
 
     (define/override (clone)

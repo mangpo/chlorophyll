@@ -11,6 +11,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (define removed (list))
+    (define debug #f)
 
     (define/public (visit ast)
       (cond
@@ -38,12 +39,13 @@
 		    (let ([def (get-field lhs me)]
 			  [use (get-field rhs next)])
 		      (begin
-			(pretty-display `(remove-temp ,(send def to-string) ,(send use to-string)))
+                        (when debug
+                              (pretty-display `(remove-temp ,(send def to-string) ,(send use to-string))))
 		      (if (and (is-a? def Temp%) (is-a? use Temp%)
 			       (equal? (get-field name def) (get-field name use))
 			       (equal? (get-field sub def) (get-field sub use)))
 			  (begin
-			    (pretty-display "REMOVE!")
+                            (when debug (pretty-display "REMOVE!"))
                             (set! removed (cons (get-field name def) removed))
 			    (cons (new Assign% [lhs (get-field lhs next)] [rhs (get-field rhs me)])
 				  (cdr rest)))

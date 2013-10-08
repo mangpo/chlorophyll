@@ -1,4 +1,4 @@
-#lang racket
+#lang s-exp rosette
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
@@ -10,11 +10,7 @@
 (define range-cloner%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [range #f] [index #f])
-
-    (define/public (set-range x-range x-index)
-      (set! range x-range)
-      (set! index x-index))
+    (init-field range index)
 
     (define/public (visit ast)
       (define (get-known-type)
@@ -31,23 +27,11 @@
 			    (get-field place x))) 
                      (car place-type))
               place-type)))
-        
-      (define (get-place-offset)
-        (let ([place-type (get-field place-type ast)])
-          (if (and (place-type-dist? place-type) 
-                   (equal? (get-field name (cdr place-type)) index))
-	      (let ([here (ormap (lambda (x) 
-				   (and (<= (get-field from x) (get-field from range))
-					(>= (get-field to x) (get-field to range))
-					(get-field place x)))
-				 (car place-type))]
-		    [count 0])
-		(for ([p (car place-type)])
-		     (when (and (<= (get-field to p) (get-field from range))
-				(not (= (get-field place p) here)))
-			   (set! count (+ count (- (get-field to p) (get-field from p))))))
-		(cons here count))
-              (cons place-type 0))))
+
+      (define (fresh-place-type)
+        (if (symbolic? (get-field place-type ast))
+            (get-sym)
+            (get-place-type)))
         
       (cond
        [(is-a? ast Const%)
@@ -59,20 +43,18 @@
         ]
 
        [(is-a? ast Array%)
-	(define place-offset (get-place-offset))
         (new Array% [name (get-field name ast)] 
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
-	     [offset (cdr place-offset)] ;; need this to substract from the index
+	     ;[offset (cdr place-offset)] ;; need this to substract from the index
 	     [cluster (get-field cluster ast)]
-             [place-type (car place-offset)] [known-type (get-known-type)])]
+             [place-type (get-place-type)] [known-type (get-known-type)])]
 
        [(is-a? ast Temp%)
         (new Temp% [name (get-field name ast)]
              [type (get-field type ast)]
              [place-type (get-place-type)] [known-type (get-known-type)]
              [compact (get-field compact ast)])]
-       
 
        [(is-a? ast Var%)
         (new Var% [name (get-field name ast)]
@@ -84,21 +66,33 @@
         (new Op% [op (get-field op ast)] [place (get-field place ast)])]
 
        [(is-a? ast UnaExp%)
+        (define place-type (fresh-place-type))
+        (define op-ret (send (get-field op ast) accept this))
+        (when (symbolic? (get-field place op-ret))
+              (set-field! place op-ret place-type))
+        (pretty-display (format "CLONER: UnaExp ~a, place-type = ~a" (send ast to-string)
+                                place-type))
         (new UnaExp% 
-             [op (send (get-field op ast) accept this)]
+             [op op-ret]
              [e1 (send (get-field e1 ast) accept this)]
              [type (get-field type ast)]
              [known-type (get-known-type)]
-             [place-type (get-place-type)])]
+             [place-type place-type])]
 
        [(is-a? ast BinExp%)
+        (define place-type (fresh-place-type))
+        (define op-ret (send (get-field op ast) accept this))
+        (when (symbolic? (get-field place op-ret))
+              (set-field! place op-ret place-type))
+        (pretty-display (format "CLONER: BinExp ~a, place-type = ~a" (send ast to-string)
+                                place-type))
         (new BinExp% 
-             [op (send (get-field op ast) accept this)]
+             [op op-ret]
              [e1 (send (get-field e1 ast) accept this)]
              [e2 (send (get-field e2 ast) accept this)]
              [type (get-field type ast)]
              [known-type (get-known-type)]
-             [place-type (get-place-type)])]
+             [place-type place-type])]
 
        [(is-a? ast FuncCall%)
         (new FuncCall%

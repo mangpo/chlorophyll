@@ -62,13 +62,13 @@
   
   ;; Unroll for loop according to array distributions of variables inside its body.
   ;; Note: given AST is mutated.
-  (define for-unroller (new loop-unroller%))
-  (send ast accept for-unroller)  
-  (when verbose
-        (pretty-display "--- after unroll ---")
-        ;(send ast accept concise-printer)
-        (send ast pretty-print)
-        )
+  ;; (define for-unroller (new loop-unroller%))
+  ;; (send ast accept for-unroller)  
+  ;; (when verbose
+  ;;       (pretty-display "--- after unroll ---")
+  ;;       ;(send ast accept concise-printer)
+  ;;       (send ast pretty-print)
+  ;;       )
 
   ;; 1) Insert communication route to send-path field.
   ;; 2) Convert partition ID to actual core ID.

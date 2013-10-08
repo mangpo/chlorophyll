@@ -24,6 +24,7 @@
 	(define index (get-field index ast))
 
         (if (and (not (empty? stack))
+                 (= (get-field offset ast) 0)
 		 (is-a? index Var%) 
 		 (equal? (get-field name index) (pack-iter (car stack))))
 	    (let ([top (car stack)])

@@ -10,7 +10,8 @@
 
 (define (optimize-file file cores capacity max-msgs)
   (define my-ast (parse file))
-  (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs #:verbose #f))
+  (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs 
+                 #:verbose #f))
 
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
@@ -37,19 +38,15 @@
                   [file (string-append testdir name ".cll")])
   (optimize-file file cores capacity max-msgs))
 
-;(test-num-msgs "array-known"   2)
-;(test-num-msgs "array-dynamic" 6)
 ;(test-num-msgs "for-array1"    0)
-;(test-num-msgs "for-array2"    560 #:max-msgs 600)
 ;(test-num-msgs "for-array3"    0)
 ;(test-num-msgs "for-array3-2"  0)
-;(test-num-msgs "for-array4"    120 #:max-msgs 300 #:capacity 512)
-;(test-num-msgs "for-array5"    720 #:max-msgs 800 #:capacity 512)
+;(test-num-msgs "for-array4"     20 #:max-msgs 100 #:capacity 512)
 ;(test-num-msgs "for-array6"    0)
 (test-num-msgs "add"           100 #:cores 8 #:max-msgs 200 #:capacity 300)
 ;(test-num-msgs "add-pair"      100 #:cores 8 #:max-msgs 200 #:capacity 300)
 ;(test-num-msgs "function"      2 #:capacity 512)
-(test-num-msgs "function2"     4)
+;(test-num-msgs "function2"     4)
 ;(test-num-msgs "while"         300 #:max-msgs 800)
 
 ;(test-consistent "space")

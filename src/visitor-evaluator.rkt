@@ -81,7 +81,6 @@
         ]
 
        [(is-a? ast FuncCall%)
-        (pretty-display (format "EVALUATOR: FuncCall ~a" (get-field name ast)))
 	(define func-ast (get-field signature ast))
         (define params (get-field stmts (get-field args func-ast)))
 	(define name (get-field name ast))
@@ -89,8 +88,6 @@
 	     (send arg accept this))
         (send ast to-concrete)
 
-        
-        (pretty-display (format "EVALUATOR: FuncCall ~a (2)" (get-field name ast)))
         ;; convert io                      
         (when (at-io? (get-field place-type ast))
               (set-field! place-type ast (sub1 num-cores)))
@@ -100,10 +97,7 @@
         ;;            (set-field! place param (sub1 num-cores))
         ;;            (set-field! place-type param (sub1 num-cores))))
         (when (or (equal? name "in") (equal? name "out"))
-              (pretty-display "VISIT func-sig")
               (send func-ast accept this))
-
-        (pretty-display (format "EVALUATOR: FuncCall ~a (3)" (get-field name ast)))
 
 	;; infer
 	(for ([param params] ; signature
@@ -153,7 +147,6 @@
 
        [(is-a? ast FuncDecl%)
         (when (get-field return ast)
-              (pretty-display "VISIT return")
               (send (get-field return ast) accept this))
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)

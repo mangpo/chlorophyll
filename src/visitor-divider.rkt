@@ -2,6 +2,7 @@
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt"
+         "visitor-offset.rkt"
          "visitor-interface.rkt")
 
 (provide ast-divider%)
@@ -20,7 +21,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #t)
+    (define debug #f)
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -475,6 +476,7 @@
 	(let ([place (get-field place-list ast)])
 	  (if (number? place)
 	      (push-workspace place ast)
+              ;; Doesn't work with int[]@{[0:10]=0,[10:20]=1,[20:30]=0}
 	      (for ([p place])
 		   (let ([here (get-field place p)]
                          [to (get-field to p)]
@@ -489,6 +491,7 @@
 			   [type (get-field type ast)]
 			   [known (get-field known ast)]
 			   [bound (- to from)]
+                           [offset from]
                            [init (sub-list (get-field init ast) from to)]
 			   [cluster (get-field cluster ast)]
 			   [place-list here]))))))]
@@ -763,7 +766,11 @@
 		     (unless (or (empty? stmts)
 				 (equal? (get-field name (last stmts)) "main"))
 			   (set-field! stmts program (list)))))
-				     
+		
+              ;; Adjust offset
+              (for ([i (in-range n)])
+                   (send (vector-ref programs i) accept (new offset-modifier%)))
+
 	      programs
 	      )
 	]

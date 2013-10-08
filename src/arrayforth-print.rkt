@@ -169,12 +169,12 @@
 
    [(aforth? x)
     (define memsize (aforth-memsize x))
-    (define node (+ (* 208 (floor (/ id w))) (modulo id w)))
+    (define node (core-id id w))
 
     (if original
         (begin
-          (pretty-display (format "{block ~a}" (+ 800 (* 2 id))))
-          (pretty-display (format "( -) # ~a ( mem ~a) 0 org | cr" node memsize)))
+          (pretty-display (format "{block ~a}" (+ block-offset (* 2 id))))
+          (pretty-display (format "( -) # ~a ( id ~a mem ~a) 0 org | cr" node id memsize)))
         (begin
           (pretty-display (format "yellow ~a node" node))
           (pretty-display (format "~a org green" memsize))))
@@ -189,6 +189,21 @@
 
    [(vector? x)
     ;(define size (sub1 (vector-length x)))
+    (pretty-display "{block 790}")
+    (pretty-display "host target | cr")
+    (for ([id (* w h)])
+         (when (vector-ref x id)
+               (pretty-display (format "~a node ~a load" 
+                                       (core-id id w) (+ block-offset (* 2 id))))))
+
+    (newline)
+    (pretty-display "{block 792}")
+    (pretty-display ": /node dup +node /ram ; | cr")
+    (for ([id (* w h)])
+         (when (vector-ref x id)
+               (pretty-display (format "~a /node $0 /p" (core-id id w)))))
+    (newline)
+                               
     (for ([i (* w h)])
          (set! id i)
 	 (print (vector-ref x i)))
