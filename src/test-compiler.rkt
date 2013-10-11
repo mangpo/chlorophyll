@@ -8,7 +8,7 @@
 ;(compile-and-optimize "../examples/test.cll" "test" 
 ;                      256 "null" #:w 4 #:h 2 #:opt #f)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
-;                      256 "null" #:opt #t)
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/function-out.cll" "function" 
@@ -24,14 +24,14 @@
 ;(compile-and-optimize "../examples/leftrotate.cll" "leftrotate" 
 ;                     256 "null" #:w 10 #:h 5 #:opt #t)
 
-(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
-                     1024 "null" #:w 8 #:h 8 #:opt #t)
-(compile-and-optimize "../tests/run/md5.cll" "md1" 
-		      400 "null" #:w 8 #:h 8 #:opt #t)
+;(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
+;                     1024 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../tests/run/md5.cll" "md1" ;
+;		      400 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)
 
-;(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
-;                     256 "null" #:w 8 #:h 5 #:opt #t)
-;(compile-and-optimize "../tests/run/swap.cll" "swap" 
-;                      256 "null" #:w 8 #:h 8 #:opt #t)
+(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
+                     256 "null" #:w 8 #:h 5 #:opt #f)
+(compile-and-optimize "../tests/run/swap.cll" "swap" 
+                      256 "null" #:w 8 #:h 8 #:opt #f)

@@ -11,7 +11,10 @@
 (define (optimize-file file cores capacity max-msgs)
   (define my-ast (parse file))
   (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs 
-                 #:verbose #f))
+                 #:verbose #t))
+
+;(optimize-file "../examples/test.cll" 4 1024 #f)
+(optimize-file "../tests/run/md5-noplace.cll" 64 720 #f)
 
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
@@ -43,7 +46,7 @@
 ;(test-num-msgs "for-array3-2"  0)
 ;(test-num-msgs "for-array4"     20 #:max-msgs 100 #:capacity 512)
 ;(test-num-msgs "for-array6"    0)
-(test-num-msgs "add"           100 #:cores 8 #:max-msgs 200 #:capacity 300)
+;(test-num-msgs "add"           100 #:cores 8 #:max-msgs 200 #:capacity 300)
 ;(test-num-msgs "add-pair"      100 #:cores 8 #:max-msgs 200 #:capacity 300)
 ;(test-num-msgs "function"      2 #:capacity 512)
 ;(test-num-msgs "function2"     4)

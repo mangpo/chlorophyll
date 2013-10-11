@@ -10,8 +10,12 @@
          "visitor-placetype.rkt"
          "visitor-printer.rkt"
          "visitor-evaluator.rkt"
+         "visitor-loopbound.rkt"
          "visitor-unroll.rkt"
          )
+
+(require rosette/solver/kodkod/kodkod)
+(require rosette/solver/z3/z3)
 
 (provide optimize-comm (struct-out result))
 
@@ -26,7 +30,8 @@
                         #:capacity [capacity 256] 
                         #:max-msgs [max-msgs #f]
                         #:verbose [verbose #f])
-
+  ;(current-solver (new z3%))
+  (current-solver (new kodkod%))
   (configure [bitwidth 32])
   
   ;; Define printer
@@ -57,12 +62,17 @@
     )
 
   ;; Unroll
+  (send my-ast accept (new loopbound-computer%))
+  (when verbose
+    (pretty-display "=== After bound compute  ===")
+    (send my-ast pretty-print)
+    )
   (send my-ast accept (new loop-unroller%))
-  ;(raise "DONE")
   (when verbose
     (pretty-display "=== After unroll  ===")
     (send my-ast pretty-print)
     )
+  ;;(raise "DONE")
 
   
   ;; Count number of messages

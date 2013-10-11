@@ -783,12 +783,13 @@
 (define For%
   (class Scope%
     (super-new)
-    (init-field iter from to body place-list known [address #f] [iter-type 0])
+    (init-field iter from to body place-list known [address #f] [iter-type 0]
+                [unroll #f])
     (inherit print-send-path print-body-placeset)
 
     (define/override (clone)
       (new For% [iter iter] [from from] [to to] [place-list place-list] 
-           [body (send body clone)] [known known]))
+           [body (send body clone)] [known known] [unroll unroll]))
 
     (define/public (to-concrete)
       (set! place-list (concrete-place place-list)))
@@ -799,6 +800,8 @@
                               (place-to-string place-list)))
       (print-body-placeset indent)
       (print-send-path indent)
+      (when unroll
+            (pretty-display (format "~a(unroll: ~a)" (inc indent) unroll)))
       (send body pretty-print (inc indent)))
 
 ))
@@ -1125,6 +1128,21 @@
 
     (define/override (to-string)
       (format "read(~a)" port))))
+
+(define Range%
+  (class Base%
+    (super-new)
+    (init-field from to)
+
+    (define/override (clone)
+      (raise "no clone for Range%"))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(RANGE ~a ~a)" indent from to)))
+
+    (define/public (to-string)
+      (format "[~a,~a]" from to))
+    ))
     
 
 

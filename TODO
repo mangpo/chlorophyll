@@ -1,8 +1,9 @@
 TODO
-0) rosette using racket
-1) optimize & test: ssd, swap, md5(no unroll)
-2) optimize: md5-3 (more compact & precise flow)
-5) unrolling synthesizer
+0) test-simulate
+1) ssd & swap: same layout noopt vs opt
+2) md1-opt, md3 runtime
+3) MSP, snapdragon?
+4) more benchmarks with new unroll synth
 
 benchmarks: ssd_simple, ssd_small, bit hack
 

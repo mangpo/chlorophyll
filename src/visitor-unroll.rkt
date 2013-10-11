@@ -14,192 +14,56 @@
     (init-field [index-map (make-hash)])
     (define debug #f)
 
-    ;; We don't care about place here. We just need ranges.dict
-    (define (construct-placelist x-placelist y-placelist index)
-      (cond
-        [(and (empty? x-placelist) (empty? y-placelist))
-         (list)]
-         
-        [(empty? x-placelist)
-         (set-field! from (car y-placelist) index)
-         y-placelist]
-        
-        [(empty? y-placelist)
-         (set-field! from (car x-placelist) index)
-         x-placelist]
-        
-        [else
-         (let* ([x-first (car x-placelist)]
-                [y-first (car y-placelist)]
-                [x-to (get-field to x-first)]
-                [y-to (get-field to y-first)])
-           (cond 
-             
-             [(equal? x-to y-to)
-              (cons (new RangePlace% [from index] [to x-to] 
-                         [place #f])
-                    (construct-placelist (cdr x-placelist) (cdr y-placelist) x-to))]
-             
-             [(< x-to y-to)
-              (cons (new RangePlace% [from index] [to x-to]
-                         [place #f])
-                    (construct-placelist (cdr x-placelist) y-placelist x-to))]
-             
-             [(> x-to y-to)
-              (cons (new RangePlace% [from index] [to y-to]
-                         [place #f])
-                    (construct-placelist x-placelist (cdr y-placelist) y-to))]
-             
-             [else (raise "contruct-placelist: unimplemented")]))]))
-    
-    (define (push-scope)
-      (let ([new-env (make-hash)])
-        (dict-set! new-env "__up__" index-map)
-        (set! index-map new-env)))
-
-    (define (pop-scope)
-      (set! index-map (dict-ref index-map "__up__")))
-
-    (define (lookup ast)
-      (define (lookup-name env name)
-        ;(pretty-display `(lookup-name ,env ,name))
-        (dict-ref env name
-                  (lambda () (lookup-name (dict-ref env "__up__"
-                                                    (lambda () #f))
-                                          name))))
-
-      (if (is-a? ast Var%)
-          (lookup-name index-map (get-field name ast))
-          #f))
-    
-    (define (update ast ranges)
-      (define (update-name env name)
-        (if (dict-has-key? env name)
-            (dict-set! env name (construct-placelist (dict-ref env name) ranges 0))
-            (update-name (dict-ref env "__up__") name)))
-
-      (update-name index-map (get-field name ast)))
-
     (define/public (visit ast)
-      (define (check)
-        (let ([place-type (get-field place-type ast)])
-          (when debug (pretty-display `(check ,(send ast to-string) ,place-type)))
-          (when (and (place-type-dist? place-type)
-                     (lookup (cdr place-type)))
-            (update (cdr place-type) (car place-type)))))
 
       (cond
-       [(is-a? ast Array%)
-        (send (get-field index ast) accept this)
-        (check)
-        ast]
-       
-       [(or (is-a? ast Num%)
-            (is-a? ast Var%)
-            (is-a? ast Param%))
-        (check)
-        ast]
 
-       [(is-a? ast UnaExp%)
-        (send (get-field e1 ast) accept this)
-        (check)
-        ast]
-       
-       [(is-a? ast BinExp%)
-        (send (get-field e1 ast) accept this)
-        (send (get-field e2 ast) accept this)
-        (check)
-        ast]
-
-       [(is-a? ast FuncCall%)
-        ;(send (get-field signature ast) accept this)
-        (for ([arg (get-field args ast)])
-             (send arg accept this))
-        (check)
-        ast]
-
-       [(is-a? ast VarDecl%) 
-        ;(pretty-display "UNROLL: VarDecl (before declare)")
-        (for ([var (get-field var-list ast)])
-             ;; Delcare as #f because this is not loop index.
-             (declare index-map var #f))
-        ;(pretty-display "UNROLL: VarDecl (after declare)")
-        ast]
-
-       [(is-a? ast ArrayDecl%)
-        ;(pretty-display "UNROLL: VarDecl (before declare)")
-        (declare index-map (get-field var ast) #f)
-        ;(pretty-display "UNROLL: VarDecl (after declare)")
+       [(or (is-a? ast FuncCall%)
+            (is-a? ast VarDecl%) 
+            (is-a? ast ArrayDecl%)
+            (is-a? ast Assign%)
+            (is-a? ast Return%))
         ast]
 
        [(is-a? ast For%)
-        ;; Do actual stuff here
-        (define body (get-field body ast))
+        (pretty-display "UNROLL: For")
+        (define body (send (get-field body ast) accept this))
         (define iter (get-field iter ast))
         (define iter-name (get-field name iter))
+        (define ranges (get-field unroll ast))
+        (pretty-display ranges)
 
-        ;(pretty-display "UNROLL: For (before visit body)")
-        (push-scope)
-        (declare index-map iter-name (list))
-        (send body accept this)
-        
-        ;(pretty-display "UNROLL: For (after visit body)")
-        
-        (define (adjust range-list from to)
-          ;; Filter out the ranges that fall outside region of interest.
-          (let ([filtered (filter (lambda (x) (and (> (get-field to x) from) (< (get-field from x) to))) 
-                                  range-list)])
-            (unless (empty? filtered)
-              (set-field! from (car filtered) from)
-              (set-field! to (last filtered) to))
-            filtered))
-
-        (let ([rangeplace-list (adjust (lookup iter) (get-field from ast) (get-field to ast))])
-          ;(undeclare index-map iter-name)
-          (pop-scope)
-          (when debug
-                (pretty-display "UNROLL: For (after lookup)")
-                (pretty-display `(rangeplace-list ,rangeplace-list)))
-          (if (empty? rangeplace-list)
-              ast
-              (for/list ([rangeplace rangeplace-list])
-                        (define body-clone (send body accept (new range-cloner% 
-                                                                  [range rangeplace]
-                                                                  [index iter-name])))
-                        ;(send body-clone pretty-print)
-                        (new For% 
-                             [iter (send iter clone)] 
-                             [body body-clone]
-                             [from (get-field from rangeplace)]
-                             [to (get-field to rangeplace)]
-                             [known (get-field known ast)]
-                             [place-list (get-field place rangeplace)]
-                             [body-placeset (get-field body-placeset ast)]))))
+        (if ranges
+            (for/list ([range ranges])
+                      (pretty-display "UNROLL: For (2)")
+                      (define body-clone (send body accept (new range-cloner% 
+                                                                [from (car range)]
+                                                                [to (cdr range)]
+                                                                [index iter-name])))
+                      (pretty-display "UNROLL: For (3)")
+                      (new For% 
+                           [iter (send iter clone)] 
+                           [body body-clone]
+                           [from (car range)]
+                           [to (add1 (cdr range))]
+                           [known (get-field known ast)]
+                           [place-list #f]
+                           [body-placeset (get-field body-placeset ast)]))
+            ast)
         ;; Return list of For%
         ]
 
        [(is-a? ast If%)
         ;(pretty-display "UNROLL: If")
-        (send (get-field condition ast) accept this)
         (send (get-field true-block ast) accept this)
         (when (get-field false-block ast)
               (send (get-field false-block ast) accept this))
         ast]
 
        [(is-a? ast While%)
-        (send (get-field pre ast) accept this)
-        (send (get-field condition ast) accept this)
         (send (get-field body ast) accept this)
         ast]
 
-       [(is-a? ast Assign%)
-        ;(pretty-display "UNROLL: Assign")
-        (send (get-field lhs ast) accept this)
-        (send (get-field rhs ast) accept this)
-        ast]
-
-       [(is-a? ast Return%)
-        ast]
 
        [(is-a? ast Program%)
         (for ([decl (get-field stmts ast)])
@@ -215,8 +79,6 @@
         ]
 
        [(is-a? ast FuncDecl%)
-        (for ([arg (get-field stmts (get-field args ast))])
-             (send arg accept this))
         (send (get-field body ast) accept this)]
 
        ))))

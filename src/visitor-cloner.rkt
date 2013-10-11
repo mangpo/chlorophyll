@@ -1,7 +1,7 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
+         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-loopbound.rkt")
 
 (provide (all-defined-out))
 
@@ -10,23 +10,21 @@
 (define range-cloner%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field range index)
+    (init-field from to index)
+    (define debug #f)
 
     (define/public (visit ast)
       (define (get-known-type)
         (get-field known-type ast))
 
       (define (get-place-type)
-        (let ([place-type (get-field place-type ast)])
-          (if (and (place-type-dist? place-type) 
-                   (equal? (get-field name (cdr place-type)) index))
-              (ormap (lambda (x) 
-                       ;; return x that covers the given range
-                       (and (and (<= (get-field from x) (get-field from range))
-                                (>= (get-field to x) (get-field to range)))
-			    (get-field place x))) 
-                     (car place-type))
-              place-type)))
+        (define place-type (get-field place-type ast))
+        (if (place-type-dist? place-type)
+            (let ([p (get-place (get-field place-type ast) index from to)])
+              (if (is-a? p RangePlace%)
+                  (get-field place p)
+                  p))
+            place-type))
 
       (define (fresh-place-type)
         (if (symbolic? (get-field place-type ast))
@@ -38,11 +36,15 @@
         (new Const% [n (get-field n ast)] [place (get-field place ast)])]
 
        [(is-a? ast Num%)
+        (when debug
+              (pretty-display (format "CLONER: Num ~a" (send ast to-string))))
         (new Num% [n (send (get-field n ast) accept this)] 
              [place-type (get-place-type)])
         ]
 
        [(is-a? ast Array%)
+        (when debug
+              (pretty-display (format "CLONER: Array ~a" (send ast to-string))))
         (new Array% [name (get-field name ast)] 
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
@@ -51,12 +53,16 @@
              [place-type (get-place-type)] [known-type (get-known-type)])]
 
        [(is-a? ast Temp%)
+        (when debug
+              (pretty-display (format "CLONER: Temp ~a" (send ast to-string))))
         (new Temp% [name (get-field name ast)]
              [type (get-field type ast)]
              [place-type (get-place-type)] [known-type (get-known-type)]
              [compact (get-field compact ast)])]
 
        [(is-a? ast Var%)
+        (when debug
+              (pretty-display (format "CLONER: Var ~a" (send ast to-string))))
         (new Var% [name (get-field name ast)]
              [type (get-field type ast)]
              [compact (get-field compact ast)]
@@ -66,12 +72,12 @@
         (new Op% [op (get-field op ast)] [place (get-field place ast)])]
 
        [(is-a? ast UnaExp%)
+        (when debug
+              (pretty-display (format "CLONER: UnaExp ~a" (send ast to-string))))
         (define place-type (fresh-place-type))
         (define op-ret (send (get-field op ast) accept this))
         (when (symbolic? (get-field place op-ret))
               (set-field! place op-ret place-type))
-        (pretty-display (format "CLONER: UnaExp ~a, place-type = ~a" (send ast to-string)
-                                place-type))
         (new UnaExp% 
              [op op-ret]
              [e1 (send (get-field e1 ast) accept this)]
@@ -80,12 +86,12 @@
              [place-type place-type])]
 
        [(is-a? ast BinExp%)
+        (when debug
+              (pretty-display (format "CLONER: BinExp ~a" (send ast to-string))))
         (define place-type (fresh-place-type))
         (define op-ret (send (get-field op ast) accept this))
         (when (symbolic? (get-field place op-ret))
               (set-field! place op-ret place-type))
-        (pretty-display (format "CLONER: BinExp ~a, place-type = ~a" (send ast to-string)
-                                place-type))
         (new BinExp% 
              [op op-ret]
              [e1 (send (get-field e1 ast) accept this)]
@@ -139,6 +145,7 @@
              [from (get-field from ast)]
              [to (get-field to ast)]
              [known (get-field known ast)]
+             [unroll (get-field unroll ast)]
              [place-list (get-field place-list ast)]
              [body-placeset (get-field body-placeset ast)])] ;; not copy
 
