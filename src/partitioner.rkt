@@ -31,7 +31,8 @@
                         #:max-msgs [max-msgs #f]
                         #:verbose [verbose #f])
   ;(current-solver (new z3%))
-  (current-solver (new kodkod%))
+  ;(current-solver (new kodkod%))
+  (current-solver (new kodkod-incremental%))
   (configure [bitwidth 32])
   
   ;; Define printer
@@ -85,7 +86,7 @@
   
   (define (solve-function func-ast)
     (define start (current-seconds))
-    (set! num-msg (evaluate-with-sol (comminfo-msgs (send func-ast accept interpreter))))
+    (set! num-msg (comminfo-msgs (send func-ast accept interpreter)))
     
     (when verbose
       (pretty-display "\n=== After interpreter ===")
@@ -94,7 +95,7 @@
 
     (when verbose (pretty-display `(num-msg , num-msg)))
     
-    (define num-cores (evaluate-with-sol (cores-count cores)))  
+    (define num-cores (cores-count cores)) 
     (define lowerbound 0)
     (define upperbound max-msgs)
     (define middle (if upperbound 
@@ -155,59 +156,92 @@
     (define t 0)
       
                 
-    (define (inner-loop)
-      (pretty-display (format "num-msg <= ~a" middle))
-      #|(if middle
-          (solve-with-sol (assert (<= num-msg middle)) global-sol)
-          (solve-with-sol (assert #t) global-sol))|#
-      (set! t (current-seconds))
-      (if middle
-          (solve (assert (<= num-msg middle)))
-          (solve (assert #t)))
-      (pretty-display `(solve-time ,(- (current-seconds) t)))
-      (set! upperbound (evaluate num-msg))
-      (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+    ;; (define (inner-loop)
+    ;;   (pretty-display (format "num-msg <= ~a" middle))
+    ;;   #|(if middle
+    ;;       (solve-with-sol (assert (<= num-msg middle)) global-sol)
+    ;;       (solve-with-sol (assert #t) global-sol))|#
+    ;;   (set! t (current-seconds))
+    ;;   (if middle
+    ;;       (solve (assert (<= num-msg middle)))
+    ;;       (solve (assert #t)))
+    ;;   (pretty-display `(solve-time ,(- (current-seconds) t)))
+    ;;   (set! upperbound (evaluate num-msg))
+    ;;   (set! middle (floor (/ (+ lowerbound upperbound) 2)))
       
+    ;;   (set! best-sol (current-solution))
+      
+    ;;   ;; display
+    ;;   (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+    ;;   (pretty-display (format "# cores = ~a" (evaluate num-cores)))
+      
+    ;;   ;; recored best-so-far solution
+    ;;   (let ([saved-sol global-sol])
+    ;;     (set-global-sol best-sol)
+    ;;     (with-output-to-file #:exists 'truncate (format "~a/~a.bestsofar" outdir name)
+    ;;       (lambda () 
+    ;;         (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+    ;;         (send my-ast accept concise-printer)
+    ;;         (display-cores cores)))
+    ;;     (set-global-sol saved-sol))
+      
+    ;;   (if (< lowerbound upperbound)
+    ;;       (inner-loop)
+    ;;       (update-global-sol))
+    ;;   )
+    
+    ;; (define (outter-loop)
+    ;;   (with-handlers* 
+    ;;    ([exn:fail? (lambda (e) 
+    ;;                  (pretty-display `(solve-time ,(- (current-seconds) t)))
+    ;;                  (if (and upperbound (or (equal? (exn-message e)
+    ;;                                                  "solve: no satisfying execution found")
+    ;;                                          (equal? (exn-message e)
+    ;;                                                  "assert: failed")))
+    ;;                      (begin
+    ;;                        (set! lowerbound (add1 middle))
+    ;;                        (set! middle (floor (/ (+ lowerbound upperbound) 2)))
+    ;;                        (if (< lowerbound upperbound)
+    ;;                            (outter-loop)
+    ;;                            (update-global-sol)))
+    ;;                      (begin
+    ;;                        (pretty-display e)
+    ;;                        (raise e))))])
+    ;;    (inner-loop)))
+
+    (define (inner-loop)
+      (set! t (current-seconds))
+      (assert (< num-msg (evaluate num-msg)))
+      (solve+ #t)
+
+      (pretty-display `(solve-time ,(- (current-seconds) t)))
       (set! best-sol (current-solution))
       
       ;; display
       (pretty-display (format "# messages = ~a" (evaluate num-msg)))
       (pretty-display (format "# cores = ~a" (evaluate num-cores)))
       
-      ;; recored best-so-far solution
-      (let ([saved-sol global-sol])
-        (set-global-sol best-sol)
-        (with-output-to-file #:exists 'truncate (format "~a/~a.bestsofar" outdir name)
-          (lambda () 
-            (pretty-display (format "# messages = ~a" (evaluate num-msg)))
-            (send my-ast accept concise-printer)
-            (display-cores cores)))
-        (set-global-sol saved-sol))
-      
-      (if (< lowerbound upperbound)
-          (inner-loop)
-          (update-global-sol))
-      )
-    
-    ;void
+      (inner-loop))
+
     (define (outter-loop)
-      (with-handlers* ([exn:fail? (lambda (e) 
-                                    (pretty-display `(solve-time ,(- (current-seconds) t)))
-                                    (if (and upperbound
-					     (or (equal? (exn-message e)
-							 "solve: no satisfying execution found")
-						 (equal? (exn-message e)
-							 "assert: failed")))
-					(begin
-					  (set! lowerbound (add1 middle))
-					  (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-					  (if (< lowerbound upperbound)
-					      (outter-loop)
-					      (update-global-sol)))
-                                        (begin
-                                          (pretty-display e)
-                                          (raise e))))])
-                      (inner-loop)))
+      (with-handlers* 
+       ([exn:fail? (lambda (e) 
+                     (pretty-display `(solve-time ,(- (current-seconds) t)))
+                     (if (or (equal? (exn-message e)
+                                     "solve: no satisfying execution found")
+                             (equal? (exn-message e)
+                                     "assert: failed"))
+                         (begin
+                           (update-global-sol)
+                           (clear-asserts)
+                           )
+                         (begin
+                           (pretty-display e)
+                           (raise e))))])
+       (solve+ #t)
+       (pretty-display "first solve")
+       (set! best-sol (current-solution))
+       (inner-loop)))
     
     (outter-loop)
     )

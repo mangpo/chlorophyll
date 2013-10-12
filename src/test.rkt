@@ -14,7 +14,7 @@
                  #:verbose #t))
 
 ;(optimize-file "../examples/test.cll" 4 1024 #f)
-(optimize-file "../tests/run/md5-noplace.cll" 64 720 #f)
+;(optimize-file "../tests/run/md5-noplace.cll" 64 720 #f)
 
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
@@ -42,7 +42,7 @@
   (optimize-file file cores capacity max-msgs))
 
 ;(test-num-msgs "for-array1"    0)
-;(test-num-msgs "for-array3"    0)
+(test-num-msgs "for-array3"    0)
 ;(test-num-msgs "for-array3-2"  0)
 ;(test-num-msgs "for-array4"     20 #:max-msgs 100 #:capacity 512)
 ;(test-num-msgs "for-array6"    0)

@@ -26,12 +26,12 @@
 
 ;(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
 ;                     1024 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/md5.cll" "md1" ;
-;		      400 "null" #:w 8 #:h 8 #:opt #t)
+(compile-and-optimize "../tests/run/md5.cll" "md1" ;
+		      1024 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)
 
-(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
-                     256 "null" #:w 8 #:h 5 #:opt #f)
-(compile-and-optimize "../tests/run/swap.cll" "swap" 
-                      256 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
+;                     256 "null" #:w 8 #:h 5 #:opt #f)
+;(compile-and-optimize "../tests/run/swap.cll" "swap" 
+;                      256 "null" #:w 8 #:h 8 #:opt #f)
