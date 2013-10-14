@@ -212,7 +212,7 @@
     (define (inner-loop)
       (set! t (current-seconds))
       (assert (< num-msg (evaluate num-msg)))
-      (solve+ #t)
+      (solve #t)
 
       (pretty-display `(solve-time ,(- (current-seconds) t)))
       (set! best-sol (current-solution))
@@ -238,7 +238,7 @@
                          (begin
                            (pretty-display e)
                            (raise e))))])
-       (solve+ #t)
+       (solve #t)
        (pretty-display "first solve")
        (set! best-sol (current-solution))
        (inner-loop)))

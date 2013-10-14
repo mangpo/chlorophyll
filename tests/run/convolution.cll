@@ -1,0 +1,44 @@
+void main() {
+  int[]@{[0:1]=0,[1:2]=1} in[2] = {10 , 6};
+  int[]@{[0:1]=0,[1:2]=1} x[2];
+  int[] kernel[2] = {1,1}; // best to duplicate kernel on every core that has input/output
+  
+  for(i from 0 to 1) {
+    x[i] = 0;
+    for(j from 0 to 2) {
+      x[i] = in[i +@place(in[i]) j] *@place(x[i]) kernel[j] +@place(x[i]) x[i];
+    }
+  }
+
+  for(i from 0 to 1) {
+    out(x[i]);
+  }
+
+
+  /*int[]@{[0:10]=0,[10:20]=1} in[20] = {10 , 6 , 4 , 9 , 6 , 5 , 4 , 1 , 9 , 10 , 3 , 0 , 2 , 7 , 4 , 9 , 1 , 6 , 4 , 5};
+  int[]@{[0:10]=0,[10:20]=1} x[20];
+  int[] kernel[5] = {1,1,1,1,1}; // best to duplicate kernel on every core that has input/output
+  
+  for(i from 0 to 16) {
+    x[i] = 0;
+    for(j from 0 to 5) {
+      x[i] = in[i +@place(in[i]) j] *@place(x[i]) kernel[j] +@place(x[i]) x[i];
+    }
+  }
+
+  for(i from 0 to 16) {
+    out(x[i]);
+  }*/
+
+  // more efficient
+  /*
+  for(i from 0 to 96) {
+    int@any sum = 0;
+    for(j from 0 to 5) {
+      sum = sum +@place(sum) in[i + j] * kernel[j];
+    }
+    x[i] = sum;
+  }
+  */
+
+}

@@ -23,14 +23,31 @@
 
     (define/public (visit ast)
       (cond
+       [(is-a? ast Num%)
+        void]
+
        [(is-a? ast Array%)
         (when debug (pretty-display (format "visitor-offset: Array ~a offset = ~a" (get-field name ast) (hash-ref offset-map (get-field name ast)))))
         (set-field! offset ast (hash-ref offset-map (get-field name ast)))
 	(define index (get-field index ast))
-	(define index-ret (send index accept this))
-	(when (and (is-a? index Var%) (has-var? iter-map (get-field name index)))
-              ;; (pretty-display "add to index-map!!!")
-	      (update iter-map index (cons ast (lookup iter-map index))))]
+	(send index accept this)
+        (define offset (get-field offset ast))
+        (when (and (not (get-field simple-expr ast)) 
+                   (> offset 0))
+          ;; if index is not simple and offset > 0
+          (set-field! index ast (new BinExp% [op (new Op% [op "-"])]
+                                     [e1 index] 
+                                     [e2 (new Num% [n (new Const% [n offset])])]))
+          (set-field! offset ast 0))
+
+        (for ([x (get-field iter-vars ast)])
+             (update iter-map x (cons ast (lookup iter-map x))))
+        ]
+
+       [(is-a? ast Var%)
+        (pretty-display (format "OFFSET: Var ~a, has-var? ~a"
+                                (get-field name ast)
+                                (has-var? iter-map (get-field name ast))))]
         
        [(is-a? ast UnaExp%)
 	(send (get-field e1 ast) accept this)]
@@ -42,7 +59,11 @@
         
        [(is-a? ast FuncCall%)
 	(for ([arg (get-field args ast)])
-	     (send arg accept this))]
+	     (send arg accept this))
+        ]
+
+       [(is-a? ast Recv%)
+        void]
 
        [(is-a? ast Send%)
 	(send (get-field data ast) accept this)]
@@ -54,12 +75,6 @@
        [(is-a? ast ArrayDecl%)
         (when debug (pretty-display (format "visitor-offset: ArrayDecl ~a offset = ~a" (get-field var ast) (get-field offset ast))))
         (hash-set! offset-map (get-field var ast) (get-field offset ast))]
-
-       [(or (is-a? ast VarDecl%)
-            (is-a? ast Num%)
-            (is-a? ast Var%)
-            (is-a? ast Recv%))
-        void]
 
        [(is-a? ast Return%)
         (define val (get-field val ast))
@@ -96,12 +111,16 @@
 	(send (get-field body ast) accept this)
 
 	(define arrays (lookup-name iter-map iter-name))
-        ;; (pretty-display `(ITER ,iter-name ,arrays))
+        (pretty-display (format "OFFSET: For ~a from ~a to ~a" iter-name
+                                (get-field from ast) (get-field to ast)))
+        (for ([array arrays])
+             (display (format "~a, " (send array to-string))))
+        (newline)
 	(unless (empty? arrays)
 		(define min-offset (foldl (lambda (x min-so-far) 
                                             (min (get-field offset x) min-so-far))
 					  (get-field to ast) arrays))
-                ;; (pretty-display `(min-offset ,min-offset))
+                (pretty-display `(min-offset ,min-offset))
 		(when (> min-offset 0)
 		      (for ([array arrays])
 			   (set-field! offset array (- (get-field offset array) min-offset)))

@@ -143,7 +143,7 @@
         (send body accept this)
 
         (when debug (pretty-display (format "UNROLL: For ~a (2)" (send iter to-string))))
-        (define ranges (construct-ranges from to 4))
+        (define ranges (construct-ranges from to 8))
         (when debug (pretty-display `(ranges ,ranges)))
         (define new-list
           (for*/list ([range ranges]

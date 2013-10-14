@@ -49,6 +49,8 @@
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
 	     ;[offset (cdr place-offset)] ;; need this to substract from the index
+             [iter-vars (get-field iter-vars ast)]
+             [simple-expr (get-field simple-expr ast)]
 	     [cluster (get-field cluster ast)]
              [place-type (get-place-type)] [known-type (get-known-type)])]
 

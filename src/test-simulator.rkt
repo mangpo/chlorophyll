@@ -23,7 +23,9 @@
 ;(test "pair1" "null" 512)
 ;(test "pair2" "null" 512)
 ;(test "while" "10" 256)
-(test "unroll" "null" 1024 #:w 2 #:h 3)
+;(test "unroll" "null" 1024 #:w 2 #:h 3)
+;(test "prefixsum" "null" 512)
+(test "convolution" "null" 10000)
 
 ;(test "matrixmult6" "72" 400) ;capacity issue
 ;(test "matrixmult4-dup" "null" 500)

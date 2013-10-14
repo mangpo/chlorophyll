@@ -26,7 +26,7 @@
 
 ;(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
 ;                     1024 "null" #:w 8 #:h 8 #:opt #f)
-(compile-and-optimize "../tests/run/md5.cll" "md1" ;
+(compile-and-optimize "../tests/run/md5-4.cll" "md4"
 		      1024 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)

@@ -19,7 +19,7 @@
 (define node-offset 10)
 (define block-offset 800)
 (define procs 4)
-(define check-interval 600)
+(define check-interval 60)
 (define distributed #t)
 
 (define outdir "/home/mangpo/work/greensyn/output")
