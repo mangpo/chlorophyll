@@ -18,7 +18,7 @@ ae b0 fd 3a
   int sum;
   int[] a[4];
 
-  A[0] = in();
+  //A[0] = in();
 
   for(i from 0 to 4)@any {
     for(k from 0 to 4) {
@@ -33,11 +33,11 @@ ae b0 fd 3a
     }
   }
 
-  out(C[0]);
-  /*for(i from 0 to 4)@any {
+  //out(C[0]);
+  for(i from 0 to 4)@any {
     for(j from 0 to 4)@any {
       out(C[(4 * i) + j]);
     }
-  }*/
+  }
 }
 

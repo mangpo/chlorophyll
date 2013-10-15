@@ -1,13 +1,10 @@
 TODO
-- test gencode when offset is negative
-- convolution test more
-- clean up visitor-evaluator
-1) gen prefixsum & convolution
+1) codegen prefixsum & convolution
 2) optimize convolution
 
-1) runtime & energy: ssd, swap, md4
-3) MSP, snapdragon?
-4) more benchmarks with new unroll synth
+3) runtime & energy: ssd, swap, md4
+4) MSP, snapdragon?
+5) more benchmarks with new unroll synth
 
 benchmarks: ssd_simple, ssd_small, bit hack
 

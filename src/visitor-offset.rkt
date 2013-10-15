@@ -10,8 +10,8 @@
     ;; Collect iter offset to adjust for loop bound (offset).
     ;; This is not for address field.
     (init-field [iter-map (make-hash)] [offset-map (make-hash)] [prohibit (set)] 
-                [level 0])
-    (define debug #t)
+                [array-level 0] [for-level 0])
+    (define debug #f)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -31,22 +31,12 @@
         (when debug (pretty-display (format "OFFSET: Array ~a offset = ~a" (get-field name ast) (hash-ref offset-map (get-field name ast)))))
         (set-field! offset ast (hash-ref offset-map (get-field name ast)))
 
-        (define save-level level)
-        (set! level (add1 level))
+        (set! array-level (add1 array-level))
 	(define index (get-field index ast))
 	(define index-ret (send index accept this))
-        (set! level save-level)
+        (set! array-level (sub1 array-level))
 
-        ;; (define offset (get-field offset ast))
-        ;; (when (and (not (get-field simple-expr ast)) 
-        ;;            (> offset 0))
-        ;;   ;; if index is not simple and offset > 0
-        ;;   (set-field! index ast (new BinExp% [op (new Op% [op "-"])]
-        ;;                              [e1 index] 
-        ;;                              [e2 (new Num% [n (new Const% [n offset])])]))
-        ;;   (set-field! offset ast 0))
-
-        (if (= level 0)
+        (if (= array-level 0)
             (for ([x index-ret])
                  (update-name iter-map x (cons ast (lookup-name iter-map x))))
             (begin
@@ -111,10 +101,9 @@
 	]
         
        [(is-a? ast FuncCall%)
-        (define iter-vars (list))
+        (define iter-vars (set))
 	(for ([arg (get-field args ast)])
-	     (set! iter-vars (append iter-vars 
-                                     (send arg accept this))))
+	     (set! iter-vars (set-union iter-vars (send arg accept this))))
 
         
         (when (and debug (not (set-empty? iter-vars)))
@@ -179,7 +168,9 @@
 	(define iter-name (get-field name (get-field iter ast)))
         (define iter-type (get-field iter-type ast))
         (declare iter-map iter-name (list))
+        (set! for-level (add1 for-level))
 	(send (get-field body ast) accept this)
+        (set! for-level (sub1 for-level))
 
 	(define arrays (lookup-name iter-map iter-name))
         (when debug
@@ -191,12 +182,18 @@
               (newline)
               (pretty-display (format ">> prohibit: ~a" prohibit))
               )
-	(unless (or (empty? arrays)
-                    (set-member? prohibit iter-name))
-		;; (define min-offset (foldl (lambda (x min-so-far) 
-                ;;                             (min (get-field offset x) min-so-far))
-		;; 			  (get-field from ast) arrays))
-                (define min-offset (get-field from ast))
+	(when (and (= for-level 0)
+                   (not (empty? arrays))
+                   (not (set-member? prohibit iter-name)))
+                (define from (get-field from ast))
+                (define same-as-from #f)
+		(define min-offset (foldl (lambda (x min-so-far) 
+                                            (when (= (get-field offset x) from)
+                                                  (set! same-as-from #t))
+                                            (min (get-field offset x) min-so-far))
+					  from arrays))
+                (when same-as-from
+                    (set! min-offset from))
                 (when debug
                       (pretty-display `(min-offset ,min-offset)))
 		(when (> min-offset 0)
@@ -218,17 +215,14 @@
 	]
 	
        [(is-a? ast Program%)
-        (when debug
-              (pretty-display "--------------------------------------------")
-              (send ast pretty-print))
+        ;; (when debug
+        ;;       (pretty-display "--------------------------------------------")
+        ;;       (send ast pretty-print))
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))]
 
        [(is-a? ast Block%)
 	(for ([stmt (get-field stmts ast)])
 	     (send stmt accept this))]
-
-       [else 
-	(raise (format "visitor-offset: unimplemented for ~a" ast))]
        ))))
        

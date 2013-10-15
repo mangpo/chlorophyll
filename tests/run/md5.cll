@@ -88,8 +88,8 @@ void main() {
   int::2@(4,5) g;
   int::2@(4,5) inc;
   
-  message::0[0] = in();
-  message::1[0] = in();
+  //message::0[0] = in();
+  //message::1[0] = in();
 
   //for(t from 0 to 16) {
     a = hash[0];
@@ -152,10 +152,10 @@ void main() {
   //} 
 
 
-  /*for(i from 0 to 4) {
+  for(i from 0 to 4) {
     out(hash::0[i]);
     out(hash::1[i]);
-  }*/
+  }
 }
 
 /*

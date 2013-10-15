@@ -239,7 +239,6 @@
                            (pretty-display e)
                            (raise e))))])
        (solve #t)
-       (pretty-display "first solve")
        (set! best-sol (current-solution))
        (inner-loop)))
     

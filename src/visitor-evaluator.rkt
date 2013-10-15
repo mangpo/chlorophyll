@@ -7,7 +7,7 @@
 (define symbolic-evaluator%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field num-cores [iter-stack (list)])
+    (init-field num-cores)
     
     (define/public (visit ast)
 
@@ -38,61 +38,39 @@
                    (send p accept this))
               (send ast to-concrete)))
 
-        (set! iter-stack (cons (get-field name (get-field iter ast)) iter-stack))
         (send (get-field body ast) accept this)
-        (set! iter-stack (cdr iter-stack))
         (evaluate-placeset)]
 
        [(is-a? ast Num%)
         (send ast to-concrete)
-        (cons #t (list))
         ]
 
        [(is-a? ast Array%)
         (send ast to-concrete)
-        (define index-ret (send (get-field index ast) accept this))
+        (send (get-field index ast) accept this)
         (send (get-field index ast) infer-place (get-field place-type ast))
-        (set-field! iter-vars ast (cdr index-ret))
-        (set-field! simple-expr ast (car index-ret))
-        (cons #f (cdr index-ret))
         ]
 
        [(or (is-a? ast Var%) 
             (is-a? ast ProxyReturn%))
         (send ast to-concrete)
-        (if (member (get-field name ast) iter-stack)
-            (cons #t (list ast))
-            (cons #t (list)))
         ]
 
        [(is-a? ast UnaExp%)
         (send (get-field op ast) accept this)
-        (define e1-ret (send (get-field e1 ast) accept this))
+        (send (get-field e1 ast) accept this)
         (send ast to-concrete)
         (send ast infer-place (get-field place-type ast))
-        (cons #t (cdr e1-ret))
         ]
 
        [(is-a? ast BinExp%)
         (define e1 (get-field e1 ast))
         (define e2 (get-field e1 ast))
         (send (get-field op ast) accept this)
-        (define e1-ret (send (get-field e1 ast) accept this))
-        (define e2-ret (send (get-field e2 ast) accept this))
+        (send (get-field e1 ast) accept this)
+        (send (get-field e2 ast) accept this)
         (send ast to-concrete)
         (send ast infer-place (get-field place-type ast))
-        
-        (define op-str (get-field op (get-field op ast)))
-        (define iter-vars (append (cdr e1-ret) (cdr e2-ret)))
-        (cond
-         [(equal? op-str "+")
-          (cons (and (car e1-ret) (car e2-ret)) iter-vars)]
-         [(equal? op-str "-")
-          (cons (and (car e1-ret) (car e2-ret) 
-                     (empty? (cdr e2-ret)))
-                iter-vars)]
-         [else
-          (cons #f iter-vars)])
         ]
 
        [(is-a? ast FuncCall%)
@@ -100,10 +78,8 @@
         (define params (get-field stmts (get-field args func-ast)))
 	(define name (get-field name ast))
 
-        (define iter-vars (list))
         (for ([arg (flatten-arg (get-field args ast))])
-	     (set! iter-vars (append iter-vars 
-                                     (cdr (send arg accept this)))))
+	     (send arg accept this))
         (send ast to-concrete)
 
         ;; convert io                      
@@ -119,8 +95,6 @@
           (send arg infer-place (get-field place-type param))
           )
         ;; return can't be at any, so we don't need to infer return
-
-        (cons #f iter-vars)
         ]
 
        [(is-a? ast Assign%)

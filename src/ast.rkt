@@ -451,12 +451,11 @@
   (class Var%
     (super-new)
     (inherit-field known-type place-type pos name expand expect type)
-    (init-field index [offset 0] [opt #f] [iter-vars (list)] [simple-expr #f])
+    (init-field index [offset 0] [opt #f])
     (inherit print-send-path)
 
     (define/override (clone)
       (new Array% [name name] [index (send index clone)] [offset offset] [type type]
-           [iter-vars iter-vars] [simple-expr simple-expr]
            [known-type known-type] [place-type place-type] [pos pos]))
 
     (define/override (pretty-print [indent ""])

@@ -25,15 +25,15 @@
 ;(test "while" "10" 256)
 ;(test "unroll" "null" 1024 #:w 2 #:h 3)
 ;(test "prefixsum" "null" 512)
-(test "convolution" "null" 10000)
+;(test "convolution" "null" 2500)
 
 ;(test "matrixmult6" "72" 400) ;capacity issue
 ;(test "matrixmult4-dup" "null" 500)
 ;(test "cluster" "null" 256)
 
 ;(test "md5" "null" 1024 #:w 10 #:h 5)
-;(test "ssd_simple" "null" 512 #:w 8 #:h 5)
-;(test "swap" "null" 512 #:w 8 #:h 8)
+(test "ssd_simple" "null" 512 #:w 8 #:h 5)
+(test "swap" "null" 512 #:w 8 #:h 8)
 
 (for ([res (reverse result)])
   (pretty-display res))
