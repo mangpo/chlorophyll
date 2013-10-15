@@ -78,10 +78,7 @@
                                name))))
 
 (define (lookup env ast)
-  ;(pretty-display `(lookup ,env ,(send ast to-string)))
-  (dict-ref env (get-field name ast)
-            (lambda () (lookup (dict-ref env "__up__" 
-                                         (lambda () (send ast not-found-error))) ast))))
+  (lookup-name env (get-field name ast)))
 
 (define (has-var? env name)
   ;(pretty-display `(has-var? ,env ,name))
@@ -89,13 +86,16 @@
       (and (dict-has-key? env "__up__") 
            (has-var? (dict-ref env "__up__") name))))
 
+(define (update-name env name val)
+  ;;(pretty-display `(lookup ,env ,name ,val))
+  (if (dict-has-key? env name)
+      (dict-set! env name val)
+      (update-name (dict-ref env "__up__"
+                             (lambda () (raise (format "undefine ~a" name))))
+                   name val)))
+
 (define (update env ast val)
-  (let ([name (get-field name ast)])
-    ;(pretty-display `(lookup ,env ,name ,val))
-    (if (dict-has-key? env name)
-        (dict-set! env name val)
-            (update (dict-ref env "__up__"
-                              (lambda () (send ast not-found-error))) ast val))))
+  (update-name env (get-field name ast) val))
 
 (define (declare env name val)
   ;(pretty-display `(declare ,env ,name ,val))

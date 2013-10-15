@@ -426,13 +426,14 @@
 (define Temp%
   (class Var%
     (super-new)
-    (init-field [link #f] [decl #f])
+    (init-field [link #f] [decl #f] [eqv #f])
     (inherit-field name place-type known-type pos expand expect type compact sub)
     
     (define/override (clone)
       ;; don't copy link & decl
       (new Temp% [name name] [known-type known-type] [place-type place-type] [pos pos]
-           [expand expand] [expect expect] [type type] [compact compact] [sub sub]))
+           [expand expand] [expect expect] [type type] [compact compact] [sub sub]
+           [eqv eqv]))
 
     (define/override (infer-place p)
       (when (and p (at-any? place-type))
@@ -863,6 +864,7 @@
   (class Assign%
     (super-new)
     (inherit-field lhs rhs)
+    (init-field [info #f])
 
     (define/override (clone)
       (new AssignTemp% [lhs (send lhs clone)] [rhs (send rhs clone)]))

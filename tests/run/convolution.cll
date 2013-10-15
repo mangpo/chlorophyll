@@ -1,16 +1,16 @@
 void main() {
-  int[]@{[0:1]=0,[1:2]=1} in[2] = {10 , 6};
-  int[]@{[0:1]=0,[1:2]=1} x[2];
+  int[]@{[0:10]=0,[10:20]=1} in[20] = {7 , 3 , 0 , 3 , 9 , 8 , 1 , 8 , 5 , 1 , 9 , 4 , 0 , 4 , 2 , 0 , 5 , 7 , 6 , 7};
+  int[]@{[0:10]=0,[10:20]=1} x[20];
   int[] kernel[2] = {1,1}; // best to duplicate kernel on every core that has input/output
   
-  for(i from 0 to 1) {
+  for(i from 0 to 19) {
     x[i] = 0;
     for(j from 0 to 2) {
       x[i] = in[i +@place(in[i]) j] *@place(x[i]) kernel[j] +@place(x[i]) x[i];
     }
   }
 
-  for(i from 0 to 1) {
+  for(i from 0 to 19) {
     out(x[i]);
   }
 

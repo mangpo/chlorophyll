@@ -21,7 +21,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -72,18 +72,19 @@
 
     (define (push-stack-temp c x)
       (let* ([place-type (get-field place-type x)]
-	     [temp (get-temp c (if (list? place-type) (length place-type) 1))])
-	(push-workspace c (new Assign% 
-			       [lhs (new Temp% [name temp] [place-type place-type] 
-					 [type (get-field type x)])]
-			       [rhs x]))
+	     [temp (get-temp c (if (list? place-type) (length place-type) 1))]
+             [stmt (new AssignTemp% 
+                        [lhs (new Temp% [name temp] [place-type place-type] 
+                                  [type (get-field type x)])]
+                        [rhs x])])
+	(push-workspace c stmt)
 	(if (and (list? place-type) (> (length place-type) 1))
 	    (for ([i (in-range (length place-type))])
 		 (push-stack c (new Temp% [name temp] [place-type c] 
 				    [sub i] [compact #t]
 				    [type (get-field type x)])))
 	    (push-stack c (new Temp% [name temp] [place-type c]
-			       [type (get-field type x)])))))
+			       [type (get-field type x)] [eqv stmt])))))
 
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
@@ -162,17 +163,19 @@
 		(intermediate (cdr path)))
               (let* ([from (car path)]
 		     [to (cadr path)]
-		     [temp (get-temp to 1)])
+		     [temp (get-temp to 1)]
+                     [stmt (new AssignTemp%
+                                [lhs (new Temp% [name temp] [place-type to]
+                                          [type "int"])]
+                                [rhs (gen-recv to from)])])
                 ;; Need to introduce them here. 
                 ;; Consider: sum1(a@1, sum2(a@1, b@0))
                 ;; at core 2
                 ;; sum2(read(1)); sum1(read(1));
                 ;; notice that the order of reading from 1 is swaped.
-		(push-workspace to (new Assign%
-					[lhs (new Temp% [name temp] [place-type to]
-                                                  [type "int"])]
-					[rhs (gen-recv to from)]))
-                (push-stack to (new Temp% [name temp] [place-type to] [type "int"])))))
+		(push-workspace to stmt)
+                (push-stack to (new Temp% [name temp] [place-type to] [type "int"]
+                                    [eqv stmt])))))
         
         (let ([from (car path)]
               [to (cadr path)])
@@ -554,7 +557,6 @@
                 (set-field! rhs ast (pop-stack place))
                 (push-workspace place ast))
 	      ;; _temp1 = bbb(); tuple type
-              ;; (for ([p (list->set (get-field place-list place))])
 	      (let ([place-list (get-field place-list place)])
 		(for ([p (list->set place-list)])
 		     (let ([occur (count (lambda (x) (= x p)) place-list)])

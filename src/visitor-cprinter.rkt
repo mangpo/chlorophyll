@@ -92,8 +92,11 @@
          (display (format "~a_~a[" (print-name (get-field name ast)) core))
 	 (send (get-field index ast) accept this)
 	 (let ([offset (get-field offset ast)])
-	   (when (> offset 0)
-		 (display (format "-~a" offset))))
+	   (cond
+            [(> offset 0)
+             (display (format "-~a" offset))]
+            [(< offset 0)
+             (display (format "+~a" (- offset)))]))
 	 (display (format "]"))
          ]
       

@@ -1,5 +1,7 @@
 TODO
-0) convolution test
+- test gencode when offset is negative
+- convolution test more
+- clean up visitor-evaluator
 1) gen prefixsum & convolution
 2) optimize convolution
 
