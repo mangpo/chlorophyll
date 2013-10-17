@@ -18,7 +18,7 @@
 (define n-bit 16)
 (define node-offset 10)
 (define block-offset 800)
-(define procs 4)
+(define procs 8)
 (define check-interval 60)
 (define distributed #t)
 

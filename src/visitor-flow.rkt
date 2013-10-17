@@ -9,6 +9,7 @@
 (define flow-generator%
   (class* object% (visitor<%>)
     (super-new)
+    (init-field [functions (make-hash '(("in" . ()) ("out" . ())))])
 
     (define (cross-product-raw x y)
       ;; (pretty-display `(cross-product-raw ,x ,y))
@@ -50,13 +51,15 @@
                   (cross-product (get-field e2 ast) ast)))]
 
        [(is-a? ast FuncCall%)
-        (let ([edges (list)]
-              [func-ast (get-field signature ast)])
-          (for ([param (get-field stmts (get-field args func-ast))] ; signature
-                [arg   (flatten-arg (get-field args ast))]) ; actual
-               (set! edges (append (cross-product param arg) edges))
-               (set! edges (append (send arg accept this) edges)))
-          edges)
+	(define interface
+	  (let ([edges (list)]
+		[func-ast (get-field signature ast)])
+	    (for ([param (get-field stmts (get-field args func-ast))] ; signature
+		  [arg   (flatten-arg (get-field args ast))]) ; actual
+		 (set! edges (append (cross-product param arg) edges))
+		 (set! edges (append (send arg accept this) edges)))
+	    edges))
+	(append interface (hash-ref functions (get-field name ast)))
         ;; TODO + funcdecl here
         ]
 
@@ -109,6 +112,11 @@
        [(is-a? ast Return%)
 	(list)
         ]
+
+       [(is-a? ast Program%)
+	(for ([decl (get-field stmts ast)])
+	     (send decl accept this))
+	(hash-ref functions "main")]
        
        [(is-a? ast Block%)
         (foldl (lambda (stmt edges) (append (send stmt accept this) edges))
@@ -116,7 +124,9 @@
         ]
 
        [(is-a? ast FuncDecl%)
-        (send (get-field body ast) accept this)]
+        (hash-set! functions (get-field name ast)
+		   (send (get-field body ast) accept this))
+	]
 
        [(or (is-a? ast Num%)
             (is-a? ast Var%)
