@@ -35,12 +35,12 @@
 ;                     256 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/swap.cll" "swap" 
 ;                      256 "null" #:w 8 #:h 8 #:opt #f)
-(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
-                      512 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
+;                      512 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/convolution.cll" "convolution" 
 ;                      5000 "null" #:w 4 #:h 4 #:opt #f)
-;(compile-and-optimize "../tests/run/convolution2.cll" "convolution2" 
-;                      512 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../tests/run/convolution2.cll" "convolution2" 
+                      512 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/convolution3.cll" "convolution3" 
 ;                      512 "null" #:w 8 #:h 8 #:opt #f)
 

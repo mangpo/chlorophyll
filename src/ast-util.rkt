@@ -71,6 +71,21 @@
           ;; if one of them is @any
           (or (at-any? a) (at-any? b) (at-io? a) (at-io? b)))))
 
+(define (unique-place ast)
+  (define-syntax-rule (unique a ...)
+    (let ([x (get-field place-type ast)])
+      (and (number? x) 
+	   (equal? x (unique-place (get-field a ast))) ... 
+	   x)))
+
+  (cond
+   [(is-a? ast Array%) (unique index)]
+   [(or (is-a? ast Num%) (is-a? ast Var%)) (unique)]
+   [(is-a? ast UnaExp%) (unique e1)]
+   [(is-a? ast BinExp%) (unique e1 e2)]
+   [else #f]))
+   
+
 (define (lookup-name env name)
   (dict-ref env name
             (lambda () (lookup-name (dict-ref env "__up__" 

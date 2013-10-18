@@ -81,11 +81,14 @@
   (send ast accept commcode-inserter)
   (when verbose
         (pretty-display "--- after insert communication ---")
-        (send ast pretty-print))
+        (send ast pretty-print)
+	(pretty-display "--- before dividing ---")
+	)
 
   (define divider (new ast-divider% [w w] [h h]))
   (define programs (send ast accept divider))
   (when verbose (pretty-display "--- after dividing ---"))
+
   (print-to-file programs "_temp")
   
   (define temp-remover (new temp-remover%))
@@ -95,6 +98,7 @@
        (send (vector-ref programs i) accept loop-optimizer))
 
   (when verbose (pretty-display "--- after removing temp & optimizing loop ---"))
+  
   (print-to-file programs)
   
   programs

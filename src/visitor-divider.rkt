@@ -313,26 +313,33 @@
         ]
 
        [(is-a? ast Array%)
-	(define my-lhs is-lhs)
-	(set! is-lhs #f)
-	(set! is-index #t)
-	(send (get-field index ast) accept this)
-	(set! is-index #f)
-	(set! is-lhs my-lhs)
-
-        (when debug
-              (pretty-display (format "\nDIVIDE: Array ~a (known=~a)\n" 
-                                      (send ast to-string) 
-                                      (get-field known-type ast))))
 	;; have yet supported clustered array
 	(when (get-field cluster ast)
 		(raise "We only support non-clustered array for now. Sorry!"))
 
-	(let ([place (get-field place-type ast)])
+	(define place (get-field place-type ast))
+	(unless (unique-place ast)
+	  (define my-lhs is-lhs)
+	  (set! is-lhs #f)
+	  (set! is-index #t)
+	  (send (get-field index ast) accept this)
+	  (set! is-index #f)
+	  (set! is-lhs my-lhs)
 	  (set-field! index ast (pop-stack place))
-	  (unless is-lhs
-		  (push-stack-temp place ast))
-	  (gen-comm))]
+	  )
+
+        (when debug
+              (pretty-display (format "\nDIVIDE: Array ~a (place@~a) (index@~a) (unique@~a)\n" 
+                                      (send ast to-string) 
+                                      (get-field place-type ast) 
+				      (get-field place-type (get-field index ast))
+				      (unique-place ast)))
+	      )
+				      
+
+        (unless is-lhs
+		(push-stack-temp place ast))
+	(gen-comm)]
 
        [(is-a? ast Var%)
         (define place (get-field place-type ast))
@@ -381,27 +388,34 @@
         (gen-comm)]
 
        [(is-a? ast BinExp%)
+	(define place (get-field place-type ast))
 	(set! is-index #f)
-        (send (get-field e1 ast) accept this)
-        (send (get-field e2 ast) accept this)
-        (let ([place (get-field place-type ast)])
-	  (when debug 
-                (pretty-display (format "\nDIVIDE: BinExp ~a\n" (send ast to-string))))
-          ;; pop in the reverse order
-          (set-field! e2 ast (pop-stack place))
-          (set-field! e1 ast (pop-stack place))
-          (push-stack-temp place ast)
-          (gen-comm))]
+	
+	(unless (unique-place ast)
+		(send (get-field e1 ast) accept this)
+		(send (get-field e2 ast) accept this)
+		;; pop in the reverse order
+		(set-field! e2 ast (pop-stack place))
+		(set-field! e1 ast (pop-stack place)))
+	
+	(when debug 
+	      (pretty-display (format "\nDIVIDE: BinExp ~a\n" (send ast to-string))))
+
+	(push-stack-temp place ast)
+	(gen-comm)]
        
        [(is-a? ast UnaExp%)
+	(define place (get-field place-type ast))
 	(set! is-index #f)
-        (send (get-field e1 ast) accept this)
-        (let ([place (get-field place-type ast)])
-	  (when debug 
-                (pretty-display (format "\nDIVIDE: UnaExp ~a\n" (send ast to-string))))
-          (set-field! e1 ast (pop-stack place))
-          (push-stack-temp place ast)
-          (gen-comm))]
+	
+	(unless (unique-place ast)
+		(send (get-field e1 ast) accept this)
+		(set-field! e1 ast (pop-stack place)))
+	
+	(when debug 
+	      (pretty-display (format "\nDIVIDE: UnaExp ~a\n" (send ast to-string))))
+	(push-stack-temp place ast)
+	(gen-comm)]
 
        [(is-a? ast FuncCall%)
 	(set! is-index #f)
@@ -553,7 +567,6 @@
           (if (number? place)
               (begin
 		;; pop left before right
-                ;; (set-field! lhs ast (pop-stack place))
                 (set-field! rhs ast (pop-stack place))
                 (push-workspace place ast))
 	      ;; _temp1 = bbb(); tuple type
