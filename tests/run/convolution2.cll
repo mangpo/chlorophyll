@@ -1,0 +1,52 @@
+void main() {
+  int[]@{[0:14]=0} inp0[14] = {7 , 5 , 2 , 3 , 7 , 0 , 4 , 2 , 8 , 7,0,0,0,0};
+  int[]@{[0:14]=1} inp1[14] = {6 , 1 , 4 , 9 , 8 , 5 , 5 , 0 , 3 , 3,0,0,0,0};
+  int[]@{[0:10]=2} inp2[10] = {5 , 4 , 1 , 3 , 1 , 0 , 1 , 0 , 9 , 4};
+
+  int[]@{[0:10]=20,[10:20]=21,[20:30]=22} x[30];
+  int@20 sum0;
+  int@21 sum1;
+  int@22 sum2;
+
+  int[]@{[0:5]=10} kernel0[5] = {1,1,1,1,1};
+  int[]@{[0:5]=11} kernel1[5];
+  int[]@{[0:5]=12} kernel2[5];
+
+  for(i from 0 to 5) {
+    kernel1[i] = kernel0[i];
+    kernel2[i] = kernel1[i];
+  }
+
+  for(i from 0 to 4) {
+    inp0[i+10] = inp1[i];
+    inp1[i+10] = inp2[i];
+  }
+
+  for(i from 0 to 10) {
+    sum0 = 0;
+    for(j from 0 to 5) {
+      sum0 = sum0 +@place(sum0) inp0[i +@place(sum0) j] *@place(sum0) kernel0[j];
+    }
+    x[i] = sum0;
+  }
+
+  for(i from 0 to 10) {
+    sum1 = 0;
+    for(j from 0 to 5) {
+      sum1 = sum1 +@place(sum1) inp1[i +@place(sum1) j] *@place(sum1) kernel1[j];
+    }
+    x[i + 10] = sum1;
+  }
+
+  for(i from 0 to 6) {
+    sum2 = 0;
+    for(j from 0 to 5) {
+      sum2 = sum2 +@place(sum2) inp2[i +@place(sum2) j] *@place(sum2) kernel2[j];
+    }
+    x[i + 20] = sum2;
+  }
+
+  for(i from 0 to 26) {
+    out(x[i]);
+  }
+}

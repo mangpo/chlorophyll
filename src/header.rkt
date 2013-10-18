@@ -22,7 +22,7 @@
 (define procs 8)
 (define check-interval 60)
 (define distributed #t)
-(define max-unroll 4)
+(define max-unroll 20)
 
 (define outdir "/home/mangpo/work/greensyn/output")
 (define outdir-rel "../output")

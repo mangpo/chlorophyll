@@ -13,14 +13,15 @@
          "arrayforth-optimize.rkt"
          "arrayforth-print.rkt"
          "visitor-arrayaccess.rkt"
+         "visitor-codegen.rkt"
          "visitor-desugar.rkt"
-         "visitor-printer.rkt"
          "visitor-linker.rkt" 
+         "visitor-loopopt.rkt"
+         "visitor-memory.rkt"
+         "visitor-printer.rkt"
          "visitor-tempinsert.rkt" 
          "visitor-tempinsert2.rkt" 
-         "visitor-desugar.rkt"
-         "visitor-memory.rkt"
-         "visitor-codegen.rkt")
+         )
 
 (provide compile test-simulate parse compile-to-IR compile-and-optimize)
 
@@ -44,7 +45,7 @@
 ;; Compile IR to machine code.
 (define (generate-code program i w h virtual)
   (pretty-display `(-------------------- ,i -----------------------))
-  (pretty-display program)
+  (send program pretty-print)
 
   ;; mark forloop and array for optimization
   (pretty-display ">>> arrayaccess")

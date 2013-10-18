@@ -1,13 +1,10 @@
 TODO
 - convolution2: optimize x[i+10]
-- prefixsum: remove loop that iterate only 1 time
-- gencode convolution
-- optimize prefixsum & convolution
+- superoptimize prefixsum & convolution (larger)
 - no constraint on mem for short functions
 
-3) runtime & energy: ssd, swap, md4
-4) MSP, snapdragon?
-5) more benchmarks with new unroll synth
+- runtime & energy: ssd, swap, md4
+- more benchmarks: disparity, integer square root, fibonacci, hearing aid
 
 benchmarks: ssd_simple, ssd_small, bit hack
 

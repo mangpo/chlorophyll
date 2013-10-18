@@ -4,6 +4,8 @@
 
 (provide (all-defined-out))
 
+;; 1) Adjust offset (not an optmization)
+;; 2) Elimiate offset when possible (an optimization)
 (define offset-modifier%
   (class* object% (visitor<%>)
     (super-new)

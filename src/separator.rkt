@@ -4,6 +4,7 @@
          "visitor-comminsert.rkt" 
          "visitor-unroll.rkt" 
          "visitor-divider.rkt" 
+         "visitor-loopopt.rkt"
          "visitor-printer.rkt"
 	 "visitor-tempremove.rkt"
          "visitor-cprinter.rkt")
@@ -88,10 +89,12 @@
   (print-to-file programs "_temp")
   
   (define temp-remover (new temp-remover%))
+  (define loop-optimizer (new loop-optimizer%))
   (for ([i (in-range n)])
-       (send (vector-ref programs i) accept temp-remover))
+       (send (vector-ref programs i) accept temp-remover)
+       (send (vector-ref programs i) accept loop-optimizer))
 
-  (when verbose (pretty-display "--- after removing temp ---"))
+  (when verbose (pretty-display "--- after removing temp & optimizing loop ---"))
   (print-to-file programs)
   
   programs

@@ -10,9 +10,9 @@ void main() {
     }
   }
 
-  /*for(i from 0 to 16) {
+  for(i from 0 to 26) {
     out(x[i]);
-  }*/
+  }
 
   // more efficient
   /*
