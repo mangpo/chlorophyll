@@ -5,9 +5,10 @@
          "visitor-interface.rkt" 
          "visitor-expr-interpreter.rkt")
 
+(require rosette/solver/kodkod/kodkod)
+(require rosette/solver/z3/z3)
+
 (provide (all-defined-out))
-
-
 
 (define (get-place place-type var from to)
   ;; (pretty-display (format "GET-PLACE: ~a ~a [~a , ~a]" 
@@ -143,7 +144,7 @@
         (send body accept this)
 
         (when debug (pretty-display (format "UNROLL: For ~a (2)" (send iter to-string))))
-        (define ranges (construct-ranges from to 8))
+        (define ranges (construct-ranges from to 16))
         (when debug (pretty-display `(ranges ,ranges)))
         (define new-list
           (for*/list ([range ranges]
@@ -190,6 +191,9 @@
 
        [(is-a? ast Program%)
                   
+	(current-solver (new kodkod%))
+	(configure [bitwidth 32])
+
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
         (define n-ranges 0)
@@ -220,8 +224,12 @@
                  (set-field! unroll x filtered))))
                              ;(and (> (length filtered) 1) filtered)))))
         
-        (with-handlers* ([exn:fail? evaluate-unroll])
-                        (loop))
+	(define t (current-seconds))
+	(with-handlers* ([exn:fail? evaluate-unroll])
+			(loop))
+
+	(clear-asserts)
+	(pretty-display (format "Loopbound Synthesis time = ~a" (- (current-seconds) t)))
         ]
 
        [(is-a? ast Block%)

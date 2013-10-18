@@ -31,7 +31,12 @@
 ;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)
 
-(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
-                     256 "null" #:w 8 #:h 8 #:opt #t)
+;(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
+;                     256 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/swap.cll" "swap" 
 ;                      256 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
+;                      512 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../tests/run/convolution.cll" "convolution" 
+                      5000 "null" #:w 4 #:h 4 #:opt #f)
+

@@ -7,7 +7,7 @@
 
 (provide define-repeating-code define-repeating-codes aforth-linklist list->linklist)
 
-(define debug #f)
+(define debug #t)
 
 (define (list->linklist lst)
   (define (copy x)
@@ -467,7 +467,7 @@
   (define subseqs (sort-subsequence seqs min-len max-len 
                                     (add1 (quotient (* 4 occur) (sub1 occur)))))
   
-  (when debug (pretty-display subseqs))
+  ;;(when debug (pretty-display subseqs))
   
   (for ([subseq subseqs])
        (let* ([str (string-join subseq)]
@@ -475,6 +475,8 @@
               [exp (regexp reformatted)]
               [matcher (new sequence-matcher% [exp exp])]
               [locations (send matcher visit linklist-program)])
+	 (when debug
+	       (pretty-display (format "SEQ: ~a  OCCUR: ~a" str (length locations))))
          (when (>= (length locations) occur)
 	       ;; if repeat more then a certain number
                (when debug (pretty-display (format "STRING: ~a" reformatted)))
@@ -528,7 +530,8 @@
 	(extract-all-sequence linklist-program 6 2)
 
         ;; TODO: if the code doesn't fit in, do this
-	;(extract-all-sequence linklist-program 3 4)
+        (when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
+	(extract-all-sequence linklist-program 3 4)
 
 	(reorder-definition linklist-program)
         ;(send (new block-merger%) visit linklist-program)

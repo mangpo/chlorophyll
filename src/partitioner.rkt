@@ -30,10 +30,6 @@
                         #:capacity [capacity 256] 
                         #:max-msgs [max-msgs #f]
                         #:verbose [verbose #f])
-  ;(current-solver (new z3%))
-  ;(current-solver (new kodkod%))
-  (current-solver (new kodkod-incremental%))
-  (configure [bitwidth 32])
   
   ;; Define printer
   (define concise-printer (new printer% [out #t]))
@@ -75,6 +71,11 @@
     )
   ;;(raise "DONE")
 
+  (current-solver (new kodkod-incremental%))
+  ;(current-solver (new z3%))
+  ;(current-solver (new kodkod%))
+
+  (configure [bitwidth 32])
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))

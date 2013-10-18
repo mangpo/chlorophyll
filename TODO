@@ -1,6 +1,9 @@
 TODO
-1) codegen prefixsum & convolution
-2) optimize convolution
+- test-mine
+- remove loop that iterate only 1 time
+- gencode convolution
+- optimize prefixsum & convolution
+- no constraint on mem for short functions
 
 3) runtime & energy: ssd, swap, md4
 4) MSP, snapdragon?

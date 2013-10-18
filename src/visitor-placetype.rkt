@@ -44,6 +44,8 @@
         [(at-io? place-exp)
          (when debug (pretty-display `(at-io)))
          place-exp]
+	[(at-any? place-exp)
+	 place-exp]
         [(is-a? place-exp Place%)
          (when debug (pretty-display `(place%)))
          (let ([place (derive-place (get-field at place-exp))])
