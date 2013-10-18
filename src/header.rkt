@@ -16,11 +16,13 @@
 
 (define max-bit 18)
 (define n-bit 16)
+
 (define node-offset 10)
 (define block-offset 800)
 (define procs 8)
 (define check-interval 60)
 (define distributed #t)
+(define max-unroll 4)
 
 (define outdir "/home/mangpo/work/greensyn/output")
 (define outdir-rel "../output")

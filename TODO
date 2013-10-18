@@ -1,6 +1,6 @@
 TODO
-- test-mine
-- remove loop that iterate only 1 time
+- convolution2: optimize x[i+10]
+- prefixsum: remove loop that iterate only 1 time
 - gencode convolution
 - optimize prefixsum & convolution
 - no constraint on mem for short functions

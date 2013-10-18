@@ -144,7 +144,7 @@
         (send body accept this)
 
         (when debug (pretty-display (format "UNROLL: For ~a (2)" (send iter to-string))))
-        (define ranges (construct-ranges from to 16))
+        (define ranges (construct-ranges from to max-unroll))
         (when debug (pretty-display `(ranges ,ranges)))
         (define new-list
           (for*/list ([range ranges]
@@ -191,7 +191,7 @@
 
        [(is-a? ast Program%)
                   
-	(current-solver (new kodkod%))
+	(current-solver (new kodkod-incremental%))
 	(configure [bitwidth 32])
 
         (for ([stmt (get-field stmts ast)])

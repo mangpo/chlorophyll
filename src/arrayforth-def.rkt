@@ -5,9 +5,9 @@
          "arrayforth-print.rkt"
          "arrayforth-miner.rkt")
 
-(provide define-repeating-code define-repeating-codes aforth-linklist list->linklist)
+(provide define-repeating-code define-repeating-codes aforth-linklist)
 
-(define debug #t)
+(define debug #f)
 
 (define (list->linklist lst)
   (define (copy x)
@@ -44,15 +44,15 @@
       (raise "Invalid linklist: no head.")
       (inner (linklist-next lst))))
 
-(define (aforth-linklist ast proc)
+(define (aforth-linklist ast)
   (cond
    [(list? ast)
-    (proc (for/list ([x ast]) (aforth-linklist x proc)))]
+    (list->linklist (for/list ([x ast]) (aforth-linklist x)))]
 
    ;; [(linklist? ast)
    ;;  (define (inner lst)
    ;;    (if (linklist-entry lst)
-   ;;        (cons (aforth-linklist (linklist-entry lst) proc) 
+   ;;        (cons (aforth-linklist (linklist-entry lst)) 
    ;;      	(inner (linklist-next lst)))
    ;;        (if (linklist-next lst)
    ;;            (raise "Invalid linklist: inproper tail.")
@@ -64,33 +64,36 @@
    ;;  ]
 
    [(forloop? ast)
-    (forloop (forloop-init ast) 
-	     (aforth-linklist (forloop-body ast) proc)
+    (define init (forloop-init ast))
+    (forloop (if (list? init)
+                 (list->linklist init)
+                 (list->linklist (list init)))
+	     (aforth-linklist (forloop-body ast))
 	     (forloop-iter ast)
 	     (forloop-from ast)
 	     (forloop-to ast))]
 
    [(ift? ast)
-    (ift (aforth-linklist (ift-t ast) proc))]
+    (ift (aforth-linklist (ift-t ast)))]
 
    [(iftf? ast)
-    (iftf (aforth-linklist (iftf-t ast) proc)
-          (aforth-linklist (iftf-f ast) proc))]
+    (iftf (aforth-linklist (iftf-t ast))
+          (aforth-linklist (iftf-f ast)))]
 
    [(-ift? ast)
-    (-ift (aforth-linklist (-ift-t ast) proc))]
+    (-ift (aforth-linklist (-ift-t ast)))]
 
    [(-iftf? ast)
-    (-iftf (aforth-linklist (-iftf-t ast) proc)
-           (aforth-linklist (-iftf-f ast) proc))]
+    (-iftf (aforth-linklist (-iftf-t ast))
+           (aforth-linklist (-iftf-f ast)))]
 
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
-              (aforth-linklist (funcdecl-body ast) proc))
+              (aforth-linklist (funcdecl-body ast)))
     ]
 
    [(aforth? ast)
-    (aforth (aforth-linklist (aforth-code ast) proc)
+    (aforth (aforth-linklist (aforth-code ast))
 	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast))]
 
    [else ast]))
@@ -523,7 +526,7 @@
 
 (define (define-repeating-code program)
   (if (and program (aforth-code program))
-      (let ([linklist-program (aforth-linklist program list->linklist)])
+      (let ([linklist-program (aforth-linklist program)])
         (when debug (pretty-display ">>> EXTRACT-STRUCTURES"))
 	(extract-all-structure linklist-program)
         (when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
@@ -535,10 +538,6 @@
 
 	(reorder-definition linklist-program)
         ;(send (new block-merger%) visit linklist-program)
-        
-        ;(define result (aforth-linklist linklist-program linklist->list))
-        ;(aforth-struct-print result)
-	;result
         linklist-program
 	)
       program)

@@ -259,7 +259,7 @@
 
    [(aforth? ast)
     ;(pretty-display "superoptimize: aforth")
-    (set! ast (aforth-linklist ast list->linklist))
+    (set! ast (aforth-linklist ast))
     (set! bit (if (< (aforth-bit ast) 9) 9 (aforth-bit ast)))
     (set! mem-size (aforth-memsize ast))
     (set! index-map (aforth-indexmap ast))
@@ -308,7 +308,7 @@
          ;; set id for printing
          (set! id i)
 
-         (let* ([program (aforth-linklist (vector-ref ast i) list->linklist)]
+         (let* ([program (aforth-linklist (vector-ref ast i))]
                 [result (superoptimize-inner program)])
            (vector-set! output-programs i result)))
     

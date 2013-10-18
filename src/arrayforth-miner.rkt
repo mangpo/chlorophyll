@@ -180,7 +180,7 @@
 
     (define/public (visit ast)
       (define (add-to-result insts)
-        (define str (string-join insts))
+        (define str  (string-join insts))
         (define len (string-length str))
 	(define matches (regexp-match-positions* exp str))
 	

@@ -255,7 +255,7 @@
 
 ))
 (set! program (define-repeating-codes program 1 1))
-;(aforth-struct-print program)
 (aforth-syntax-print program 1 1)
+;(aforth-struct-print program)
 ;(define real-opts (superoptimize program "test" 1 1))
 ;(aforth-syntax-print real-opts 1 1)
