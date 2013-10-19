@@ -19,9 +19,9 @@
 
 (define node-offset 10)
 (define block-offset 800)
-(define procs 8)
+(define procs 4)
 (define check-interval 60)
-(define distributed #t)
+(define distributed #f)
 (define max-unroll 20)
 
 (define outdir "/home/mangpo/work/greensyn/output")

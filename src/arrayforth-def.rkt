@@ -358,8 +358,12 @@
           (pretty-display "ll:")
           (aforth-struct-print (linklist-entry ll)))
     ;; (pretty-display `(org ,org))
-    (let* ([insts (substring code 0 index)]
-           [fst-org (substring org 0 index)]
+    (let* ([n (length (string-split (substring code 0 index)))]
+           [code-list (string-split code)]
+           [org-list (string-split org)]
+
+           [insts (string-join (take code-list n))]
+           [fst-org (string-join (take org-list n))]
            [inout (estimate-inout insts)]
            [a     (estimate-a insts)]
            [b     (estimate-b insts)]
@@ -368,8 +372,9 @@
 	   [mem   (restrict-mem (block-cnstr entry))]
 	   [org-a (restrict-a (block-cnstr entry))]
 	   [org-r (restrict-r (block-cnstr entry))]
-           [snd-insts (substring code index)]
-           [snd-org (substring org index)]
+
+           [snd-insts (string-join (drop code-list n))]
+           [snd-org   (string-join (drop org-list n))]
            [snd-inout (estimate-inout snd-insts)]
            [snd-a     (estimate-a snd-insts)]
            [snd-b     (estimate-b snd-insts)]
@@ -546,7 +551,7 @@
 (define (define-repeating-codes programs w h)
   (define res (make-vector (* w h)))
   (for ([i (in-range (* w h))])
-       (pretty-display (format "define-repeating ~a" i))
+       (pretty-display (format "--------------- define-repeating ~a ------------------" i))
        (vector-set! res i (define-repeating-code (vector-ref programs i))))
   res)
 
