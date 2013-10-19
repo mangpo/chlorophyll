@@ -211,6 +211,9 @@
                                (lambda ()
                                  (aforth-syntax-print real-opts w h)))))
     (pretty-display (format "optimizing time: ~a s" (- (current-seconds) start)))
+    (with-output-to-file #:exists 'truncate (format "~a/~a.time" outdir name)
+      (lambda ()
+        (pretty-display (format "optimizing time: ~a s" (- (current-seconds) start)))))
     )
   
   )
