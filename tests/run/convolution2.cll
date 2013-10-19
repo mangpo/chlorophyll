@@ -1,25 +1,36 @@
 void main() {
   int[]@{[0:14]=0} inp0[14] = {7 , 5 , 2 , 3 , 7 , 0 , 4 , 2 , 8 , 7,0,0,0,0};
   int[]@{[0:14]=1} inp1[14] = {6 , 1 , 4 , 9 , 8 , 5 , 5 , 0 , 3 , 3,0,0,0,0};
-  int[]@{[0:10]=2} inp2[10] = {5 , 4 , 1 , 3 , 1 , 0 , 1 , 0 , 9 , 4};
+  int[]@{[0:14]=2} inp2[14] = {5 , 4 , 1 , 3 , 1 , 0 , 1 , 0 , 9 , 4,0,0,0,0};
+  int[]@{[0:14]=3} inp3[14] = {5 , 1 , 3 , 6 , 9 , 5 , 9 , 8 , 2 , 9, 10 , 2 , 8 , 8};
 
-  int[]@{[0:10]=20,[10:20]=21,[20:30]=22} x[30];
+  int[]@{[0:10]=20,[10:20]=21,[20:30]=22,[30:40]=23} x[40];
   int@10 sum0;
   int@11 sum1;
   int@12 sum2;
+  int@13 sum3;
 
   int[]@{[0:5]=10} kernel0[5] = {1,1,1,1,1};
-  int[]@{[0:5]=11} kernel1[5];
-  int[]@{[0:5]=12} kernel2[5];
+  int[]@{[0:5]=11} kernel1[5] = {1,1,1,1,1};
+  int[]@{[0:5]=12} kernel2[5] = {1,1,1,1,1};
+  int[]@{[0:5]=13} kernel3[5] = {1,1,1,1,1};
 
-  for(i from 0 to 5) {
-    kernel1[i] = kernel0[i];
-    kernel2[i] = kernel1[i];
+  /*for(i from 0 to 10) {
+    inp0[i] = in();
+    inp1[i] = in();
+    inp2[i] = in();
+    inp3[i] = in();
   }
+
+  for(i from 10 to 14) {
+    inp3[i] = in();
+  }*/
+  inp0[0] = in();
 
   for(i from 0 to 4) {
     inp0[i+10] = inp1[i];
     inp1[i+10] = inp2[i];
+    inp2[i+10] = inp3[i];
   }
 
   for(i from 0 to 10) {
@@ -35,18 +46,28 @@ void main() {
     for(j from 0 to 5) {
       sum1 = sum1 +@place(sum1) inp1[i +@any j] *@place(sum1) kernel1[j];
     }
-    x[i + 10] = sum1;
+    x[i +@any 10] = sum1;
   }
 
-  for(i from 0 to 6) {
+  for(i from 0 to 10) {
     sum2 = 0;
     for(j from 0 to 5) {
       sum2 = sum2 +@place(sum2) inp2[i +@any j] *@place(sum2) kernel2[j];
     }
-    x[i + 20] = sum2;
+    x[i +@any 20] = sum2;
   }
 
-  /*for(i from 0 to 26) {
+  for(i from 0 to 10) {
+    sum3 = 0;
+    for(j from 0 to 5) {
+      sum3 = sum3 +@place(sum3) inp3[i +@any j] *@place(sum3) kernel3[j];
+    }
+    x[i +@any 30] = sum3;
+  }
+
+  out(x[30]);
+
+  /*for(i from 0 to 40) {
     out(x[i]);
   }*/
 }

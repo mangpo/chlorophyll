@@ -1,5 +1,4 @@
 TODO
-- convolution2: optimize x[i+10]
 - superoptimize prefixsum & convolution (larger)
 - no constraint on mem for short functions
 

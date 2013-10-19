@@ -8,7 +8,7 @@
   (set! result (cons 
                 (cons name (test-simulate name input capacity w h))
                 result)))
-
+#|
 (test "array" "10" 256)
 (test "simple" "null" 256)
 
@@ -32,9 +32,10 @@
 (test "md5" "null" 1024 #:w 10 #:h 5)
 (test "ssd_simple" "null" 512 #:w 8 #:h 5)
 (test "swap" "null" 512 #:w 8 #:h 8)
-(test "prefixsum" "null" 512 #:w 8 #:h 8)
-;(test "convolution" "null" 5000 #:w 4 #:h 4)
+(test "prefixsum" "null" 512 #:w 8 #:h 8)|#
+;(test "convolution" "null" 10000 #:w 4 #:h 4)
 ;(test "convolution2" "null" 512 #:w 8 #:h 8)
+(test "fir" "1" 1000 #:w 3 #:h 3)
 
 (for ([res (reverse result)])
   (pretty-display res))
