@@ -1,4 +1,5 @@
 TODO
+- md5: after more accurate flow graph, after more opt
 - no constraint on mem for short functions
 
 - runtime & energy: ssd, swap, md4

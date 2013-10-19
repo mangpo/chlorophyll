@@ -1,0 +1,29 @@
+void main() {
+  int[]@{[0:8]=0} filter0[8] = {1,8,7,6,5,4,3,2};
+  int[]@{[0:8]=1} filter1[8] = {9,16,15,14,13,12,11,10};
+  int[]@{[0:8]=0} x0[8] = {0 , 0 , 0 , 0 , 0 , 0 , 0 , 0};
+  int[]@{[0:8]=1} x1[8] =  {0 , 0 , 0 , 0 , 0 , 0 , 0 , 0};
+  int@0 sum0, b0;
+  int@1 sum1, b1;
+  int@15 offset; // offset 0
+  
+  b0 = offset;
+  b1 = offset;
+  x1[b1] = x0[b0];
+  x0[b0] = in();
+  sum0 = 0;
+  sum1 = 0;
+  
+  for(i from 0 to 8) {
+    sum0 = sum0 +@0 filter0[i] *@0 x0[b0];
+    b0 = (b0 +@0 1) &@0 7;
+  }
+
+  for(i from 0 to 8) {
+    sum1 = sum1 +@1 filter1[i] *@1 x1[b1];
+    b1 = (b1 +@1 1) &@1 7;
+  }
+
+  offset = (offset +@place(offset) 1) &@place(offset) 7;
+  out(sum0 +@1 sum1);
+}

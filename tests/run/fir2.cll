@@ -1,0 +1,18 @@
+void main() {
+  int[]@{[0:16]=0} filter[16] = {1,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2};
+  int[]@{[0:16]=0} x[16] = {0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0};
+  int@0 bbb;
+  int@1 sum, offset; // offset 0
+  
+  bbb = offset;
+  x[bbb] = in();
+  sum = 0;
+  
+  for(i from 0 to 16) {
+    sum = sum +@1 filter[i] *@0 x[bbb];
+    bbb = (bbb +@0 1) &@0 15;
+  }
+
+  offset = (offset +@1 1) &@1 15;
+  out(sum);
+}
