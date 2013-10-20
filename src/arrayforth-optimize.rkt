@@ -18,7 +18,7 @@
                [a (restrict-a cnstr)]
                [b (restrict-b cnstr)]
                [r #t]
-               [return (if (restrict-r cnstr) 2 1)]
+               [return (if (restrict-r cnstr) 2 2)]
                ))
 
 (define (in-constraint data inst)
@@ -129,7 +129,7 @@
       ;; if getting result => return the optimized block
       (define (optimize-loop len)
         (define-values (next block-noopt) 
-          (collect-code ast (new-block (list) 0 0 (restrict #f #f #f #f) (list)) len))
+          (collect-code ast (new-block (list) 0 0 (restrict #t #f #f #f) (list)) len))
         
         (define out (block-out block-noopt))
         (define body (block-body block-noopt))

@@ -113,12 +113,18 @@
   (format "~arep" count))
 
 (define (insert-definition from to program new-name)
+  (define (constrain-mem l)
+    (when (block? (linklist-entry l))
+          (set-restrict-mem! (block-cnstr (linklist-entry l)) #t))
+    (when (linklist-next l)
+          (constrain-mem (linklist-next l))))
   
   ;; set head for from
   (define head (linklist #f #f from))
   (set-linklist-prev! from head)
   ;; set tail for to
   (set-linklist-next! to (linklist to #f #f))
+  (constrain-mem from)
   
   #|(pretty-display "FROM!!!!!")
   (pretty-display (send to-string visit (linklist-entry from)))
@@ -538,8 +544,8 @@
 	(extract-all-sequence linklist-program 6 2)
 
         ;; TODO: if the code doesn't fit in, do this
-        (when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
-	(extract-all-sequence linklist-program 3 4)
+        ;(when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
+	;(extract-all-sequence linklist-program 3 4)
 
 	(reorder-definition linklist-program)
         ;(send (new block-merger%) visit linklist-program)

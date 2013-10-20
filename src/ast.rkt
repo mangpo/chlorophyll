@@ -664,8 +664,8 @@
       (new VarDecl% [var-list var-list] [type type] [known known] [place place]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(VARDECL ~a ~a @~a (known=~a))" 
-                              indent type var-list place known))
+      (pretty-display (format "~a(VARDECL ~a ~a @~a (address=~a))" 
+                              indent type var-list place address))
       (print-send-path indent))
 
     (define/public (partition-mismatch)
@@ -1073,7 +1073,7 @@
 (define FuncDecl%
   (class Scope%
     (super-new)
-    (init-field name args body return [temps (list)])
+    (init-field name args body return [temps (list)] [regs 0])
     (inherit-field pos body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%

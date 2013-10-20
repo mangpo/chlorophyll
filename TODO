@@ -1,6 +1,10 @@
 TODO
+- prohibit rep with push and pop
+- regalloc is not doing the right thing.
+  1) can't use rstack, use dstack instead
+  2) only some variables are valid to store in dstack
 - md5: after more accurate flow graph, after more opt
-- no constraint on mem for short functions
+- kill z3
 
 - runtime & energy: ssd, swap, md4
 - more benchmarks: disparity, integer square root, fibonacci, hearing aid

@@ -4,6 +4,12 @@
 
 (provide (all-defined-out))
 
+(define (need-mem? name)
+  (not (or (regexp-match #rx"_temp" name)
+           (regexp-match #rx"_dummy" name)
+           (regexp-match #rx"_cond" name)
+           (regexp-match #rx"#return" name))))
+
 (define memory-mapper%
   (class* object% (visitor<%>)
     (super-new)
@@ -39,11 +45,6 @@
       ;; #f indicates that this is temp
       (meminfo p p #f))
 
-    (define (need-mem? name)
-      (not (or (regexp-match #rx"_temp" name)
-	       (regexp-match #rx"_dummy" name)
-	       (regexp-match #rx"_cond" name)
-	       (regexp-match #rx"#return" name))))
 
     (define (need-temp-mem? name)
       (regexp-match #rx"_temp" name))
@@ -53,13 +54,19 @@
        [(is-a? ast VarDecl%)
         (when debug 
               (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast))))
+        (define reg-for (get-field address ast))
 	(for ([var (get-field var-list ast)])
              (cond 
+              [(equal? var reg-for)
+               (dict-set! mem-map var 'r)
+               (set-field! address ast 'r)]
+
               [(need-mem? var)
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
                (set-field! address ast (gen-mem mem-p mem-rp))
                (set! mem-p (add1 mem-p))
                (set! mem-rp (add1 mem-rp))]
+
               [(need-temp-mem? var)
                (define type (get-field type ast))
                (if (pair? type)

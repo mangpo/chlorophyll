@@ -19,6 +19,7 @@
          "visitor-loopopt.rkt"
          "visitor-memory.rkt"
          "visitor-printer.rkt"
+         "visitor-regalloc.rkt"
          "visitor-tempinsert.rkt" 
          "visitor-tempinsert2.rkt" 
          )
@@ -50,6 +51,10 @@
   ;; mark forloop and array for optimization
   (pretty-display ">>> arrayaccess")
   (send program accept (new arrayaccess%))
+
+  ;; registor allocatoin (optional)
+  (pretty-display ">>> arrayaccess")
+  (send program accept (new registor-allocator%))
   
   (pretty-display ">>> memory-mapper")
   (let* ([data-iter (send program accept (new memory-mapper%))]

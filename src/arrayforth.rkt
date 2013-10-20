@@ -20,7 +20,7 @@
 (struct linklist (prev entry next) #:mutable)
 
 (define ga-bit 1)
-(define block-limit 12)
+(define block-limit 13)
 (define reduce-limit 5)
 
 (define-syntax new-block
@@ -134,7 +134,7 @@
   
   (define a-cnstr (block-cnstr a-block))
   (define b-cnstr (block-cnstr b-block))
-  (set-block-cnstr! a-block (restrict (or (restrict-mem a-cnstr) (restrict-mem b-cnstr))
+  (set-block-cnstr! a-block (restrict (and (restrict-mem a-cnstr) (restrict-mem b-cnstr))
                                       (or (restrict-a a-cnstr) (restrict-a b-cnstr))
                                       (restrict-b b-cnstr)
                                       (or (restrict-r a-cnstr) (restrict-r b-cnstr))

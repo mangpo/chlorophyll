@@ -29,6 +29,8 @@
                             (format "~a/~a-gen-red.rkt" outdir name))])
 
     (with-handlers* ([exn:break? (lambda (err)
+                                   (pretty-display `(kill ,name))
+                                   (subprocess-kill sp #t)
                                    (close-ports i out-port)
                                    (raise err))])
                     (task sp out-port i))))
@@ -36,7 +38,7 @@
 ;; Remove terminating subprocess from the running list
 (define (finish queue runnings)
   (unless (empty? runnings)
-    (sync/timeout check-interval (task-sp (last runnings)))
+    (sync/timeout/enable-break check-interval (task-sp (last runnings)))
     (let ([still (filter (lambda (t) 
                            (if (equal? (subprocess-status (task-sp t)) 'running)
                                #t
@@ -51,6 +53,7 @@
   (define (cleanup e)
     (for ([t runnings])
          (when (equal? (subprocess-status (task-sp t)) 'running)
+               (pretty-display `(kill ,t))
                (subprocess-kill (task-sp t) #t))
          (close-ports (task-i t) (task-o t)))
     (raise "user break"))

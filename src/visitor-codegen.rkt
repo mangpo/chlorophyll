@@ -18,15 +18,16 @@
                 [if-count 0] [while-count 0]
                 [maxnum 1]
                 ;; map virtual index to real index
-                [index-map (make-hash)])
+                [index-map (make-hash)]
+                [n-regs 0])
 
-    (define debug #f)
+    (define debug #t)
     (define const-a (list #f))
 
     (define-syntax gen-block
       (syntax-rules ()
 	[(gen-block)
-	 (new-block (list) 0 0 (restrict #f #f #f #f) (list))]
+	 (new-block (list) 0 0 (restrict #t #f #f #f) (list))]
 	[(gen-block mem)
 	 (new-block (list) 0 0 (restrict mem (car const-a) #f #f) (list))]
 	[(gen-block a ... in out)
@@ -46,8 +47,9 @@
     (define-syntax gen-block-list
       (syntax-rules ()
 	[(gen-block-list insts insts-org in out)
-	 (new-block insts in out (restrict #t (car const-a) #f #f) insts-org)]))
-    
+	 (new-block insts in out (restrict #t (car const-a) #f #f) insts-org)]
+        ))
+
     (define-syntax gen-block-org
       (syntax-rules ()
 	[(gen-block-org (a ...) (b ...) in out)
@@ -161,7 +163,11 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
-        (list)]
+        (if (equal? (get-field address ast) 'r)
+            (begin
+              (set! n-regs (add1 n-regs))
+              (list (gen-block "0" "push" 0 0)))
+            (list))]
 
        [(is-a? ast ArrayDecl%)
         (when debug
@@ -222,23 +228,25 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Var ~a" (send ast to-string))))
 	(define address (get-field address ast))
-	(if address
-	    ;; push on the stack
-	    (if (meminfo-data address)
-		;; data
-		(list (gen-block-org 
-                       ((number->string (get-var address)) "b!" "@b")
-                       ((number->string (meminfo-addr address)) "b!" "@b")
-                       0 1
-                       ))
-		;; iter
-		(list (gen-block-org 
-                       ((number->string (get-iter address)) "b!" "@b")
-                       ((number->string (get-iter-org address)) "b!" "@b")
-                       0 1
-                       )))
-	    ;; already on the stack
-	    (list))]
+
+        (cond
+         [(equal? address 'r)
+          (list (gen-block "pop" "dup" "push" 0 1))]
+         [(not address)
+          ;; already on stack
+          (list)]
+         [(meminfo-data address)
+          ;; data
+          (list (gen-block-org 
+                 ((number->string (get-var address)) "b!" "@b")
+                 ((number->string (meminfo-addr address)) "b!" "@b")
+                 0 1))]
+         [else
+          ;; iter
+          (list (gen-block-org 
+                 ((number->string (get-iter address)) "b!" "@b")
+                 ((number->string (get-iter-org address)) "b!" "@b")
+                 0 1))])]
 
        [(is-a? ast UnaExp%)
         (when debug 
@@ -322,52 +330,64 @@
 	    (let ([rhs-ret (send rhs accept this)])
 		  (prog-append
 		   rhs-ret
-		   (if address
-		       (if (meminfo-data address)
-			   ;; data
-                           (if (pair? (get-field type lhs))
-                               ;; need to expand
-                               (list 
-                                (gen-block-store (number->string (get-var address))
-                                                 (number->string (meminfo-addr address))
-                                                 (cdr (get-field type lhs))))
-                               (list
-                                (gen-block-store (number->string (get-var address))
-                                                 (number->string (meminfo-addr address))
-                                                 1)))
-			   ;; iter
-			   (list (gen-block-org
-                                  ((number->string (get-iter address)) "b!" "!b")
-                                  ((number->string (get-iter-org address)) "b!" "!b")
-                                  1 0
-                                  )))
-		       ;; temp on stack
-		       (list)))))]
+                   (cond
+                    [(equal? address 'r)
+                     (list (gen-block "pop" "drop" "push" 1 0))]
+                    [(not address)
+                     ;; temp on stack
+                     (list)]
+                    [(meminfo-data address)
+                     ;; data
+                     (if (pair? (get-field type lhs))
+                         ;; need to expand
+                         (list 
+                          (gen-block-store (number->string (get-var address))
+                                           (number->string (meminfo-addr address))
+                                           (cdr (get-field type lhs))))
+                         (list
+                          (gen-block-store (number->string (get-var address))
+                                           (number->string (meminfo-addr address))
+                                           1)))]
+                    [else
+                     ;; iter
+                     (list (gen-block-org
+                            ((number->string (get-iter address)) "b!" "!b")
+                            ((number->string (get-iter-org address)) "b!" "!b")
+                            1 0))
+                     ]))))
+        ]
 
        [(is-a? ast Return%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Return")))
+
         (define val (get-field val ast))
+        (define entries (if (list? val) (length val) 1))
 	(define ret
 	  (if (list? val)
 	      (foldl (lambda (v all) (prog-append all (send v accept this)))
 		     (list) val)
 	      (send (get-field val ast) accept this)))
 
-	(if (empty? ret)
-	    (list (gen-block #f))
-	    (begin
-	      (set-restrict-mem! (block-cnstr (last ret)) #f)
-	      ret))
+        (define drops (flatten (for/list ([i (in-range n-regs)]) 
+                                         (list "pop" "drop"))))
+          
+        (define drop-ret (list (gen-block-list drops drops 0 0)))
+
+        (if (empty? ret)
+            (set! ret drop-ret)
+            (set! ret (prog-append ret drop-ret)))
+
+        (for ([b ret])
+             (set-restrict-mem! (block-cnstr b) #f))
+
+        ret
 	]
 
        [(is-a? ast If%)
 	;; not yet support && ||
         (when debug 
               (pretty-display (format "\nCODEGEN: If"))
-	      (pretty-display ">>> pre")
-	      (send (get-field pre ast) pretty-print)
-	      (pretty-display "<<<")
 	      )
         (define pre-ret 
 	  (if (get-field pre ast)
@@ -527,17 +547,60 @@
 	]
 
        [(is-a? ast FuncDecl%)
+
 	(define decls (get-field stmts (get-field args ast)))
+        
+        ;; (pretty-display "ARGS:")
+        ;; (for ([decl decls])
+        ;;      (send decl pretty-print))
+
 	(define n-decls (length decls))
+
+        (define mem-decls (filter (lambda (x) (not (equal? 'r (get-field address x))))
+                                          decls))
+        (define n-mem-decls (length mem-decls))
+        (set! n-regs (- n-decls n-mem-decls))
+        (when (> n-regs 1)
+              (raise "visitor-codegen: only support one variable on return stack"))
+
+        ;; args
+        (define args-ret
+          (cond
+           [(> n-mem-decls 0)
+            (let* ([address (get-field address (last mem-decls))]
+                   [code (append (list (number->string (get-var address)) "a!")
+                                 (for/list ([decl decls])
+                                           (if (equal? 'r (get-field address decl))
+                                               "push" "!+"))
+                                 )])
+              (list (gen-block-list code code n-decls 0)))]
+           
+           [(> n-regs 0)
+            (let* ([code (list "push")])
+              (list (gen-block-list code code n-decls 0)))]
+           
+           [else
+            (list (gen-block))]))
+        
+        ;; body
 	(define body-ret (send (get-field body ast) accept this))
 
-	(if (> n-decls 0)
-	    (let* ([address (get-field address (last decls))]
-                   [code (append (list (number->string (get-var address)) "a!")
-                                 (for/list ([i (in-range n-decls)]) "!+"))]
-		   [args-ret (list (gen-block-list code code n-decls 0))])
-	      (funcdecl (get-field name ast) (prog-append args-ret body-ret)))
-	    (funcdecl (get-field name ast) body-ret))]
+        ;; return
+        (define return-ret
+          (let ([b (if (or (= n-regs 0) 
+                           ;; there is nothing to drop.
+                           (get-field return ast) 
+                           ;; if it not void, return% clears the return stack.
+                           (equal? (get-field name ast) "main")
+                           ;; if main, just leave thing on stack.
+                           )
+                       (gen-block)
+                       (gen-block "pop" "drop" 0 0))])
+            ;; TODO: is setting memomy constraint to false in main too aggressive?
+            (set-restrict-mem! (block-cnstr b) #f)
+            (list b)))
+        
+        (funcdecl (get-field name ast) (prog-append args-ret body-ret return-ret))]
 
        [(is-a? ast Program%)
         (when debug 
