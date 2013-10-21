@@ -51,16 +51,29 @@
                   (cross-product (get-field e2 ast) ast)))]
 
        [(is-a? ast FuncCall%)
+        ;(pretty-display (format "FLOW: FuncCall ~a" (send ast to-string)))
 	(define interface
 	  (let ([edges (list)]
 		[func-ast (get-field signature ast)])
+            
+            (when accurate-flow
+              (for ([arg (get-field args ast)])
+                (when (list? (get-field place-type arg))
+                  ;; Proxy return: need to include flow edges here
+                      (set! edges (append (hash-ref functions (get-field name arg)))))))
+            
 	    (for ([param (get-field stmts (get-field args func-ast))] ; signature
 		  [arg   (flatten-arg (get-field args ast))]) ; actual
+                 
+                 ;;(pretty-display (format ">> ARG ~a: visit ~a" (send ast to-string)
+                 ;;                        (send arg to-string)))
 		 (set! edges (append (cross-product param arg) edges))
 		 (set! edges (append (send arg accept this) edges)))
-	    edges))
-	(append interface (hash-ref functions (get-field name ast)))
-        ;; TODO + funcdecl here
+                 edges))
+        
+        (if accurate-flow
+            (append interface (hash-ref functions (get-field name ast)))
+            interface)
         ]
 
        [(is-a? ast ProxyReturn%)
@@ -114,9 +127,14 @@
         ]
 
        [(is-a? ast Program%)
-	(for ([decl (get-field stmts ast)])
-	     (send decl accept this))
-	(hash-ref functions "main")]
+        (define f
+          (foldl (lambda (stmt edges) (append (send stmt accept this) edges))
+                 (list) (get-field stmts ast)))
+
+        (if accurate-flow
+            (hash-ref functions "main")
+            f)
+        ]
        
        [(is-a? ast Block%)
         (foldl (lambda (stmt edges) (append (send stmt accept this) edges))
@@ -124,8 +142,11 @@
         ]
 
        [(is-a? ast FuncDecl%)
-        (hash-set! functions (get-field name ast)
-		   (send (get-field body ast) accept this))
+        ;(pretty-display (format "\nFLOW: FuncDecl ~a (begin)" (get-field name ast)))
+        (define f (send (get-field body ast) accept this))
+        (hash-set! functions (get-field name ast) f)
+        f
+        ;(pretty-display (format "FLOW: FuncDecl ~a (end)" (get-field name ast)))
 	]
 
        [(or (is-a? ast Num%)
