@@ -10,6 +10,11 @@
            (regexp-match #rx"_cond" name)
            (regexp-match #rx"#return" name))))
 
+(define (on-stack? name)
+  (or (regexp-match #rx"_dummy" name)
+      (regexp-match #rx"_cond" name)
+      (regexp-match #rx"#return" name)))
+
 (define memory-mapper%
   (class* object% (visitor<%>)
     (super-new)
@@ -45,7 +50,6 @@
       ;; #f indicates that this is temp
       (meminfo p p #f))
 
-
     (define (need-temp-mem? name)
       (regexp-match #rx"_temp" name))
     
@@ -58,8 +62,8 @@
 	(for ([var (get-field var-list ast)])
              (cond 
               [(equal? var reg-for)
-               (dict-set! mem-map var 'r)
-               (set-field! address ast 'r)]
+               (dict-set! mem-map var 't)
+               (set-field! address ast 't)]
 
               [(need-mem? var)
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
@@ -103,7 +107,9 @@
 	;; (pretty-display `(need-mem? ,(need-mem? (get-field name ast))))
 	(cond
          [(need-mem? (get-field name ast))
-          (set-field! address ast (lookup mem-map ast))]
+          (define address (lookup mem-map ast))
+          (unless (equal? address 't)
+                  (set-field! address ast address))]
 
          [(need-temp-mem? (get-field name ast))
           (set-field! address ast (gen-temp (get-field sub ast)))

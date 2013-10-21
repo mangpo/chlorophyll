@@ -484,21 +484,23 @@
   ;;(when debug (pretty-display subseqs))
   
   (for ([subseq subseqs])
-       (let* ([str (string-join subseq)]
-              [reformatted (string-replace (string-replace str "+" "\\+") "*" "\\*")]
-              [exp (regexp reformatted)]
-              [matcher (new sequence-matcher% [exp exp])]
-              [locations (send matcher visit linklist-program)])
-	 (when debug
-	       (pretty-display (format "SEQ: ~a  OCCUR: ~a" str (length locations))))
-         (when (>= (length locations) occur)
-	       ;; if repeat more then a certain number
-               (when debug (pretty-display (format "STRING: ~a" reformatted)))
-               (define-and-replace locations exp)
-               ;(aforth-syntax-print linklist-program 2 2)
-               )
-         )
-       )
+    (let ([str (string-join subseq)])
+      ;; Can't define repeating sequence that contains "push" or "pop" becuase
+      ;; it will mess up the return stack.
+      (unless (or (regexp-match #rx"push" str) (regexp-match #rx"pop" str))
+        (let* ([reformatted (string-replace (string-replace str "+" "\\+") "*" "\\*")]
+               [exp (regexp reformatted)]
+               [matcher (new sequence-matcher% [exp exp])]
+               [locations (send matcher visit linklist-program)])
+          (when debug
+                (pretty-display (format "SEQ: ~a  OCCUR: ~a" str (length locations))))
+          (when (>= (length locations) occur)
+                ;; if repeat more then a certain number
+                 (when debug (pretty-display (format "STRING: ~a" reformatted)))
+                 (define-and-replace locations exp)
+                                        ;(aforth-syntax-print linklist-program 2 2)
+                 )
+          ))))
   
   ;(aforth-struct-print linklist-program)
   )

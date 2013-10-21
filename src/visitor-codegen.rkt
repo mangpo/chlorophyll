@@ -21,7 +21,7 @@
                 [index-map (make-hash)]
                 [n-regs 0])
 
-    (define debug #t)
+    (define debug #f)
     (define const-a (list #f))
 
     (define-syntax gen-block
@@ -163,10 +163,10 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
-        (if (equal? (get-field address ast) 'r)
+        (if (equal? (get-field address ast) 't)
             (begin
               (set! n-regs (add1 n-regs))
-              (list (gen-block "0" "push" 0 0)))
+              (list (gen-block "0" 0 1)))
             (list))]
 
        [(is-a? ast ArrayDecl%)
@@ -230,8 +230,10 @@
 	(define address (get-field address ast))
 
         (cond
-         [(equal? address 'r)
-          (list (gen-block "pop" "dup" "push" 0 1))]
+         [(equal? address 't)
+          (list (gen-block "dup" 0 1))]
+         [(equal? address 's)
+          (list (gen-block "over" 0 1))]
          [(not address)
           ;; already on stack
           (list)]
@@ -331,8 +333,8 @@
 		  (prog-append
 		   rhs-ret
                    (cond
-                    [(equal? address 'r)
-                     (list (gen-block "pop" "drop" "push" 1 0))]
+                    [(equal? address 't)
+                     (list (gen-block "push" "drop" "pop" 2 1))]
                     [(not address)
                      ;; temp on stack
                      (list)]
@@ -369,10 +371,13 @@
 		     (list) val)
 	      (send (get-field val ast) accept this)))
 
-        (define drops (flatten (for/list ([i (in-range n-regs)]) 
-                                         (list "pop" "drop"))))
-          
-        (define drop-ret (list (gen-block-list drops drops 0 0)))
+        (define drops (append (for/list ([i (in-range entries)]) "push")
+                              (list "drop")
+                              (for/list ([i (in-range entries)]) "pop")))
+
+        (define drop-ret (list (if (= n-regs 1)
+                                   (gen-block-list drops drops (add1 entries) entries)
+                                   (gen-block))))
 
         (if (empty? ret)
             (set! ret drop-ret)
@@ -396,10 +401,12 @@
 	  
 	(codegen-print pre-ret)
         (define cond-ret (send (get-field condition ast) accept this))
-        (define true-ret (send (get-field true-block ast) accept this))
+        (define true-ret (prog-append (list (gen-block "drop" 1 0))
+                                      (send (get-field true-block ast) accept this)))
         (define false-ret 
           (if (get-field false-block ast)
-              (send (get-field false-block ast) accept this)
+              (prog-append (list (gen-block "drop" 1 0))
+                           (send (get-field false-block ast) accept this))
               #f))
 
         (cond
@@ -556,8 +563,7 @@
 
 	(define n-decls (length decls))
 
-        (define mem-decls (filter (lambda (x) (not (equal? 'r (get-field address x))))
-                                          decls))
+        (define mem-decls (filter (lambda (x) (meminfo? (get-field address x))) decls))
         (define n-mem-decls (length mem-decls))
         (set! n-regs (- n-decls n-mem-decls))
         (when (> n-regs 1)
@@ -570,14 +576,11 @@
             (let* ([address (get-field address (last mem-decls))]
                    [code (append (list (number->string (get-var address)) "a!")
                                  (for/list ([decl decls])
-                                           (if (equal? 'r (get-field address decl))
-                                               "push" "!+"))
+                                           (if (meminfo? (get-field address decl))
+                                               "!+" "push"))
+                                 (list "pop")
                                  )])
-              (list (gen-block-list code code n-decls 0)))]
-           
-           [(> n-regs 0)
-            (let* ([code (list "push")])
-              (list (gen-block-list code code n-decls 0)))]
+              (list (gen-block-list code code n-decls n-regs)))]
            
            [else
             (list (gen-block))]))
@@ -595,7 +598,7 @@
                            ;; if main, just leave thing on stack.
                            )
                        (gen-block)
-                       (gen-block "pop" "drop" 0 0))])
+                       (gen-block "drop" 1 0))])
             ;; TODO: is setting memomy constraint to false in main too aggressive?
             (set-restrict-mem! (block-cnstr b) #f)
             (list b)))

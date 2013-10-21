@@ -53,8 +53,9 @@
   (send program accept (new arrayaccess%))
 
   ;; registor allocatoin (optional)
-  (pretty-display ">>> arrayaccess")
+  (pretty-display ">>> registor allocation")
   (send program accept (new registor-allocator%))
+  ;(raise "done")
   
   (pretty-display ">>> memory-mapper")
   (let* ([data-iter (send program accept (new memory-mapper%))]

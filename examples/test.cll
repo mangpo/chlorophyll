@@ -1,8 +1,19 @@
-void main() {
-  int[]@{[0:50]=0,[50:75]=1,[75:100]=2} x[100];
-  for(i from 0 to 10) {
-    for(j from 0 to 10) {
-      x[10*i + j] = 10;
-    }
+int f() {
+  int@0 x, y;
+  if(x > 0) {
+    x = 100;
+    return x;
+  } else {
+    x = 200;
   }
+
+  if(y > 16) {
+    y = 300;
+  }
+  return y;
+}
+
+void main() {
+  int@0 a;
+  a = f();
 }
