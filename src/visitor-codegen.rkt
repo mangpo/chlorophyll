@@ -21,7 +21,7 @@
                 [index-map (make-hash)]
                 [n-regs 0])
 
-    (define debug #t)
+    (define debug #f)
     (define const-a (list #f))
 
     (define-syntax gen-block
@@ -203,7 +203,7 @@
 
        [(is-a? ast Array%)
         (when debug 
-              (pretty-display (format "\nCODEGEN: Array ~a" (send ast to-string))))
+              (pretty-display (format "\nCODEGEN: Array ~a (1)" (send ast to-string))))
 	(define index-ret (send (get-field index ast) accept this))
 
 	(define offset (get-field offset ast))
@@ -228,15 +228,25 @@
         (define array-ret
           (list (gen-block-list insts insts-org 1 1)))
 
-        (if opt
-            array-ret
-            (prog-append index-ret array-ret))
+        
+        (define ret
+          (if opt
+              array-ret
+              (prog-append index-ret array-ret)))
+
+        ;; (when debug 
+        ;;       (pretty-display (format "\nCODEGEN: Array ~a (2) opt = ~a" 
+        ;;                               (send ast to-string) opt))
+        ;;       (aforth-struct-print ret)
+        ;;       )
+        ret
         ]
 
        [(is-a? ast Var%)
-        (when debug 
-              (pretty-display (format "\nCODEGEN: Var ~a" (send ast to-string))))
 	(define address (get-field address ast))
+        (when debug 
+              (pretty-display (format "\nCODEGEN: Var ~a, address = ~a" 
+                                      (send ast to-string) address)))
 
         (cond
          [(equal? address 't)
@@ -273,11 +283,12 @@
         (define op (get-field op (get-field op ast)))
 	(define e1-ret (send (get-field e1 ast) accept this))
 	(define e2-ret (send (get-field e2 ast) accept this))
-        (when debug 
-              (pretty-display (format "\nCODEGEN: BinExp ~a (return)" 
-                                      (send ast to-string)))
-              (aforth-struct-print (prog-append e1-ret e2-ret (gen-op op))))
-	(prog-append e1-ret e2-ret (gen-op op))]
+        ;; (when debug 
+        ;;       (pretty-display (format "\nCODEGEN: BinExp ~a (return)" 
+        ;;                               (send ast to-string)))
+        ;;       (aforth-struct-print (prog-append e1-ret e2-ret (gen-op op))))
+	(prog-append e1-ret e2-ret (gen-op op))
+        ]
 
        [(is-a? ast Recv%)
         (when debug 

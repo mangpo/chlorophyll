@@ -23,7 +23,7 @@
 (define check-interval 60)
 (define distributed #t)
 (define max-unroll 20)
-(define accurate-flow #f)
+(define accurate-flow #t)
 
 (define outdir "/home/mangpo/work/greensyn/output")
 (define outdir-rel "../output")

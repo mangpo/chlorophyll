@@ -27,6 +27,10 @@
                                       items)))
         ]
 
+       [(is-a? ast Array%)
+        (send (get-field index ast) accept this)
+        ]
+
        [(is-a? ast Var%)
         (define name (get-field name ast))
         
