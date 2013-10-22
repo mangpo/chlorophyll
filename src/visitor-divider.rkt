@@ -83,8 +83,8 @@
 		 (push-stack c (new Temp% [name temp] [place-type c] 
 				    [sub i] [compact #t]
 				    [type (get-field type x)])))
-	    (push-stack c (new Temp% [name temp] [place-type c]
-			       [type (get-field type x)] [eqv stmt])))))
+            (push-stack c (new Temp% [name temp] [place-type c]
+                               [type (get-field type x)] [eqv stmt])))))
 
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
@@ -388,7 +388,7 @@
         (gen-comm)]
 
        [(is-a? ast BinExp%)
-	(define place (get-field place-type ast))
+        (define place (get-field place-type ast))
 	(set! is-index #f)
 	
 	(unless (unique-place ast)
@@ -397,12 +397,17 @@
 		;; pop in the reverse order
 		(set-field! e2 ast (pop-stack place))
 		(set-field! e1 ast (pop-stack place)))
+
+        (when (equal? (get-field op (get-field op ast)) "/%")
+              (let ([r (new ProxyReturn% [place-type place])])
+                (set-field! place-type ast (list r r))))
 	
 	(when debug 
 	      (pretty-display (format "\nDIVIDE: BinExp ~a\n" (send ast to-string))))
 
-	(push-stack-temp place ast)
-	(gen-comm)]
+        (push-stack-temp place ast)
+	(gen-comm)
+        ]
        
        [(is-a? ast UnaExp%)
 	(define place (get-field place-type ast))

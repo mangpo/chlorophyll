@@ -9,14 +9,14 @@
     (super-new)
     (init-field [var-map (make-hash)] [decl-map (make-hash)] [items 0])
 
-    (define debug #t)
+    (define debug #f)
 
     (define/public (visit ast)
       (cond
        [(is-a? ast ArrayDecl%) void]
        [(is-a? ast VarDecl%)
         (for ([name (get-field var-list ast)])
-             (when (need-mem? name)
+             (when (and (need-mem? name) (not (regexp-match #rx"::" name)))
                    (hash-set! decl-map name ast)
                    (hash-set! var-map name 0)))]
 
@@ -55,7 +55,8 @@
        [(is-a? ast BinExp%)
 	(send (get-field e1 ast) accept this)
         (send (get-field e2 ast) accept this)
-        (set! items (sub1 items))
+        (unless (equal? (get-field op (get-field op ast)) "/%")
+                (set! items (sub1 items)))
         (when debug 
               (pretty-display (format "REGALLOC: BinExp ~a => ~a" (send ast to-string)
                                       items)))

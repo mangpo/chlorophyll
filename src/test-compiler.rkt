@@ -2,8 +2,8 @@
 
 (require "compiler.rkt")
 
-;(compile-and-optimize "../examples/test.cll" "test" 
-;                      1024 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../examples/test.cll" "test" 
+                      1024 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 
@@ -23,8 +23,8 @@
 
 ;(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
 ;                     1024 "null" #:w 8 #:h 8 #:opt #f)
-(compile-and-optimize "../tests/run/md5-4.cll" "md4"
-		      1024 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../tests/run/md5-4.cll" "md4"
+;		      1024 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)
 

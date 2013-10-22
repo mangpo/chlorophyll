@@ -21,7 +21,7 @@
                 [index-map (make-hash)]
                 [n-regs 0])
 
-    (define debug #f)
+    (define debug #t)
     (define const-a (list #f))
 
     (define-syntax gen-block
@@ -100,13 +100,13 @@
        [(equal? op "^") (list (gen-block "or" 2 1))]
        [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]
        ;; --u/mod: h l d - r q
-       [(equal? op "/") (list (gen-block "-" "1" "+") 
+       [(equal? op "/") (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
 			      (funccall "--u/mod") 
 			      (gen-block "push" "drop" "pop" 2 1))]
-       [(equal? op "%") (list (gen-block "-" "1" "+")
+       [(equal? op "%") (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
 			      (funccall "--u/mod") 
 			      (gen-block "drop" 1 0))]
-       [(equal? op "/%") (list (gen-block "-" "1" "+")
+       [(equal? op "/%") (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
 			       (funccall "--u/mod"))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
@@ -269,9 +269,14 @@
        [(is-a? ast BinExp%)
         (when debug 
               (pretty-display (format "\nCODEGEN: BinExp ~a" (send ast to-string))))
+
+        (define op (get-field op (get-field op ast)))
 	(define e1-ret (send (get-field e1 ast) accept this))
 	(define e2-ret (send (get-field e2 ast) accept this))
-	(define op (get-field op (get-field op ast)))
+        (when debug 
+              (pretty-display (format "\nCODEGEN: BinExp ~a (return)" 
+                                      (send ast to-string)))
+              (aforth-struct-print (prog-append e1-ret e2-ret (gen-op op))))
 	(prog-append e1-ret e2-ret (gen-op op))]
 
        [(is-a? ast Recv%)

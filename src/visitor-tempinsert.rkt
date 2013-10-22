@@ -70,7 +70,20 @@
          (define e2-ret (send (get-field e2 ast) accept this))
          (set-field! e1 ast (cdr e1-ret))
          (set-field! e2 ast (cdr e2-ret))
-         (cons (append (car e1-ret) (car e2-ret)) ast)]
+
+         (define place (get-field place (get-field op ast)))
+         (if (equal? (get-field op (get-field op ast)) "/%")
+             (let-values 
+                 ([(tmp1 tmp2) 
+                   (get-temp "int" 2 2 (new TypeExpansion%
+                                            [place-list (list place place)])
+                             #t)])
+               ;; send expect = 1 so that it doesn't get expanded in desugarin step
+               (set-field! expect tmp1 1)
+               (let ([stmt1 (new AssignTemp% [lhs tmp1] [rhs ast])])
+                 (cons (append (car e1-ret) (car e1-ret) (list stmt1)) tmp2)))
+             (cons (append (car e1-ret) (car e2-ret)) ast))
+         ]
         
         [(is-a? ast FuncCall%)
          (when debug (pretty-display (format "TEMPINSERT: FuncCall ~a" (send ast to-string))))

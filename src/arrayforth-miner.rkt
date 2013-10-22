@@ -273,9 +273,7 @@
 
        [(funccall? ast)
         (define name (funccall-name ast))
-	(unless (or (equal? func name)
-                    (equal? "in" name)
-                    (equal? "out" name))
+	(unless (member name (list func "in" "out" "--u/mod"))
 		(set! result (set-add result (funccall-name ast))))]
        
        [else void]))))

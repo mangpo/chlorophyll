@@ -18,8 +18,9 @@
   #hash(("~" . 1)
 	("!" . 1)
         ("*" . 7) ; @p 17 for +* unext
-        ("/" . 52) ; estimate from chuck's blog
-        ("%" . 52) ; estimate from chuck's blog
+        ("/" . 20)
+        ("%" . 18)
+        ("/%" . 17) 
         ("+" . 2)  ; . +
         ("-" . 10) ; - @p . + 1 . +
         (">>" . 12) ; dup dup or - . + for 2/ unext
