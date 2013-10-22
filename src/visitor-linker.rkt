@@ -225,6 +225,12 @@
         
         [(is-a? ast BinExp%)
          ;(pretty-display (format "LINKER: BinExp ~a" (send ast to-string)))
+	 (when (equal? (get-field op (get-field op ast)) "/%")
+	       (if (= entry 2)
+		   (set! entry 1)
+		   (raise (format "visitor-linker: return value entries mismatched at ~a l:~a"
+				  (send ast to-string) (send ast get-line)))))
+
 	 (set-field! expect ast entry)
 	 (define e1 (get-field e1 ast))
 	 (define e2 (get-field e2 ast))

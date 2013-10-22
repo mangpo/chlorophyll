@@ -3,7 +3,7 @@
 (require "compiler.rkt")
 
 ;(compile-and-optimize "../examples/test.cll" "test" 
-;                      256 "null" #:w 3 #:h 3 #:opt #f)
+;                      1024 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 

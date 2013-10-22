@@ -14,7 +14,7 @@
     (super-new)
     (init-field routing-table part2core n)
 
-    (define debug #f)
+    (define debug #t)
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -113,7 +113,7 @@
                         (new RangePlace% [from (get-field from p)] [to (get-field to p)]
                              [place place] [send-path (get-path-one-to-many place placeset)])))]
            
-           [else (raise "gen-path-condition: unimplemented")]))
+           [else (raise (format "gen-path-condition: unimplemented ~a" x))]))
         ;`(gen-path-condition ,(get-field condition cond-ast) x ,x placeset ,placeset ,(get-field send-path cond-ast))
         ))
 

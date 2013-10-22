@@ -1,0 +1,11 @@
+void main() {
+  int input, index;
+  int m;
+  int table[16] = {0, 450, 900, 1350, 1800, 2250, 2700, 3150, 3600, 4050, 4500, 4950, 5400, 5850, 6300, 6750};
+
+  input = in();
+  i = input/m;
+  r = input - m*i;
+  output = table[i] + ((table[i+1] - table[i])*r)/m;
+  out(output);
+}

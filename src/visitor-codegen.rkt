@@ -99,6 +99,15 @@
        [(equal? op "&") (list (gen-block "and" 2 1))]
        [(equal? op "^") (list (gen-block "or" 2 1))]
        [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]
+       ;; --u/mod: h l d - r q
+       [(equal? op "/") (list (gen-block "-" "1" "+") 
+			      (funccall "--u/mod") 
+			      (gen-block "push" "drop" "pop" 2 1))]
+       [(equal? op "%") (list (gen-block "-" "1" "+")
+			      (funccall "--u/mod") 
+			      (gen-block "drop" 1 0))]
+       [(equal? op "/%") (list (gen-block "-" "1" "+")
+			       (funccall "--u/mod"))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
     (define (gen-port port)
