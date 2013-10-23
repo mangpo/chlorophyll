@@ -49,17 +49,18 @@
   (send program pretty-print)
 
   ;; mark forloop and array for optimization
-  (pretty-display ">>> arrayaccess")
+  (pretty-display ">>> arrayaccess >>>")
   (send program accept (new arrayaccess%))
 
   ;; registor allocatoin (optional)
-  (pretty-display ">>> registor allocation")
+  (pretty-display ">>> registor allocation >>>")
   (send program accept (new registor-allocator%))
-  ;(raise "done")
+  (send program pretty-print)
   
-  (pretty-display ">>> memory-mapper")
-  (let* ([data-iter (send program accept (new memory-mapper%))]
-         ;; only generated reduced version if mem > 5
+  (pretty-display ">>> memory-mapper >>>")
+  (define data-iter (send program accept (new memory-mapper%)))
+  (send program pretty-print)
+  (let* (;; only generated reduced version if mem > 5
          [reduce (and virtual (> (+ (meminfo-addr (car data-iter)) (cdr data-iter)) 
                                  reduce-limit))]
          [code-gen (new code-generator% [data-size (car data-iter)]

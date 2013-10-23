@@ -74,13 +74,17 @@
                              (for/list ([i (in-range in)]) "!+"))))))
       
     (define (gen-op op)
+      (define (save-a code)
+	(if (car const-a)
+	    (append (list (gen-block-r "a" "push" 0 0))
+		    code
+		    (list (gen-block-r "pop" "a!" 0 0)))
+	    code))
+
       (cond
        [(equal? op "~") (list (gen-block "-" 1 1))]
        [(equal? op "!") (list (gen-block "-" 1 1))]
-       [(equal? op "*") 
-        (if (car const-a)
-            (list (gen-block-r "a" "push" 0 0) (mult) (gen-block "pop" "a!" 0 0))
-            (list (mult)))]
+       [(equal? op "*") (save-a (list (mult)))]
 
        [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
        [(equal? op "+") (list (gen-block "+" 2 1))]
@@ -100,14 +104,16 @@
        [(equal? op "^") (list (gen-block "or" 2 1))]
        [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]
        ;; --u/mod: h l d - r q
-       [(equal? op "/") (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
-			      (funccall "--u/mod") 
-			      (gen-block "push" "drop" "pop" 2 1))]
-       [(equal? op "%") (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
-			      (funccall "--u/mod") 
-			      (gen-block "drop" 1 0))]
-       [(equal? op "/%") (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
-			       (funccall "--u/mod"))]
+       [(equal? op "/") (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
+				      (funccall "--u/mod") 
+				      (gen-block "push" "drop" "pop" 2 1)))]
+       [(equal? op "%") (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
+				      (funccall "--u/mod") 
+				      (gen-block "drop" 1 0)))]
+       [(equal? op "/%") (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
+				       (funccall "--u/mod")))]
+       [(equal? op "*/17") (save-a (list (funccall "*.17")
+					 (gen-block "push" "drop" "pop" 2 1)))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
     (define (gen-port port)
@@ -172,7 +178,7 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
-        (if (equal? (get-field address ast) 't)
+        (if (string? (get-field address ast))
             (begin
               (set! n-regs (add1 n-regs))
               (list (gen-block "0" 0 1)))

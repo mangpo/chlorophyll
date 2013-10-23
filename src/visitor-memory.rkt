@@ -62,12 +62,10 @@
 	(for ([var (get-field var-list ast)])
              (cond 
               [(equal? var reg-for)
-               (dict-set! mem-map var 't)
-               (set-field! address ast 't)]
+               (dict-set! mem-map var 't)]
 
               [(need-mem? var)
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
-               (set-field! address ast (gen-mem mem-p mem-rp))
                (set! mem-p (add1 mem-p))
                (set! mem-rp (add1 mem-rp))]
 

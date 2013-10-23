@@ -8,10 +8,10 @@
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 
 ;                      256 "null" #:opt #t)
-(compile-and-optimize "../tests/run/function-out.cll" "function" 
-                      256 "null" #:opt #t)
-(compile-and-optimize "../tests/run/function-pair1.cll" "function_pair" 
-                      512 "null" #:opt #t)
+;(compile-and-optimize "../tests/run/function-out.cll" "function" 
+;                      256 "null" #:opt #t)
+;(compile-and-optimize "../tests/run/function-pair1.cll" "function_pair" 
+;                      512 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/while-noio.cll" "whilenoio" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../tests/run/add-noio.cll" "addnoio" 
@@ -32,16 +32,17 @@
 ;                     256 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/swap.cll" "swap" 
 ;                      256 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/fir3.cll" "fir3" 
-;                      512 "null" #:w 3 #:h 3 #:opt #t)
+
+;(compile-and-optimize "../tests/run/fir.cll" "fir" 
+;                      512 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir2.cll" "fir2" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../tests/run/fir.cll" "fir" 
-;                      512 "null" #:w 3 #:h 3 #:opt #t)
-;(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
-;                      512 "null" #:w 4 #:h 4 #:opt #f)
-;(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 
-;                      512 "null" #:w 4 #:h 4 #:opt #f)
+;(compile-and-optimize "../tests/run/fir3.cll" "fir3" 
+;                      512 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
+                      512 "null" #:w 4 #:h 4 #:opt #f)
+(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 
+                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
 ;                      512 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/convolution.cll" "convolution" 
