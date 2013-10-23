@@ -603,7 +603,7 @@
                                  (for/list ([decl decls])
                                            (if (meminfo? (get-field address decl))
                                                "!+" "push"))
-                                 (list "pop")
+                                 (if (= n-regs 1) (list "pop") (list))
                                  )])
               (list (gen-block-list code code n-decls n-regs)))]
            

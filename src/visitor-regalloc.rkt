@@ -16,9 +16,11 @@
        [(is-a? ast ArrayDecl%) void]
        [(is-a? ast VarDecl%)
         (for ([name (get-field var-list ast)])
-             (when (and (need-mem? name) (not (regexp-match #rx"::" name)))
+             (when (need-mem? name)
                    (hash-set! decl-map name ast)
-                   (hash-set! var-map name 0)))]
+                   (hash-set! var-map name 
+                              ;; try to get something that is in tuple value.
+                              (if (regexp-match #rx"::" name) -10 0))))]
 
        [(is-a? ast Num%)
         (set! items (add1 items))
@@ -175,7 +177,7 @@
 
         (define var
           (car (foldl (lambda (x res) (if (> (cdr x) (cdr res)) x res))
-                      (cons #f -1) (hash->list var-map))))
+                      (cons #f -100) (hash->list var-map))))
         (pretty-display (format "REGALLOC: ~a, CHOOSE: ~a" var-map var))
         (when var
               (set-field! address (hash-ref decl-map var) var))
