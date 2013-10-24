@@ -282,6 +282,19 @@
 	(define op (get-field op (get-field op ast)))
 	(prog-append e1-ret (gen-op op))]
 
+       [(and (is-a? ast BinExp%) 
+             (member (get-field op (get-field op ast)) (list ">>" "<<"))
+             (is-a? (get-field e2 ast) Num%)
+             (< (get-field n (get-field n (get-field e2 ast))) 18))
+
+        (define op (get-field op (get-field op ast)))
+	(define e1-ret (send (get-field e1 ast) accept this))
+        (define e2-n (get-field n (get-field n (get-field e2 ast))))
+        
+        (define shift (for/list ([i (in-range e2-n)]) (if (equal? op ">>") "2/" "2*")))
+
+        (prog-append e1-ret (list (gen-block-list shift shift 1 1)))]
+
        [(is-a? ast BinExp%)
         (when debug 
               (pretty-display (format "\nCODEGEN: BinExp ~a" (send ast to-string))))

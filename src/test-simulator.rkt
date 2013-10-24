@@ -19,7 +19,7 @@
 (test "add2"       "200" 1024)
 (test "function" "4_1" 256)
 (test "function" "4_2" 256)|#
-(test "function-out" "null" 256)
+;(test "function-out" "null" 256)
 #|(test "function-pair1" "null" 512 #:w 2 #:h 3)
 (test "pair1" "null" 512)
 (test "pair2" "null" 512)
@@ -37,6 +37,8 @@
 ;(test "convolution" "null" 10000 #:w 4 #:h 4)
 ;(test "convolution2" "null" 512 #:w 8 #:h 8)
 ;(test "fir" "1" 1000 #:w 3 #:h 3)
+;(test "interp2" "1" 256 #:w 3 #:h 3)
+(test "poly" "null" 256 #:w 3 #:h 3)
 
 (for ([res (reverse result)])
   (pretty-display res))

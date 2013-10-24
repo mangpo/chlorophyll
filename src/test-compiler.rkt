@@ -21,10 +21,13 @@
 ;(compile-and-optimize "../examples/leftrotate.cll" "leftrotate" 
 ;                     256 "null" #:w 10 #:h 5 #:opt #t)
 
+
+(compile-and-optimize "../tests/run/interp2.cll" "interp2" 
+                      256 "null" #:w 3 #:h 3 #:opt #t)
 ;(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
 ;                     1024 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/md5-4.cll" "md4"
-;		      1024 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../tests/run/md5-4.cll" "md4"
+		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
 ;                     400 "null" #:w 10 #:h 5 #:opt #t)
 
@@ -43,8 +46,8 @@
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
-(compile-and-optimize "../tests/run/interp.cll" "interp" 
-                      256 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../tests/run/poly.cll" "poly" 
+;                      256 "null" #:w 3 #:h 3 #:opt #f)
 
 
 ;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 

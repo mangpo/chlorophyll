@@ -303,6 +303,7 @@
 
     (num-unit
          ((NUM) $1)
+         ((ARITHOP2 NUM) (- $2))
          ((LPAREN num-list RPAREN) $2))
          
     (num-list
