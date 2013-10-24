@@ -1,8 +1,5 @@
 TODO
-- prohibit rep with push and pop
-- regalloc is not doing the right thing.
-  1) can't use rstack, use dstack instead
-  2) only some variables are valid to store in dstack
+- /% */17 in c simulator
 - md5: after more accurate flow graph, after more opt
 - kill z3
 

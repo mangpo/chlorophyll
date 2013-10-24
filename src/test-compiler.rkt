@@ -39,10 +39,14 @@
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir3.cll" "fir3" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
-(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
-                      512 "null" #:w 4 #:h 4 #:opt #f)
-(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 
-                      512 "null" #:w 4 #:h 4 #:opt #f)
+;(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
+;                      512 "null" #:w 4 #:h 4 #:opt #f)
+;(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 
+;                      512 "null" #:w 4 #:h 4 #:opt #f)
+(compile-and-optimize "../tests/run/interp.cll" "interp" 
+                      256 "null" #:w 3 #:h 3 #:opt #f)
+
+
 ;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
 ;                      512 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/convolution.cll" "convolution" 

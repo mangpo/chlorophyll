@@ -152,7 +152,8 @@
         (define index (get-field index ast))
         (send index accept this)
         
-        (when debug (pretty-display (format ">> Array ~a" (send ast to-string))))
+        (when debug (pretty-display (format ">> Array ~a, cluster = ~a" 
+					    (send ast to-string) cluster)))
         
         (if (= (length places) 1)
             ;; Array lives in only one place
@@ -259,6 +260,9 @@
 
        [(is-a? ast ArrayDecl%)
         (define place-list (get-field place-list ast)) ; don't support place(x)
+	(when (or (number? place-list)
+		  (and (list? place-list) (= (length place-list) 1)))
+	      (set-field! cluster ast #f))
         (define cluster (get-field cluster ast))
 
         (for ([p place-list])
