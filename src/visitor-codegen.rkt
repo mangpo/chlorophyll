@@ -114,6 +114,8 @@
 				       (funccall "--u/mod")))]
        [(equal? op "*/17") (save-a (list (funccall "*.17")
 					 (gen-block "push" "drop" "pop" 2 1)))]
+       [(equal? op "*/16") (save-a (list (funccall "*.")
+					 (gen-block "push" "drop" "pop" 2 1)))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
 
     (define (gen-port port)

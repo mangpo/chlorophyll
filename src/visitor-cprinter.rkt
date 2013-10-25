@@ -130,11 +130,24 @@
          ]
         
         [(is-a? ast BinExp%)
+	 (define op (get-field op (get-field op ast)))
+	 (when (member op (list "*/17" "*/16"))
+	       (display "("))
          (display "(")
          (send (get-field e1 ast) accept this)
-	 (display (send (get-field op ast) to-string))
+
+	 (if (member op (list "*/17" "*/16"))
+	     (display "*")
+	     (display (send (get-field op ast) to-string)))
+
          (send (get-field e2 ast) accept this)
+
          (display ")")
+	 (cond
+	  [(equal? op "*/17")
+	   (display ">>17)")]
+	  [(equal? op "*/16")
+	   (display ">>16)")])
          ]
 
 	[(is-a? ast FuncCall%)

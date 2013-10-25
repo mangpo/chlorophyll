@@ -1,0 +1,31 @@
+void main() {
+  int x; //(-2**16, 2**16)
+  int y;
+  int cos;
+  int[] coeff[5] = {1092, 0, -32768, 0, 65536};
+
+  x = 16384; // x in revolutions
+  if(x > 32768) { // 2**15
+    x = 65536 - x; // 2**16
+  }
+  if(x > 16384) {
+    y = 32768 - x;
+  } else {
+    y = x;
+  }
+
+  out(y);
+  y = (y << 1) */16 102943; // y*3.142...
+  out(y);
+
+  cos = 0;
+  for(i from 0 to 5) {
+    cos = cos */16 y + coeff[i];
+    out(cos);
+  }
+
+  if(x > 16384) {
+    cos = cos^262143;
+  }
+  out(cos);
+}

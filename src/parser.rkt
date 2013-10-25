@@ -29,7 +29,7 @@
   (line-comment (re-: "//" (re-* (char-complement #\newline)) #\newline))
   (digit10 (char-range "0" "9"))
   (number10 (number digit10))
-  (arith-op1 (re-or "*" "*/17" "/" "%" "/%"))
+  (arith-op1 (re-or "*" "*/17" "*/16" "/" "%" "/%"))
   (arith-op2 (re-or "+" "-" "~"))
   (arith-op3 (re-or "<<" ">>"))
   (rel-op (re-or "<" "<=" ">=" ">"))
