@@ -66,6 +66,7 @@
 
               [(need-mem? var)
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
+               (set-field! address ast (gen-mem mem-p mem-rp))
                (set! mem-p (add1 mem-p))
                (set! mem-rp (add1 mem-rp))]
 

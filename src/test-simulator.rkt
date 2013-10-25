@@ -37,9 +37,9 @@
 ;(test "convolution" "null" 10000 #:w 4 #:h 4)
 ;(test "convolution2" "null" 512 #:w 8 #:h 8)
 ;(test "fir" "1" 1000 #:w 3 #:h 3)
-;(test "interp2" "1" 256 #:w 3 #:h 3)
+(test "interp2" "1" 256 #:w 3 #:h 3)
 ;(test "poly" "null" 256 #:w 3 #:h 3)
-(test "cos" "null" 256 #:w 3 #:h 3)
+;(test "cos2" "null" 300 #:w 3 #:h 3)
 
 (for ([res (reverse result)])
   (pretty-display res))

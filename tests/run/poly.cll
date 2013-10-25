@@ -1,0 +1,10 @@
+void main() {
+  int[] coeff[8] = {31 , -46 , 54 , -72 , -51 , -46 , -67 , 69};
+  int@0 x, ans;
+  x = in();
+  ans = 0;
+  for(i from 0 to 8) {
+    ans = ans */16 x + coeff[i];
+  }
+  out(ans);
+}

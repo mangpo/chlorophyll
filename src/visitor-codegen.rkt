@@ -282,7 +282,18 @@
               (pretty-display (format "\nCODEGEN: UnaExp ~a" (send ast to-string))))
 	(define e1-ret (send (get-field e1 ast) accept this))
 	(define op (get-field op (get-field op ast)))
-	(prog-append e1-ret (gen-op op))]
+
+        (define op-ret
+          (cond
+           [(equal? op "-")
+            (list (gen-block "-" "1" "+" 1 1))]
+           [(equal? op "~")
+            (list (gen-block "-" 1 1))]
+           [else
+            (raise (format "visitor-codegen: do not support unary-op ~a at line ~a"
+                           op (send ast get-line)))]))
+
+	(prog-append e1-ret op-ret)]
 
        [(and (is-a? ast BinExp%) 
              (member (get-field op (get-field op ast)) (list ">>" "<<"))
@@ -600,12 +611,14 @@
 	]
 
        [(is-a? ast FuncDecl%)
+        (pretty-display (format "\nCODEGEN: FuncDecl ~a" (get-field name ast)))
 
 	(define decls (get-field stmts (get-field args ast)))
         
-        ;; (pretty-display "ARGS:")
-        ;; (for ([decl decls])
-        ;;      (send decl pretty-print))
+        (pretty-display "ARGS:")
+        (for ([decl decls])
+             (pretty-display (format "~a ==> ~a" 
+                                     (get-field var-list decl) (get-field address decl))))
 
 	(define n-decls (length decls))
 

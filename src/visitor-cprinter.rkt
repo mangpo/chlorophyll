@@ -39,8 +39,8 @@
 
     (define (print-type type)
       (if (string? type)
-	  type
-	  (format "~a~a" (car type) (cdr type))))
+	  "long"
+	  (format "long~a" (cdr type))))
 
     (define (print-name name)
       (regexp-replace* #rx"#" (regexp-replace* #rx"::" name "_") "_"))
@@ -201,7 +201,7 @@
          (let ([val (get-field val ast)])
            (if (list? val)
                (begin
-                 (display (format "int~a(" (length val)))
+                 (display (format "long~a(" (length val)))
                  (send (car val) accept this)
                  (for ([x (cdr val)])
                       (display ", ")
@@ -337,7 +337,7 @@
          (display indent)
          (display (format "int _cond_~a; " core))
          (for ([temp (get-field temps ast)])
-              (display (format "int~a ~a_~a; " 
+              (display (format "long~a ~a_~a; " 
 			       (if (> (cdr temp) 1) (cdr temp) "")
 			       (car temp) core)))
 
