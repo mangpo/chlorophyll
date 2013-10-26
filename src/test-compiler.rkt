@@ -36,14 +36,14 @@
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir3.cll" "fir3" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
-;                      512 "null" #:w 4 #:h 4 #:opt #f)
+(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
+                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/interp2.cll" "interp2" 
 ;                      256 "null" #:w 3 #:h 3 #:opt #t)
-(compile-and-optimize "../tests/run/poly.cll" "poly" 
-                      256 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../tests/run/poly.cll" "poly" 
+;                      256 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/cos2.cll" "cos2" 
 ;                      300 "null" #:w 3 #:h 3 #:opt #f)
 

@@ -464,6 +464,29 @@
 
     (define res (car res-list))
 
+    (define (combine-restriction lst)
+      ;; combine restriction in the first one.
+      (define first-item (car lst))
+      (unless (equal? first-item (cdr res))
+	(when (block? (linklist-entry first-item))
+	  (define first-block (linklist-entry first-item))
+	  (define a #f)
+	  (define b #f)
+	  (define mem #f)
+	  (define r #f)
+          (for ([item (map linklist-entry lst)])
+	       (set! a (or a (restrict-a (block-cnstr item))))
+	       (set! b (or b (restrict-b (block-cnstr item))))
+	       (set! r (or r (restrict-r (block-cnstr item))))
+	       (set! mem (or mem (restrict-mem (block-cnstr item)))))
+	  (set-restrict-a! (block-cnstr first-block) a)
+	  (set-restrict-b! (block-cnstr first-block) b)
+	  (set-restrict-r! (block-cnstr first-block) r)
+	  (set-restrict-mem! (block-cnstr first-block) mem))
+	(combine-restriction (map linklist-next lst))))
+
+    (combine-restriction (map car res-list))
+
     (when (block? (linklist-entry (car res)))
       ;; If initial state constraints of the repeating seqeunces are different,
       ;; need to set it to false.
