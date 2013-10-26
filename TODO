@@ -1,6 +1,12 @@
 TODO
-- /% */17 in c simulator
-- md5: after more accurate flow graph, after more opt
+
+MD5 (accurate)
+1) nostack-noopt: can i make it fits?
+2) nostack-opt: do this
+3) *stack-noopt: make this fits
+4) *stack-noopt-herisit-partition
+
+- /% in c simulator
 - kill z3
 
 - runtime & energy: ssd, swap, md4

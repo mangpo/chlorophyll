@@ -4,7 +4,7 @@ void main() {
   int r;
   int input;
 
-  input = 500;
+  input = in();
   r = input & 63;
   d = input >> 6;
   out(table[d] + (((table[d+1] - table[d])*r) >> 6));
