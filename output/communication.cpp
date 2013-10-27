@@ -47,6 +47,48 @@ typedef struct int4 {
   }
 }int4;
 
+typedef struct long2 {
+  long fst,snd;
+  long2() {
+    fst = 0;
+    snd = 0;
+  }
+  long2(long x, long y) {
+    fst = x;
+    snd = y;
+  }
+}long2;
+
+typedef struct long3 {
+  long fst,snd,thd;  
+  long3() {
+    fst = 0;
+    snd = 0;
+    thd = 0;
+  }
+  long3(long x, long y, long z) {
+    fst = x;
+    snd = y;
+    thd = z;
+  }
+}long3;
+
+typedef struct long4 {
+  long fst,snd,thd,frth;
+  long4() {
+    fst = 0;
+    snd = 0;
+    thd = 0;
+    frth = 0;
+  }
+  long4(long w, long x, long y, long z) {
+    fst = w;
+    snd = x;
+    thd = y;
+    frth = z;
+  }
+}long4;
+
 int channel[N];
 bool empty[N];
 std::mutex wlock[N];

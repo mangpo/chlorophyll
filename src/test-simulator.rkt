@@ -20,24 +20,25 @@
 (test "function" "4_1" 256)
 (test "function" "4_2" 256)|#
 ;(test "function-out" "null" 256)
-#|(test "function-pair1" "null" 512 #:w 2 #:h 3)
-(test "pair1" "null" 512)
-(test "pair2" "null" 512)
-(test "while" "10" 256)
-(test "unroll" "null" 1024 #:w 2 #:h 3)
+;(test "function-pair1" "null" 512 #:w 2 #:h 3)
+;(test "pair1" "null" 512)
+;(test "pair2" "null" 512)
+;(test "while" "10" 256)
+;(test "unroll" "null" 1024 #:w 2 #:h 3)
 
-(test "matrixmult6" "72" 400) ;capacity issue
-(test "matrixmult4-dup" "null" 500)
+;(test "matrixmult6" "72" 400) ;capacity issue
+;(test "matrixmult4-dup" "null" 500)
 ;(test "cluster" "null" 256)
 
-(test "md5" "null" 1024 #:w 10 #:h 5)
-(test "ssd_simple" "null" 512 #:w 8 #:h 5)
-(test "swap" "null" 512 #:w 8 #:h 8)
-(test "prefixsum" "null" 512 #:w 8 #:h 8)|#
+(test "md5-1" "null" 1024 #:w 8 #:h 8)
+(test "md5-2" "null" 1024 #:w 8 #:h 8)
+;(test "ssd_simple" "null" 512 #:w 8 #:h 5)
+;(test "swap" "null" 512 #:w 8 #:h 8)
+;(test "prefixsum" "null" 512 #:w 8 #:h 8)
 ;(test "convolution" "null" 10000 #:w 4 #:h 4)
 ;(test "convolution2" "null" 512 #:w 8 #:h 8)
 ;(test "fir" "1" 1000 #:w 3 #:h 3)
-(test "interp2" "1" 256 #:w 3 #:h 3)
+;(test "interp2" "1" 256 #:w 3 #:h 3)
 ;(test "poly" "null" 256 #:w 3 #:h 3)
 ;(test "cos2" "null" 300 #:w 3 #:h 3)
 

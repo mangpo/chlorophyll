@@ -21,16 +21,8 @@
 ;(compile-and-optimize "../examples/leftrotate.cll" "leftrotate" 
 ;                     256 "null" #:w 10 #:h 5 #:opt #t)
 
-
-;(compile-and-optimize "../tests/run/md5-3.cll" "md3" 
-;                     1024 "null" #:w 8 #:h 8 #:opt #f)
-(compile-and-optimize "../tests/run/md5-2.cll" "md2"
+(compile-and-optimize "../tests/run/md5-1.cll" "md1"
 		      1024 "null" #:w 8 #:h 8 #:opt #t)
-;(compile-and-optimize "../tests/run/md5-1.cll" "md1"
-;		      1024 "null" #:w 8 #:h 8 #:opt #t)
-;(compile-and-optimize "../tests/run/md5-2.cll" "md2" 
-;                     400 "null" #:w 10 #:h 5 #:opt #t)
-
 
 ;(compile-and-optimize "../tests/run/fir.cll" "fir" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
