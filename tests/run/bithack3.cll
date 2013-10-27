@@ -1,0 +1,6 @@
+void main() {
+  int@0 x, y;
+  x = in();
+  y = in();
+  out((x^y) ^ (x&y));
+}

@@ -1,0 +1,5 @@
+void main() {
+  int@0 x;
+  x = in();
+  out(x - (x & in()));
+}

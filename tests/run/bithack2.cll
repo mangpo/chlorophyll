@@ -1,0 +1,3 @@
+void main() {
+  out(~(in() - in()));
+}
