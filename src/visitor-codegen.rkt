@@ -634,7 +634,7 @@
            [(> n-mem-decls 0)
             (let* ([address (get-field address (last mem-decls))]
                    [code (append (list (number->string (get-var address)) "a!")
-                                 (for/list ([decl decls])
+                                 (for/list ([decl (reverse decls)])
                                            (if (meminfo? (get-field address decl))
                                                "!+" "push"))
                                  (if (= n-regs 1) (list "pop") (list))
