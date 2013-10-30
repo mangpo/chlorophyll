@@ -89,6 +89,25 @@ typedef struct long4 {
   }
 }long4;
 
+////////////////////////////////////////////////////////////////////
+
+long2 divmod(long x, long y) {
+  long d, r;
+  d = x/y;
+  r = x%y;
+  return long2(r,d);
+}
+
+long2 mult2(long x, long y) {
+  long res, h, l;
+  res = x*y;
+  h = res >> 18;
+  l = res & 0x3ffff;
+  return long2(h,l);
+}
+
+////////////////////////////////////////////////////////////////////
+
 int channel[N];
 bool empty[N];
 std::mutex wlock[N];

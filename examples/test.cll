@@ -1,22 +1,13 @@
-int::2@(1, 2) leftrotate(int::2@(0,0) x, int@0 r) {
-  int::2@(1, 2) out;
-  int@4 r2;
-  int::2@(4,4) x2;
-  int@5 r3;
-  int::2@(5,5) x3;
-  x2 = x;
-  x3 = x;
-  r2 = r;
-  r3 = r;
-  out::0 = ((x3::1 >>@5 (16 -@5 r3)) |@4 (x2::0 <<@4 r2)) &@4 65535;
-  out::1 = ((x3::0 >>@5 (16 -@5 r3)) |@4 (x2::1 <<@4 r2)) &@4 65535;
-  return out;
+int::2@(2,2) foo() {
+  return 0;
 }
 
-void main () {
-  int::2@(0,0) x;
-  int::2@(3,3) y;
-  x::0 = 16;
-  x::1 = 48;
-  y = leftrotate(x, 7);
+void main() {
+  int@0 temp;
+  int::2@(1,1) g2;
+  int::2@(3,3) bar;
+  
+  bar = foo();
+  g2 = temp /%@0 temp;
+
 }

@@ -61,7 +61,7 @@
        [(is-a? ast BinExp%)
 	(send (get-field e1 ast) accept this)
         (send (get-field e2 ast) accept this)
-        (unless (equal? (get-field op (get-field op ast)) "/%")
+        (unless (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2"))
                 (set! items (sub1 items)))
         (when debug 
               (pretty-display (format "REGALLOC: BinExp ~a => ~a" (send ast to-string)

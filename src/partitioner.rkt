@@ -6,6 +6,8 @@
          "partition-storage.rkt"
          "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
+         "visitor-flow.rkt"
+         "visitor-heupartition.rkt"
          "visitor-rename.rkt"
          "visitor-placetype.rkt"
          "visitor-printer.rkt"
@@ -246,14 +248,26 @@
     (outter-loop)
     )
     
-  (for ([decl (get-field stmts my-ast)])
-    (if 
-     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
-     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
-        (begin
-          (solve-function decl)
-          (when verbose (pretty-display "------------------------------------------------")))
-        (send decl accept interpreter)))
+  (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
+  (set-global-sol (sat (make-immutable-hash 
+                        (hash->list (merge-sym-partition space network capacity)))))
+  ;(raise "done")
+
+  ;; (for ([decl (get-field stmts my-ast)])
+  ;;   (if 
+  ;;    ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
+  ;;    (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+  ;;       (begin
+  ;;         (solve-function decl)
+  ;;         (when verbose (pretty-display "------------------------------------------------")))
+  ;;       (send decl accept interpreter)))
+
+
+  
+  (let ([evaluator (new symbolic-evaluator% [num-cores num-core])])
+    (send my-ast accept evaluator)
+    ;(send my-ast pretty-print)
+    )
 
   (with-output-to-file #:exists 'truncate (format "~a/~a.part" outdir name)
     (lambda () (send my-ast accept concise-printer)))
@@ -261,11 +275,6 @@
   (pretty-display "\n=== Final Solution ===")
   (send my-ast accept concise-printer)
   (display-cores cores)
-  
-  (let ([evaluator (new symbolic-evaluator% [num-cores num-core])])
-    (send my-ast accept evaluator)
-    ;(send my-ast pretty-print)
-    )
   
   (when verbose
     (pretty-display "\n=== After evaluate ===")

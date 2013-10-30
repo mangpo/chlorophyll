@@ -12,6 +12,7 @@
     (super-new)
     (init-field from to index)
     (define debug #f)
+    (define keep #f) ;; keep symbolic-place of op% the same when _temp = a /% b;
 
     (define/public (visit ast)
       (define (get-known-type)
@@ -27,7 +28,7 @@
             place-type))
 
       (define (fresh-place-type)
-        (if (symbolic? (get-field place-type ast))
+        (if (and (not keep) (symbolic? (get-field place-type ast)))
             (get-sym)
             (get-place-type)))
         
@@ -38,6 +39,7 @@
        [(is-a? ast Num%)
         (when debug
               (pretty-display (format "CLONER: Num ~a" (send ast to-string))))
+        (set! keep #f)
         (new Num% [n (send (get-field n ast) accept this)] 
              [place-type (get-place-type)])
         ]
@@ -45,6 +47,7 @@
        [(is-a? ast Array%)
         (when debug
               (pretty-display (format "CLONER: Array ~a" (send ast to-string))))
+        (set! keep #f)
         (new Array% [name (get-field name ast)] 
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
@@ -55,6 +58,7 @@
        [(is-a? ast Temp%)
         (when debug
               (pretty-display (format "CLONER: Temp ~a" (send ast to-string))))
+        (set! keep #f)
         (new Temp% [name (get-field name ast)]
              [type (get-field type ast)]
              [place-type (get-place-type)] [known-type (get-known-type)]
@@ -63,6 +67,7 @@
        [(is-a? ast Var%)
         (when debug
               (pretty-display (format "CLONER: Var ~a" (send ast to-string))))
+        (set! keep #f)
         (new Var% [name (get-field name ast)]
              [type (get-field type ast)]
              [compact (get-field compact ast)]
@@ -76,8 +81,9 @@
               (pretty-display (format "CLONER: UnaExp ~a" (send ast to-string))))
         (define place-type (fresh-place-type))
         (define op-ret (send (get-field op ast) accept this))
-        (when (symbolic? (get-field place op-ret))
+        (when (and (not keep) (symbolic? (get-field place op-ret)))
               (set-field! place op-ret place-type))
+        (set! keep #f)
         (new UnaExp% 
              [op op-ret]
              [e1 (send (get-field e1 ast) accept this)]
@@ -90,8 +96,9 @@
               (pretty-display (format "CLONER: BinExp ~a" (send ast to-string))))
         (define place-type (fresh-place-type))
         (define op-ret (send (get-field op ast) accept this))
-        (when (symbolic? (get-field place op-ret))
+        (when (and (not keep) (symbolic? (get-field place op-ret)))
               (set-field! place op-ret place-type))
+        (set! keep #f)
         (new BinExp% 
              [op op-ret]
              [e1 (send (get-field e1 ast) accept this)]
@@ -101,6 +108,7 @@
              [place-type place-type])]
 
        [(is-a? ast FuncCall%)
+        (set! keep #f)
         (new FuncCall%
              [name (get-field name ast)]
              [args (map (lambda (x) (send x accept this)) (get-field args ast))]
@@ -166,9 +174,13 @@
 		       (send (get-field pre ast) accept this))]
 
        [(is-a? ast AssignTemp%)
+        (define lhs-ret (send (get-field lhs ast) accept this))
+        (set! keep #t)
+        (define rhs-ret (send (get-field rhs ast) accept this))
+        
         (new AssignTemp%
-             [lhs (send (get-field lhs ast) accept this)]
-             [rhs (send (get-field rhs ast) accept this)])]
+               [lhs lhs-ret]
+               [rhs rhs-ret])]
 
        [(is-a? ast Assign%)
         (new Assign%

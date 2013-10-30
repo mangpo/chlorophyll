@@ -30,8 +30,7 @@
 ;(test "matrixmult4-dup" "null" 500)
 ;(test "cluster" "null" 256)
 
-(test "md5-1" "null" 1024 #:w 8 #:h 8)
-(test "md5-2" "null" 1024 #:w 8 #:h 8)
+;(test "md5-1" "null" 1024 #:w 8 #:h 8)
 ;(test "ssd_simple" "null" 512 #:w 8 #:h 5)
 ;(test "swap" "null" 512 #:w 8 #:h 8)
 ;(test "prefixsum" "null" 512 #:w 8 #:h 8)
@@ -41,6 +40,7 @@
 ;(test "interp2" "1" 256 #:w 3 #:h 3)
 ;(test "poly" "null" 256 #:w 3 #:h 3)
 ;(test "cos2" "null" 300 #:w 3 #:h 3)
+(test "sqrt" "null" 300 #:w 3 #:h 3)
 
 (for ([res (reverse result)])
   (pretty-display res))

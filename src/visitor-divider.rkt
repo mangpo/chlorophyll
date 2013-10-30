@@ -21,7 +21,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -89,8 +89,10 @@
     (define (pop-stack i)
       (let* ([id (vector-ref cores i)]
              [stack (core-stack id)])
-	(when debug (pretty-display `(pop-stack ,i -> ,(send (car stack) to-string))))
-	(when debug (pretty-display `(pop-stack ,i remain: ,(cdr stack))))
+	(when debug 
+          (pretty-display `(pop-stack ,i))
+          (pretty-display `(top    -> ,(send (car stack) to-string)))
+          (pretty-display `(remain -> ,(cdr stack))))
         (set-core-stack! id (cdr stack))
         (car stack)))
 
@@ -398,7 +400,7 @@
 		(set-field! e2 ast (pop-stack place))
 		(set-field! e1 ast (pop-stack place)))
 
-        (when (equal? (get-field op (get-field op ast)) "/%")
+        (when (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2"))
               (let ([r (new ProxyReturn% [place-type place])])
                 (set-field! place-type ast (list r r))))
 	

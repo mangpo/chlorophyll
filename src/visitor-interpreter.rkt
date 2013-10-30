@@ -369,26 +369,26 @@
         ]
 
        [(is-a? ast ArrayDecl%)
-          (define place-list (get-field place-list ast)) ; don't support place(x)
-          (when debug
-                (pretty-display (format ">> ArrayDecl ~a" (get-field var ast))))
-
-          ;; check boundaries
-          (define last 0)
-          (for ([p place-list])
-               (let* ([from (get-field from p)]
-                      [to   (get-field to p)])
-                 (when (not (= from last))
-                       (send ast bound-error))
-                 (set! last to)
-                 (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
-                 ))
-
-          (when (not (= (get-field bound ast) last))
-                (send ast bound-error))
-            
-          (comminfo 0 (to-place-set place-list))
-          ]
+        (define place-list (get-field place-list ast)) ; don't support place(x)
+        (when debug
+              (pretty-display (format ">> ArrayDecl ~a" (get-field var ast))))
+        
+        ;; check boundaries
+        (define last 0)
+        (for ([p place-list])
+             (let* ([from (get-field from p)]
+                    [to   (get-field to p)])
+               (when (not (= from last))
+                     (send ast bound-error))
+               (set! last to)
+               (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
+               ))
+        
+        (when (not (= (get-field bound ast) last))
+              (send ast bound-error))
+        
+        (comminfo 0 (to-place-set place-list))
+        ]
 
        [(is-a? ast For%)
           (define place-list (get-field place-list ast)) ; don't allow place(x)

@@ -73,8 +73,8 @@
    [(is-a? place TypeExpansion%)
     (let ([place-list (get-field place-list place)])
       (format "(~a)"
-              (foldl (lambda (p str) (format "~a, ~a" str (place-to-string p)))
-                     (place-to-string (car place-list))
+              (foldl (lambda (p str) (format "~a, ~a" str p))
+                     (car place-list)
                      (cdr place-list))))]
 
    [else

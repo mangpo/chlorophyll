@@ -1,0 +1,28 @@
+void main() {
+  int::2 x;
+  int res;
+  int add;
+  int temp;
+  int::2 g2;
+
+  res = 0;
+  add = 32768; 
+  
+  x::0 = in(); // high
+  x::1 = in(); // low
+  for(i from 0 to 16) {
+    temp = res | add;
+    g2 = temp *:2 temp;
+    if(x::0 > g2::0) {
+      res = temp;
+    } else {
+      if(x::0 == g2::0) {
+        if(x::1 >= g2::1) {
+          res = temp;
+        }
+      }
+    }
+    add = add >> 1;
+  }
+  out(res);
+}

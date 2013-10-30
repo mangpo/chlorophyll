@@ -88,15 +88,16 @@
 
        [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
        [(equal? op "+") (list (gen-block "+" 2 1))]
-       [(equal? op ">>") ;; x-1 for 2/ unext
-        (list (ift (list (gen-block "-1" "+" 1 1) 
-                         (forloop (gen-block) (list (gen-block "2/" 1 1)) #f #f #f)
-                         (gen-block "dup" 1 2)))
-              (gen-block "drop" 1 0))]
 
        [(equal? op "<<") ;; x-1 for 2* unext
         (list (ift (list (gen-block "-1" "+" 1 1) 
                          (forloop (gen-block) (list (gen-block "2*" 1 1)) #f #f #f)
+                         (gen-block "dup" 1 2)))
+              (gen-block "drop" 1 0))]
+
+       [(equal? op ">>") ;; x-1 for 2/ unext
+        (list (ift (list (gen-block "-1" "+" 1 1) 
+                         (forloop (gen-block) (list (gen-block "2/" 1 1)) #f #f #f)
                          (gen-block "dup" 1 2)))
               (gen-block "drop" 1 0))]
 
@@ -112,6 +113,11 @@
 				      (gen-block "drop" 1 0)))]
        [(equal? op "/%") (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
 				       (funccall "--u/mod")))]
+       [(equal? op "*:2") (save-a (list (gen-block "a!" "0" "17" 2 3)
+                                        (forloop (gen-block)
+                                                 (list (gen-block "+*" 1 1)) #f #f #f)
+                                        (gen-block "push" "drop" "pop" "a" 2 2)))]
+
        [(equal? op "*/17") (save-a (list (funccall "*.17")
 					 (gen-block "push" "drop" "pop" 2 1)))]
        [(equal? op "*/16") (save-a (list (funccall "*.")
