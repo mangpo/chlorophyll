@@ -248,19 +248,18 @@
     (outter-loop)
     )
     
-  (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
-  (set-global-sol (sat (make-immutable-hash 
-                        (hash->list (merge-sym-partition space network capacity)))))
-  ;(raise "done")
+  ;; (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
+  ;; (set-global-sol (sat (make-immutable-hash 
+  ;;                       (hash->list (merge-sym-partition space network capacity)))))
 
-  ;; (for ([decl (get-field stmts my-ast)])
-  ;;   (if 
-  ;;    ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
-  ;;    (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
-  ;;       (begin
-  ;;         (solve-function decl)
-  ;;         (when verbose (pretty-display "------------------------------------------------")))
-  ;;       (send decl accept interpreter)))
+  (for ([decl (get-field stmts my-ast)])
+    (if 
+     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
+     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+        (begin
+          (solve-function decl)
+          (when verbose (pretty-display "------------------------------------------------")))
+        (send decl accept interpreter)))
 
 
   

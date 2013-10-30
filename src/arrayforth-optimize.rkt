@@ -97,7 +97,7 @@
                                                (default-state)
                                                (in-constraint (block-incnstr ast) 
                                                               (car body-list)))
-                             #:mem mem-size #:start mem-size))
+                             #:mem mem-size #:start mem-size #:bin-search `time))
 
     (define opt (if (equal? result 'timeout)
                     ast
@@ -144,7 +144,7 @@
                                                    (in-constraint 
                                                     (block-incnstr block-noopt)
                                                     (car body)))
-				 #:mem mem-size #:start mem-size))
+				 #:mem mem-size #:start mem-size #:bin-search `time))
 
         (if (equal? result 'timeout)
             (let* ([last-block (linklist-entry (linklist-prev next))]

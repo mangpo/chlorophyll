@@ -1,22 +1,19 @@
 TODO
+- collect stat on kaopad
 
-MD5 (accurate)
-1) nostack-noopt: can i make it fits?
-2) nostack-opt: do this
-3) *stack-noopt: make this fits
-4) *stack-noopt-herisit-partition
+- run bithack, sqrt
+- partitioner-synthesizer vs heuristic: more benchmarks
+- rerun md5 partitioner
+- why fir-par2 only provides 2.3x speed up
 
-- /% in c simulator
-- kill z3
+- superoptimize sqrt
+- rerun poly, interp, cos when opt for runtime
 
-- runtime & energy: ssd, swap, md4
-- more benchmarks: disparity, integer square root, fibonacci, hearing aid
+RELATED WORK
+- read Monica Lam's HFT => MPI
+- UW paper
+- PLDI paper
 
-- measure time & energy
-- more benchmarks
-  = vs expert
-  = vs unopt
-  = vs manual code
 - call rohin's compiler to get program size
   = if size > 64 words -> define-repeating-code for shorter seq
 - connect to rohin's interpreter

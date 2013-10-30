@@ -498,28 +498,29 @@
 	  ]
 
        [(is-a? ast AssignTemp%)
+        (send (get-field lhs ast) accept this)
         (send (get-field rhs ast) accept this)]
 
        [(is-a? ast Assign%) 
-          (when debug (newline))
-          (define lhs (get-field lhs ast))
-          (define rhs (get-field rhs ast))
-
-          (when debug
-                (pretty-display ">> Assign (lhs)"))
-
-          ;; infer place
-          (send rhs infer-place (get-field place-type lhs))
-          (send lhs infer-place (get-field place-type rhs))
-          
-          ;; Visit lhs
-          (define lhs-ret (send lhs accept this))
-          (define rhs-ret (send rhs accept this))
-       
-          (comminfo
-           (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
-           (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
-         ]
+        (when debug (newline))
+        (define lhs (get-field lhs ast))
+        (define rhs (get-field rhs ast))
+        
+        (when debug
+              (pretty-display ">> Assign (lhs)"))
+        
+        ;; infer place
+        (send rhs infer-place (get-field place-type lhs))
+        (send lhs infer-place (get-field place-type rhs))
+        
+        ;; Visit lhs
+        (define lhs-ret (send lhs accept this))
+        (define rhs-ret (send rhs accept this))
+        
+        (comminfo
+         (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
+         (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
+        ]
 
        [(is-a? ast Return%)
 	(comminfo 0 (set))]
