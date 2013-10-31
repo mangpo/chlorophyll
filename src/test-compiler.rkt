@@ -50,8 +50,8 @@
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
-(compile-and-optimize "../tests/run/gaussseidel.cll" "gauss" 
-                      400 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/gaussseidel2.cll" "gauss" 
+                      290 "null" #:w 3 #:h 3 #:opt #f)
 
 ;(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
 ;                     256 "null" #:w 8 #:h 8 #:opt #t)

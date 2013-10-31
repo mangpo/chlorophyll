@@ -1,8 +1,11 @@
 TODO
+- partitioner-synthesizer vs heuristic: more benchmarks
+  = sqrt: test correctness
+  = guass-seidel: need to make it fit
+  = complex: fix sqrt
 - collect stat on kaopad
 
 - run bithack, sqrt
-- partitioner-synthesizer vs heuristic: more benchmarks
 - rerun md5 partitioner
 - why fir-par2 only provides 2.3x speed up
 

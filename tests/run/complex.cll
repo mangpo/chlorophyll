@@ -1,0 +1,65 @@
+int cosine(int@0 x) {
+  int@0 y;
+  int[]@{[0:4]=0} coeff[4] = {-281 , 5203 , -42329 , 37407};
+  int@0 sum;
+
+  x = x <<@0 2;
+  if(x <@0 0) {
+    x = x +@0 65536;
+  } else {
+    x = 65536 -@0 x;
+  }
+
+  y = x */16@0 x;
+  sum = 0;
+  for(i from 0 to 4) {
+    sum = sum */16@0 y +@0 coeff[i];
+  }
+
+  return (sum */16@0 x) +@0 x;
+}
+
+int sqrt(int::2 x) {
+  int res;
+  int add;
+  int temp;
+  int::2 g2;
+
+  res = 0;
+  //add = 32768; 
+  add = 196608; 
+  //for(i from 0 to 16) {
+  for(i from 0 to 18) {
+    temp = res | add;
+    g2 = temp *:2 temp;
+    if(x::0 > g2::0) {
+      res = temp;
+    } else {
+      if(x::0 == g2::0) {
+        if(x::1 >= g2::1) {
+          res = temp;
+        }
+      }
+    }
+    add = add >> 1;
+  }
+  return res;
+}
+
+void main() {
+  int rev;
+  int cos;
+  int::2 cos2;
+  int::2 sin2;
+
+  int sin;
+  cos = cosine(rev);
+  cos2 = cos *:2 cos;
+  
+  sin2::1 = (~cos2::1) + 1;
+  sin2::0 = 16383 - cos2::0; // 0x3fff
+  if(sin2::1 == 0) {
+    sin2::0 = sin2::0 + 1;
+  }
+  out(sqrt(sin2));
+}
