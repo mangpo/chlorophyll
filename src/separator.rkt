@@ -125,6 +125,7 @@
 					 binary)))
 	;; error
 	(raise "compilation error at sequantial simulation file."))
+  (pretty-display (format "GENERATE ~a" expect))
   (system (format "./~a < ~a/~a > ~a"
                   binary
                   datadir input  ;; input

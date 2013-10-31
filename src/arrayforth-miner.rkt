@@ -13,15 +13,14 @@
    [(block? entry)
     (define body (block-body entry))
     (define seq (if (string? body) (string-split body) body))
-    (set! insts (append insts seq))
-    (collect-from-block (linklist-next x) func insts)]
+    (collect-from-block (linklist-next x) func 
+			(append insts seq))]
    
    [(funccall? entry)
     (if (and func (equal? func (funccall-name entry)))
 	(values x insts)
-	(begin
-	  (set! insts (append insts (list (funccall-name entry))))
-	  (collect-from-block (linklist-next x) func insts)))]
+	(collect-from-block (linklist-next x) func 
+			    (append insts (list (funccall-name entry)))))]
    
    [else (values x insts)]))
 
@@ -168,7 +167,8 @@
   (define-values (next insts) 
     (collect-from-block (contain-block-funccall ast)))
 
-  ;(pretty-display `(first-location ,(string-join insts) ,exp ,(car (regexp-match-positions exp (string-join insts)))))
+  ;; (pretty-display `(first-location ,(string-join insts) ,exp))
+  ;; (pretty-display (car (regexp-match-positions exp (string-join insts))))
   (car (regexp-match-positions exp (string-join insts))))
 
 (define sequence-matcher%
@@ -182,11 +182,19 @@
       (define (add-to-result insts)
         (define str  (string-join insts))
         (define len (string-length str))
-	(define matches (regexp-match-positions* exp str))
+	(define matches (filter (lambda (x) 
+				  (let ([start (car x)]
+					[end (cdr x)])
+				    (and (or (= start 0)
+					     (equal? (substring str (sub1 start) start) " "))
+					 (or (= end (string-length str))
+					     (equal? (substring str end (add1 end)) " ")))))
+				(regexp-match-positions* exp str)))
+	;; (pretty-display `(add-to-result ,insts ,matches))
 	
         ;; add prev pointers to result list
 	(for ([pos matches])
-             ;; (pretty-display "ADD TO RESULT:")
+             ;; (pretty-display (format "ADD TO RESULT: ~a" exp))
              ;; (aforth-struct-print (linklist-prev ast))
              (let ([to (cdr pos)])
                (when (or (= (cdr pos) len) 

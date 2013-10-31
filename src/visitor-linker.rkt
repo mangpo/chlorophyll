@@ -350,7 +350,7 @@
          (define new-if
 	   (cond
 	    [(binop-equal? exp "!=")
-	     (new If!=0% [condition (minus (get-e1 exp) (get-e2 exp))] 
+	     (new If!=0% [condition (minus (get-e1 exp) (get-e2 exp) place)] 
 		  [true-block t]
 		  [false-block f])]
 	    

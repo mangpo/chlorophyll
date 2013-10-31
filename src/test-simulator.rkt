@@ -40,7 +40,8 @@
 ;(test "interp2" "1" 256 #:w 3 #:h 3)
 ;(test "poly" "null" 256 #:w 3 #:h 3)
 ;(test "cos2" "null" 300 #:w 3 #:h 3)
-(test "sqrt" "null" 300 #:w 3 #:h 3)
+;(test "sqrt" "null" 300 #:w 3 #:h 3)
+(test "gaussseidel" "null" 300 #:w 3 #:h 3)
 
 (for ([res (reverse result)])
   (pretty-display res))

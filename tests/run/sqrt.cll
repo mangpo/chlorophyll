@@ -6,11 +6,13 @@ void main() {
   int::2 g2;
 
   res = 0;
-  add = 32768; 
+  //add = 32768; 
+  add = 196608; 
   
   x::0 = in(); // high
   x::1 = in(); // low
-  for(i from 0 to 16) {
+  //for(i from 0 to 16) {
+  for(i from 0 to 18) {
     temp = res | add;
     g2 = temp *:2 temp;
     if(x::0 > g2::0) {

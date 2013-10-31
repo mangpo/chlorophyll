@@ -42,10 +42,16 @@
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/interp2.cll" "interp2" 
 ;                      256 "null" #:w 3 #:h 3 #:opt #t)
-(compile-and-optimize "../tests/run/poly.cll" "poly" 
-                      256 "null" #:w 3 #:h 3 #:opt #t)
+;(compile-and-optimize "../tests/run/poly.cll" "poly" 
+;                      256 "null" #:w 3 #:h 3 #:opt #t)
 ;(compile-and-optimize "../tests/run/cos2.cll" "cos2" 
 ;                      300 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../tests/run/cos.cll" "cos" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../tests/run/sin.cll" "sin" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/gaussseidel.cll" "gauss" 
+                      400 "null" #:w 3 #:h 3 #:opt #f)
 
 ;(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd_simple2" 
 ;                     256 "null" #:w 8 #:h 8 #:opt #t)

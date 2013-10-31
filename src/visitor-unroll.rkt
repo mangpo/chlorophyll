@@ -33,7 +33,7 @@
         (define ranges (get-field unroll ast))
         (pretty-display ranges)
 
-        (if ranges
+        (if (and ranges (> (length ranges) 1))
             (for/list ([range ranges])
                       (pretty-display "UNROLL: For (2)")
                       (define body-clone (send body accept (new range-cloner% 
