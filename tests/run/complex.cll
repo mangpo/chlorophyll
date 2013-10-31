@@ -20,18 +20,21 @@ int cosine(int@0 x) {
 }
 
 int sqrt(int::2 x) {
-  int res;
-  int add;
-  int temp;
-  int::2 g2;
+  int@1 res;
+  int@1 add;
+  int@1 temp;
+  int::2@(0,0) g2;
 
   res = 0;
-  //add = 32768; 
-  add = 196608; 
-  //for(i from 0 to 16) {
-  for(i from 0 to 18) {
+  add = 32768; 
+  
+  x::0 = in(); // high
+  x::1 = in(); // low
+  for(i from 0 to 16) {
     temp = res | add;
     g2 = temp *:2 temp;
+    g2::0 = (g2::0 << 2) + ((g2::1 >> 16) & 3);
+    g2::1 = g2::1 & 65535;
     if(x::0 > g2::0) {
       res = temp;
     } else {
@@ -61,5 +64,8 @@ void main() {
   if(sin2::1 == 0) {
     sin2::0 = sin2::0 + 1;
   }
+
+  sin2::0 = (sin2::0 << 2) + ((sin2::1 >> 16) & 3);
+  sin2::1 = sin2::1 & 65535;
   out(sqrt(sin2));
 }
