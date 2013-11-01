@@ -1,9 +1,9 @@
 void main() {
-  int::2@(0,0) x;
-  int@1 res;
-  int@1 add;
-  int@1 temp;
-  int::2@(0,0) g2;
+  int::2@(14,4) x;
+  int@4 res;
+  int@4 add;
+  int@4 temp;
+  int::2@(14,14) g2;
 
   res = 0;
   add = 32768; 
@@ -25,7 +25,7 @@ void main() {
       }
     }
     //out(res);
-    add = add >> 1;
+    add = add >>@place(add) 1;
   }
   out(res);
 }

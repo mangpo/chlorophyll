@@ -248,9 +248,11 @@
     (outter-loop)
     )
     
+  ;; (define heu-start (current-seconds))
   ;; (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
   ;; (set-global-sol (sat (make-immutable-hash 
   ;;                       (hash->list (merge-sym-partition space network capacity)))))
+  ;; (pretty-display (format "heuristic time = ~a" (- (current-seconds) heu-start)))
 
   (for ([decl (get-field stmts my-ast)])
     (if 
