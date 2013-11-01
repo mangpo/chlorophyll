@@ -47,11 +47,11 @@
 ;(compile-and-optimize "../tests/run/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/complex1.cll" "complex1" 
-;                      290 "null" #:w 4 #:h 4 #:opt #f) ;; factor = 0.5
+;                      290 "null" #:w 4 #:h 4 #:opt #f) ;; partitioner
 ;(compile-and-optimize "../tests/run/complex2.cll" "complex2heu" 
 ;                      290 "null" #:w 5 #:h 5 #:opt #f) ;; factor = 0.5
 (compile-and-optimize "../tests/run/sqrt1.cll" "sqrt1"
-		      290 "null" #:w 4 #:h 4 #:opt #f) ;; factor = 0.6
+		      290 "null" #:w 4 #:h 4 #:opt #f) ;; partitioner/factor = 0.6
 ;(compile-and-optimize "../tests/run/cos-exp.cll" "cosexp" 
 ;                      256 "null" #:w 3 #:h 3 #:opt #f)
 

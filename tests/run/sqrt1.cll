@@ -1,9 +1,9 @@
 void main() {
-  int::2@(14,4) x;
-  int@4 res;
-  int@4 add;
-  int@4 temp;
-  int::2@(14,14) g2;
+  int::2@(4,2) x;
+  int@2 res;
+  int@2 add;
+  int@2 temp;
+  int::2@(4,4) g2;
 
   res = 0;
   add = 32768; 
