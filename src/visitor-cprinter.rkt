@@ -300,7 +300,7 @@
         [(is-a? ast FuncDecl%)
          (define (print-arg arg pre)
            (display (format "~a~a ~a_~a" pre
-                           (get-field type arg) 
+                           "long"
                            (print-name (car (get-field var-list arg)))
 			   core)))
 

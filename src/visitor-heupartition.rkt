@@ -2,9 +2,9 @@
 
 (require "header.rkt" "ast.rkt" "visitor-interface.rkt" "space-estimator.rkt")
 
-(provide (all-defined-out))
+(provide heuristic-partitioner% merge-sym-partition)
 
-(define factor 1)
+(define factor 0.5)
 
 (define (merge-sym-partition space flow-graph capacity)
   (define sol-map (make-hash))
@@ -68,13 +68,14 @@
   (pretty-display "------------------ after merge sym partition ---------------------")
   (pretty-display sol-map)
   sol-map)
+  
 
 (define heuristic-partitioner%
   (class* object% (visitor<%>)
     (super-new)
     (init-field [space (make-hash)])
 
-    (define network (list))
+    (define network (make-hash))
 
     (define (inc-space place sp)
       (pretty-display `(inc-space ,place))
@@ -104,7 +105,16 @@
              (not (is-a? p1 Place%))
              (not (is-a? p2 Place%))
              (or (symbolic? p1) (symbolic? p2)))
-        (set! network (cons (cons p1 p2) network))]))
+        (define key1 (cons p1 p2))
+        (define key2 (cons p2 p1))
+        (cond
+         [(hash-has-key? network key1)
+          (hash-set! network key1 (add1 (hash-ref network key1)))]
+         [(hash-has-key? network key2)
+          (hash-set! network key2 (add1 (hash-ref network key2)))]
+         [else
+          (hash-set! network key1 1)])
+        ]))
     
     (define/public (visit ast)
       (cond
@@ -281,7 +291,10 @@
              (send stmt accept this))
 
         (pretty-display `(network1 ,network))
-        (values space network)]
+
+        (define sorted-edges (sort (hash->list network) (lambda (x y) (> (cdr x) (cdr y)))))
+        (pretty-display `(sorted-edges ,sorted-edges))
+        (values space (map car sorted-edges))]
 
        [(is-a? ast Block%)
         (foldl (lambda (stmt all) (set-union all (send stmt accept this)))

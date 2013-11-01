@@ -1,6 +1,12 @@
 TODO
+1) run poly, interp, cos, div
+2) run bithack
+3) normal superoptimize bithack
+4) partitioner vs heuristic: complex, sqrt
+
+5) partition md5
+
 - partitioner-synthesizer vs heuristic: more benchmarks
-  = sqrt: test correctness
   = guass-seidel: need to make it fit
   = complex: fix sqrt
 - collect stat on kaopad

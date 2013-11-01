@@ -23,6 +23,8 @@
 
     (define debug #f)
     (define const-a (list #f))
+    (define cond-onstack #f)
+    (define in-pre #f)
 
     (define-syntax gen-block
       (syntax-rules ()
@@ -183,6 +185,15 @@
     (define (get-iter-org mem)
       (+ (meminfo-addr data-size) (meminfo-addr mem)))
 
+    (define (drop-cond my-cond code)
+      (if my-cond
+          (begin
+            ;(pretty-display ">>> DROP COND <<<")
+            (set! cond-onstack #f)
+            (prog-append (list (gen-block "drop" 1 0)) code)
+            )
+          code))
+
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
@@ -335,19 +346,28 @@
         (list (gen-block-in port "b!" "@b" 0 1 port))]
 
        [(is-a? ast Send%)
+        (define my-cond cond-onstack)
         (define data (get-field data ast))
+        (define send-cond (and (is-a? data Temp%) (equal? (get-field name data) "_cond")))
+        (unless send-cond
+                (set! cond-onstack #f))
+
         (when debug 
               (pretty-display (format "\nCODEGEN: Send ~a ~a" (get-field port ast) data)))
 	(define data-ret (send data accept this))
         (define temp-ret
-          (if (and (is-a? data Temp%) (equal? (get-field name data) "_cond"))
+          (if send-cond
               (list (gen-block "dup" 1 2))
               (list (gen-block))))
         (define port (gen-port (get-field port ast)))
 	(define send-ret (list (gen-block-in port "b!" "!b" 1 0 port)))
-        (prog-append data-ret temp-ret send-ret)]
+
+        (drop-cond (and (not send-cond) my-cond) (prog-append data-ret temp-ret send-ret))]
 
        [(is-a? ast FuncCall%)
+        (define my-cond cond-onstack)
+        (set! cond-onstack #f)
+
         (when debug 
               (pretty-display (format "\nCODEGEN: FuncCall ~a" (send ast to-string))))
         (define arg-code 
@@ -359,17 +379,24 @@
                     (funccall (get-field name ast))
                     (gen-block "pop" "a!" 0 0))
               (list (funccall (get-field name ast)))))
-        (prog-append arg-code call-code)
+
+        (drop-cond my-cond (prog-append arg-code call-code))
         ]
 
        [(is-a? ast Assign%)
+        (define my-cond cond-onstack)
+        (set! cond-onstack #f)
+
 	(define lhs (get-field lhs ast))
 	(define rhs (get-field rhs ast))
+        (when (equal? (get-field name lhs) "_cond")
+              (set! cond-onstack #t))
         (when debug 
               (pretty-display (format "\nCODEGEN: Assign ~a = ~a" 
 				      (send lhs to-string) (send rhs to-string))))
 	(define address (get-field address lhs))
 	;(pretty-display `(address ,address))
+        (define ret
 	(if (is-a? lhs Array%)
 	    (let* ([index-ret (send (get-field index lhs) accept this)]
 		   [offset    (get-field offset lhs)]
@@ -419,10 +446,14 @@
                             ((number->string (get-iter address)) "b!" "!b")
                             ((number->string (get-iter-org address)) "b!" "!b")
                             1 0))
-                     ]))))
+                     ])))))
+        (drop-cond my-cond ret)
         ]
 
        [(is-a? ast Return%)
+        (define my-cond cond-onstack)
+        (set! cond-onstack #f)
+
         (when debug 
               (pretty-display (format "\nCODEGEN: Return")))
 
@@ -449,7 +480,7 @@
         (for ([b ret])
              (set-restrict-mem! (block-cnstr b) #f))
 
-        ret
+        (drop-cond my-cond ret)
 	]
 
        [(is-a? ast If%)
@@ -457,13 +488,16 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: If"))
 	      )
+        (set! in-pre #t)
         (define pre-ret 
 	  (if (get-field pre ast)
 	      (send (get-field pre ast) accept this)
 	      (list (gen-block))))
+        (set! in-pre #f)
 	  
 	(codegen-print pre-ret)
         (define cond-ret (send (get-field condition ast) accept this))
+        (set! cond-onstack #f)
         (define true-ret (prog-append (list (gen-block "drop" 1 0))
                                       (send (get-field true-block ast) accept this)))
         (define false-ret 
@@ -548,6 +582,9 @@
 	]
 
        [(is-a? ast For%)
+        (define my-cond cond-onstack)
+        (set! cond-onstack #f)
+
 	(define array (get-field iter-type ast))
 
         (define from (get-field from ast))
@@ -612,8 +649,9 @@
                        (address-org-str "b!" "@b" "1" "+" "!b")
                        0 0)))))
 
-        (list (forloop init-ret (prog-append body-ret body-decor) 
-                       addr-pair from to))
+        (drop-cond my-cond
+                   (list (forloop init-ret (prog-append body-ret body-decor) 
+                                  addr-pair from to)))
 	]
 
        [(is-a? ast FuncDecl%)
@@ -695,8 +733,16 @@
         ]
 
        [(is-a? ast Block%)
-	(foldl (lambda (stmt all) (prog-append all (send stmt accept this)))
-	       (list) (get-field stmts ast))]
+        (define ret
+          (foldl (lambda (stmt all) (prog-append all (send stmt accept this)))
+                 (list) (get-field stmts ast)))
+        (if (and cond-onstack (not in-pre))
+            (begin
+              (set! cond-onstack #f)
+              (prog-append ret (list (gen-block "drop" 1 0)))
+              )
+            ret)
+        ]
 
        [else
 	(raise (format "visitor-codegen: unimplemented for ~a" ast))]
