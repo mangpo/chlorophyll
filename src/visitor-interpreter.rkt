@@ -43,8 +43,8 @@
               (cores-inc-space places p add-space))]
         
         [else
-         (raise "inc-space")
          (pretty-display `(inc-space ,place))
+         (raise "inc-space")
          (let ([place-list (if (place-type-dist? place) (car place) place)])
            (for ([p place])
 		(cores-inc-space places (get-field place p) add-space)))]))

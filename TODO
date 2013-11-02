@@ -1,22 +1,10 @@
 TODO
-1) run poly, interp, cos, div
-2) run bithack
-3) normal superoptimize bithack
 4) partitioner vs heuristic: complex, sqrt
-
 5) partition md5
 
-- partitioner-synthesizer vs heuristic: more benchmarks
-  = guass-seidel: need to make it fit
-  = complex: fix sqrt
-- collect stat on kaopad
-
-- run bithack, sqrt
-- rerun md5 partitioner
 - why fir-par2 only provides 2.3x speed up
 
 - superoptimize sqrt
-- rerun poly, interp, cos when opt for runtime
 
 RELATED WORK
 - read Monica Lam's HFT => MPI

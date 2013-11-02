@@ -195,6 +195,7 @@
             (pretty-display "CASE 1")
 	    (set-block-body! entry (block-org entry))
             (pretty-display `(set-block-body! ,(block-org entry)))
+	    ;; sliding window
 	    (superoptimize-inner (linklist-next ast)))
           (begin
             (pretty-display "CASE 2")
@@ -202,6 +203,7 @@
             (set-linklist-entry! ast renamed)
             (set-linklist-next! ast next)
             (set-linklist-prev! next ast)
+	    ;; move to next block
             (superoptimize-inner next)))]
 
      [(linklist-entry ast)

@@ -20,7 +20,7 @@
 (struct linklist (prev entry next) #:mutable)
 
 (define ga-bit 1)
-(define block-limit 13)
+(define block-limit 16)
 (define reduce-limit 5)
 
 (define-syntax new-block
