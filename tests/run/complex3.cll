@@ -1,0 +1,76 @@
+int@1 cosine(int@1 x) {
+  int@3 y;
+  int[]@3 coeff[4] = {-281 , 5203 , -42329 , 37407};
+  int@3 sum;
+
+  x = x <<@1 2;
+  if(x < 0) {
+    x = x +@1 65536;
+  } else {
+    x = 65536 -@1 x;
+  }
+
+  y = x */16@1 x;
+  sum = 0;
+  for(i from 0 to 4) {
+    sum = (sum */16@3 y) +@3 coeff[i];
+  }
+
+  return (sum */16@1 x) +@1 x;
+}
+
+int@7 sqrt(int::2@(4,0) x) {
+  int@7 res;
+  int@0 add;
+  int@7 temp;
+  int::2@(4,0) g2;
+
+  res = 0;
+  add = 32768; 
+  for(i from 0 to 16) {
+    temp = res |@7 add;
+    g2 = temp *:2@7 temp;
+    g2::0 = (g2::0 <<@4 2) +@4 ((g2::1 >>@0 16) &@0 3);
+    g2::1 = g2::1 &@0 65535;
+    if(x::0 >@4 g2::0) {
+      res = temp;
+    } else {
+      if(x::0 ==@4 g2::0) {
+        if(x::1 >=@0 g2::1) {
+          res = temp;
+        }
+      }
+    }
+    add = add >>@place(add) 1;
+  }
+  return res;
+}
+
+void main() {
+  int@5 cos;
+  int::2@(6,5) cos2;
+  int::2@(6,5) sin2;
+  int@1 rev;
+  int@8 sin;
+
+  rev = in();
+  cos = cosine(rev);
+  out(cos);
+
+  cos2 = cos *:2@5 cos;
+  cos2::0 = (cos2::0 <<@6 2) +@6 ((cos2::1 >>@6 16) &@6 3);
+  cos2::1 = cos2::1 &@5 65535;
+
+  if(cos2::1 >@5 0) {
+    sin2::1 = 65536 -@5 cos2::1;
+    sin2::0 = 65535 -@6 cos2::0;
+  } else {
+    sin2::1 = 0;
+    sin2::0 = 65536 -@6 cos2::0;
+  }
+  sin = sqrt(sin2);
+  if(rev < 0) {
+    sin = -@8 sin;
+  }
+  out(sin);
+}
