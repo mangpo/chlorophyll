@@ -41,7 +41,7 @@
 ;(test "poly" "null" 256 #:w 3 #:h 3)
 ;(test "cos2" "null" 300 #:w 3 #:h 3)
 ;(test "complex-exp" "null" 300 #:w 4 #:h 4)
-(test "sqrt-exp" "null" 300 #:w 3 #:h 3)
+(test "sqrt2" "null" 400 #:w 3 #:h 3)
 
 (for ([res (reverse result)])
   (pretty-display res))
