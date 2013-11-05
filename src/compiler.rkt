@@ -170,7 +170,9 @@
 (define (compile-and-optimize file name capacity input 
                               #:w [w 5] #:h [h 4] 
                               #:verbose [verbose #t]
-                              #:opt [opt #t] #:layout [layout #f] #:partition [partition #f]
+                              #:opt [opt #t] 
+			      #:layout [layout #t] 
+			      #:partition [partition #t]
 			      #:run [run #f])
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
 				  #:weight layout #:partition partition))

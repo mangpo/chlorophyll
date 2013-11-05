@@ -571,7 +571,7 @@
 
         ;; TODO: if the code doesn't fit in, do this
         ;(when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
-	(extract-all-sequence linklist-program 3 4)
+	;(extract-all-sequence linklist-program 3 4)
 
 	(reorder-definition linklist-program)
         ;(send (new block-merger%) visit linklist-program)

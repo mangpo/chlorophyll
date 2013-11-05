@@ -27,8 +27,8 @@
 
 ;(compile-and-optimize "../tests/run/md5-1.cll" "md1"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
-(compile-and-optimize "../tests/run/md5-2.cll" "md2heu"
-		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f)
+;(compile-and-optimize "../tests/run/md5-2.cll" "md2heu"
+;		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f)
 
 ;(compile-and-optimize "../tests/run/fir.cll" "fir" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
@@ -59,11 +59,11 @@
 
 ;(compile-and-optimize "../tests/run/swap.cll" "swap" 
 ;                      256 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd" 
-;                     256 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
-;                      512 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/convolution2.cll" "convolution2" 
-;                      512 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../tests/run/ssd_simple22.cll" "ssd" 
+                     256 "null" #:w 8 #:h 8 #:opt #t)
+(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
+                      512 "null" #:w 8 #:h 8 #:opt #t)
+(compile-and-optimize "../tests/run/convolution2.cll" "convolution2" 
+                      512 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/convolution.cll" "convolution" 
 ;                      500 "null" #:w 8 #:h 8 #:opt #f)
