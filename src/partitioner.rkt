@@ -31,6 +31,7 @@
                         #:cores [num-core 144] 
                         #:capacity [capacity 256] 
                         #:max-msgs [max-msgs #f]
+			#:synthesis [synthesis #t]
                         #:verbose [verbose #f])
   
   ;; Define printer
@@ -61,7 +62,13 @@
     )
 
   ;; Unroll
+  (define start-loopbound (current-seconds))
   (send my-ast accept (new loopbound-computer%))
+  (define stop-loopbound (current-seconds))
+  (with-output-to-file #:exists 'truncate (format "~a/~a.time" outdir name)
+    (lambda ()
+      (pretty-display (format "loopbound time: ~a s" (- stop-loopbound start-loopbound)))))
+
   (when verbose
     (pretty-display "=== After bound compute  ===")
     (send my-ast pretty-print)
@@ -153,7 +160,10 @@
         (pretty-display global-sol)
         (display-cores cores)
         (pretty-display (format "synthesis time = ~a sec" (- stop start)))
-        )
+	(with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
+	  (lambda ()
+	    (pretty-display (format "partition time: ~a s" (- stop start)))))
+      )
       )
     
     (define t 0)
@@ -248,21 +258,27 @@
     (outter-loop)
     )
     
-  ;; (define heu-start (current-seconds))
-  ;; (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
-  ;; (set-global-sol (sat (make-immutable-hash 
-  ;;                       (hash->list (merge-sym-partition space network capacity)))))
-  ;; (pretty-display (format "heuristic time = ~a" (- (current-seconds) heu-start)))
+  (cond
+   [synthesis
+    (for ([decl (get-field stmts my-ast)])
+	 (if 
+	  ;;(is-a? decl FuncDecl%) ;; Use this for solving function by function
+	  (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+	  (begin
+	    (solve-function decl)
+	    (when verbose (pretty-display "------------------------------------------------")))
+	  (send decl accept interpreter)))]
 
-  (for ([decl (get-field stmts my-ast)])
-    (if 
-     ;(is-a? decl FuncDecl%) ;; Use this for solving function by function
-     (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
-        (begin
-          (solve-function decl)
-          (when verbose (pretty-display "------------------------------------------------")))
-        (send decl accept interpreter)))
-
+   [else
+    (define heu-start (current-seconds))
+    (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
+    (set-global-sol (sat (make-immutable-hash 
+			  (hash->list (merge-sym-partition space network capacity)))))
+    
+    (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
+      (lambda ()
+	(pretty-display (format "heuristic partition time: ~a s" 
+				(- (current-seconds) heu-start)))))])
 
   
   (let ([evaluator (new symbolic-evaluator% [num-cores num-core])])

@@ -21,6 +21,7 @@ def abs(x):
 # F: N x N matrix
 if __name__ == "__main__":
   inp = open(sys.argv[1], 'r')
+  weight = (sys.argv[2] == '--weight')
 
   # P W H
   s = inp.readline().split()
@@ -51,8 +52,12 @@ if __name__ == "__main__":
     if len(s) == 3:
       # u v f_uv
       (u,v,w) = [int(x) for x in s]
-      f[u][v] = f[u][v] + w
-      f[v][u] = f[v][u] + w
+      if weight:
+        f[u][v] = f[u][v] + w
+        f[v][u] = f[v][u] + w
+      else:
+        f[u][v] = 1
+        f[v][u] = 1
       assert(u != v)
     elif len(s) != 0:
       raise "Flow information is given as 'u v f' per line."

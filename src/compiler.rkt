@@ -89,7 +89,9 @@
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile-to-IR file name capacity input [w 5] [h 4] 
                        #:verbose [verbose #t]
-                       #:run [run #f])
+                       #:run [run #f]
+		       #:weight [weight #t]
+		       #:partition [partition #f])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -107,7 +109,8 @@
                                    #:name name
                                    #:cores (* w h) 
                                    #:capacity capacity 
-                                   #:verbose #t))
+                                   #:verbose #t
+				   #:synthesis partition))
   
   (when verbose
     (pretty-display "--- after partition ---")
@@ -120,8 +123,7 @@
     (send my-ast pretty-print))
   
   ;; layout
-  (define layout-res (layout my-ast
-                             n w h name))
+  (define layout-res (layout my-ast n w h name weight))
   
   (when verbose
     (pretty-display "--- after layout ---"))
@@ -168,9 +170,10 @@
 (define (compile-and-optimize file name capacity input 
                               #:w [w 5] #:h [h 4] 
                               #:verbose [verbose #t]
-                              #:opt [opt #t]
+                              #:opt [opt #t] #:layout [layout #f] #:partition [partition #f]
 			      #:run [run #f])
-  (define programs (compile-to-IR file name capacity input w h #:verbose verbose))
+  (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
+				  #:weight layout #:partition partition))
   (when run
 	(pretty-display (format "running ~a ..." name))
 	(simulate-multicore name input))
@@ -218,7 +221,7 @@
                                (lambda ()
                                  (aforth-syntax-print real-opts w h)))))
     (pretty-display (format "optimizing time: ~a s" (- (current-seconds) start)))
-    (with-output-to-file #:exists 'truncate (format "~a/~a.time" outdir name)
+    (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
       (lambda ()
         (pretty-display (format "optimizing time: ~a s" (- (current-seconds) start)))))
     )

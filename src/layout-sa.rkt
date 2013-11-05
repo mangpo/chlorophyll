@@ -78,7 +78,7 @@
 ;;(gen-route (list (edge 0 1 1) (edge 1 2 1) (edge 2 3 1))
 ;;           (list 0 1 2 3) 2 2)
 
-(define (layout ast num-cores w h name)
+(define (layout ast num-cores w h name weight)
   ;; Generate flow graph represented by a list of edges
   (define flow-gen (new flow-generator%))
   (define flow-graph (send ast accept flow-gen))
@@ -88,7 +88,10 @@
   
   ;; Convert a list of edges into a matrix
   (with-output-to-string 
-   (lambda () (system (format "./qap/graph2matrix.py ~a/~a.graph > ~a/~a.dat" outdir name outdir name))))
+   (lambda () (system (format "./qap/graph2matrix.py ~a/~a.graph ~a > ~a/~a.dat" 
+			      outdir name 
+			      (if weight "--weight" "--noweight")
+			      outdir name))))
   
   (with-output-to-file #:exists 'append (format "~a/~a.dat" outdir name)
     (lambda () 
@@ -99,6 +102,7 @@
       (newline)))
   
   ;; Mapping from cores to partitions
+  (define start (current-seconds))
   (define core2part
     ;; Output of sa_qap starts from 1, but we want to start from 0.
     (map (lambda (x)
@@ -108,6 +112,10 @@
                  (with-output-to-string
                   (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir-rel name))))
                  "\n")))))
+  (define stop (current-seconds))
+  (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
+    (lambda ()
+      (pretty-display (format "layout time: ~a s" (- stop start)))))
 
   (with-output-to-file #:exists 'truncate (format "~a/~a.layout" outdir name)
     (lambda () (display core2part)))
