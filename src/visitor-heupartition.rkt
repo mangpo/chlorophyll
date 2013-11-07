@@ -4,7 +4,7 @@
 
 (provide heuristic-partitioner% merge-sym-partition)
 
-(define factor 0.5)
+(define factor 0.45)
 
 (define (merge-sym-partition space flow-graph capacity)
   (define sol-map (make-hash))
@@ -23,7 +23,7 @@
     (hash-remove! space r1))
   
   (define (unify p1 p2)
-    ;(pretty-display `(unify ,p1 ,p2))
+    (pretty-display `(unify ,p1 ,p2))
     (define r1 (root p1))
     (define r2 (root p2))
     (when (and (not (equal? r1 r2))
@@ -76,9 +76,10 @@
     (init-field [space (make-hash)])
 
     (define network (make-hash))
+    (define debug #t)
 
     (define (inc-space place sp)
-      (pretty-display `(inc-space ,place))
+      ;(pretty-display `(inc-space ,place))
       (if (is-a? place TypeExpansion%)
           (for ([p (get-field place-list place)])
                (inc-space p sp))
@@ -87,6 +88,7 @@
               (hash-set! space place sp))))
     
     (define (add-network p1 p2)
+      (when debug (pretty-display `(add-network ,p1 ,p2)))
       (cond
        [(and (is-a? p1 TypeExpansion%) (is-a? p2 TypeExpansion%))
         (for ([x (get-field place-list p1)]
@@ -102,9 +104,10 @@
        [(and (not (equal? p1 p2)) 
              ;; (not (equal? p1 (* 2 w)))
              ;; (not (equal? p2 (* 2 w)))
-             (not (is-a? p1 Place%))
-             (not (is-a? p2 Place%))
+             (rosette-number? p1)
+             (rosette-number? p2)
              (or (symbolic? p1) (symbolic? p2)))
+        (when debug (pretty-display `(add-network-real ,p1 ,p2)))
         (define key1 (cons p1 p2))
         (define key2 (cons p2 p1))
         (cond
@@ -119,11 +122,15 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast Num%)
+        (when debug 
+              (pretty-display (format "HUE: Num ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-num)
         (set (get-field place-type ast))
         ]
 
        [(is-a? ast Array%)
+        (when debug 
+              (pretty-display (format "HUE: Array ~a" (send ast to-string))))
         (define index (get-field index ast))
         (define place-type (get-field place-type ast))
         (inc-space place-type est-acc-arr)
@@ -137,11 +144,15 @@
         ]
 
        [(is-a? ast Var%)
+        (when debug 
+              (pretty-display (format "HUE: Var ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-var)
         (set (get-field place-type ast))
         ]
 
        [(is-a? ast UnaExp%)
+        (when debug 
+              (pretty-display (format "HUE: UnaExp ~a" (send ast to-string))))
         (define e1 (get-field e1 ast))
         (define op (get-field op ast))
         
@@ -158,8 +169,9 @@
         ]
 
        [(is-a? ast BinExp%)
-        (pretty-display (format "HEU: BinExp% ~a, place-type = ~a" 
-                                (send ast to-string) (get-field place-type ast)))
+        (when debug
+              (pretty-display (format "HEU: BinExp% ~a, place-type = ~a" 
+                                      (send ast to-string) (get-field place-type ast))))
         (define e1 (get-field e1 ast))
         (define e2 (get-field e2 ast))
         (define op (get-field op ast))
@@ -178,6 +190,8 @@
         ]
 
        [(is-a? ast FuncCall%)
+        (when debug 
+              (pretty-display (format "HUE: FuncCall ~a" (send ast to-string))))
         ;; infer place-type
         (for ([param (get-field stmts (get-field args (get-field signature ast)))]
               [arg (flatten-arg (get-field args ast))])
@@ -193,9 +207,10 @@
         ]
 
        [(is-a? ast Assign%)
-        (pretty-display (format "HEU: Assign% ~a = ~a" 
-                                (send (get-field lhs ast) to-string)
-                                (send (get-field rhs ast) to-string)))
+        (when debug
+              (pretty-display (format "HEU: Assign% ~a = ~a" 
+                                      (send (get-field lhs ast) to-string)
+                                      (send (get-field rhs ast) to-string))))
         (define lhs (get-field lhs ast))
         (define rhs (get-field rhs ast))
 
@@ -290,10 +305,10 @@
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
 
-        (pretty-display `(network1 ,network))
+        ;(pretty-display `(network1 ,network))
 
         (define sorted-edges (sort (hash->list network) (lambda (x y) (> (cdr x) (cdr y)))))
-        (pretty-display `(sorted-edges ,sorted-edges))
+        ;(pretty-display `(sorted-edges ,sorted-edges))
         (values space (map car sorted-edges))]
 
        [(is-a? ast Block%)

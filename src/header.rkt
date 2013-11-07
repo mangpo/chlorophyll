@@ -3,23 +3,26 @@
 (require (only-in rosette [sym? symbolic?]))
 (require (only-in racket foldl log))
 
-(provide symbolic? foldl log
+(provide symbolic? foldl log rosette-number?
          (all-defined-out))
 
 (define global-sol (sat (hash)))
 (define (set-global-sol sol)
   (set! global-sol sol))
 
+(define (rosette-number? x) (number? x))
+
 (define-syntax-rule (evaluate-with-sol x)
   ;(evaluate x))
   (evaluate x global-sol))
+
 
 (define max-bit 18)
 (define n-bit 16)
 
 (define node-offset 10)
 (define block-offset 800)
-(define procs 8)
+(define procs 4)
 (define check-interval 60)
 (define distributed #t)
 (define max-unroll 20)

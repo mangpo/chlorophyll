@@ -403,7 +403,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Var:~a @~a (expand=~a/~a) (type=~a) (compact=~a))" 
-                              indent name (place-to-string place-type)
+                              indent name place-type
                               expand expect type compact))
       (print-send-path indent))
 

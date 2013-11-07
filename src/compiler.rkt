@@ -91,7 +91,7 @@
                        #:verbose [verbose #t]
                        #:run [run #f]
 		       #:weight [weight #t]
-		       #:partition [partition #f])
+		       #:partition [syn #t])
   
   (define n (* w h))
   (define my-ast (parse file))
@@ -110,7 +110,7 @@
                                    #:cores (* w h) 
                                    #:capacity capacity 
                                    #:verbose #t
-				   #:synthesis partition))
+				   #:synthesis syn))
   
   (when verbose
     (pretty-display "--- after partition ---")
@@ -172,10 +172,10 @@
                               #:verbose [verbose #t]
                               #:opt [opt #t] 
 			      #:layout [layout #t] 
-			      #:partition [partition #t]
+			      #:partition [xxx #t]
 			      #:run [run #f])
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
-				  #:weight layout #:partition partition))
+				  #:weight layout #:partition xxx))
   (when run
 	(pretty-display (format "running ~a ..." name))
 	(simulate-multicore name input))

@@ -21,7 +21,7 @@
                 [index-map (make-hash)]
                 [n-regs 0])
 
-    (define debug #f)
+    (define debug #t)
     (define const-a (list #f))
     (define cond-onstack #f)
     (define in-pre #f)
@@ -321,6 +321,8 @@
              (member (get-field op (get-field op ast)) (list ">>" "<<"))
              (is-a? (get-field e2 ast) Num%)
              (< (get-field n (get-field n (get-field e2 ast))) 18))
+        (when debug 
+              (pretty-display (format "\nCODEGEN: BinExp Special ~a" (send ast to-string))))
 
         (define op (get-field op (get-field op ast)))
 	(define e1-ret (send (get-field e1 ast) accept this))

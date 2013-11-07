@@ -260,6 +260,7 @@
     
   (cond
    [synthesis
+    (pretty-display "Running partitioning synthesizer ...")
     (for ([decl (get-field stmts my-ast)])
 	 (if 
 	  ;;(is-a? decl FuncDecl%) ;; Use this for solving function by function
@@ -270,6 +271,7 @@
 	  (send decl accept interpreter)))]
 
    [else
+    (pretty-display "Running heuristic partitioner ...")
     (define heu-start (current-seconds))
     (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
     (set-global-sol (sat (make-immutable-hash 
