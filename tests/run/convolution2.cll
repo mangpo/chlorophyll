@@ -5,15 +5,15 @@ void main() {
   int[]@{[0:14]=3} inp3[14] = {5 , 1 , 3 , 6 , 9 , 5 , 9 , 8 , 2 , 9, 10 , 2 , 8 , 8};
 
   int[]@{[0:10]=20,[10:20]=21,[20:30]=22,[30:40]=23} x[40];
-  int@10 sum0;
-  int@11 sum1;
-  int@12 sum2;
-  int@13 sum3;
+  int@20 sum0;
+  int@21 sum1;
+  int@22 sum2;
+  int@23 sum3;
 
-  int[]@{[0:5]=10} kernel0[5] = {1,1,1,1,1};
-  int[]@{[0:5]=11} kernel1[5] = {1,1,1,1,1};
-  int[]@{[0:5]=12} kernel2[5] = {1,1,1,1,1};
-  int[]@{[0:5]=13} kernel3[5] = {1,1,1,1,1};
+  int[] kernel0[5] = {1,1,1,1,1};
+  int[] kernel1[5] = {1,1,1,1,1};
+  int[] kernel2[5] = {1,1,1,1,1};
+  int[] kernel3[5] = {1,1,1,1,1};
 
   /*for(i from 0 to 10) {
     inp0[i] = in();
@@ -28,9 +28,9 @@ void main() {
   inp0[0] = in();
 
   for(i from 0 to 4) {
-    inp0[i+10] = inp1[i];
-    inp1[i+10] = inp2[i];
-    inp2[i+10] = inp3[i];
+    inp0[i +@any 10] = inp1[i];
+    inp1[i +@any 10] = inp2[i];
+    inp2[i +@any 10] = inp3[i];
   }
 
   for(i from 0 to 10) {
@@ -65,7 +65,7 @@ void main() {
     x[i +@any 30] = sum3;
   }
 
-  out(x[0]);
+  out(x[39]);
 
   /*for(i from 0 to 40) {
     out(x[i]);
