@@ -4,13 +4,14 @@
 
 (provide heuristic-partitioner% merge-sym-partition)
 
-(define factor 0.45)
+(define factor 0.4)
 
 (define (merge-sym-partition space flow-graph capacity)
   (define sol-map (make-hash))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
+    ;(pretty-display `(root ,place ,parent))
     (if (equal? place parent)
         place
         (let ([r (root parent)])
@@ -23,6 +24,7 @@
     (hash-remove! space r1))
   
   (define (unify p1 p2)
+    ;(pretty-display `(flow-graph sol-map))
     (pretty-display `(unify ,p1 ,p2))
     (define r1 (root p1))
     (define r2 (root p2))
@@ -30,9 +32,13 @@
                (or (symbolic? r1) (symbolic? r2))
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
                   (inexact->exact (floor (* capacity factor)))))
+	  (pretty-display `(merge ,p1 ,p2))
+	  ;(pretty-display `(parents ,r1 ,r2))
           (if (symbolic? r1)
               (point r1 r2)
-              (point r2 r1))))
+              (point r2 r1))
+	  (pretty-display `(after ,(root p1) ,(root p2)))
+	  ))
 
   (pretty-display "------------------ before merge sym partition ---------------------")
   (pretty-display space)
@@ -45,8 +51,16 @@
   (for ([e flow-graph])
        (unify (car e) (cdr e)))
 
+  ;; post merge to reduce number of cores
+  ;; (define partitions (hash-keys space))
+  ;; (for* ([p1 partitions]
+  ;; 	 [p2 partitions])
+  ;; 	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
+  ;; 	      (unify p1 p2)))
+
   (define vals (hash-values sol-map))
-  (define concrete-vals (set (filter (lambda (x) (not (symbolic? x))) vals)))
+  (define concrete-vals (list->set (filter (lambda (x) (not (symbolic? x))) vals)))
+  (pretty-display `(concrete-vals ,concrete-vals))
   (define counter 0)
   (define (next-counter)
     (if (set-member? concrete-vals counter)
@@ -54,15 +68,20 @@
           (set! counter (add1 counter))
           (next-counter))
         counter))
-  (define more-sol (make-hash))
-  (for ([key-val (hash->list sol-map)])
-       (let* ([key (car key-val)]
-              [val (cdr key-val)])
+  ;(define more-sol (make-hash))
+  ;(pretty-display `(sol-map ,sol-map))
+  (for ([key (hash-keys sol-map)])
+       ;(pretty-display `(key ,key))
+       (let ([val (root key)])
          (when (symbolic? val)
-               (unless (hash-has-key? more-sol val)
-                       (hash-set! more-sol val (next-counter))
-                       (set! counter (add1 counter)))
-               (hash-set! sol-map key (hash-ref more-sol val)))))
+               ;; (unless (hash-has-key? more-sol val)
+               ;;         (hash-set! more-sol val (next-counter))
+               ;;         (set! counter (add1 counter)))
+               (hash-set! sol-map val (next-counter))
+	       (pretty-display `(hash-set ,val ,counter))
+	       (hash-set! sol-map counter counter)
+	       (set! counter (add1 counter))
+	       (root key))))
   
   
   (pretty-display "------------------ after merge sym partition ---------------------")

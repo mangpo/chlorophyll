@@ -27,7 +27,7 @@
 
 ;(compile-and-optimize "../tests/run/md5-1.cll" "md1"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
-;(compile-and-optimize "../tests/run/md5-2.cll" "md2heu"
+;(compile-and-optimize "../tests/run/md5-nl.cll" "mdnl"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f)
 
 ;(compile-and-optimize "../tests/run/fir.cll" "fir" 
@@ -48,8 +48,8 @@
 ;                      300 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../tests/run/sqrt2.cll" "sqrt2"
-;		      290 "null" #:w 4 #:h 4 #:opt #t) ;; partitioner/factor = 0.6
+(compile-and-optimize "../tests/run/sqrt0.cll" "sqrt0heu"
+		      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f) ;; partitioner/factor = 0.6
 ;(compile-and-optimize "../tests/run/complex3.cll" "complex3" 
 ;                      290 "null" #:w 4 #:h 4 #:opt #t) ;; partitioner
 ;(compile-and-optimize "../tests/run/complex2.cll" "complex2heu" 
@@ -59,11 +59,8 @@
 
 ;(compile-and-optimize "../tests/run/swap.cll" "swap" 
 ;                      256 "null" #:w 8 #:h 8 #:opt #f)
-(compile-and-optimize "../tests/run/ssd.cll" "ssdnl" 
-                      310 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f) ;; factor = 0.45
-
 ;(compile-and-optimize "../tests/run/ssd-heu.cll" "ssdheu" 
-;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f #:layout #t) ;; factor = 0.45
+;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f) ;; factor = 0.9
 ;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
 ;                      512 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/convolution2.cll" "convolution2" 

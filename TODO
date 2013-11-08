@@ -1,6 +1,7 @@
 TODO
-4) partitioner vs heuristic: complex, sqrt
-5) partition md5
+1) make ssd array 160
+2) complex, prefixsum, convolution
+
 
 - why fir-par2 only provides 2.3x speed up
 
