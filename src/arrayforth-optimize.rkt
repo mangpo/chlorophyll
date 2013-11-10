@@ -74,7 +74,8 @@
       (define body (block-body entry))
       (define seq (if (string? body) (string-split body) body))
       
-      (if (<= (+ (length (block-body big-block)) (length seq)) limit)
+      (if (or (= (length (block-body big-block)) 0)
+              (<= (+ (length (block-body big-block)) (length seq)) limit))
           (collect-code (linklist-next x) (merge-block big-block entry) limit)
           (values x big-block))]
      
