@@ -23,7 +23,7 @@
     (hash-set! space r2 (+ (hash-ref space r1) (hash-ref space r2)))
     (hash-remove! space r1))
   
-  (define (unify p1 p2)
+  (define (unify p1 p2 [scale 1])
     ;(pretty-display `(flow-graph sol-map))
     (pretty-display `(unify ,p1 ,p2))
     (define r1 (root p1))
@@ -31,7 +31,7 @@
     (when (and (not (equal? r1 r2))
                (or (symbolic? r1) (symbolic? r2))
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
-                  (inexact->exact (floor (* capacity factor)))))
+                  (inexact->exact (floor (* capacity factor scale)))))
 	  (pretty-display `(merge ,p1 ,p2))
 	  ;(pretty-display `(parents ,r1 ,r2))
           (if (symbolic? r1)
@@ -52,11 +52,11 @@
        (unify (car e) (cdr e)))
 
   ;; post merge to reduce number of cores
-  ;; (define partitions (hash-keys space))
-  ;; (for* ([p1 partitions]
-  ;; 	 [p2 partitions])
-  ;; 	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
-  ;; 	      (unify p1 p2)))
+  (define partitions (hash-keys space))
+  (for* ([p1 partitions]
+  	 [p2 partitions])
+  	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
+  	      (unify p1 p2 0.7)))
 
   (define vals (hash-values sol-map))
   (define concrete-vals (list->set (filter (lambda (x) (not (symbolic? x))) vals)))
