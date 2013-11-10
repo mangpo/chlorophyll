@@ -208,13 +208,13 @@
     
     (define start (current-seconds))
     (if distributed
-        (distribute-and-optimize virtual-codes name w h)
+        (distribute-and-optimize virtual-codes name w h sliding)
         (begin
           (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
                                (lambda () 
                                  (print-header)
                                  (aforth-struct-print virtual-codes)
-                                 (print-optimize name w h)))
+                                 (print-optimize name w h sliding)))
           ;; superoptimize
           (set! real-opts (superoptimize virtual-codes name w h sliding))
           (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
