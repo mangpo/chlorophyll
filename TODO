@@ -1,11 +1,7 @@
 TODO
-1) make ssd array 160
-2) complex, prefixsum, convolution
-
-
-- why fir-par2 only provides 2.3x speed up
-
-- superoptimize sqrt
+1) faster sqrt
+2) one core benchmarks: occupied space stat
+3) no sliding windows
 
 RELATED WORK
 - read Monica Lam's HFT => MPI

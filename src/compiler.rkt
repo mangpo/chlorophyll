@@ -160,7 +160,7 @@
   (codegen-print virtual-code)
 
   (pretty-display "------------------ OPT CODE ----------------------")
-  (define opt (superoptimize virtual-code "name" w h))
+  (define opt (superoptimize virtual-code "name" w h #t))
   (codegen-print opt)
   
   (aforth-syntax-print opt w h)
@@ -173,6 +173,7 @@
                               #:opt [opt #t] 
 			      #:layout [layout #t] 
 			      #:partition [xxx #t]
+                              #:sliding [sliding #t]
 			      #:run [run #f])
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
 				  #:weight layout #:partition xxx))
@@ -215,7 +216,7 @@
                                  (aforth-struct-print virtual-codes)
                                  (print-optimize name w h)))
           ;; superoptimize
-          (set! real-opts (superoptimize virtual-codes name w h))
+          (set! real-opts (superoptimize virtual-codes name w h sliding))
           (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
                                (lambda () (aforth-struct-print real-opts)))
           ;; superoptimized arrayforth

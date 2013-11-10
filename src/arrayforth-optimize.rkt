@@ -45,14 +45,16 @@
 (define id #f)
 (define before 0)
 (define after 0)
+(define sliding #t)
 
-(define (superoptimize ast my-name my-w my-h #:id [id 0])
+(define (superoptimize ast my-name my-w my-h sliding-windows #:id [id 0])
   (set! name my-name)
   (set! w my-w)
   (set! h my-h)
   (set! id id)
   (set! before 0)
   (set! after 0)
+  (set! sliding sliding-windows)
   (system (format "rm ~a/~a.stat" outdir name))
   (system (format "rm ~a/~a-work.rkt" outdir name))
   (system (format "rm ~a/~a-work.aforth" outdir name))
@@ -133,7 +135,7 @@
         
         (define out (block-out block-noopt))
         (define body (block-body block-noopt))
-        (pretty-display `(optimize-loop ,len ,body))
+        (pretty-display `(optimize-loop ,len ,body ,sliding))
         (define cnstr (block-cnstr block-noopt))
         (define result (optimize (string-join body)
 				 #:f18a #f
@@ -146,15 +148,19 @@
                                                     (car body)))
 				 #:mem mem-size #:start mem-size #:bin-search `time))
 
-        (if (equal? result 'timeout)
-            (let* ([last-block (linklist-entry (linklist-prev next))]
+        (cond
+         [(and sliding (equal? result 'timeout))
+          (let* ([last-block (linklist-entry (linklist-prev next))]
                    [last-body (block-body last-block)]
                    [last-list (if (string? last-body) (string-split last-body) last-body)])
-              (optimize-loop (- (length body) (max 1 (length last-list)))))
+              (optimize-loop (- (length body) (max 1 (length last-list)))))]
 
-            (begin
-              (set-block-body! block-noopt result)
-              (values next block-noopt))))
+         [(equal? result 'timeout)
+          (values next block-noopt)]
+
+         [else
+          (set-block-body! block-noopt result)
+          (values next block-noopt)]))
 
       (define-values (next opt) (optimize-loop block-limit))
       (pretty-display "OPTMIZE: DONE")
@@ -188,17 +194,17 @@
                            (lambda () 
 			     (pretty-display (format "~a ~a \"~a\" \"~a\"" org-len res-len org res))))
 
-      (if (and (equal? res org) (block? (linklist-entry next)))
+      (if (and sliding (equal? res org) (block? (linklist-entry next)))
           ;; sliding window: skip one superoptimizable unit
 	  (let ([entry (linklist-entry ast)])
 	    ;; change to original in case the we do memory compression
-            (pretty-display "CASE 1")
+            (pretty-display "CASE 1: sliding")
 	    (set-block-body! entry (block-org entry))
             (pretty-display `(set-block-body! ,(block-org entry)))
 	    ;; sliding window
 	    (superoptimize-inner (linklist-next ast)))
           (begin
-            (pretty-display "CASE 2")
+            (pretty-display "CASE 2: skip")
             (aforth-syntax-print renamed 1 1)
             (set-linklist-entry! ast renamed)
             (set-linklist-next! ast next)
@@ -322,7 +328,9 @@
 
 (define (renameindex ast mem-size index-map)
   (define (renameindex-inner)
-    (define body (string-split (block-body ast)))
+    (define body (if (string? (block-body ast)) 
+                     (string-split (block-body ast))
+                     (block-body ast)))
     (define org (block-org ast))
     (define rename-set (track-index body))
     (pretty-display `(renameindex ,body ,rename-set ,index-map))
