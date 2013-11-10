@@ -6,14 +6,14 @@
 (struct task (sp o i))
 
 ;; Print optimizing file for each core
-(define (print-file program name core w h)
+(define (print-file program name core w h sliding)
   (with-output-to-file #:exists 'truncate (format "~a/~a-~a-gen-red.rkt" outdir name core)
     (lambda () 
       (print-header)
       (pretty-display "(define program")
       (aforth-struct-print program)
       (pretty-display ")")
-      (print-optimize name w h core))))
+      (print-optimize name w h sliding core))))
 
 (define (close-ports i o)
   (close-output-port i)
@@ -73,11 +73,11 @@
   
 ;; Create file for each core and optimize each core on a subprocess.
 ;; Combine result to one file.
-(define (distribute-and-optimize programs name w h)
+(define (distribute-and-optimize programs name w h sliding)
   ;; Create file for each core.
   (define files
     (for/list ([i (in-range (* w h))])
-	      (print-file (vector-ref programs i) name i w h)
+	      (print-file (vector-ref programs i) name i w h sliding)
 	      (format "~a-~a" name i)))
   
   ;; Run each core file.
