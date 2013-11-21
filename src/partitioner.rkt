@@ -78,7 +78,7 @@
     (pretty-display "=== After unroll  ===")
     (send my-ast pretty-print)
     )
-  ;;(raise "DONE")
+  ;(raise "DONE")
 
   (current-solver (new kodkod-incremental%))
   ;(current-solver (new z3%))

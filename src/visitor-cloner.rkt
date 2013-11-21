@@ -10,7 +10,7 @@
 (define range-cloner%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field from to index)
+    (init-field from to index [env (make-hash)])
     (define debug #f)
     (define keep #f) ;; keep symbolic-place of op% the same when _temp = a /% b;
 
@@ -27,10 +27,15 @@
                   p))
             place-type))
 
-      (define (fresh-place-type)
-        (if (and (not keep) (symbolic? (get-field place-type ast)))
+      (define (fresh-place-type op)
+        (if (and (not keep) (symbolic? (get-field place-type ast)) (symbolic? (get-field place op)))
             (get-sym)
             (get-place-type)))
+
+      (define (fresh-place)
+	(if (symbolic? (get-field place ast))
+	    (get-sym)
+	    (get-field place ast)))
         
       (cond
        [(is-a? ast Const%)
@@ -68,10 +73,14 @@
         (when debug
               (pretty-display (format "CLONER: Var ~a" (send ast to-string))))
         (set! keep #f)
-        (new Var% [name (get-field name ast)]
+	(define name (get-field name ast))
+	(define place (if (has-var? env name)
+			  (lookup-name env name)
+			  (get-place-type)))
+        (new Var% [name name]
              [type (get-field type ast)]
              [compact (get-field compact ast)]
-             [place-type (get-place-type)] [known-type (get-known-type)])]
+             [place-type place] [known-type (get-known-type)])]
 
        [(is-a? ast Op%)
         (new Op% [op (get-field op ast)] [place (get-field place ast)])]
@@ -79,8 +88,8 @@
        [(is-a? ast UnaExp%)
         (when debug
               (pretty-display (format "CLONER: UnaExp ~a" (send ast to-string))))
-        (define place-type (fresh-place-type))
         (define op-ret (send (get-field op ast) accept this))
+        (define place-type (fresh-place-type op-ret))
         (when (and (not keep) (symbolic? (get-field place op-ret)))
               (set-field! place op-ret place-type))
         (set! keep #f)
@@ -94,8 +103,8 @@
        [(is-a? ast BinExp%)
         (when debug
               (pretty-display (format "CLONER: BinExp ~a" (send ast to-string))))
-        (define place-type (fresh-place-type))
         (define op-ret (send (get-field op ast) accept this))
+        (define place-type (fresh-place-type op-ret))
         (when (and (not keep) (symbolic? (get-field place op-ret)))
               (set-field! place op-ret place-type))
         (set! keep #f)
@@ -130,11 +139,14 @@
              [place-type (get-place-type)])]
 
        [(is-a? ast VarDecl%)
+	(define place (fresh-place))
+	(for ([var (get-field var-list ast)])
+	     (declare env var place))
         (new VarDecl%
              [var-list (get-field var-list ast)] ;; not copy
              [type (get-field type ast)]
              [known (get-field known ast)]
-             [place (get-field place ast)])]
+             [place place])]
              
        [(is-a? ast ArrayDecl%)
         (new ArrayDecl%

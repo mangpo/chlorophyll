@@ -1,7 +1,31 @@
-void main() {
-  int[]@{[0:5],[5:10]} x[10];
-  int c;
+/*void main() {
+  int[]@{[0:5]=0,[5:10]=1} x[10];
+  int[]@{[0:5],[5:10]} y[10];
+  int[]@{[0:5],[5:10]} z[10];
   for(i from 0 to 10) {
-    x[i] = x[i] +@place(x[i]) c;
+    int temp;
+    temp = x[i] - y[i];
+    z[i] = temp * temp;
   }
+}*/
+
+int ssd(int a, int b) {
+  int temp;
+  temp = a - b;
+  return temp * temp;
+}
+
+int::2 cadd(int::2 a, int b) {
+  int::2 z;
+  z::0 = a::0 + b;
+  z::1 = a::1 + (z::0 >> 16);
+  z::0 = z::0 & 65535;
+  return z;
+}
+
+void main() {
+  int[]@{[0:5]=0,[5:10]=1} x[10];
+  int[]@{[0:5],[5:10]} y[10];
+  int::2 ans;
+  ans = reduce(cadd, 0, map(ssd, x, y));
 }
