@@ -1,13 +1,7 @@
-int::2@(2,2) foo() {
-  return 0;
-}
-
 void main() {
-  int@0 temp;
-  int::2@(1,1) g2;
-  int::2@(3,3) bar;
-  
-  bar = foo();
-  g2 = temp /%@0 temp;
-
+  int[]@{[0:5],[5:10]} x[10];
+  int c;
+  for(i from 0 to 10) {
+    x[i] = x[i] +@place(x[i]) c;
+  }
 }
