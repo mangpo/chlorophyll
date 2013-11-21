@@ -355,6 +355,8 @@
                  [pos $7-start-pos])))
          
     (stmt 
+         ((var-decl) $1)
+
          ; assignment
          ((ele = exp SEMICOL) 
             (new Assign% [lhs $1] [rhs $3] [pos $1-start-pos]))
@@ -409,27 +411,32 @@
 
     (block ((stmts) (new Block% [stmts $1])))
 
-    (var-decls
-         (() (list))
-         ((var-decl) (list $1))
-         ((var-decl var-decls) (cons $1 $2)))
+    ;; (var-decls
+    ;;      (() (list))
+    ;;      ((var-decl) (list $1))
+    ;;      ((var-decl var-decls) (cons $1 $2)))
 
-    (decl-block ((var-decls) (new Block% [stmts $1])))
+    ;; (decl-block ((var-decls) (new Block% [stmts $1])))
+
+    ;; (func-decl
+    ;;      ((data-place-type VAR LPAREN params RPAREN LBRACK var-decls stmts RBRACK)
+    ;;       (new FuncDecl% [name $2] [args (new Block% [stmts $4])] 
+    ;;            [body (new Block% [stmts (list 
+    ;;                                      (new Block% [stmts $7])
+    ;;                                      (new Block% [stmts $8]))])]
+    ;;            [return (and (not (equal? (car $1) "void"))
+    ;;                         (new ReturnDecl% [var-list (list "#return")] 
+    ;;                              [type (car $1)] [place (cdr $1)]))]
+    ;;            [pos $2-start-pos])))
 
     (func-decl
-         ((data-place-type VAR LPAREN params RPAREN LBRACK var-decls stmts RBRACK)
+         ((data-place-type VAR LPAREN params RPAREN LBRACK stmts RBRACK)
           (new FuncDecl% [name $2] [args (new Block% [stmts $4])] 
-               [body (new Block% [stmts (list 
-                                         (new Block% [stmts $7])
-                                         (new Block% [stmts $8]))])]
+               [body (new Block% [stmts $7])]
                [return (and (not (equal? (car $1) "void"))
                             (new ReturnDecl% [var-list (list "#return")] 
                                  [type (car $1)] [place (cdr $1)]))]
                [pos $2-start-pos])))
-
-    ;; (decl
-    ;;      ((var-decl) $1)
-    ;;      ((func-decl) $1))
 
     (decls
          ((func-decl) (list $1))

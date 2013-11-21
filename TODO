@@ -1,85 +1,46 @@
 TODO
-1) faster sqrt
-2) one core benchmarks: occupied space stat
-3) no sliding windows
+- @place() inside loop
+- clustered array and function
+- optimize MD5 more
+- reuse memory space (variables of different loops that are not on stack at the same time)
 
-RELATED WORK
-- read Monica Lam's HFT => MPI
-- UW paper
-- PLDI paper
+REORGANIZATION
+- merge example and tests/run
+- generate code of examples/simple/sqrt.cll in examples/simple/sqrt/
 
-- call rohin's compiler to get program size
-  = if size > 64 words -> define-repeating-code for shorter seq
-- connect to rohin's interpreter
-  = left, right, up, down
-  = 0 , 0 , 0 ,
-- or tikhon's
-  = word for starting to execute
-- stat report
-
-- redundant temp for funccall
-- kill z3 when user break happens
-- nop is less than everything, @ < @+
-- 3 a! @ 32 - 1 . + . + 0 . + a! @
-  = implement an abstract interpreter to just figure how many send and recv we need
-  = no need to generate first pair from the interpreter
-
-- reset rosette when solving new problem (see compiler.rkt)
-- known type interpreter
-  = for-array2-error.cll should have compile error: other variable (e.g. i) can't be at the same place ast clustered array
+MISC
 - data type check (x[i] + y) when y is array
 - visitor-divider can't handle nested indexes (eg. +@place(x[i*n+j]))
-
-- refactoring interpretor & flow & comminsert
-- topological sort
-- recursion
-- general for?
-- for-array-fancy.cll
-- do we have to support int@any x?
-  might need one more pass to get inferred place (e.g. @any)
+- test for-array-fancy.cll
 
 FASTER PARTITIONER
 - infer each function first (see issue about racket)
-- incremental solving on num-msg
+* iterative feedback for MD5
+  = call rohin's compiler to get program size
+    + if size > 64 words -> define-repeating-code for shorter seq
+  = connect to rohin's interpreter
+    + left, right, up, down
+    + 0 , 0 , 0 ,
 
 ISSUE ABOUT RACKET
+- incremental solving not working
 - branch debug
-- email emina about smaller example
-- after the error is gone, do perf test again (partial vs no partial)
-
-BETTER ESTIMATION
-- symbolic set or lower space to 4
-  vector v of set s
-  (vector-ref v i) -> (ite cond (set *) (set * /))
-  (set-add (vector-ref v i) %) => ERROR
 
 MEMO
 - same VarDecl => same sym-place!!!
 
 BENCHMARKS
-- md5
-
+* faster sqrt
 - matrix multiply
 - insertion sort
-- SSD
+- mergesort (function, recursion)
+- disparity
 - transpose
-
 - DP (activity scheduling)
 - fibonacci 
-
 - shortest path
 - MST
 - DFS, BFS
 - heap
-
-- bit hack benchmarks
-
-RUN
-- 1D convolution (better analysis)
-- prefixsum (better analysis)
-- ssd (multiple copies) in laptop?
-
-future
 - blackscholes (float, log, exp)
-- mergesort (function, recursion)
 - FFT

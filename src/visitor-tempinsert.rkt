@@ -193,9 +193,8 @@
         [(is-a? ast FuncDecl%)
          (when debug (pretty-display (format "TEMPINSERT: FuncDecl ~a" (get-field name ast))))
          (define body (get-field body ast))
-         (define decl-block (car (get-field stmts body)))
          (send body accept this)
-         (set-field! stmts decl-block (append (get-field stmts decl-block) new-decls))
+         (set-field! stmts body (append new-decls (get-field stmts body)))
          (set! new-decls (list))
          ast]
         

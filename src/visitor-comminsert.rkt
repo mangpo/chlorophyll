@@ -144,8 +144,9 @@
                               (map (lambda (x) (convert-base x)) (get-field place-list p))))
           p]
          [(not p) p]
-         [else
-          (raise (format "convert-place-type: unimplemented for ~a" p))]))
+	 [else p]))
+         ;; [else
+         ;;  (raise (format "convert-place-type: unimplemented for ~a" p))]))
 
       (define (convert-place)
         (set-field! place ast (convert-base (get-field place ast))))
@@ -186,7 +187,8 @@
           (set)]
 
          [else
-          (raise (format "visitor-comminsert: all-place-from: unimplemented for ~a" place))]))
+	  (set)]))
+          ;(raise (format "visitor-comminsert: all-place-from: unimplemented for ~a" place))]))
       
       (define (all-place)
         ;(pretty-display `(all-place ,(get-field place ast)))

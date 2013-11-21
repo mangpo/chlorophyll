@@ -15,7 +15,7 @@
     (define debug #f)
     
     ;; find actual place for @place(exp)
-    (define (find-place ast [modify #t])
+    (define (find-place ast)
       ;; (when (not (is-a? ast Livable%))
       ;;   (raise "find-place: ast is not Livable%"))
       
@@ -49,8 +49,6 @@
         [(is-a? place-exp Place%)
          (when debug (pretty-display `(place%)))
          (let ([place (derive-place (get-field at place-exp))])
-           (when (and modify (is-a? ast Livable%)) 
-                 (set-field! place ast place))
            place)]
         [else
          (when debug (pretty-display `(else)))
