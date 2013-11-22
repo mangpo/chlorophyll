@@ -10,10 +10,28 @@
 (define range-cloner%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field from to index functions program id)
+    (init-field program)
     (define env (make-hash))
     (define debug #f)
     (define keep #f) ;; keep symbolic-place of op% the same when _temp = a /% b;
+    
+    (define functions (make-hash))
+    (define from #f)
+    (define to #f)
+    (define index #f)
+    (define id #f)
+
+    (define/public (set-id this-id)
+      (set! id this-id))
+
+    (define/public (add-function ast)
+      (hash-set! functions (get-field name ast) ast))
+    
+    (define/public (set-range this-from this-to this-index this-id)
+      (set! from this-from)
+      (set! to this-to)
+      (set! index this-index)
+      (set! id this-id))
 
     (define/public (visit ast)
       (define (get-known-type)
@@ -74,12 +92,16 @@
              [type (get-field type ast)]
              [place-type (get-place-type)] [known-type (get-known-type)]
              [compact (get-field compact ast)])]
+        
 
        [(is-a? ast Var%)
         (when debug
               (pretty-display (format "CLONER: Var ~a" (send ast to-string))))
         (set! keep #f)
-	(define name (get-field name ast))
+	(define name 
+          (if (is-a? ast VarDup%)
+              (format "~ap~a" (get-field name ast) id)
+              (get-field name ast)))
 	(define place (if (has-var? env name)
 			  (lookup-name env name)
 			  (get-place-type)))
@@ -127,7 +149,7 @@
 	
 	(define func-name (get-field name ast))
 	(define new-func (send (hash-ref functions func-name) accept this))
-	(define new-name (format "~a~a" func-name id))
+	(define new-name (format "_~a~a" func-name id))
 	(set-field! name new-func new-name)
 	(set-field! stmts program (cons new-func (get-field stmts program)))
 
@@ -167,10 +189,14 @@
 
        [(is-a? ast VarDecl%)
 	(define place (fresh-place))
-	(for ([var (get-field var-list ast)])
-	     (declare env var place))
+        (define new-var-list
+          (for/list ([var (get-field var-list ast)])
+            (let ([name (if (is-a? ast VarDeclDup%) (format "~ap~a" var id) var)])
+              (declare env name place)
+              name
+              )))
         (new VarDecl%
-             [var-list (get-field var-list ast)] ;; not copy
+             [var-list new-var-list]
              [type (get-field type ast)]
              [known (get-field known ast)]
              [place place])]

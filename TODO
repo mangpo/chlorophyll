@@ -1,4 +1,6 @@
 TODO
+- finish reduce, test map again
+- expanded type: map & reduce
 - inline
 - clustered array and function
 - optimize MD5 more

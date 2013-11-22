@@ -29,7 +29,8 @@
 ;(test "matrixmult6" "72" 500) ;capacity issue
 ;(test "matrixmult4-dup" "null" 500)
 ;(test "cluster" "null" 256)
-(test "map" "null" 290)
+;(test "map" "null" 290)
+(test "reduce" "null" 290)
 
 ;(test "md5-1" "null" 1024 #:w 8 #:h 8)
 ;(test "ssd_simple" "null" 512 #:w 8 #:h 5)

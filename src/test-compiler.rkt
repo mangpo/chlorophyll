@@ -2,7 +2,9 @@
 
 (require "compiler.rkt")
 
-(compile-and-optimize "../tests/run/map.cll" "map" 
+;(compile-and-optimize "../tests/run/map.cll" "map" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/reduce.cll" "reduce" 
                       290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
 ;                      256 "null" #:opt #f)

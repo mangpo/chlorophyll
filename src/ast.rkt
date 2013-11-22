@@ -423,6 +423,10 @@
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
     ))
 
+(define VarDup%
+  (class Var%
+    (super-new)))
+
 (define Temp%
   (class Var%
     (super-new)
@@ -682,6 +686,11 @@
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
   ))
 
+(define VarDeclDup%
+  (class VarDecl%
+    (super-new)
+    (init-field [unroll #f])))
+
 (define ReturnDecl%
   (class VarDecl%
     (super-new)
@@ -798,7 +807,7 @@
     (super-new)
     (init-field iter from to body [known #t] 
 		[place-list (new Place% [at "any"])] [address #f] [iter-type 0]
-                [unroll #f])
+                [unroll #f] [reduce (list)])
     (inherit print-send-path print-body-placeset)
 
     (define/override (clone)
@@ -807,6 +816,13 @@
 
     (define/public (to-concrete)
       (set! place-list (concrete-place place-list)))
+
+    (define/public (set-unroll k)
+      (pretty-display `(set-unroll ,k))
+      (set! unroll k)
+      (define len (length k))
+      (for ([x reduce])
+           (set-field! unroll x len)))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
@@ -871,6 +887,11 @@
       (send rhs pretty-print (inc indent))
       )
   ))
+
+(define AssignDup%
+  (class Assign%
+    (super-new)
+    (init-field [unroll #f])))
 
 (define AssignTemp%
   (class Assign%

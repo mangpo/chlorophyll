@@ -111,7 +111,7 @@
         (check)]
 
        [(is-a? ast UnaExp%)
-        (when debug (pretty-display (format "UNROLL: UnaExp ~a" (send ast to-string))))
+        (when debug (pretty-display (format "LOOPBOUND: UnaExp ~a" (send ast to-string))))
         (send (get-field e1 ast) accept this)
         (check)]
        
@@ -134,7 +134,7 @@
         (define iter (get-field iter ast))
         (define from (get-field from ast))
         (define to (get-field to ast))
-        (when debug (pretty-display (format "UNROLL: For ~a (1)" (send iter to-string))))
+        (when debug (pretty-display (format "LOOPBOUND: For ~a (1)" (send iter to-string))))
 
         ;; new scope
         (set! stack (cons current-list stack))
@@ -143,7 +143,7 @@
         ;; body
         (send body accept this)
 
-        (when debug (pretty-display (format "UNROLL: For ~a (2)" (send iter to-string))))
+        (when debug (pretty-display (format "LOOPBOUND: For ~a (2)" (send iter to-string))))
         (define ranges (construct-ranges from to max-unroll))
         (when debug (pretty-display `(ranges ,ranges)))
         (define new-list
@@ -221,7 +221,8 @@
           (for ([x for-list])
                (let* ([ranges (evaluate (get-field unroll x))]
                       [filtered (filter (lambda (x) (<= (car x) (cdr x))) ranges)])
-                 (set-field! unroll x filtered))))
+                 (send x set-unroll filtered))))
+                 ;(set-field! unroll x filtered)))
                              ;(and (> (length filtered) 1) filtered)))))
         
 	(define t (current-seconds))

@@ -12,20 +12,27 @@
   (class* object% (visitor<%>)
     (super-new)
     (define index-map (make-hash))
-    (define functions (make-hash))
-    (define program #f)
+    (define cloner #f)
     (define debug #f)
 
     (define/public (visit ast)
-
       (cond
+       [(is-a? ast VarDeclDup%)
+        (pretty-display (format "UNROLL: VarDeclDup ~a unroll = ~a" 
+                                (get-field var-list ast)
+                                (get-field unroll ast)))
+        (for/list ([i (in-range (get-field unroll ast))])
+                  (send cloner set-id i)
+                  (send ast accept cloner))
+        ]
 
-       [(or (is-a? ast FuncCall%)
-            (is-a? ast VarDecl%) 
-            (is-a? ast ArrayDecl%)
-            (is-a? ast Assign%)
-            (is-a? ast Return%))
-        ast]
+       [(is-a? ast AssignDup%)
+        (pretty-display (format "UNROLL: AssignDup unroll = ~a" 
+                                (get-field unroll ast)))
+        (for/list ([i (in-range (get-field unroll ast))])
+                  (send cloner set-id i)
+                  (send ast accept cloner))
+        ]
 
        [(is-a? ast For%)
         (pretty-display "UNROLL: For")
@@ -37,24 +44,18 @@
 
         (if ranges
             (for/list ([range ranges]
-		       [id (in-range (length ranges))])
-                      (pretty-display "UNROLL: For (2)")
-                      (define body-clone (send body accept (new range-cloner% 
-								[functions functions]
-								[program program]
-								[id id]
-                                                                [from (car range)]
-                                                                [to (cdr range)]
-                                                                [index iter-name])))
-                      (pretty-display "UNROLL: For (3)")
-                      (new For% 
-                           [iter (send iter clone)] 
-                           [body body-clone]
-                           [from (car range)]
-                           [to (add1 (cdr range))]
-                           [known (get-field known ast)]
-                           [place-list #f]
-                           [body-placeset (get-field body-placeset ast)]))
+                       [id (in-range (length ranges))])
+              (pretty-display "UNROLL: For (2)")
+              (send cloner set-range (car range) (cdr range) iter-name id)
+              (pretty-display "UNROLL: For (3)")
+              (new For% 
+                   [iter (send iter clone)] 
+                   [body (send body accept cloner)]
+                   [from (car range)]
+                   [to (add1 (cdr range))]
+                   [known (get-field known ast)]
+                   [place-list #f]
+                   [body-placeset (get-field body-placeset ast)]))
             ast)
         ;; Return list of For%
         ]
@@ -72,7 +73,7 @@
 
 
        [(is-a? ast Program%)
-	(set! program ast)
+        (set! cloner (new range-cloner% [program ast]))
         (for ([decl (get-field stmts ast)])
              (send decl accept this))]
 
@@ -86,8 +87,10 @@
         ]
 
        [(is-a? ast FuncDecl%)
-	(hash-set! functions (get-field name ast) ast)
+        (send cloner add-function ast)
         (send (get-field body ast) accept this)]
+
+       [else ast]
 
        ))))
        
