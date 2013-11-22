@@ -11,7 +11,9 @@
 (define loop-unroller%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [index-map (make-hash)])
+    (define index-map (make-hash))
+    (define functions (make-hash))
+    (define program #f)
     (define debug #f)
 
     (define/public (visit ast)
@@ -34,9 +36,13 @@
         (pretty-display ranges)
 
         (if ranges
-            (for/list ([range ranges])
+            (for/list ([range ranges]
+		       [id (in-range (length ranges))])
                       (pretty-display "UNROLL: For (2)")
                       (define body-clone (send body accept (new range-cloner% 
+								[functions functions]
+								[program program]
+								[id id]
                                                                 [from (car range)]
                                                                 [to (cdr range)]
                                                                 [index iter-name])))
@@ -66,6 +72,7 @@
 
 
        [(is-a? ast Program%)
+	(set! program ast)
         (for ([decl (get-field stmts ast)])
              (send decl accept this))]
 
@@ -79,6 +86,7 @@
         ]
 
        [(is-a? ast FuncDecl%)
+	(hash-set! functions (get-field name ast) ast)
         (send (get-field body ast) accept this)]
 
        ))))

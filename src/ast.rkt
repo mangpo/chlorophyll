@@ -543,6 +543,7 @@
     
     ))
 
+
 (define FuncCall%
   (class Exp%
     (super-new)
@@ -567,8 +568,6 @@
            [type type]))
 
     (define/override (pretty-print [indent ""])
-      ;; (pretty-display (format "~a(FuncCall: ~a @~a (known=~a)" 
-      ;;   		      indent name (evaluate-with-sol place-type) known-type))
       (pretty-display (format "~a(FuncCall: ~a @~a (expand=~a/~a) (type=~a)" 
 			      indent name (evaluate-with-sol place-type)
                               expand expect type))
@@ -608,6 +607,15 @@
 			    (format "error at src  l:~a c:~a" (position-line pos) (position-col pos))))
     ))
 
+(define FuncCallDup%
+  (class FuncCall%
+    (super-new)
+    (inherit-field place-type type name args)
+
+    (define/override (clone)
+      (new FuncCallDup% [name name] [args (map (lambda (x) (send x clone)) args)]
+           [place-type place-type] ;[signature (send signature get-signature)]
+           [type type]))))
 
 (define Const%
   (class Livable%
@@ -714,6 +722,10 @@
             (set! place p)
             (set! place-type p)))
 
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(PARAM ~a ~a @~a (place-type=~a)" 
+                              indent type var-list place place-type)))
+
     (define/public (to-string)
       (format "param:~a" (car var-list)))
     
@@ -784,7 +796,8 @@
 (define For%
   (class Scope%
     (super-new)
-    (init-field iter from to body place-list known [address #f] [iter-type 0]
+    (init-field iter from to body [known #t] 
+		[place-list (new Place% [at "any"])] [address #f] [iter-type 0]
                 [unroll #f])
     (inherit print-send-path print-body-placeset)
 

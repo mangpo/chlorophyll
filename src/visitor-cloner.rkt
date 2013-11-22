@@ -1,4 +1,4 @@
-#lang s-exp rosette
+#lang racket
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-loopbound.rkt")
@@ -10,7 +10,8 @@
 (define range-cloner%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field from to index [env (make-hash)])
+    (init-field from to index functions program id)
+    (define env (make-hash))
     (define debug #f)
     (define keep #f) ;; keep symbolic-place of op% the same when _temp = a /% b;
 
@@ -30,7 +31,12 @@
       (define (fresh-place-type op)
         (if (and (not keep) (symbolic? (get-field place-type ast)) (symbolic? (get-field place op)))
             (get-sym)
-            (get-place-type)))
+	    (let ([place (get-field place op)])
+	      (if (and (is-a? place Place%) 
+		       (is-a? (get-field at place) Var%) 
+		       (hash-has-key? env (get-field name (get-field at place))))
+		  (hash-ref env (get-field name (get-field at place)))
+		  (get-place-type)))))
 
       (define (fresh-place)
 	(if (symbolic? (get-field place ast))
@@ -116,6 +122,25 @@
              [known-type (get-known-type)]
              [place-type place-type])]
 
+       [(is-a? ast FuncCallDup%)
+        (set! keep #f)
+	
+	(define func-name (get-field name ast))
+	(define new-func (send (hash-ref functions func-name) accept this))
+	(define new-name (format "~a~a" func-name id))
+	(set-field! name new-func new-name)
+	(set-field! stmts program (cons new-func (get-field stmts program)))
+
+	(define return-place (and (get-field return new-func)
+				  (get-field place (get-field return new-func))))
+        (new FuncCall%
+             [name new-name]
+             [args (map (lambda (x) (send x accept this)) (get-field args ast))]
+             [type (get-field type ast)]
+             [signature new-func]
+             [known-type (get-known-type)]
+             [place-type (typeexpansion->list return-place)])]
+
        [(is-a? ast FuncCall%)
         (set! keep #f)
         (new FuncCall%
@@ -130,13 +155,15 @@
         (new ProxyReturn% [place-type (get-field place-type ast)])]
 
        [(is-a? ast Param%)
+	(define place (fresh-place))
+	(for ([var (get-field var-list ast)])
+	     (declare env var place))
         (new Param%
              [var-list (get-field var-list ast)] ;; not copy
              [type (get-field type ast)]
              [known (get-field known ast)]
-             [place (get-field place ast)]
-             [known-type (get-known-type)]
-             [place-type (get-place-type)])]
+             [place place]
+	     [place-type place])]
 
        [(is-a? ast VarDecl%)
 	(define place (fresh-place))
@@ -204,7 +231,7 @@
         (new Return%
              [val (if (list? val) 
 		      (map (lambda (x) (send x accept this)) val)
-		      val)]
+		      (send val accept this))]
 	     [expect (get-field expect ast)])]
 
        [(is-a? ast Block%)
@@ -215,9 +242,9 @@
         (new FuncDecl%
              [name (get-field name ast)]
              [args (send (get-field args ast) accept this)]
-             [body (send (get-field body ast) accept this)]
              [return (and (get-field return ast) 
                           (send (get-field return ast) accept this))]
+             [body (send (get-field body ast) accept this)]
              [body-placeset (get-field body-placeset ast)])] ;; not copy
 
        [else

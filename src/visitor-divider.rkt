@@ -21,7 +21,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)

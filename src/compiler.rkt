@@ -2,26 +2,27 @@
 #lang racket
 
 (require "header.rkt"
-         "parser.rkt"
-         "ast-util.rkt"
-         "partitioner.rkt" 
-         "layout-sa.rkt" 
-         "separator.rkt"
-         "optimize-distributor.rkt"
-         "arrayforth.rkt"
 	 "arrayforth-def.rkt"
          "arrayforth-optimize.rkt"
          "arrayforth-print.rkt"
+         "arrayforth.rkt"
+         "ast-util.rkt"
+         "layout-sa.rkt" 
+         "optimize-distributor.rkt"
+	 "parser.rkt"
+         "partitioner.rkt" 
+         "separator.rkt"
          "visitor-arrayaccess.rkt"
          "visitor-codegen.rkt"
          "visitor-desugar.rkt"
          "visitor-linker.rkt" 
          "visitor-loopopt.rkt"
+	 "visitor-mapreduce.rkt"
          "visitor-memory.rkt"
          "visitor-printer.rkt"
          "visitor-regalloc.rkt"
-         "visitor-tempinsert.rkt" 
          "visitor-tempinsert2.rkt" 
+         "visitor-tempinsert.rkt" 
          )
 
 (provide compile test-simulate parse compile-to-IR compile-and-optimize)
@@ -30,9 +31,12 @@
 (define (parse file)
   ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
-  (pretty-display "=============== before link ===============")
+  (pretty-display "=============== before map-reduce ===============")
   (send my-ast pretty-print)
-  (define need-temp (send my-ast accept (new linker%)))
+  (send my-ast accept (new mapper-reducer%))
+  (pretty-display "=============== after map-reduce ===============")
+  (send my-ast pretty-print)
+  (send my-ast accept (new linker%))
   (pretty-display "=============== after link ===============")
   (send my-ast pretty-print)
   (send my-ast accept (new temp-inserter%))

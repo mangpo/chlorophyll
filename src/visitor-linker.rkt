@@ -16,7 +16,6 @@
     (super-new)
     (init-field [env (make-hash)] 
                 [array-map (make-hash)] 
-                [non-native #f] 
                 [entry #f]
                 [stmt-level #f]
                 [lowerbound (new lowerbound%)])
@@ -103,7 +102,6 @@
 	 (if (pair? type)
              (begin
                (visit-place (get-field place ast) (cdr type))
-               (set! non-native #t)
                (set-field! type ast (car type))
                (set-field! expect ast (cdr type)))
              (set-field! expect ast 1))
@@ -129,7 +127,6 @@
 	 (if (pair? type)
              (begin
                (visit-place (get-field place-list ast) (cdr type))
-               (set! non-native #t)
                (set-field! type ast (car type))
                (set-field! expect ast (cdr type)))
              (set-field! expect ast 1))
@@ -476,9 +473,6 @@
          (for ([stmt (reverse stmts)])
            (when (is-a? stmt FuncDecl%)
 		 (send stmt accept this)))
-
-         ;; return non-native flag
-         non-native
          ]
         
         [(is-a? ast Block%)

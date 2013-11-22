@@ -1,5 +1,5 @@
 TODO
-- @place() inside loop
+- inline
 - clustered array and function
 - optimize MD5 more
 - reuse memory space (variables of different loops that are not on stack at the same time)

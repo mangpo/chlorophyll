@@ -367,16 +367,14 @@
          ; for loop
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN LBRACK block RBRACK)
             (new For% [iter (new Var% [name $3] [known-type #t] [pos $3-start-pos])] 
-                 [known #t] [from $5] [to $7] [place-list (new Place% [at "any"])] 
-                 [body $10] [pos $1-start-pos]))
+                 [from $5] [to $7] [body $10] [pos $1-start-pos]))
 
          ; for loop with placement
          ((FOR LPAREN VAR FROM NUM TO NUM RPAREN 
                @ place-dist-expand
                LBRACK block RBRACK)
             (new For% [iter (new Var% [name $3] [known-type #t] [pos $3-start-pos])] 
-                 [known #t] [from $5] [to $7] [place-list $10] 
-                 [body $12] [pos $1-start-pos]))
+                 [from $5] [to $7] [place-list $10] [body $12] [pos $1-start-pos]))
 
 	 ; while loop. default bound is 100, but we should so static analysis.
 	 ((WHILE LPAREN exp RPAREN LBRACK block RBRACK)

@@ -2,8 +2,8 @@
 
 (require "compiler.rkt")
 
-(compile-and-optimize "../examples/test.cll" "test" 
-                      1024 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/map.cll" "map" 
+                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 
@@ -25,13 +25,13 @@
 ;(compile-and-optimize "../tests/run/bithack3.cll" "bithack3"
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
 
-;(compile-and-optimize "../tests/run/md5-1.cll" "md1";
+;(compile-and-optimize "../tests/run/md5-1.cll" "md1"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/md5-nl.cll" "mdnl"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f)
 
 ;(compile-and-optimize "../tests/run/fir2.cll" "firfix" 
-;                      512 "null" #:w 3 #:h 3 #:opt #t)
+;                      512 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir-par2.cll" "fir-par2" 

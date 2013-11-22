@@ -53,6 +53,7 @@
 
        [(or (is-a? ast Var%) 
             (is-a? ast ProxyReturn%))
+	;(pretty-display (format "EVALUATE: Var ~a" (send ast to-string)))
         (send ast to-concrete)
         ]
 
@@ -107,6 +108,7 @@
         ]
 
        [(is-a? ast Return%)
+	;(pretty-display (format "EVALUATE: Return"))
 	(define val (get-field val ast))
         (if (list? val)
 	    (for ([x val])
@@ -134,6 +136,7 @@
              (send stmt accept this))]
 
        [(is-a? ast FuncDecl%)
+	;(pretty-display (format "EVALUATE: FuncDecl ~a" (get-field name ast)))
         (when (get-field return ast)
               (send (get-field return ast) accept this))
         (send (get-field args ast) accept this)

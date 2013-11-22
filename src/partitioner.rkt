@@ -4,15 +4,16 @@
          "ast.rkt" "ast-util.rkt"
          "parser.rkt" 
          "partition-storage.rkt"
-         "visitor-interpreter.rkt" 
          "visitor-collector.rkt" 
+         "visitor-evaluator.rkt"
          "visitor-flow.rkt"
+	 "visitor-funcremove.rkt"
          "visitor-heupartition.rkt"
-         "visitor-rename.rkt"
+         "visitor-interpreter.rkt" 
+         "visitor-loopbound.rkt"
          "visitor-placetype.rkt"
          "visitor-printer.rkt"
-         "visitor-evaluator.rkt"
-         "visitor-loopbound.rkt"
+         "visitor-rename.rkt"
          "visitor-unroll.rkt"
          )
 
@@ -78,7 +79,11 @@
     (pretty-display "=== After unroll  ===")
     (send my-ast pretty-print)
     )
-  ;(raise "DONE")
+  (send my-ast accept (new func-remover%))
+  (when verbose
+    (pretty-display "=== After func-remover  ===")
+    (send my-ast pretty-print)
+    )
 
   (current-solver (new kodkod-incremental%))
   ;(current-solver (new z3%))

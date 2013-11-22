@@ -1,0 +1,15 @@
+int ssd(int a, int b) {
+  int temp;
+  temp = a -@place(temp) b;
+  return temp *@place(temp) temp;
+}
+
+void main() {
+  int[]@{[0:5]=0,[5:10]=1} x[10];
+  int[]@{[0:5],[5:10]} y[10];
+  int[]@{[0:5],[5:10]} z[10];
+  z = map(ssd, x, y);
+  /*for(i from 0 to 10) {
+    out(z[i]);
+  }*/
+}
