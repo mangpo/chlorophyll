@@ -2,12 +2,10 @@
 
 (require "compiler.rkt")
 
-;(compile-and-optimize "../tests/run/map.cll" "map" 
-;                      290 "null" #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../tests/run/map-pair.cll" "mappair" 
-;                      290 "null" #:w 3 #:h 3 #:opt #f)
-(compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
-                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/test.cll" "test" 
+;                      256 "null" #:opt #f)
+
+;; Simple
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 
@@ -24,16 +22,10 @@
 ;                      220 "null" #:w 5 #:h 4 #:opt #t)
 ;(compile-and-optimize "../examples/leftrotate.cll" "leftrotate" 
 ;                     256 "null" #:w 10 #:h 5 #:opt #t)
-
-
 ;(compile-and-optimize "../tests/run/bithack3.cll" "bithack3"
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
 
-;(compile-and-optimize "../tests/run/md5-1.cll" "md1"
-;		      1024 "null" #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../tests/run/md5-nl.cll" "mdnl"
-;		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f)
-
+;; Single-core
 ;(compile-and-optimize "../tests/run/fir2.cll" "firfix" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/fir-par.cll" "fir-par" 
@@ -49,6 +41,7 @@
 ;(compile-and-optimize "../tests/run/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 
+;; Multicore
 ;(compile-and-optimize "../tests/run/swap.cll" "swap" 
 ;                      256 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../tests/run/ssd.cll" "ssdfix" 
@@ -61,10 +54,6 @@
 ;                      290 "null" #:w 4 #:h 4 #:opt #t #:sliding #f)
 ;(compile-and-optimize "../tests/run/complex0.cll" "complex5" 
 ;                      290 "null" #:w 5 #:h 5 #:opt #f #:partition #f #:layout #t) ;; factor = 0.4
-;(compile-and-optimize "../tests/run/cos-exp.cll" "cosexp" 
-;                      256 "null" #:w 3 #:h 3 #:opt #f)
-
-
 ;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/convolution2.cll" "convolutionfix" 
@@ -72,3 +61,19 @@
 ;(compile-and-optimize "../tests/run/convolution2-heu.cll" "convolution2nl" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f #:layout #f) ;; factor = 0.4
 
+
+;; MD5
+;(compile-and-optimize "../tests/run/md5-1.cll" "md1"
+;		      1024 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../tests/run/md5-nl.cll" "mdnl"
+;		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #t #:layout #f)
+
+
+
+;; Map & Reduce
+;(compile-and-optimize "../tests/run/map.cll" "map" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../tests/run/map-pair.cll" "mappair" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
+                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)

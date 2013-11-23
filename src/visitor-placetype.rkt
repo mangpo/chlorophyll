@@ -12,7 +12,7 @@
     (super-new)
     (init-field [env (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
     
     ;; find actual place for @place(exp)
     (define (find-place ast)
@@ -34,7 +34,9 @@
           (car (lookup env p))]
 
          [(is-a? p Var%) 
-          (lookup env p)]
+          (if (get-field sub p)
+              (lookup-name env (ext-name (get-field name p) (get-field sub p)))
+              (lookup env p))]
          
          [else
           (pretty-display "raise error")
@@ -59,6 +61,7 @@
       (when debug (pretty-display `(find-index ,place)))
       (if (is-a? place Place%)
           (let ([at (get-field at place)])
+            (when debug (pretty-display `(find-index at ,at)))
             (if (string? at)
                 at
                 (let* ([index (if (is-a? at Array%)
@@ -66,7 +69,7 @@
                                  (get-field index at)
                                  ;; return i when place = @place(i)
                                  at)]
-                       [info (lookup env at)])
+                       [info (and (has-var? env (get-field name at)) (lookup env at))])
                   (when debug (pretty-display `(find-index at ,(send at to-string) 
                                                            info ,info)))
                   (when (and (pair? info) (not (list? info)) (cdr info)) 
