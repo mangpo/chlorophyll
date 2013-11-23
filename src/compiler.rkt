@@ -237,9 +237,9 @@
 
 (define testdir "../tests/run")
 
-(define (test-simulate name input capacity w h)
+(define (test-simulate name input capacity w h partition)
   (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input w h
-                 #:run #t)
+                 #:run #t #:partition partition)
   (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))
   

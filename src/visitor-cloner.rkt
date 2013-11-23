@@ -12,11 +12,12 @@
     (super-new)
     (init-field program)
 
+    (define debug #t)
+
     (define env (make-hash))
     (define tempdecls (make-hash))
-    (define debug #f)
     (define keep #f) ;; keep symbolic-place of op% the same when _temp = a /% b;
-    
+
     (define functions (make-hash))
     (define from #f)
     (define to #f)
@@ -164,7 +165,7 @@
 	
 	(define func-name (get-field name ast))
 	(define new-func (send (hash-ref functions func-name) accept this))
-	(define new-name (format "_~a~a" func-name id))
+	(define new-name (format "_~a~a" id func-name))
 	(set-field! name new-func new-name)
 	(set-field! stmts program (cons new-func (get-field stmts program)))
 
@@ -269,11 +270,13 @@
         (define lhs-ret (send (get-field lhs ast) accept this))
         (set! keep #t)
         (define rhs-ret (send (get-field rhs ast) accept this))
-        (define place (list->typeexpansion (get-field place-type rhs-ret)))
+
         (define temp-name (get-field name lhs-ret))
-        (set-field! place-type lhs-ret place)
-        (set-field! place (hash-ref tempdecls temp-name) place)
-        (declare-var temp-name place)
+        (when (hash-has-key? tempdecls temp-name)
+              (define place (list->typeexpansion (get-field place-type rhs-ret)))
+              (set-field! place-type lhs-ret place)
+              (set-field! place (hash-ref tempdecls temp-name) place)
+              (declare-var temp-name place))
         
         (new AssignTemp%
                [lhs lhs-ret]

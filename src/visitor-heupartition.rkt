@@ -4,7 +4,7 @@
 
 (provide heuristic-partitioner% merge-sym-partition)
 
-(define factor 1)
+(define factor 0.95)
 
 (define (merge-sym-partition space flow-graph capacity)
   (define sol-map (make-hash))

@@ -199,6 +199,11 @@
             )
           code))
 
+    (define (func-name name)
+      (if (equal? (substring name 0 1) "_")
+          (substring name 1)
+          name))
+
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
@@ -377,15 +382,16 @@
 
         (when debug 
               (pretty-display (format "\nCODEGEN: FuncCall ~a" (send ast to-string))))
+        (define name (func-name (get-field name ast)))
         (define arg-code 
           (foldl (lambda (x all) (prog-append all (send x accept this)))
                  (list) (get-field args ast)))
         (define call-code
           (if (car const-a)
               (list (gen-block-r "a" "push" 0 0)
-                    (funccall (get-field name ast))
+                    (funccall name)
                     (gen-block "pop" "a!" 0 0))
-              (list (funccall (get-field name ast)))))
+              (list (funccall name))))
 
         (drop-cond my-cond (prog-append arg-code call-code))
         ]
@@ -665,6 +671,7 @@
         (pretty-display (format "\nCODEGEN: FuncDecl ~a" (get-field name ast)))
 
 	(define decls (get-field stmts (get-field args ast)))
+        (define name (func-name (get-field name ast)))
         
         (pretty-display "ARGS:")
         (for ([decl decls])
@@ -704,7 +711,7 @@
                            ;; there is nothing to drop.
                            (get-field return ast) 
                            ;; if it not void, return% clears the return stack.
-                           (equal? (get-field name ast) "main")
+                           (equal? name "main")
                            ;; if main, just leave thing on stack.
                            )
                        (gen-block)
@@ -713,7 +720,7 @@
             (set-restrict-mem! (block-cnstr b) #f)
             (list b)))
         
-        (funcdecl (get-field name ast) (prog-append args-ret body-ret return-ret))]
+        (funcdecl name (prog-append args-ret body-ret return-ret))]
 
        [(is-a? ast Program%)
         (when debug 

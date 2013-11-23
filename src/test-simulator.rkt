@@ -4,9 +4,9 @@
 
 (define result (list))
 
-(define (test name input capacity #:w [w 5] #:h [h 4])
+(define (test name input capacity #:w [w 5] #:h [h 4] #:partition [part #t])
   (set! result (cons 
-                (cons name (test-simulate name input capacity w h))
+                (cons name (test-simulate name input capacity w h part))
                 result)))
 
 ;(test "array" "10" 256)
@@ -30,7 +30,9 @@
 ;(test "matrixmult4-dup" "null" 500)
 ;(test "cluster" "null" 256)
 ;(test "map" "null" 290)
+;(test "map-pair" "null" 290)
 ;(test "reduce" "null" 290)
+(test "reduce-pair" "null" 290 #:partition #f)
 
 ;(test "md5-1" "null" 1024 #:w 8 #:h 8)
 ;(test "ssd_simple" "null" 512 #:w 8 #:h 5)

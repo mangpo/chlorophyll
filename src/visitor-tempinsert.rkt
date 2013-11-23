@@ -199,24 +199,28 @@
          (list ast)]
         
         [(is-a? ast For%)
-         (send (get-field body ast) accept this)
+         (push-scope)
+         (define body (get-field body ast))
+         (send body accept this)
+         (define decls (pop-scope))
+         (set-field! stmts body (append decls (get-field stmts body)))
          ast]
         
         [(is-a? ast FuncDecl%)
          (when debug (pretty-display (format "TEMPINSERT: FuncDecl ~a" 
                                              (get-field name ast))))
+         (push-scope)
          (define body (get-field body ast))
          (send body accept this)
+         (define decls (pop-scope))
+         (set-field! stmts body (append decls (get-field stmts body)))
          ast]
         
         [(is-a? ast Block%)
-         (push-scope)
          (set-field! stmts ast
                      (flatten (map (lambda (x) (send x accept this))
                                    (get-field stmts ast))))
          
-         (define decls (pop-scope))
-         (set-field! stmts ast (append decls (get-field stmts ast)))
 
          ast
          ]

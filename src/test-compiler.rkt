@@ -2,6 +2,8 @@
 
 (require "compiler.rkt")
 
+;(compile-and-optimize "../tests/run/map.cll" "map" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/map-pair.cll" "mappair" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 (compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
