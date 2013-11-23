@@ -77,9 +77,7 @@
                      (car place-list)
                      (cdr place-list))))]
 
-   [else
-    (let ([p (evaluate-with-sol place)])
-      (if (and out (symbolic? p)) "??" p))]
+   [else (evaluate-with-sol place)]
    ))
 
 ;; path-list -> string
@@ -665,7 +663,7 @@
   (class Livable%
     (super-new)
     (inherit-field place pos)
-    (init-field var-list type [known #t] [address #f] [compact #f])
+    (init-field var-list type [known #t] [address #f] [compact #f] [loop #f])
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
@@ -677,7 +675,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(VARDECL ~a ~a @~a (address=~a))" 
-                              indent type var-list place address))
+                              indent type var-list (place-to-string place) address))
       (print-send-path indent))
 
     (define/public (partition-mismatch)
@@ -688,8 +686,7 @@
 
 (define VarDeclDup%
   (class VarDecl%
-    (super-new)
-    (init-field [unroll #f])))
+    (super-new)))
 
 (define ReturnDecl%
   (class VarDecl%
@@ -807,7 +804,7 @@
     (super-new)
     (init-field iter from to body [known #t] 
 		[place-list (new Place% [at "any"])] [address #f] [iter-type 0]
-                [unroll #f] [reduce (list)])
+                [unroll #f])
     (inherit print-send-path print-body-placeset)
 
     (define/override (clone)
@@ -819,10 +816,7 @@
 
     (define/public (set-unroll k)
       (pretty-display `(set-unroll ,k))
-      (set! unroll k)
-      (define len (length k))
-      (for ([x reduce])
-           (set-field! unroll x len)))
+      (set! unroll k))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FOR ~a from ~a to ~a) @{~a}" 
@@ -890,8 +884,7 @@
 
 (define AssignDup%
   (class Assign%
-    (super-new)
-    (init-field [unroll #f])))
+    (super-new)))
 
 (define AssignTemp%
   (class Assign%
@@ -1094,6 +1087,11 @@
             (send stmt pretty-print indent)))
 
 ))
+
+(define BlockDup%
+  (class Block%
+    (super-new)
+    (init-field loop)))
 
 (define Program%
   (class Block%

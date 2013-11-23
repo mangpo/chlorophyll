@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -365,7 +365,9 @@
         (when debug
               (pretty-display (format ">> VarDecl ~a (after)" var-list)))
         
-        (comminfo 0 (to-place-set place))
+        (define ret (comminfo 0 (to-place-set place)))
+        (pretty-display `(placeset ,var-list ,(comminfo-placeset ret)))
+        ret
         ]
 
        [(is-a? ast ArrayDecl%)
@@ -553,6 +555,8 @@
           ret)]
 
        [(is-a? ast FuncDecl%)
+          (when debug
+                (pretty-display (format ">> FuncDecl(1) ~a" (get-field name ast))))
           (push-scope)
 	  (define return (get-field return ast))
           (define return-ret 
@@ -568,9 +572,13 @@
           (pop-scope)
           
           (when debug
-                (pretty-display (format ">> FuncDecl ~a" (get-field name ast))))
+                (pretty-display (format ">> FuncDecl(2) ~a" 
+                                        (get-field name ast))))
+          (pretty-display `(body-placeset ,(comminfo-placeset args-ret)
+                                          ,(comminfo-placeset body-ret)
+                                          ,(comminfo-placeset return-ret)))
 
-          (define body-placeset (set-union (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret)) (comminfo-placeset return-ret)))
+          (define body-placeset (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret) (comminfo-placeset return-ret)))
           (set-field! body-placeset ast body-placeset)
 
 	  (let ([ret (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))

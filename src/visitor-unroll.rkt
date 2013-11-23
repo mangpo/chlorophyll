@@ -18,18 +18,10 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDeclDup%)
+        (define n (length (get-field unroll (get-field loop ast))))
         (pretty-display (format "UNROLL: VarDeclDup ~a unroll = ~a" 
-                                (get-field var-list ast)
-                                (get-field unroll ast)))
-        (for/list ([i (in-range (get-field unroll ast))])
-                  (send cloner set-id i)
-                  (send ast accept cloner))
-        ]
-
-       [(is-a? ast AssignDup%)
-        (pretty-display (format "UNROLL: AssignDup unroll = ~a" 
-                                (get-field unroll ast)))
-        (for/list ([i (in-range (get-field unroll ast))])
+                                (get-field var-list ast) n))
+        (for/list ([i (in-range n)])
                   (send cloner set-id i)
                   (send ast accept cloner))
         ]
@@ -76,6 +68,23 @@
         (set! cloner (new range-cloner% [program ast]))
         (for ([decl (get-field stmts ast)])
              (send decl accept this))]
+
+
+       [(is-a? ast BlockDup%)
+        (pretty-display (format "UNROLL: AssignDup unroll = ~a" n))
+        (define n (length (get-field unroll (get-field loop ast))))
+        (set-field! stmts ast
+                    (flatten (map (lambda (x) (send x accept this)) 
+                                  (get-field stmts ast))))
+        (set-field! stmts ast
+                    (flatten
+                     (for/list ([i (in-range n)])
+                               (send cloner set-id i)
+                               (let ([new-block (send ast accept cloner)])
+                                 (get-field stmts new-block)))))
+
+        ast
+        ]
 
        [(is-a? ast Block%)
         (set-field! stmts ast

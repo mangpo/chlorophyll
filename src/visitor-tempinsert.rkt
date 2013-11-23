@@ -16,8 +16,20 @@
 
     (struct entry (temp type expand))
 
+    (define (push-scope)
+      (set! new-decls (cons (list) new-decls)))
+
+    (define (pop-scope)
+      (define ret (car new-decls))
+      (set! new-decls (cdr new-decls))
+      ret)
+
+    (define (add-decl x)
+      (set! new-decls (cons (cons x (car new-decls))
+                            (cdr new-decls))))
+
     (define (get-temp type expand expect place-type compact)
-      (let* ([temp (format "_temp1_~a" count)]
+      (let* ([temp (format "_temp_~a" count)]
 	     [temp-decl (if (> expand 1)
 			    ;; no expansion in desugar step
 			    (new TempDecl% [var-list (list temp)]
@@ -32,7 +44,7 @@
                                  [compact compact]))])
 	
         (set! count (add1 count))
-        (set! new-decls (cons temp-decl new-decls))
+        (add-decl temp-decl)
         
         ;; temp for funccall:
         ;; let func() -> int::2
@@ -191,20 +203,21 @@
          ast]
         
         [(is-a? ast FuncDecl%)
-         (when debug (pretty-display (format "TEMPINSERT: FuncDecl ~a" (get-field name ast))))
+         (when debug (pretty-display (format "TEMPINSERT: FuncDecl ~a" 
+                                             (get-field name ast))))
          (define body (get-field body ast))
          (send body accept this)
-         (set-field! stmts body (append new-decls (get-field stmts body)))
-         (set! new-decls (list))
          ast]
         
         [(is-a? ast Block%)
+         (push-scope)
          (set-field! stmts ast
-                     (flatten (map (lambda (x) 
-                                     (send x accept this))
+                     (flatten (map (lambda (x) (send x accept this))
                                    (get-field stmts ast))))
-         (when (is-a? ast Program%)
-           (set-field! stmts ast (append new-decls (get-field stmts ast))))
+         
+         (define decls (pop-scope))
+         (set-field! stmts ast (append decls (get-field stmts ast)))
+
          ast
          ]
         

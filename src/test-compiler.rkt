@@ -2,10 +2,10 @@
 
 (require "compiler.rkt")
 
-;(compile-and-optimize "../tests/run/map.cll" "map" 
+;(compile-and-optimize "../tests/run/map-pair.cll" "mappair" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
-(compile-and-optimize "../tests/run/reduce.cll" "reduce" 
-                      290 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
+                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
 ;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../tests/run/offset.cll" "offset" 

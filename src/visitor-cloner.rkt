@@ -11,7 +11,9 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field program)
+
     (define env (make-hash))
+    (define tempdecls (make-hash))
     (define debug #f)
     (define keep #f) ;; keep symbolic-place of op% the same when _temp = a /% b;
     
@@ -56,10 +58,23 @@
 		  (hash-ref env (get-field name (get-field at place)))
 		  (get-place-type)))))
 
-      (define (fresh-place)
-	(if (symbolic? (get-field place ast))
-	    (get-sym)
-	    (get-field place ast)))
+      (define (fresh-place place)
+	(cond
+         [(symbolic? place)
+          (get-sym)]
+         [(is-a? place TypeExpansion%)
+          (new TypeExpansion% 
+               [place-list (map fresh-place (get-field place-list place))])]
+         [else place]))
+
+      (define (declare-var name place)
+        (when (is-a? place TypeExpansion%)
+              (let ([place-list (get-field place-list place)])
+                (for ([i (in-range (length place-list))]
+                      [p place-list])
+                     ;(pretty-display (format "CLONER: declare ~a @ ~a" (ext-name name i) p))
+                     (declare env (ext-name name i) p))))
+        (declare env name place))
         
       (cond
        [(is-a? ast Const%)
@@ -84,15 +99,14 @@
 	     [cluster (get-field cluster ast)]
              [place-type (get-place-type)] [known-type (get-known-type)])]
 
-       [(is-a? ast Temp%)
-        (when debug
-              (pretty-display (format "CLONER: Temp ~a" (send ast to-string))))
-        (set! keep #f)
-        (new Temp% [name (get-field name ast)]
-             [type (get-field type ast)]
-             [place-type (get-place-type)] [known-type (get-known-type)]
-             [compact (get-field compact ast)])]
-        
+       ;; [(is-a? ast Temp%)
+       ;;  (when debug
+       ;;        (pretty-display (format "CLONER: Temp ~a" (send ast to-string))))
+       ;;  (set! keep #f)
+       ;;  (new Temp% [name (get-field name ast)]
+       ;;       [type (get-field type ast)]
+       ;;       [place-type (get-place-type)] [known-type (get-known-type)]
+       ;;       [compact (get-field compact ast)])]
 
        [(is-a? ast Var%)
         (when debug
@@ -105,7 +119,8 @@
 	(define place (if (has-var? env name)
 			  (lookup-name env name)
 			  (get-place-type)))
-        (new Var% [name name]
+        (new (if (is-a? ast Temp%) Temp% Var%)
+             [name name]
              [type (get-field type ast)]
              [compact (get-field compact ast)]
              [place-type place] [known-type (get-known-type)])]
@@ -177,7 +192,7 @@
         (new ProxyReturn% [place-type (get-field place-type ast)])]
 
        [(is-a? ast Param%)
-	(define place (fresh-place))
+	(define place (fresh-place (get-field place ast)))
 	(for ([var (get-field var-list ast)])
 	     (declare env var place))
         (new Param%
@@ -188,18 +203,30 @@
 	     [place-type place])]
 
        [(is-a? ast VarDecl%)
-	(define place (fresh-place))
+	(define place (fresh-place (get-field place ast)))
         (define new-var-list
           (for/list ([var (get-field var-list ast)])
             (let ([name (if (is-a? ast VarDeclDup%) (format "~ap~a" var id) var)])
-              (declare env name place)
+              (declare-var name place)
               name
               )))
-        (new VarDecl%
-             [var-list new-var-list]
-             [type (get-field type ast)]
-             [known (get-field known ast)]
-             [place place])]
+        
+        (define ret
+          (new (cond
+                [(is-a? ast ReturnDecl%) ReturnDecl%]
+                [(is-a? ast TempDecl%) TempDecl%]
+                [else VarDecl%])
+               [var-list new-var-list]
+               [type (get-field type ast)]
+               [known (get-field known ast)]
+               [place place]))
+
+        (when (is-a? ast TempDecl%)
+          (for/list ([var (get-field var-list ast)])
+                    (hash-set! tempdecls var ret)))
+        
+        ret
+        ]
              
        [(is-a? ast ArrayDecl%)
         (new ArrayDecl%
@@ -242,6 +269,11 @@
         (define lhs-ret (send (get-field lhs ast) accept this))
         (set! keep #t)
         (define rhs-ret (send (get-field rhs ast) accept this))
+        (define place (list->typeexpansion (get-field place-type rhs-ret)))
+        (define temp-name (get-field name lhs-ret))
+        (set-field! place-type lhs-ret place)
+        (set-field! place (hash-ref tempdecls temp-name) place)
+        (declare-var temp-name place)
         
         (new AssignTemp%
                [lhs lhs-ret]

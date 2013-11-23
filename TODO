@@ -1,6 +1,5 @@
 TODO
-- finish reduce, test map again
-- expanded type: map & reduce
+- tempdecl's place has to connnect with funccall
 - inline
 - clustered array and function
 - optimize MD5 more

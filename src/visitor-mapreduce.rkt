@@ -60,37 +60,50 @@
         (define array-name (get-field name (last reduce-args)))
 	(define n (hash-ref arrays array-name))
         (define reduce-name (get-reduce-name))
-
+        (define pos (get-field pos ast))
 	
-        (define reduce-decl
-          (new VarDeclDup% 
-               [var-list (list reduce-name)] 
-               [type (hash-ref vartypes lhs-name)]))
-        (define lhs-init
-          (new Assign% [lhs (new Var% [name lhs-name])] [rhs (send val clone)]))
-        (define reduce-init
-          (new AssignDup% [lhs (new VarDup% [name reduce-name])] [rhs (send val clone)]))
-
 	(define body
 	  (new Assign% 
-	       [lhs (new VarDup% [name reduce-name])]
+	       [lhs (new VarDup% [name reduce-name] [pos pos])]
 	       [rhs (new FuncCallDup% 
 			 [name func] 
 			 [args (list (new VarDup% [name reduce-name])
                                      (new Array% [name array-name] 
-                                          [index (new Var% [name "i"])]))])]))
+                                          [index (new Var% [name "i"] [pos pos])]))]
+                         [pos pos])]
+               [pos pos]))
+        (define reduce-loop
+          (new For% [iter (new Var% [name "i"] [known-type #t] [pos pos])] [from 0] [to n] 
+               [body (new Block% [stmts (list body)])]
+               [pos pos]))
+
+        (define reduce-decl
+          (new VarDeclDup% 
+               [var-list (list reduce-name)] 
+               [type (hash-ref vartypes lhs-name)] 
+               [loop reduce-loop] [pos pos]))
+        (define lhs-init
+          (new Assign% 
+               [lhs (new Var% [name lhs-name] [pos pos])] [rhs (send val clone)] 
+               [pos pos]))
+        (define reduce-init
+          (new BlockDup% 
+               [stmts (list (new Assign% 
+                                 [lhs (new VarDup% [name reduce-name] [pos pos])] 
+                                 [rhs (send val clone)] [pos pos]))]
+               [loop reduce-loop] [pos pos]))
 
         (define reduce-assign
-          (new AssignDup% 
-	       [lhs (new Var% [name lhs-name])]
-	       [rhs (new FuncCall% 
-			 [name func] 
-			 [args (list (new Var% [name lhs-name])
-                                     (new VarDup% [name reduce-name]))])]))
-        (define reduce-loop
-          (new For% [iter (new Var% [name "i"] [known-type #t])] [from 0] [to n] 
-               [body (new Block% [stmts (list body)])]
-               [reduce (list reduce-decl reduce-init reduce-assign)]))
+          (new BlockDup% 
+               [stmts (list (new Assign% 
+                                 [lhs (new Var% [name lhs-name] [pos pos])]
+                                 [rhs (new FuncCall% 
+                                           [name func] 
+                                           [args (list (new Var% [name lhs-name] [pos pos])
+                                                       (new VarDup% [name reduce-name] 
+                                                            [pos pos]))]
+                                           [pos pos])]))]
+               [loop reduce-loop]))
 
         (list reduce-decl lhs-init reduce-init reduce-loop reduce-assign)
 	]

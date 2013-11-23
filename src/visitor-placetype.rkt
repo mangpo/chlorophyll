@@ -138,9 +138,11 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast Num%)
+        (when debug (pretty-display (format "PLACETYPE: Num ~a" (send ast to-string))))
         (set-field! place-type ast (find-place-type ast (get-field n ast)))]
 
        [(is-a? ast Array%)
+        (when debug (pretty-display (format "PLACETYPE: Array ~a" (send ast to-string))))
         ;; lookup place from env
         (define place-cluster (lookup env ast))
         (define places (car place-cluster))
@@ -167,6 +169,7 @@
         ]
 
        [(is-a? ast Var%)
+        (when debug (pretty-display (format "PLACETYPE: Var ~a" (send ast to-string))))
         (define place (lookup env ast))
         (define inferred-place (get-field place-type ast))
         (define place-type (if (and (at-any? place) inferred-place)
@@ -191,6 +194,7 @@
         ]
 
        [(is-a? ast UnaExp%)
+        (when debug (pretty-display (format "PLACETYPE: UnaExp ~a" (send ast to-string))))
         (define e1 (get-field e1 ast))
         (define op (get-field op ast))
         
@@ -203,6 +207,7 @@
         (send e1 accept this)]
 
        [(is-a? ast BinExp%)
+        (when debug (pretty-display (format "PLACETYPE: BinExp ~a" (send ast to-string))))
         (define e1 (get-field e1 ast))
         (define e2 (get-field e2 ast))
         (define op (get-field op ast))
@@ -219,6 +224,7 @@
         (send e2 accept this)]
 
        [(is-a? ast FuncCall%)
+        (when debug (pretty-display (format "PLACETYPE: FuncCall ~a" (send ast to-string))))
         ;; infer place-type
         ;; (for ([param (get-field stmts (get-field args (get-field signature ast)))]
         ;;       [arg (flatten-arg (get-field args ast))])
@@ -231,6 +237,7 @@
 
        [(or (is-a? ast TempDecl%)
 	    (is-a? ast ReturnDecl%))
+        (when debug (pretty-display (format "PLACETYPE: TempDecl")))
         (define type (get-field type ast))
         (define temp (car (get-field var-list ast)))
         (define place (find-place ast))
@@ -245,6 +252,7 @@
 		   (declare env (ext-name temp i) p))))]
 
        [(is-a? ast VarDecl%) 
+        (when debug (pretty-display (format "PLACETYPE: VarDecl")))
         (define place (find-place ast))
         (define var-list (get-field var-list ast))
         
@@ -257,6 +265,7 @@
              (declare env var place))]
 
        [(is-a? ast ArrayDecl%)
+        (when debug (pretty-display (format "PLACETYPE: ArrayDecl")))
         (define place-list (get-field place-list ast)) ; don't support place(x)
 	(when (or (number? place-list)
 		  (and (list? place-list) (= (length place-list) 1)))
@@ -277,6 +286,7 @@
         ]
 
        [(is-a? ast For%)
+        (when debug (pretty-display (format "PLACETYPE: For")))
         
         ;; Add new scope for body.
         (push-scope)
@@ -291,6 +301,7 @@
         (pop-scope)]
 
        [(is-a? ast If%)
+        (when debug (pretty-display (format "PLACETYPE: If")))
         (send (get-field condition ast) accept this)
         (push-scope)
         (send (get-field true-block ast) accept this)
@@ -302,6 +313,7 @@
               (pop-scope))]
 
        [(is-a? ast While%)
+        (when debug (pretty-display (format "PLACETYPE: While")))
         (send (get-field pre ast) accept this)
         (send (get-field condition ast) accept this)
         (push-scope)
@@ -309,10 +321,12 @@
         (pop-scope)]
 
        [(is-a? ast AssignTemp%)
+        (when debug (pretty-display (format "PLACETYPE: AssignTemp")))
         (send (get-field rhs ast) accept this)]
 
        
        [(is-a? ast Assign%) 
+        (when debug (pretty-display (format "PLACETYPE: Assign")))
         (define lhs (get-field lhs ast))
         (define rhs (get-field rhs ast))
 
@@ -325,6 +339,7 @@
         ]
 
        [(is-a? ast Return%)
+        (when debug (pretty-display (format "PLACETYPE: Return")))
 	(define val (get-field val ast))
 	(if (list? val)
 	    (for ([x val])
@@ -332,6 +347,7 @@
 	    (send val accept this))]
 
        [(is-a? ast FuncDecl%)
+        (when debug (pretty-display (format "\nPLACETYPE: FuncDecl ~a" (get-field name ast))))
         (push-scope)
         (send (get-field args ast) accept this)
         (when (get-field return ast)

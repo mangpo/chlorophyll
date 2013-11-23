@@ -50,11 +50,15 @@
 	     ;; int a::0: int a::1;
              (for/list ([i (in-range entry)]
                         [p (get-field place-list (get-field place ast))])
-                        (new (if (is-a? ast Param%) Param%  VarDecl%)
+                        (new (cond
+                              [(is-a? ast Param%) Param%]
+                              [(is-a? ast VarDeclDup%) VarDeclDup%]
+                              [else VarDecl%])
                              [type native-type]
                              [var-list (decor-list (get-field var-list ast) i)]
                              [known known]
                              [place (if p p (get-sym))]
+                             [loop (get-field loop ast)]
                              [pos (get-field pos ast)]))
 	     ;; normal type
 	     ast)
@@ -206,7 +210,8 @@
                                   [place-type p])))
                          (for/list ([i (in-range expand)])
                            (let ([new-name (ext-name (get-field name ast) i)])
-                             (new Var% [name new-name]
+                             (new (if (is-a? ast VarDup%) VarDup% Var%)
+                                  [name new-name]
                                   ;; set known-type
                                   [known-type known-type]
                                   [pos (get-field pos ast)]))))
@@ -292,7 +297,9 @@
 	     (for/list ([i-lhs lhs-ret]
 			[i-rhs rhs-ret])
                        (new 
-                        (if (is-a? ast AssignTemp%) AssignTemp% Assign%)
+                        (cond
+                         [(is-a? ast AssignTemp%) AssignTemp%]
+                         [else AssignTemp% Assign%])
                         [lhs i-lhs] [rhs i-rhs] [pos (get-field pos ast)])))
          ]
 
