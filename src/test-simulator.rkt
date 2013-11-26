@@ -32,7 +32,8 @@
 ;(test "map" "null" 290)
 ;(test "map-pair" "null" 290)
 ;(test "reduce" "null" 290)
-(test "reduce-pair" "null" 290 #:partition #f)
+;(test "reduce-pair" "null" 290 #:partition #f)
+(test "mapreduce" "null" 290 #:partition #f)
 
 ;(test "md5-1" "null" 1024 #:w 8 #:h 8)
 ;(test "ssd_simple" "null" 512 #:w 8 #:h 5)

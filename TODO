@@ -1,4 +1,6 @@
 TODO
+- why results from heuristic partitioners when running in test-compiler and test-simulartor are not the same?
+- reduce variables should be at different places
 * iterative partition
 - inline
 - clustered array and function

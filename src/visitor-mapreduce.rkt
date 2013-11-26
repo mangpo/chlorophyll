@@ -17,32 +17,61 @@
       (set! count (add1 count))
       (format "_red~a" count))
 
+    (define (get-reduce-length map-func [n #f])
+      (define map-args (map (lambda (x) (get-field name x)) 
+                            (get-field args map-func)))
+      (define func (car map-args))
+      (define args (cdr map-args))
+      (define my-n (hash-ref arrays (car args)))
+      (if n
+          (unless (= (hash-ref arrays (first args)) n)
+            (raise (format "map function cannot be applies to arguments whose number of array entries are not the same as the lhs's. Error at ~a in line ~a." 
+                           func (send map-func get-line))))
+          (set! n my-n))
+
+      (for ([arg (cdr args)])
+           (unless (= (hash-ref arrays arg) n)
+             (raise (format "map function cannot be applies to arguments whose number of array entries are not the same as the lhs's. Error at ~a in line ~a." 
+                            func (send map-func get-line)))))
+
+      n)
+
+    (define (desugar-map map-func)
+      (define map-args (map (lambda (x) (get-field name x)) 
+                            (get-field args map-func)))
+      (define func (car map-args))
+      (define args (cdr map-args))
+      (define pos (send map-func get-line))
+      (new FuncCallDup% 
+           [name func] 
+           [args (map (lambda (x) (new Array% 
+                                       [name x] [pos pos]
+                                       [index (new Var% [name "i"])]))
+                      args)]
+           [pos pos]))
+
     (define/public (visit ast)
       (cond
        [(and (is-a? ast Assign%) 
 	     (is-a? (get-field rhs ast) FuncCall%) 
 	     (equal? (get-field name (get-field rhs ast)) "map"))
-	
-	(define lhs-name (get-field name (get-field lhs ast)))
-	(define n (hash-ref arrays lhs-name))
-	(define map-args (map (lambda (x) (get-field name x)) (get-field args (get-field rhs ast))))
-	(define func (car map-args))
-	(define args (cdr map-args))
-	
-	(for ([arg args])
-	     (unless (= (hash-ref arrays arg) n)
-		     (raise (format "map function cannot be applies to arguments whose number of array entries are not the same as the lhs's. Error at ~a in line ~a." func (send ast get-line)))))
+
+        (define lhs-name (get-field name (get-field lhs ast)))
+        (define rhs (get-field rhs ast))
+        (define n (get-reduce-length rhs (hash-ref arrays lhs-name)))
+        (define expanded-func (desugar-map rhs))
+        (define pos (get-field pos ast))
 
 	(define body
 	  (new Assign% 
-	       [lhs (new Array% [name lhs-name] [index (new Var% [name "i"])] [known-type #t])]
-	       [rhs (new FuncCallDup% 
-			 [name func] 
-			 [args (map (lambda (x) (new Array% [name x] [index (new Var% [name "i"])]))
-				    args)])]))
+	       [lhs (new Array% [pos pos]
+                         [name lhs-name] [index (new Var% [name "i"])] [known-type #t])]
+	       [rhs expanded-func]
+               [pos pos]))
 	
         
-	(new For% [iter (new Var% [name "i"] [known-type #t])] [from 0] [to n] 
+	(new For% 
+             [iter (new Var% [name "i"] [known-type #t])] [from 0] [to n] [pos pos]
 	     [body (new Block% [stmts (list body)])])
 	]
 
@@ -57,8 +86,23 @@
                 (raise (format "reduce function only takes 3 arguments. Error at ~a in line ~a" func (send ast get-line))))
 
         (define val (second reduce-args))
-        (define array-name (get-field name (last reduce-args)))
-	(define n (hash-ref arrays array-name))
+        (define last-reduce-arg (last reduce-args))
+        (define array-map-name (get-field name last-reduce-arg))
+	(define n 
+          (if (equal? array-map-name "map")
+              ;; map reduce case
+              (get-reduce-length last-reduce-arg)
+              (hash-ref arrays array-map-name)))
+
+        (define array-or-map
+          (if (equal? array-map-name "map")
+              ;; map reduce case
+              (desugar-map last-reduce-arg)
+              (new Array% 
+                   [name array-map-name] 
+                   [index (new Var% [name "i"] [pos pos])]
+                   [pos pos])))
+
         (define reduce-name (get-reduce-name))
         (define pos (get-field pos ast))
 	
@@ -68,8 +112,7 @@
 	       [rhs (new FuncCallDup% 
 			 [name func] 
 			 [args (list (new VarDup% [name reduce-name])
-                                     (new Array% [name array-name] 
-                                          [index (new Var% [name "i"] [pos pos])]))]
+                                     array-or-map)]
                          [pos pos])]
                [pos pos]))
         (define reduce-loop
