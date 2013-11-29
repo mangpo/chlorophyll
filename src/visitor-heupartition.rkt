@@ -6,8 +6,22 @@
 
 (define factor 0.95)
 
-(define (merge-sym-partition space flow-graph capacity)
+(define (merge-sym-partition n space flow-graph capacity conflict-list)
   (define sol-map (make-hash))
+  (define conflict-map (make-hash))
+  
+  (pretty-display `(conflict-list ,conflict-list))
+  ;; Construct conflict-map
+  (for ([lst conflict-list])
+    (let ([len (length lst)])
+      (for* ([set-x lst]
+             [set-y lst])
+        (unless (equal? set-x set-y)
+          (for* ([x set-x]
+                 [y set-y])
+            (hash-set! conflict-map (cons x y) 1)
+            (hash-set! conflict-map (cons y x) 1))))))
+  (pretty-display `(conflict-map ,conflict-map))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
@@ -30,6 +44,8 @@
     (define r2 (root p2))
     (when (and (not (equal? r1 r2))
                (or (symbolic? r1) (symbolic? r2))
+               (not (hash-has-key? conflict-map (cons r1 r2)))
+               (not (hash-has-key? conflict-map (cons r2 r1)))
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
                   (inexact->exact (floor (* capacity factor scale)))))
 	  (pretty-display `(merge ,p1 ,p2))
@@ -39,6 +55,7 @@
               (point r2 r1))
 	  (pretty-display `(after ,(root p1) ,(root p2)))
 	  ))
+
 
   (pretty-display "------------------ before merge sym partition ---------------------")
   (pretty-display space)
@@ -328,7 +345,7 @@
 
         (define sorted-edges (sort (hash->list network) (lambda (x y) (> (cdr x) (cdr y)))))
         ;(pretty-display `(sorted-edges ,sorted-edges))
-        (values space (map car sorted-edges))]
+        (values space (map car sorted-edges) (get-field conflict-list ast))]
 
        [(is-a? ast Block%)
         (foldl (lambda (stmt all) (set-union all (send stmt accept this)))

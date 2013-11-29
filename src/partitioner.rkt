@@ -74,7 +74,7 @@
     (pretty-display "=== After bound compute  ===")
     (send my-ast pretty-print)
     )
-  (send my-ast accept (new loop-unroller%))
+  (send my-ast accept (new loop-unroller% [program my-ast]))
   (when verbose
     (pretty-display "=== After unroll  ===")
     (send my-ast pretty-print)
@@ -278,9 +278,11 @@
    [else
     (pretty-display "Running heuristic partitioner ...")
     (define heu-start (current-seconds))
-    (define-values (space network) (send my-ast accept (new heuristic-partitioner%)))
+    (define-values (space network conflict-list) 
+      (send my-ast accept (new heuristic-partitioner%)))
     (set-global-sol (sat (make-immutable-hash 
-			  (hash->list (merge-sym-partition space network capacity)))))
+			  (hash->list (merge-sym-partition num-core space network capacity 
+                                                           conflict-list)))))
     
     (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
       (lambda ()

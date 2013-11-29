@@ -10,7 +10,7 @@
 (define range-cloner%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field program)
+    (init-field [new-funcs (list)])
 
     (define debug #t)
 
@@ -50,13 +50,24 @@
             place-type))
 
       (define (fresh-place-type op)
-        (if (and (not keep) (symbolic? (get-field place-type ast)) (symbolic? (get-field place op)))
+        (if (and (not keep) 
+                 (symbolic? (get-field place-type ast)) 
+                 (symbolic? (get-field place op)))
             (get-sym)
 	    (let ([place (get-field place op)])
 	      (if (and (is-a? place Place%) 
-		       (is-a? (get-field at place) Var%) 
-		       (hash-has-key? env (get-field name (get-field at place))))
-		  (hash-ref env (get-field name (get-field at place)))
+		       (is-a? (get-field at place) Var%))
+                  (let* ([var (get-field at place)]
+                         [name (if (get-field sub var) 
+                                   (ext-name (get-field name var) (get-field sub var))
+                                   (get-field name var))])
+                    ;; (pretty-display `(fresh-place-type ,(send op to-string) 
+                    ;;                                    ,place
+                    ;;                                    ,name
+                    ;;                                    ,(hash-has-key? env name)))
+                    (if (hash-has-key? env name)
+                        (hash-ref env name)
+                        (get-place-type)))
 		  (get-place-type)))))
 
       (define (fresh-place place)
@@ -73,8 +84,11 @@
               (let ([place-list (get-field place-list place)])
                 (for ([i (in-range (length place-list))]
                       [p place-list])
-                     ;(pretty-display (format "CLONER: declare ~a @ ~a" (ext-name name i) p))
+                     (when debug 
+                           (pretty-display (format "CLONER: declare ~a @ ~a" 
+                                                   (ext-name name i) p)))
                      (declare env (ext-name name i) p))))
+        (when debug (pretty-display (format "CLONER: declare ~a @ ~a" name place)))
         (declare env name place))
         
       (cond
@@ -145,12 +159,15 @@
              [place-type place-type])]
 
        [(is-a? ast BinExp%)
-        (when debug
-              (pretty-display (format "CLONER: BinExp ~a" (send ast to-string))))
         (define op-ret (send (get-field op ast) accept this))
         (define place-type (fresh-place-type op-ret))
         (when (and (not keep) (symbolic? (get-field place op-ret)))
               (set-field! place op-ret place-type))
+
+        (when debug
+              (pretty-display (format "CLONER: BinExp ~a @ ~a" 
+                                      (send ast to-string)
+                                      place-type)))
         (set! keep #f)
         (new BinExp% 
              [op op-ret]
@@ -161,13 +178,15 @@
              [place-type place-type])]
 
        [(is-a? ast FuncCallDup%)
+        (when debug (pretty-display (format "CLONER: FuncCallDup ~a" (send ast to-string))))
         (set! keep #f)
 	
 	(define func-name (get-field name ast))
 	(define new-func (send (hash-ref functions func-name) accept this))
 	(define new-name (format "_~a~a" id func-name))
 	(set-field! name new-func new-name)
-	(set-field! stmts program (cons new-func (get-field stmts program)))
+	;(set-field! stmts program (cons new-func (get-field stmts program)))
+        (set! new-funcs (cons new-func new-funcs))
 
 	(define return-place (and (get-field return new-func)
 				  (get-field place (get-field return new-func))))

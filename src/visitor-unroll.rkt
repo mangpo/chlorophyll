@@ -1,7 +1,8 @@
 #lang racket
 
 (require "header.rkt"
-         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-cloner.rkt")
+         "ast.rkt" "ast-util.rkt" "visitor-interface.rkt" "visitor-cloner.rkt"
+         "visitor-placeset.rkt")
 
 (provide (all-defined-out))
 
@@ -11,9 +12,11 @@
 (define loop-unroller%
   (class* object% (visitor<%>)
     (super-new)
+    (init-field program)
     (define index-map (make-hash))
-    (define cloner #f)
+    (define cloner (new range-cloner%))
     (define debug #f)
+    (define placeset-collector (new placeset-collector%))
 
     (define/public (visit ast)
       (cond
@@ -21,9 +24,20 @@
         (define n (length (get-field unroll (get-field loop ast))))
         (pretty-display (format "UNROLL: VarDeclDup ~a unroll = ~a" 
                                 (get-field var-list ast) n))
-        (for/list ([i (in-range n)])
-                  (send cloner set-id i)
-                  (send ast accept cloner))
+        
+        (define conflicts (list))
+
+        (define ret
+          (for/list ([i (in-range n)])
+                    (send cloner set-id i)
+                    (let ([new-vardecl (send ast accept cloner)])
+                      (set! conflicts (cons (send new-vardecl accept placeset-collector)
+                                            conflicts))
+                      new-vardecl)))
+
+        (set-field! conflict-list program
+                    (cons conflicts (get-field conflict-list program)))
+        ret
         ]
 
        [(is-a? ast For%)
@@ -34,22 +48,40 @@
         (define ranges (get-field unroll ast))
         (pretty-display ranges)
 
-        (if ranges
-            (for/list ([range ranges]
-                       [id (in-range (length ranges))])
-              (pretty-display "UNROLL: For (2)")
-              (send cloner set-range (car range) (cdr range) iter-name id)
-              (pretty-display "UNROLL: For (3)")
-              (new For% 
-                   [iter (send iter clone)] 
-                   [body (send body accept cloner)]
-                   [from (car range)]
-                   [to (add1 (cdr range))]
-                   [known (get-field known ast)]
-                   [place-list #f]
-                   [body-placeset (get-field body-placeset ast)]))
-            ast)
-        ;; Return list of For%
+        ;; prepare to cllect newly created functions from reduce construct
+        (set-field! new-funcs cloner (list))
+
+        (define ret
+          (if ranges
+              (for/list ([range ranges]
+                         [id (in-range (length ranges))])
+                        (pretty-display "UNROLL: For (2)")
+                        (send cloner set-range (car range) (cdr range) iter-name id)
+                        (pretty-display "UNROLL: For (3)")
+                        (new For% 
+                             [iter (send iter clone)] 
+                             [body (send body accept cloner)]
+                             [from (car range)]
+                             [to (add1 (cdr range))]
+                             [known (get-field known ast)]
+                             [place-list #f]
+                             [body-placeset (get-field body-placeset ast)]))
+              ast))
+        
+        ;; add newly created functions from reduce to program AST
+        (set-field! stmts program (append (get-field new-funcs cloner)
+                                          (get-field stmts program)))
+
+        (pretty-display (format "UNROLL: For unroll, new-funcs = ~a" 
+                                (get-field new-funcs cloner)))
+        
+        ;; add to conflict-list
+        (set-field! conflict-list program
+                    (cons (for/list ([func (get-field new-funcs cloner)])
+                                    (send func accept placeset-collector))
+                          (get-field conflict-list program)))
+        
+        ret
         ]
 
        [(is-a? ast If%)
@@ -65,17 +97,17 @@
 
 
        [(is-a? ast Program%)
-        (set! cloner (new range-cloner% [program ast]))
         (for ([decl (get-field stmts ast)])
              (send decl accept this))]
 
 
        [(is-a? ast BlockDup%)
-        (pretty-display (format "UNROLL: AssignDup unroll = ~a" n))
+        (pretty-display (format "UNROLL: BlockDup unroll = ~a" n))
         (define n (length (get-field unroll (get-field loop ast))))
         (set-field! stmts ast
                     (flatten (map (lambda (x) (send x accept this)) 
                                   (get-field stmts ast))))
+
         (set-field! stmts ast
                     (flatten
                      (for/list ([i (in-range n)])

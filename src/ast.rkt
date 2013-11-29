@@ -1097,6 +1097,7 @@
   (class Block%
     (super-new)
     (inherit-field stmts)
+    (init-field [conflict-list (list)])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)]))

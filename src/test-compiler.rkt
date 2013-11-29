@@ -75,7 +75,7 @@
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/map-pair.cll" "mappair" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
-;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
-(compile-and-optimize "../tests/run/mapreduce.cll" "mapreduce" 
-                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)
+(compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
+                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
+;(compile-and-optimize "../tests/run/mapreduce.cll" "mapreduce-compile" 
+;                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)
