@@ -1,20 +1,9 @@
 TODO
-- reduce variables should be at different places
-  = heuristic: why #f is in placeset?
-  = partitioner: TODO
 * iterative partition
 - inline
 - clustered array and function
 - optimize MD5 more
 - reuse memory space (variables of different loops that are not on stack at the same time)
-
-UPDATE GOOGLE DOC
-BlockDup & VarDeclDup* - duplicate construct according to loop field
-VarDup - rename name to namdID
-FuncCallDup* - rename name to _IDname and create corresponding FuncDecl
-
-Need to assert that multiple newly created VarDecls don't share the same partitions.
-Same as FuncDecl.
 
 REORGANIZATION
 - merge example and tests/run

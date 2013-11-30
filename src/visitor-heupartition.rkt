@@ -13,14 +13,13 @@
   (pretty-display `(conflict-list ,conflict-list))
   ;; Construct conflict-map
   (for ([lst conflict-list])
-    (let ([len (length lst)])
-      (for* ([set-x lst]
-             [set-y lst])
-        (unless (equal? set-x set-y)
-          (for* ([x set-x]
-                 [y set-y])
-            (hash-set! conflict-map (cons x y) 1)
-            (hash-set! conflict-map (cons y x) 1))))))
+     (for* ([set-x lst]
+            [set-y lst])
+       (unless (equal? set-x set-y)
+         (for* ([x set-x]
+                [y set-y])
+           (hash-set! conflict-map (cons x y) 1)
+           (hash-set! conflict-map (cons y x) 1)))))
   (pretty-display `(conflict-map ,conflict-map))
 
   (define (root place)

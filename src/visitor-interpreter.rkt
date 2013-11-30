@@ -531,6 +531,14 @@
         (when debug
             (pretty-display ">> Program"))
 
+        (for ([lst (get-field conflict-list ast)])
+          (for* ([set-x lst]
+                 [set-y lst])
+            (unless (equal? set-x set-y)
+              (for* ([x set-x]
+                     [y set-y])
+                (assert (not (= x y)))))))
+
 	(define ret #f)
 	(for ([decl (get-field stmts ast)])
 	     (let ([decl-ret (send decl accept this)])
@@ -540,8 +548,7 @@
 	ret]
 
        [(is-a? ast Block%) 
-        (when debug
-            (pretty-display ">> Block"))
+        (when debug (pretty-display ">> Block"))
         (let ([ret
                (foldl (lambda (stmt all) 
                         (let ([stmt-ret (send stmt accept this)])
