@@ -2,7 +2,7 @@ void main() {
   int x; //(-2**16, 2**16)
   int y;
   int sin;
-  int[] coeff[8] = {-13, 0, 546, 0, -10923, 0, 65536, 0};
+  int coeff[8] = {-13, 0, 546, 0, -10923, 0, 65536, 0};
 
   x = in(); // x in revolutions
   if(x > 32768) { // 2**15

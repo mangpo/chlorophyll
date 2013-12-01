@@ -1,5 +1,5 @@
 void main() {
-  cluster int[]@{[0:20]=0,[20:40]=1} x[40];
+  cluster int@{[0:20]=0,[20:40]=1} x[40];
 
   for(i from 0 to 40)@3 {
     x[i] = x[x[i]];

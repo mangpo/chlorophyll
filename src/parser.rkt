@@ -270,7 +270,8 @@
 	 ;; get symbolic place if there is no @ specified
          ((data-type)                 (cons $1 (get-sym))) 
          ((data-type @ place-exp)     (cons $1 $3))
-	 ((data-type @ place-tuple)   (cons $1 $3)))
+	 ((data-type @ place-tuple)   (cons $1 $3))
+         ((data-type @ place-dist-expand) (cons $1 $3)))
 
     ;; a,b,c
     (var-list
@@ -319,40 +320,20 @@
          ((data-place-type var-list SEMICOL) 
             (new VarDecl% [var-list $2] [type (car $1)] [place (cdr $1)]
                  [pos $2-start-pos]))
-         
-         ; array declaration
-         ((data-type LSQBR RSQBR VAR LSQBR NUM RSQBR array-init SEMICOL)
-            (new ArrayDecl% [var $4] [type $1] [cluster #f] [bound $6]
-                 [init $8]
-	 	 [place-list (default-array-place 0 $6)]
-                 [pos $4-start-pos]))
-
-         ; array declaration with placement
-         ((data-type LSQBR RSQBR @ place-dist-expand
-                     VAR LSQBR NUM RSQBR array-init SEMICOL)
-            (new ArrayDecl% [var $6] [type $1] [cluster #f] [bound $8] 
-                 [place-list (if (or (list? $5) (is-a? $5 TypeExpansion%))
-                                 $5
-                                 (list (new RangePlace% [from 0] [to $8] [place $5])))]
-                 [init $10]
-                 [pos $6-start-pos]))
 
          ; array declaration
-         ((CLUSTER data-type LSQBR RSQBR VAR LSQBR NUM RSQBR array-init SEMICOL)
-            (new ArrayDecl% [var $5] [type $2] [cluster #t] [bound $7]
-                 [init $9]
-	 	 [place-list (default-array-place 0 $7)]
-                 [pos $5-start-pos]))
+         ((data-place-type VAR LSQBR NUM RSQBR array-init SEMICOL)
+            (new ArrayDecl% [var $2] [type (car $1)] [cluster #f] [bound $4]
+                 [init $6]
+	 	 [place-list (cdr $1)]
+                 [pos $2-start-pos]))
 
-         ; array declaration with placement
-         ((CLUSTER data-type LSQBR RSQBR @ place-dist-expand
-                      VAR LSQBR NUM RSQBR array-init SEMICOL)
-            (new ArrayDecl% [var $7] [type $2] [cluster #t] [bound $9] 
-                 [init $11]
-                 [place-list (if (or (list? $6) (is-a? $6 TypeExpansion%))
-                                 $6
-                                 (list (new RangePlace% [from 0] [to $9] [place $6])))]
-                 [pos $7-start-pos])))
+         ; clustered array declaration
+         ((CLUSTER data-place-type VAR LSQBR NUM RSQBR array-init SEMICOL)
+            (new ArrayDecl% [var $3] [type (car $2)] [cluster #t] [bound $5]
+                 [init $7]
+	 	 [place-list (cdr $2)]
+                 [pos $3-start-pos])))
          
     (stmt 
          ((var-decl) $1)

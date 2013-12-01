@@ -139,6 +139,12 @@
          (declare array-map (get-field var ast) ast)
 
 	 (define expect (get-field expect ast))
+         (when (rosette-number? (get-field place-list ast))
+               (set-field! place-list ast 
+                           (list (new RangePlace% 
+                                      [from 0] [to (get-field bound ast)]
+                                      [place (get-field place-list ast)]))))
+
 	 (define place (get-field place-list ast))
 	 (when (and (> expect 1) (not (is-a? place TypeExpansion%)))
 	       (set-field! place-list ast (new TypeExpansion% [place-list (expand-place place expect)])))

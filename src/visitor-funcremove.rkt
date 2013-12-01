@@ -35,7 +35,7 @@
 
        [(is-a? ast While%)
 	(send (get-field condition ast) accept this)
-	(send (get-field body ast) acccept this)]
+	(send (get-field body ast) accept this)]
 
        [(is-a? ast Assign%)
 	(send (get-field lhs ast) accept this)

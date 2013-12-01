@@ -1,8 +1,0 @@
-int::2@(0,0) ones() {
-  return 0;
-}
-
-void main() {
-  int::2@(1,2) x;
-  x = ones();
-}

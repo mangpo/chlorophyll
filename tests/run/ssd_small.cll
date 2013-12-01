@@ -1,15 +1,15 @@
 void main() {
-  int[] l[45]; // 3 x 15
-  int[] r[45];
-  int[] ssd[9];
+  int l[45]; // 3 x 15
+  int r[45];
+  int ssd[9];
   int pl;
   int pr;
 
   l[0] = in();
   pr = 0;
 
-  int[] local_l[9];
-  int[] local_r[9];
+  int local_l[9];
+  int local_r[9];
 
   for(t from 0 to 9) { // 15-(3+5-2)
     // init for each round

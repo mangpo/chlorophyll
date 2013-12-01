@@ -1,7 +1,7 @@
 void main() {
-  int[]@{[0:44]=0} in[44] = {7 , 5 , 2 , 3 , 7 , 0 , 4 , 2 , 8 , 7 , 6 , 1 , 4 , 9 , 8 , 5 , 5 , 0 , 3 , 3 , 5 , 4 , 1 , 3 , 1 , 0 , 1 , 0 , 9 , 4 , 5 , 1 , 3 , 6 , 9 , 5 , 9 , 8 , 2 , 9, 10 , 2 , 8 , 8};
-  int[]@{[0:40]=1} x[40];
-  int[]@{[0:5]=2} kernel[5] = {1,1,1,1,1}; // best to duplicate kernel on every core that has input/output
+  int@{[0:44]=0} in[44] = {7 , 5 , 2 , 3 , 7 , 0 , 4 , 2 , 8 , 7 , 6 , 1 , 4 , 9 , 8 , 5 , 5 , 0 , 3 , 3 , 5 , 4 , 1 , 3 , 1 , 0 , 1 , 0 , 9 , 4 , 5 , 1 , 3 , 6 , 9 , 5 , 9 , 8 , 2 , 9, 10 , 2 , 8 , 8};
+  int@{[0:40]=1} x[40];
+  int@{[0:5]=2} kernel[5] = {1,1,1,1,1}; // best to duplicate kernel on every core that has input/output
   
   for(i from 0 to 40) {
     x[i] = 0;
