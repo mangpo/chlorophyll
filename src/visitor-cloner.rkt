@@ -77,6 +77,11 @@
          [(is-a? place TypeExpansion%)
           (new TypeExpansion% 
                [place-list (map fresh-place (get-field place-list place))])]
+         [(is-a? place RangePlace%)
+          (new RangePlace% [from (get-field from place)] [to (get-field to place)]
+               [place (fresh-place (get-field place place))])]
+         [(list? place)
+          (map fresh-place place)]
          [else place]))
 
       (define (declare-var name place)
@@ -107,12 +112,15 @@
         (when debug
               (pretty-display (format "CLONER: Array ~a" (send ast to-string))))
         (set! keep #f)
-        (new Array% [name (get-field name ast)] 
+        (define name (get-field name ast))
+	(define place (if (has-var? env name)
+			  (lookup-name env name)
+			  (get-place-type)))
+        (new Array% [name name] 
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
-	     ;[offset (cdr place-offset)] ;; need this to substract from the index
 	     [cluster (get-field cluster ast)]
-             [place-type (get-place-type)] [known-type (get-known-type)])]
+             [place-type place] [known-type (get-known-type)])]
 
        ;; [(is-a? ast Temp%)
        ;;  (when debug
@@ -249,6 +257,15 @@
         ]
              
        [(is-a? ast ArrayDecl%)
+        (define place (fresh-place (get-field place-list ast)))
+        (define name (get-field var ast))
+        (if (list? place)
+            (begin
+              (unless (= (length place) 1)
+                      (raise "Array declaration inside loop cannot be distributed. Error at ~a in line ~a." (get-field var ast) (send ast get-line)))
+              (declare-var name (get-field place (car place))))
+            (declare-var name place))
+
         (new ArrayDecl%
              [var (get-field var ast)]
              [type (get-field type ast)]
@@ -256,7 +273,7 @@
              [bound (get-field bound ast)]
              [init (get-field init ast)]
 	     [cluster (get-field cluster ast)]
-             [place-list (get-field place-list ast)])]
+             [place-list place])]
 
        [(is-a? ast For%)
         (new For%

@@ -147,13 +147,19 @@
        [(is-a? ast Array%)
         (when debug (pretty-display (format "PLACETYPE: Array ~a" (send ast to-string))))
         ;; lookup place from env
-        (define place-cluster (lookup env ast))
+        (define ghost (get-field place-type ast))
+        (when ghost
+          (unless (is-a? (get-field at ghost) Array%)
+            (raise "@place for ghost region of ~a has to be an array. Error at line ~a."
+                   (send ast to-string) (send ast get-line))))
+        (define delegate (if ghost (get-field at ghost) ast))
+        (define place-cluster (lookup env delegate))
         (define places (car place-cluster))
         (define cluster (cdr place-cluster))
         (set-field! cluster ast cluster)
         
-        (define index (get-field index ast))
-        (send index accept this)
+        (send (get-field index ast) accept this)
+        (define index (get-field index delegate))
         
         (when debug (pretty-display (format ">> Array ~a, cluster = ~a" 
 					    (send ast to-string) cluster)))

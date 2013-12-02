@@ -58,6 +58,8 @@
 ;                      290 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/convolution2.cll" "convolutionfix" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #t #:sliding #f)
+(compile-and-optimize "../tests/run/convolution3.cll" "convolution" 
+                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 ;(compile-and-optimize "../tests/run/convolution2-heu.cll" "convolution2nl" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f #:layout #f) ;; factor = 0.4
 
@@ -75,8 +77,8 @@
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../tests/run/map-pair.cll" "mappair" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
-(compile-and-optimize "../tests/run/reduce.cll" "reduce" 
-                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #t)
+;(compile-and-optimize "../tests/run/reduce.cll" "reduce" 
+;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #t)
 ;(compile-and-optimize "../tests/run/reduce-pair.cll" "reducepair" 
 ;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../tests/run/mapreduce.cll" "mapreduce-compile" 

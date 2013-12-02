@@ -497,7 +497,9 @@
         (define (sub-list lst from to)
           (and lst (take (drop lst from) (- to from))))
 
-	(let ([place (get-field place-list ast)])
+	(let ([place (if (get-field ghost ast) 
+                         (get-field ghost ast)
+                         (get-field place-list ast))])
 	  (if (number? place)
 	      (push-workspace place ast)
               ;; Doesn't work with int[]@{[0:10]=0,[10:20]=1,[20:30]=0}

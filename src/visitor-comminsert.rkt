@@ -253,10 +253,18 @@
 
         (let ([place (get-field place-list ast)])
           (if (list? place)
-              (for ([p (get-field place-list ast)])
+              (for ([p place])
                    (send p accept this))
               (when (number? place)
                     (set-field! place-list ast (vector-ref part2core place)))))
+
+        (when (and (is-a? ast ArrayDecl%) (get-field ghost ast))
+              (let ([ghost (get-field ghost ast)])
+                (if (list? ghost)
+                    (for ([p ghost])
+                         (send p accept this))
+                    (when (number? ghost)
+                          (set-field! ghost ast (vector-ref part2core ghost))))))
 
         (all-place-list)
         ]

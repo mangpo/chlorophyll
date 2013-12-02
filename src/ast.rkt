@@ -835,12 +835,12 @@
     (super-new)
     (inherit-field pos place-list)
     (init-field var type bound cluster init [known #t] [compress (min 2 bound)] 
-                [address #f] [offset 0])
+                [address #f] [offset 0] [ghost #f])
     (inherit print-send-path)
 
     (define/override (clone)
       (new ArrayDecl% [var var] [type type] [bound bound] [cluster cluster] [init init]
-           [place-list place-list]))
+           [place-list place-list] [ghost ghost]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ARRAYDECL ~a ~a @{~a} (known=~a) (cluster=~a) (compress=~a) " 

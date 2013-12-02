@@ -12,7 +12,7 @@
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
 			       READ WRITE
-                               PLACE HERE ANY))
+                               PLACE HERE ANY GHOST))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -55,6 +55,7 @@
    ("from"  (token-FROM))
    ("to"    (token-TO))
    ("place" (token-PLACE))
+   ("ghost" (token-GHOST))
    ("here"  (token-HERE))
    ("any"   (token-ANY))
    ("@" (token-@))
@@ -145,12 +146,15 @@
     (left NOT))
    (src-pos)
    (grammar
+    (at-place 
+         ((PLACE LPAREN ele RPAREN) (new Place% [at $3] [pos $1-start-pos])))
+    
     (place-exp
          ((NUM) $1)
          ((VAR) $1)
          ;((HERE) (new Place% [at "here"] [pos $1-start-pos]))
          ((ANY) (new Place% [at "any"] [pos $1-start-pos]))
-         ((PLACE LPAREN ele RPAREN) (new Place% [at $3] [pos $1-start-pos]))
+         ((at-place) $1)
          )
     
     (array-place
@@ -205,7 +209,12 @@
     (array 
          ((VAR LSQBR exp RSQBR) (new Array% [name $1] [pos $1-start-pos] [index $3]))
          ((VAR EXT NUM LSQBR exp RSQBR) 
-          (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5])))
+          (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5]))
+         ((VAR LSQBR exp RSQBR @ at-place)
+          (new Array% [name $1] [pos $1-start-pos] [index $3] [place-type $6]))
+         ((VAR EXT NUM LSQBR exp RSQBR @ at-place) 
+          (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5] [place-type $8]))
+         )
 
     (ele ((id) $1)
 	 ((array) $1))
@@ -273,6 +282,10 @@
 	 ((data-type @ place-tuple)   (cons $1 $3))
          ((data-type @ place-dist-expand) (cons $1 $3)))
 
+    (ghost-place-type
+         ((GHOST) #t)
+         ((GHOST @ place-dist-expand) $3))
+
     ;; a,b,c
     (var-list
          ((VAR) (list $1))
@@ -327,6 +340,13 @@
                  [init $6]
 	 	 [place-list (cdr $1)]
                  [pos $2-start-pos]))
+
+         ; ghost array declaration
+         ((ghost-place-type data-place-type VAR LSQBR NUM RSQBR array-init SEMICOL)
+            (new ArrayDecl% [var $3] [type (car $2)] [cluster #f] [bound $5]
+                 [init $7] [ghost $1]
+	 	 [place-list (cdr $2)]
+                 [pos $3-start-pos]))
 
          ; clustered array declaration
          ((CLUSTER data-place-type VAR LSQBR NUM RSQBR array-init SEMICOL)
