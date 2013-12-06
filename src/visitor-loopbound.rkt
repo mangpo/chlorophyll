@@ -89,8 +89,6 @@
     (define (add-to-set dist-place)
       (set! current-list (cons dist-place current-list)))
 
-
-
     (define/public (visit ast)
       (define (check)
         (let ([place-type (get-field place-type ast)])

@@ -120,7 +120,9 @@
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
 	     [cluster (get-field cluster ast)]
-             [place-type place] [known-type (get-known-type)])]
+             [place-type place] [known-type (get-known-type)]
+             [ghost (get-field ghost ast)]
+             [pos (get-field pos ast)])]
 
        ;; [(is-a? ast Temp%)
        ;;  (when debug
@@ -257,6 +259,7 @@
         ]
              
        [(is-a? ast ArrayDecl%)
+        ;; for privatization
         (define place (fresh-place (get-field place-list ast)))
         (define name (get-field var ast))
         (if (list? place)

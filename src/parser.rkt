@@ -211,9 +211,11 @@
          ((VAR EXT NUM LSQBR exp RSQBR) 
           (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5]))
          ((VAR LSQBR exp RSQBR @ at-place)
-          (new Array% [name $1] [pos $1-start-pos] [index $3] [place-type $6]))
+          (new Array% [name $1] [pos $1-start-pos] [index $3] [place-type $6]
+               [ghost #t]))
          ((VAR EXT NUM LSQBR exp RSQBR @ at-place) 
-          (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5] [place-type $8]))
+          (new Array% [name $1] [sub $3] [pos $1-start-pos] [index $5] [place-type $8]
+               [ghost #t]))
          )
 
     (ele ((id) $1)
@@ -283,7 +285,7 @@
          ((data-type @ place-dist-expand) (cons $1 $3)))
 
     (ghost-place-type
-         ((GHOST) #t)
+         ((GHOST) (list))
          ((GHOST @ place-dist-expand) $3))
 
     ;; a,b,c

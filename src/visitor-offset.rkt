@@ -13,7 +13,7 @@
     ;; This is not for address field.
     (init-field [iter-map (make-hash)] [offset-map (make-hash)] [prohibit (set)] 
                 [array-level 0] [for-level 0])
-    (define debug #f)
+    (define debug #t)
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -72,6 +72,7 @@
         ]
         
        [(is-a? ast UnaExp%)
+        (when debug (pretty-display (format "OFFSET: UnaExp ~a" (send ast to-string))))
 	(define e1-ret (send (get-field e1 ast) accept this))
         (define op-str (get-field op (get-field op ast)))
         (cond 
@@ -84,6 +85,7 @@
           ]
 
        [(is-a? ast BinExp%)
+        (when debug (pretty-display (format "OFFSET: BinExp ~a" (send ast to-string))))
 	(define e1-ret (send (get-field e1 ast) accept this))
 	(define e2-ret (send (get-field e2 ast) accept this))
 
@@ -103,6 +105,7 @@
 	]
         
        [(is-a? ast FuncCall%)
+        (when debug (pretty-display (format "OFFSET: FuncCall ~a" (send ast to-string))))
         (define iter-vars (set))
 	(for ([arg (get-field args ast)])
 	     (set! iter-vars (set-union iter-vars (send arg accept this))))
@@ -128,6 +131,7 @@
         ]
         
        [(is-a? ast Assign%)
+        (when debug (pretty-display (format "OFFSET: Assign")))
 	(send (get-field lhs ast) accept this)
 	(define rhs-ret (send (get-field rhs ast) accept this))
         (when (is-a? ast AssignTemp%)
@@ -147,6 +151,7 @@
 	]
 
        [(is-a? ast If%)
+        (when debug (pretty-display (format "OFFSET: If")))
         (send (get-field condition ast) accept this)
 	(push-scope)
 	(send (get-field true-block ast) accept this)
@@ -157,6 +162,7 @@
 	      (pop-scope))]
 
        [(is-a? ast While%)
+        (when debug (pretty-display (format "OFFSET: While")))
         (send (get-field pre ast) accept this)
         (send (get-field condition ast) accept this)
 	(push-scope)
@@ -165,6 +171,7 @@
 	]
 
        [(is-a? ast For%)
+        (when debug (pretty-display (format "OFFSET: For")))
 	(push-scope)
 
 	(define iter-name (get-field name (get-field iter ast)))

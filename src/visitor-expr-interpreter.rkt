@@ -1,13 +1,13 @@
 #lang s-exp rosette
 
-(require "header.rkt" "ast.rkt" "visitor-interface.rkt")
+(require "header.rkt" "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
 
 (provide (all-defined-out))
 
 (define expr-interpreter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field var from to)
+    (init-field [var #f] [from #f] [to #f] [env #f])
 
     (define (compute-range e1 e2 op)
       (cons (op (car e1) (car e2)) (op (cdr e1) (cdr e2))))
@@ -23,9 +23,16 @@
         (new Range% [from n] [to n])]
 
        [(is-a? ast Var%)
-        (if (equal? (get-field name ast) var)
-            (new Range% [from from] [to to])
-            (send ast clone))]
+        (cond
+         [var
+          (if (equal? (get-field name ast) var)
+              (new Range% [from from] [to to])
+              (send ast clone))]
+         [env
+          (define range (lookup env ast))
+          (new Range% [from (car range)] [to (cdr range)])]
+         [else
+          (raise "visitor-expr-interpreter: 'var' and 'env' cannot be #f at the same time")])]
 
        [(is-a? ast UnaExp%)
         (define e1-ret (send (get-field e1 ast) accept this))

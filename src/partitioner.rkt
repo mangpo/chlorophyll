@@ -7,11 +7,11 @@
          "visitor-collector.rkt" 
          "visitor-evaluator.rkt"
          "visitor-flow.rkt"
-	 "visitor-funcremove.rkt"
          "visitor-heupartition.rkt"
          "visitor-interpreter.rkt" 
          "visitor-loopbound.rkt"
          "visitor-placetype.rkt"
+	 "visitor-postunroll.rkt"
          "visitor-printer.rkt"
          "visitor-rename.rkt"
          "visitor-unroll.rkt"
@@ -79,7 +79,7 @@
     (pretty-display "=== After unroll  ===")
     (send my-ast pretty-print)
     )
-  (send my-ast accept (new func-remover%))
+  (send my-ast accept (new post-unroller%))
   (when verbose
     (pretty-display "=== After func-remover  ===")
     (send my-ast pretty-print)

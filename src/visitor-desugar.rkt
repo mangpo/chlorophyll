@@ -138,6 +138,7 @@
          (define entry (get-field expect ast))
          (define expand (get-field expand ast))
          (define known-type (get-field known-type ast))
+         (define ghost (get-field ghost ast))
          
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
@@ -161,6 +162,7 @@
 			      (let ([new-name (ext-name (get-field name ast) i)])
 				(new Array% [name new-name]
 				     [index i-index]
+                                     [ghost ghost]
 				     ;; set known-type
 				     [known-type known-type]
 				     [pos (get-field pos ast)])))

@@ -52,9 +52,11 @@
 
 ;; place-list -> string
 (define (place-list-to-string place-list)
-  (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
-         (send (car place-list) to-string) 
-         (cdr place-list)))
+  (if (empty? place-list)
+      ""
+      (foldl (lambda (p str) (string-append (string-append str ", ") (send p to-string))) 
+             (send (car place-list) to-string) 
+             (cdr place-list))))
 
 ;; place-type, place-list -> string
 (define (place-to-string place [out #t])
@@ -453,19 +455,19 @@
   (class Var%
     (super-new)
     (inherit-field known-type place-type pos name expand expect type)
-    (init-field index [offset 0] [opt #f])
+    (init-field index [offset 0] [opt #f] [ghost #f])
     (inherit print-send-path)
 
     (define/override (clone)
       (new Array% [name name] [index (send index clone)] [offset offset] [type type]
-           [known-type known-type] [place-type place-type] [pos pos]))
+           [known-type known-type] [place-type place-type] [ghost ghost] [pos pos]))
 
     (define/override (pretty-print [indent ""])
       ;; (pretty-display (format "~a(Array:~a @~a (known=~a))" 
       ;;   		      indent name (place-to-string place-type) known-type))
-      (pretty-display (format "~a(Array:~a @~a (expand=~a/~a))" 
+      (pretty-display (format "~a(Array:~a @~a (expand=~a/~a) (ghost=~a)" 
 			      indent name (place-to-string place-type)
-                              expand expect))
+                              expand expect ghost))
       (print-send-path indent)
       (when (> offset 0)
 	    (pretty-display (format "~a(offset: ~a)" (inc indent) offset)))
@@ -845,9 +847,10 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ARRAYDECL ~a ~a @{~a} (known=~a) (cluster=~a) (compress=~a) " 
                               indent type var
-			      place-list
-                              ;(place-to-string place-list)
+			      (place-to-string place-list)
                               known cluster compress))
+      (when ghost (pretty-display (format "~aghost@{~a}" (inc indent) 
+                                          (place-to-string ghost))))
       (pretty-display (format "~a(init ~a)" (inc indent) init))
       (print-send-path indent))
 
@@ -864,6 +867,13 @@
     (define/public (update-compress lowerbound)
       (when (>= lowerbound compress)
             (set! compress (min (add1 lowerbound) bound))))
+
+    (define/public (add-ghost-region range place)
+      (set! ghost (cons (new RangePlace% 
+                             [from (get-field from range)]
+                             [to (add1 (get-field to range))]
+                             [place place])
+                        ghost)))
 
     ))
 
