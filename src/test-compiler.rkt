@@ -58,10 +58,12 @@
 ;                      290 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../tests/run/convolution2.cll" "convolutionfix" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #t #:sliding #f)
-(compile-and-optimize "../tests/run/convolution3.cll" "convolution" 
-                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
+;(compile-and-optimize "../tests/run/convolution3.cll" "convolution" 
+;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 ;(compile-and-optimize "../tests/run/convolution2-heu.cll" "convolution2nl" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f #:layout #f) ;; factor = 0.4
+(compile-and-optimize "../tests/run/convolution-pair.cll" "convolutionpair" 
+                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 
 
 ;; MD5

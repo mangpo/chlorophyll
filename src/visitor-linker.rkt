@@ -174,10 +174,18 @@
          (define type (val-type pack))
 	 (define expand (val-expand pack))
          (define known-type (val-known pack))
+         (define place-type (get-field place-type ast))
          (when (number? (get-field sub ast))
                (set! expand 1))
 	 (when (> expand entry)
 	       (send ast partition-mismatch expand entry))
+         (when (and (> entry 1) place-type)
+               ;; expand for ghost region tuple type
+               (visit-place place-type entry)
+	       (when (not (is-a? place-type TypeExpansion%))
+                     (set-field! place-type ast 
+				 (new TypeExpansion% 
+                                      [place-list (expand-place place-type entry)]))))
 
 	 (set-field! type ast type)
 	 (set-field! expand ast expand)

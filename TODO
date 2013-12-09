@@ -1,5 +1,6 @@
 TODO
 * iterative partition
+* better hueristic: consider frequency
 - inline
 - clustered array and function
 - optimize MD5 more

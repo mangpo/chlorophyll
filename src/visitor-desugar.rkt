@@ -100,12 +100,16 @@
 	     ;; expanded type
 	     (for/list ([i (in-range entry)]
 			[p (get-field place-list (get-field place-list ast))]
+                        [g (if (get-field ghost ast)
+                               (get-field place-list (get-field ghost ast))
+                               (for/list ([j (in-range entry)]) #f))]
                         [init (list->tuple (get-field init ast))])
 		       (let ([new-name (ext-name (get-field var ast) i)])
 			 (new ArrayDecl% [type type]
 			      [var new-name]
 			      [known known]
 			      [place-list p]
+                              [ghost g]
                               [init init]
 			      [bound bound]
 			      [cluster cluster]
@@ -139,6 +143,7 @@
          (define expand (get-field expand ast))
          (define known-type (get-field known-type ast))
          (define ghost (get-field ghost ast))
+         (define place-type (get-field place-type ast))
          
          (if (= entry 1)
              (let ([sub (get-field sub ast)])
@@ -158,11 +163,15 @@
                  ;;    (new Num% [n (new Const% [n 0])] [pos (get-field pos ast)])))
 		 (if (= expand entry)
 		     (for/list ([i (in-range expand)]
-                                [i-index index-ret])
+                                [i-index index-ret]
+                                [i-place (if place-type
+                                             (get-field place-list place-type)
+                                             (for/list ([i (in-range expand)]) #f))])
 			      (let ([new-name (ext-name (get-field name ast) i)])
 				(new Array% [name new-name]
 				     [index i-index]
                                      [ghost ghost]
+                                     [place-type i-place]
 				     ;; set known-type
 				     [known-type known-type]
 				     [pos (get-field pos ast)])))
@@ -223,7 +232,8 @@
          ]
         
         [(is-a? ast Op%)
-         ;(pretty-display (format "DESUGAR: Op ~a" (get-field op ast)))
+         ;; (pretty-display (format "DESUGAR: Op ~a @~a" (get-field op ast) 
+         ;;                         (get-field place ast)))
          (define entry (get-field expect ast))
 	 (if (= entry 1)
 	     ast
@@ -284,9 +294,9 @@
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))
          (define rhs (get-field rhs ast))
-         (pretty-display (format "DESUGAR: Assign ~a ~a" 
-                                 (send lhs to-string) 
-                                 (send rhs to-string)))
+         ;; (pretty-display (format "DESUGAR: Assign ~a ~a" 
+         ;;                         (send lhs to-string) 
+         ;;                         (send rhs to-string)))
          
          ;; visit lhs & rhs
          (define lhs-ret (send lhs accept this))
