@@ -15,8 +15,9 @@
     (init-field program)
     (define index-map (make-hash))
     (define cloner (new range-cloner%))
-    (define debug #f)
     (define placeset-collector (new placeset-collector%))
+
+    (define debug #t)
 
     (define/public (visit ast)
       (cond

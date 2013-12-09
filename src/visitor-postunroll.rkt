@@ -12,7 +12,8 @@
     (define functions (set "main"))
     (define arrays (make-hash))
     (define env (make-hash))
-    (define debug #t)
+
+    (define debug #f)
 
     (define (push-scope)
       ;(pretty-display `(push-scope))

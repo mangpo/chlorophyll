@@ -12,7 +12,7 @@
     (super-new)
     (init-field [new-funcs (list)])
 
-    (define debug #t)
+    (define debug #f)
 
     (define env (make-hash))
     (define tempdecls (make-hash))

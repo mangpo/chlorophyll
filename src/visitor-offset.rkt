@@ -13,7 +13,7 @@
     ;; This is not for address field.
     (init-field [iter-map (make-hash)] [offset-map (make-hash)] [prohibit (set)] 
                 [array-level 0] [for-level 0])
-    (define debug #t)
+    (define debug #f)
 
     (define (push-scope)
       (let ([new-env (make-hash)])

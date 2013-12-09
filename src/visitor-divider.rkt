@@ -21,7 +21,7 @@
     (super-new)
     (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #t)
+    (define debug #f)
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -774,18 +774,15 @@
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
-        (pretty-display "!!!!!!!!! 1 !!!!!!!")
         (when (is-a? ast Program%)
               (for ([i (in-range n)])
                    (unless (is-a? (get-workspace i) Program%) 
                            (raise (format "Top level scope @core ~a is not Program!" i)))
                    (reverse-workspace i))
-              (pretty-display "!!!!!!!! 2 !!!!!!!!")
 	      (define programs (make-vector n))
 	      (for ([i (in-range n)])
 		   (vector-set! programs i (get-workspace i)))
 
-              (pretty-display "!!!!!!!! 3 !!!!!!!!")
 	      (for ([i (in-range n)])
 		   (let* ([program (vector-ref programs i)]
 			  [stmts (get-field stmts program)])
@@ -793,12 +790,10 @@
 				 (equal? (get-field name (last stmts)) "main"))
 			   (set-field! stmts program (list)))))
 		
-              (pretty-display "!!!!!!!! 4 !!!!!!!!")
               ;; Adjust offset
               (for ([i (in-range n)])
                    (send (vector-ref programs i) accept (new offset-modifier%)))
 
-              (pretty-display "!!!!!!!! 5 !!!!!!!!")
 	      programs
 	      )
 	]

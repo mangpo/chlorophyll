@@ -6,11 +6,13 @@
 
 (define factor 0.95)
 
+(define debug #f)
+
 (define (merge-sym-partition n space flow-graph capacity conflict-list)
   (define sol-map (make-hash))
   (define conflict-map (make-hash))
   
-  (pretty-display `(conflict-list ,conflict-list))
+  (when debug (pretty-display `(conflict-list ,conflict-list)))
   ;; Construct conflict-map
   (for ([lst conflict-list])
      (for* ([set-x lst]
@@ -20,7 +22,7 @@
                 [y set-y])
            (hash-set! conflict-map (cons x y) 1)
            (hash-set! conflict-map (cons y x) 1)))))
-  (pretty-display `(conflict-map ,conflict-map))
+  (when debug (pretty-display `(conflict-map ,conflict-map)))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
@@ -37,8 +39,7 @@
     (hash-remove! space r1))
   
   (define (unify p1 p2 [scale 1])
-    ;(pretty-display `(flow-graph sol-map))
-    (pretty-display `(unify ,p1 ,p2))
+    (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
     (when (and (not (equal? r1 r2))
@@ -47,7 +48,7 @@
                (not (hash-has-key? conflict-map (cons r2 r1)))
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
                   (inexact->exact (floor (* capacity factor scale)))))
-	  (pretty-display `(merge ,p1 ,p2))
+	  (when debug (pretty-display `(merge ,p1 ,p2)))
 	  ;(pretty-display `(parents ,r1 ,r2))
           (if (symbolic? r1)
               (point r1 r2)
@@ -56,9 +57,10 @@
 	  ))
 
 
-  (pretty-display "------------------ before merge sym partition ---------------------")
-  (pretty-display space)
-  (pretty-display `(flow-graph ,flow-graph ,(list? flow-graph)))
+  (when debug
+        (pretty-display "------------------ before merge sym partition ---------------------")
+        (pretty-display space)
+        (pretty-display `(flow-graph ,flow-graph ,(list? flow-graph))))
 
   ;; point ot itself
   (for ([key (hash-keys space)])
@@ -76,7 +78,7 @@
 
   (define vals (hash-values sol-map))
   (define concrete-vals (list->set (filter (lambda (x) (not (symbolic? x))) vals)))
-  (pretty-display `(concrete-vals ,concrete-vals))
+  (when debug (pretty-display `(concrete-vals ,concrete-vals)))
   (define counter 0)
   (define (next-counter)
     (if (set-member? concrete-vals counter)
@@ -94,14 +96,14 @@
                ;;         (hash-set! more-sol val (next-counter))
                ;;         (set! counter (add1 counter)))
                (hash-set! sol-map val (next-counter))
-	       (pretty-display `(hash-set ,val ,counter))
+	       (when debug (pretty-display `(hash-set ,val ,counter)))
 	       (hash-set! sol-map counter counter)
 	       (set! counter (add1 counter))
 	       (root key))))
   
-  
-  (pretty-display "------------------ after merge sym partition ---------------------")
-  (pretty-display sol-map)
+  (when debug
+        (pretty-display "------------------ after merge sym partition ---------------------")
+        (pretty-display sol-map))
   sol-map)
   
 
@@ -111,7 +113,6 @@
     (init-field [space (make-hash)])
 
     (define network (make-hash))
-    (define debug #t)
 
     (define (inc-space place sp)
       ;(pretty-display `(inc-space ,place))

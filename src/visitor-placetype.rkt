@@ -12,7 +12,7 @@
     (super-new)
     (init-field [env (make-hash)])
 
-    (define debug #t)
+    (define debug #f)
     
     ;; find actual place for @place(exp)
     (define (find-place ast)

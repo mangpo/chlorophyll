@@ -14,7 +14,7 @@
     (super-new)
     (init-field routing-table part2core n)
 
-    (define debug #t)
+    (define debug #f)
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
