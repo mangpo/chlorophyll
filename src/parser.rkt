@@ -160,6 +160,7 @@
     (array-place
          ((LSQBR NUM COL NUM RSQBR = place-exp) (new RangePlace% [from $2] [to $4] [place $7]))
          ((LSQBR NUM COL NUM RSQBR) (new RangePlace% [from $2] [to $4]))
+         ((NUM) $1)
 	 )
     
     (array-place-exp
@@ -169,8 +170,8 @@
 
     ;; place-dist
     (place-dist
-         ((place-exp) $1)
-         ((LBRACK array-place-exp RBRACK) $2))
+         ((place-exp) $1)                      ;; @0
+         ((LBRACK array-place-exp RBRACK) $2)) ;; @{[0:10]=0,[10:20]=1} @{0,1}
 
     (place-dist-list
          ((place-dist) (list $1))
@@ -277,12 +278,21 @@
     (place-tuple
          ((LPAREN place-list RPAREN) (new TypeExpansion% [place-list $2])))
 
+    (block-layout
+         ((LSQBR NUM RSQBR) 
+          (new BlockLayout% [size $2]))
+         ((LSQBR NUM RSQBR @ place-dist-expand)
+          (new BlockLayout% [size $2] [place-list $5])))
+         
+
     (data-place-type
 	 ;; get symbolic place if there is no @ specified
          ((data-type)                 (cons $1 (get-sym))) 
          ((data-type @ place-exp)     (cons $1 $3))
 	 ((data-type @ place-tuple)   (cons $1 $3))
-         ((data-type @ place-dist-expand) (cons $1 $3)))
+         ((data-type @ place-dist-expand) (cons $1 $3))
+         ((data-type block-layout)    (cons $1 $2))
+         )
 
     (ghost-place-type
          ((GHOST) (list))

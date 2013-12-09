@@ -124,6 +124,59 @@
         [(is-a? ast ArrayDecl%)
          ;(pretty-display (format "LINKER: VarDecl ~a" (get-field var ast)))
          (define type (get-field type ast)) 
+
+         ;; Desugar block-layout
+         (define block (get-field place-list ast))
+         (when (is-a? block BlockLayout%)
+               (define array-bound (get-field bound ast))
+               (define block-size (get-field size block))
+               (define n (ceiling (/ array-bound block-size)))
+               (define last-size (- array-bound (* block-size (sub1 n))))
+               (define places (get-field place-list block))
+               (define rangeplace-list 
+                 (append 
+                  (for/list ([i (in-range (sub1 n))])
+                            (new RangePlace% 
+                                 [from (* i block-size)]
+                                 [to (* (add1 i) block-size)]
+                                 [place #f]))
+                  (list (new RangePlace% 
+                             [from (* (sub1 n) block-size)]
+                             [to array-bound]
+                             [place #f]))))
+               (cond
+                [(equal? places #f)
+                 (for ([rangeplace rangeplace-list])
+                      (set-field! place rangeplace (get-sym)))
+                 (set-field! place-list ast rangeplace-list)]
+
+                [(list? places)
+                 (unless (= (length places) n)
+                         (raise "Number of places specified in the annotation has to be equal to array-size/block-size. Error at '~a' array declaration at line ~a"
+                                (get-field var ast) (send ast get-line)))
+                 (for ([rangeplace rangeplace-list]
+                       [place places])
+                      (set-field! place rangeplace place))
+                 (set-field! place-list ast rangeplace-list)]
+                
+                [(is-a? places TypeExpansion%)
+                 ;; trun list of numbers into list of RangePlaces
+                 (set-field! 
+                  place-list places 
+                  (for/list ([p-list (get-field place-list places)])
+                    (unless (= (length p-list) n)
+                            (raise "Number of places specified in the annotation has to be equal to array-size/block-size. Error at '~a' array declaration at line ~a"
+                                   (get-field var ast) (send ast get-line)))
+                    (for/list ([rangeplace rangeplace-list]
+                               [place p-list])
+                              (new RangePlace%
+                                   [from (get-field from rangeplace)]
+                                   [to (get-field to rangeplace)]
+                                   [place place]))))
+                 ;; set block's TypeExpansion to ast's TypeExpansion
+                 (set-field! place-list ast places)
+                 ]))           
+
 	 (if (pair? type)
              (begin
                (visit-place (get-field place-list ast) (cdr type))

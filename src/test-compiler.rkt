@@ -2,8 +2,8 @@
 
 (require "compiler.rkt")
 
-;(compile-and-optimize "../examples/test.cll" "test" 
-;                      256 "null" #:opt #f)
+(compile-and-optimize "../examples/test.cll" "test" 
+                      256 "null" #:opt #f)
 
 ;; Simple
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
@@ -62,8 +62,8 @@
 ;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 ;(compile-and-optimize "../tests/run/convolution2-heu.cll" "convolution2nl" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f #:layout #f) ;; factor = 0.4
-(compile-and-optimize "../tests/run/convolution-pair.cll" "convolutionpair" 
-                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
+;(compile-and-optimize "../tests/run/convolution-pair.cll" "convolutionpair" 
+;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 
 
 ;; MD5

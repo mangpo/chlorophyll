@@ -801,6 +801,17 @@
       (pretty-display (format "~a(ProxyReturn @~a)" place-type)))
     ))
 
+(define BlockLayout%
+  (class Base%
+    (super-new)
+    (init-field size [place-list #f])
+
+    (define/override (clone)
+      (new BlockLayout% [size size] [place-list place-list]))
+
+    (define/override (pretty-print)
+      (pretty-display (format "block[~a]@{~a}" size place-list)))))
+
 (define For%
   (class Scope%
     (super-new)
