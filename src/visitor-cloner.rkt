@@ -265,7 +265,7 @@
         (if (list? place)
             (begin
               (unless (= (length place) 1)
-                      (raise "Array declaration inside loop cannot be distributed. Error at ~a in line ~a." (get-field var ast) (send ast get-line)))
+                      (raise (format "Array declaration inside loop cannot be distributed. Error at ~a in line ~a." (get-field var ast) (send ast get-line))))
               (declare-var name (get-field place (car place))))
             (declare-var name place))
 

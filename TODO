@@ -1,10 +1,10 @@
 TODO
-* iterative partition
 * better hueristic: consider frequency
+* iterative partition
+- reuse memory space (variables of different loops that are not on stack at the same time)
 - inline
 - clustered array and function
 - optimize MD5 more
-- reuse memory space (variables of different loops that are not on stack at the same time)
 
 REORGANIZATION
 - merge example and tests/run

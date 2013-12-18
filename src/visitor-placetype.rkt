@@ -150,8 +150,8 @@
         (define ghost (get-field place-type ast))
         (when ghost
           (unless (is-a? (get-field at ghost) Array%)
-            (raise "@place for ghost region of ~a has to be an array. Error at line ~a."
-                   (send ast to-string) (send ast get-line))))
+            (raise (format "@place for ghost region of ~a has to be an array. Error at line ~a."
+			   (send ast to-string) (send ast get-line)))))
         (define delegate (if ghost (get-field at ghost) ast))
         (define place-cluster (lookup env delegate))
         (define places (car place-cluster))

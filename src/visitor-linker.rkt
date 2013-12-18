@@ -152,8 +152,8 @@
 
                 [(list? places)
                  (unless (= (length places) n)
-                         (raise "Number of places specified in the annotation has to be equal to array-size/block-size. Error at '~a' array declaration at line ~a"
-                                (get-field var ast) (send ast get-line)))
+                         (raise (format "Number of places specified in the annotation has to be equal to array-size/block-size. Error at '~a' array declaration at line ~a"
+					(get-field var ast) (send ast get-line))))
                  (for ([rangeplace rangeplace-list]
                        [place places])
                       (set-field! place rangeplace place))
@@ -165,8 +165,8 @@
                   place-list places 
                   (for/list ([p-list (get-field place-list places)])
                     (unless (= (length p-list) n)
-                            (raise "Number of places specified in the annotation has to be equal to array-size/block-size. Error at '~a' array declaration at line ~a"
-                                   (get-field var ast) (send ast get-line)))
+                            (raise (format "Number of places specified in the annotation has to be equal to array-size/block-size. Error at '~a' array declaration at line ~a"
+					   (get-field var ast) (send ast get-line))))
                     (for/list ([rangeplace rangeplace-list]
                                [place p-list])
                               (new RangePlace%
