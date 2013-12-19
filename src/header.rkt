@@ -24,18 +24,16 @@
 (define block-offset 800)
 (define procs 8)
 (define check-interval 60)
-(define distributed #f)
+(define distributed #t)
 (define max-unroll 20)
 (define accurate-flow #t)
 
 (define srcdir "/home/mangpo/work/greensyn/src")
-(define outdir "/home/mangpo/work/greensyn/output")
-(define outdir-rel "../output")
+(define outdir #f)
 (define datadir "/home/mangpo/work/greensyn/testdata")
 
 (define (set-outdir x)
   (set! outdir x)
-  (set! outdir-rel x)
   )
 
 (struct meminfo (addr virtual data))

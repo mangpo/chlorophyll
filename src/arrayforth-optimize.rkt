@@ -46,8 +46,9 @@
 (define before 0)
 (define after 0)
 (define sliding #t)
+(define dir #f)
 
-(define (superoptimize ast my-name my-w my-h sliding-windows #:id [id 0])
+(define (superoptimize ast my-name my-w my-h sliding-windows my-dir #:id [id 0])
   (set! name my-name)
   (set! w my-w)
   (set! h my-h)
@@ -55,12 +56,13 @@
   (set! before 0)
   (set! after 0)
   (set! sliding sliding-windows)
-  (system (format "rm ~a/~a.stat" outdir name))
-  (system (format "rm ~a/~a-work.rkt" outdir name))
-  (system (format "rm ~a/~a-work.aforth" outdir name))
+  (set! dir my-dir)
+  (system (format "rm ~a/~a.stat" dir name))
+  (system (format "rm ~a/~a-work.rkt" dir name))
+  (system (format "rm ~a/~a-work.aforth" dir name))
   (let ([result (superoptimize-inner ast)])
     ;; (with-output-to-file #:exists 'append 
-    ;;                      (format "~a/~a.stat" outdir name)
+    ;;                      (format "~a/~a.stat" dir name)
     ;;                      (lambda () 
     ;;                        (pretty-display (format "~a ~a (TOTAL)" before after))))
     result))
@@ -111,7 +113,7 @@
     (aforth-syntax-print renamed 1 1)
     
     (with-output-to-file #:exists 'append 
-      (format "~a/~a-work.rkt" outdir name)
+      (format "~a/~a-work.rkt" dir name)
       (lambda () 
         (pretty-display ";; original")
         (aforth-struct-print ast)
@@ -169,7 +171,7 @@
       (pretty-display "RENAME: DONE")
     
       (with-output-to-file #:exists 'append 
-                           (format "~a/~a-work.rkt" outdir name)
+                           (format "~a/~a-work.rkt" dir name)
                            (lambda () 
                              (display ";; original: ")
                              (pretty-display (block-org renamed))
@@ -191,7 +193,7 @@
       (set! after (+ after res-len))
     
       (with-output-to-file #:exists 'append 
-                           (format "~a/~a.stat" outdir name)
+                           (format "~a/~a.stat" dir name)
                            (lambda () 
 			     (pretty-display (format "~a ~a \"~a\" \"~a\"" org-len res-len org res))))
 
@@ -279,7 +281,7 @@
       (aforth result (aforth-memsize ast) bit (aforth-indexmap ast)))
     
     (with-output-to-file #:exists 'append 
-      (format "~a/~a-work.rkt" outdir name)
+      (format "~a/~a-work.rkt" dir name)
       (lambda () 
         (pretty-display ";; original")
         (aforth-struct-print ast)
@@ -289,7 +291,7 @@
         ))
 
     ;; (with-output-to-file #:exists 'append 
-    ;;   (format "~a/~a-work.aforth" outdir name)
+    ;;   (format "~a/~a-work.aforth" dir name)
     ;;   (lambda () 
     ;;     (aforth-syntax-print ret w h #:id id)
     ;;     ))
@@ -306,7 +308,7 @@
     (for ([i (in-range n)])
 
          (with-output-to-file #:exists 'append 
-           (format "~a/~a-work.rkt" outdir name)
+           (format "~a/~a-work.rkt" dir name)
            (lambda ()
              (pretty-display 
               (format ";;;;;;;;;;;;;;;;;;;;;;;; ~a ;;;;;;;;;;;;;;;;;;;;;;;;;;" i))))

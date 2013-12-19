@@ -668,15 +668,17 @@
 	]
 
        [(is-a? ast FuncDecl%)
-        (pretty-display (format "\nCODEGEN: FuncDecl ~a" (get-field name ast)))
+	(when debug 
+	      (pretty-display (format "\nCODEGEN: FuncDecl ~a" (get-field name ast))))
 
 	(define decls (get-field stmts (get-field args ast)))
         (define name (func-name (get-field name ast)))
         
-        (pretty-display "ARGS:")
-        (for ([decl decls])
-             (pretty-display (format "~a ==> ~a" 
-                                     (get-field var-list decl) (get-field address decl))))
+	(when debug
+	      (pretty-display "ARGS:")
+	      (for ([decl decls])
+		   (pretty-display (format "~a ==> ~a" 
+					   (get-field var-list decl) (get-field address decl)))))
 
 	(define n-decls (length decls))
 

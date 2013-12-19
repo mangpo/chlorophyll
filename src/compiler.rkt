@@ -169,7 +169,7 @@
   (codegen-print virtual-code)
 
   (pretty-display "------------------ OPT CODE ----------------------")
-  (define opt (superoptimize virtual-code "name" w h #t))
+  (define opt (superoptimize virtual-code "name" w h #t outdir))
   (codegen-print opt)
   
   (aforth-syntax-print opt w h)
@@ -231,7 +231,7 @@
                                  (aforth-struct-print virtual-codes)
                                  (print-optimize name w h sliding)))
           ;; superoptimize
-          (set! real-opts (superoptimize virtual-codes name w h sliding))
+          (set! real-opts (superoptimize virtual-codes name w h sliding outdir))
           (with-output-to-file #:exists 'truncate (format "~a/~a-opt.rkt" outdir name)
                                (lambda () (aforth-struct-print real-opts)))
           ;; superoptimized arrayforth

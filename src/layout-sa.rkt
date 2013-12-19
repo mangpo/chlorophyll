@@ -110,7 +110,7 @@
          (string-split
           (last (string-split
                  (with-output-to-string
-                  (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir-rel name))))
+                  (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir name))))
                  "\n")))))
   (define stop (current-seconds))
   (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)

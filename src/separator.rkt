@@ -114,7 +114,7 @@
 
 (define (simulate-onecore ast name input)
   (define cpp    (format "~a/~a_seq.cpp" outdir name))
-  (define binary (format "~a/~a_seq" outdir-rel name))
+  (define binary (format "~a/~a_seq" outdir name))
   (define expect (format "~a/out/~a_~a.out" datadir name input))
   
   (generate-onecore-simulation ast cpp)
@@ -133,7 +133,7 @@
   )
        
 (define (simulate-multicore name input)
-  (define binary (format "~a/~a" outdir-rel name))
+  (define binary (format "~a/~a" outdir name))
   (define output (format "~a/out/~a_~a.tmp" datadir name input))
   (define expect (format "~a/out/~a_~a.out" datadir name input))
   

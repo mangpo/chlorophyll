@@ -4,6 +4,8 @@
 
 (compile-and-optimize "../examples/test.cll" "test" 
                       256 "null" #:w 1 #:h 3 #:opt #t)
+(compile-and-optimize "../examples/test2.cll" "test2" 
+                      256 "null" #:w 1 #:h 3 #:opt #t)
 
 ;; Simple
 ;(compile-and-optimize "../tests/run/array.cll" "array" 
