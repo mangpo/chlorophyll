@@ -386,6 +386,7 @@
               (pretty-display (format "COMMINSERT: AssignTemp ~a = ~a"
                                       (send (get-field lhs ast) to-string) 
                                       (send (get-field rhs ast) to-string))))
+        (send (get-field lhs ast) accept this)
         (send (get-field rhs ast) accept this)]
 
        [(is-a? ast Assign%) 

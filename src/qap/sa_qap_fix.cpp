@@ -98,24 +98,19 @@ long unif(long low, long high)
 
 /************************** sa for qap ********************************/
 
-void lire(long &n, type_matrice &a, type_matrice &b, type_vecteur &fix, char* file)
- {ifstream fichier_donnees;
-  char nom_fichier[30];
-  long i, j;
-
-  cout << "Data file name : \n";
-  //cin >> nom_fichier;
-  strcpy(nom_fichier,file);
-  cout << nom_fichier << '\n';
-  fichier_donnees.open(nom_fichier);
-  fichier_donnees >> n; a_la_ligne(fichier_donnees);
-  for (i = 1; i <= n; i = i+1) for (j = 1; j <= n; j = j+1)
-    fichier_donnees >> a[i][j];
-  for (i = 1; i <= n; i = i+1) for (j = 1; j <= n; j = j+1)
-    fichier_donnees >> b[i][j];
-  for (i = 1; i <= n; i = i+1)
-    fichier_donnees >> fix[i];
-  fichier_donnees.close();
+void lire(long &n, type_matrice &a, type_matrice &b, type_vecteur &fix, char* file) {
+  freopen(file, "r", stdin);
+  cin >> n;
+  cout << "n=" << n << endl;
+  for(int i = 1; i <= n; i++)
+    for(int j = 1; j <= n; j++)
+      cin >> a[i][j];
+  for(int i = 1; i <= n; i++)
+    for(int j = 1; j <= n; j++)
+      cin >> b[i][j];
+  for(int i = 1; i <= n; i++)
+    cin >> fix[i];
+  fclose(stdin);
  }
 
 long calc_delta_complet2(long n, type_matrice & a, type_matrice & b,

@@ -7,8 +7,9 @@ TODO
 - optimize MD5 more
 
 REORGANIZATION
-- merge example and tests/run
-- generate code of examples/simple/sqrt.cll in examples/simple/sqrt/
+- change test-compiler.rkt & test.rkt
+- test on arrayforth simulator: md5, rom benchmarks
+- .configure
 
 MISC
 - data type check (x[i] + y) when y is array

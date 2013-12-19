@@ -1,0 +1,77 @@
+void main() {
+  int@{[0:15]=0} l[15]; // 3 x 5
+  int pl;
+
+  int@{[0:9]=2} local_l[9];
+  int local_r[9];
+
+  int local_p;
+  int col_l;
+  int col_r;
+  int index_l;
+
+  int min;
+  int diff;
+  int index;
+  int sum;
+
+  col_r = 0;
+  col_l = 0;
+
+  // right input
+  for(i from 0 to 3) {
+    local_r[col_r +@place(col_r) i] = in();
+  }
+  col_r = col_r +@place(col_r) 3;
+  if(col_r >=@place(col_r) 9) { col_r = 0; }
+  
+  // left input
+  for(i from 0 to 3) {
+    l[col_l +@place(col_l) i] = in();
+  }
+  col_l = col_l +@place(col_l) 3;
+  if(col_l >=@place(col_l) 15) { col_l = 0; }
+  
+    // init for each round
+    pl = col_l;
+    for(i from 0 to 3) {
+      local_l[i] = l[pl +@place(pl) i];
+    }
+    pl = pl +@place(pl) 3;
+    if(pl >=@place(pl) 15) { pl = 0; }
+
+    for(i from 0 to 3) {
+      local_l[3+i] = l[pl +@place(pl) i];
+    }
+    pl = pl +@place(pl) 3;
+    if(pl >=@place(pl) 15) { pl = 0; }
+    
+    local_p = 6;
+    min = 65536;
+    for(i from 0 to 5) {
+      // get a column of data for l
+      for(j from 0 to 3) {
+        local_l[local_p +@place(local_p) j] = l[pl +@place(local_p) j];
+      }
+      local_p = local_p +@place(local_p) 3;
+      if(local_p >=@place(local_p) 9) { local_p = 0; }
+      pl = pl +@place(pl) 3;
+      if(pl >=@place(pl) 15) { pl = 0; }
+
+      // SSD
+      sum = 0;
+      for(j from 0 to 9) {
+        index_l = local_p +@place(local_p) j;
+        if(index_l >=@place(local_p) 9) { index_l = index_l -@place(local_p) 9; }
+
+        diff = local_l[index_l] - local_r[j];
+        sum = sum + diff * diff;
+      }
+      if(sum < min) {
+        min = sum;
+        index = i;
+      }
+    }
+    out(index);
+
+}

@@ -233,6 +233,8 @@
 	     [place-type place])]
 
        [(is-a? ast VarDecl%)
+        (pretty-display (format "CLONER: VarDecl% ~a @ ~a (before)" (get-field var-list ast)
+                                (get-field place ast)))
 	(define place (fresh-place (get-field place ast)))
         (define new-var-list
           (for/list ([var (get-field var-list ast)])
@@ -250,6 +252,9 @@
                [type (get-field type ast)]
                [known (get-field known ast)]
                [place place]))
+        (pretty-display (format "CLONER: VarDecl% ~a @ ~a (ret)" (get-field var-list ast)
+                                place))
+        (send ret pretty-print)
 
         (when (is-a? ast TempDecl%)
           (for/list ([var (get-field var-list ast)])
@@ -306,15 +311,29 @@
 		       (send (get-field pre ast) accept this))]
 
        [(is-a? ast AssignTemp%)
+        (define (expand p n)
+          (cond 
+           [(list? p)
+            (list->typeexpansion p)]
+           [(rosette-number? p)
+            (new TypeExpansion% [place-list (for/list ([i (in-range n)]) p)])]
+           [else
+            (raise (format "visitor-cloner: AssignTemp% unimplemented for ~a" p))]))
+
         (define lhs-ret (send (get-field lhs ast) accept this))
         (set! keep #t)
         (define rhs-ret (send (get-field rhs ast) accept this))
 
         (define temp-name (get-field name lhs-ret))
         (when (hash-has-key? tempdecls temp-name)
-              (define place (list->typeexpansion (get-field place-type rhs-ret)))
+              (define decl (hash-ref tempdecls temp-name))
+              ;; (define type-expand (cdr (get-field type decl)))
+              (pretty-display "HERE!!!!!!!!!!!!!!")
+              (pretty-display (get-field place-type rhs-ret))
+              (define place (expand (get-field place-type rhs-ret) 
+                                    (cdr (get-field type decl))))
               (set-field! place-type lhs-ret place)
-              (set-field! place (hash-ref tempdecls temp-name) place)
+              (set-field! place decl place)
               (declare-var temp-name place))
         
         (new AssignTemp%

@@ -1,8 +1,0 @@
-int sum(int a) {
-  return a;
-}
-
-void main() {
-  int x;
-  x = sum(10);
-}

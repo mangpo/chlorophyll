@@ -1,5 +1,0 @@
-void main() {
-  int@0 a, b, x;
-  int@1 c, d;
-  x = (a +@0 b) *@0 (c +@0 d);
-}
