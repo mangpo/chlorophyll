@@ -150,7 +150,12 @@
 
 ;; compile HLP to optimized one-core machine code.
 ;; for testing only.
-(define (compile-and-optimize-percore file core w h)
+(define (compile-and-optimize-percore file name core w h)
+  (set-outdir (string-append
+	       (substring file 0 (cdr (last (regexp-match-positions* #rx"/" file))))
+	       name))
+  (system (format "mkdir ~a" outdir))
+
   (pretty-display "------------------ AST ----------------------")
   (define program (parse file))
   (send program pretty-print)
@@ -179,6 +184,12 @@
 			      #:partition [xxx #t]
                               #:sliding [sliding #t]
 			      #:run [run #f])
+  ;; Create output directory at the same level as input file.
+  (set-outdir (string-append
+	       (substring file 0 (cdr (last (regexp-match-positions* #rx"/" file))))
+	       name))
+  (system (format "mkdir ~a" outdir))
+    
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
 				  #:weight layout #:partition xxx))
   (when run

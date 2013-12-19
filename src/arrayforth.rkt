@@ -465,16 +465,27 @@
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))
 
 (define (print-header)
+  (define outdir-split (string-split outdir "/"))
+  (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
+  (define outdir-down-count (- (length outdir-split) outdir-up-count))
+
+  (define srcdir-split (string-split srcdir "/"))
+
+  (define path-list (append (for/list ([i (in-range outdir-down-count)]) "..")
+			    (reverse (take (reverse srcdir-split) outdir-up-count))))
+  (define path (string-join path-list "/"))
+
   (pretty-display "#lang racket")
-  (pretty-display "(require \"../src/header.rkt\" \"../src/arrayforth.rkt\" \"../src/arrayforth-optimize.rkt\" \"../src/arrayforth-print.rkt\")"))
+  (pretty-display (format "(require \"~a/header.rkt\" \"~a/arrayforth.rkt\" \"~a/arrayforth-optimize.rkt\" \"~a/arrayforth-print.rkt\")" path path path path)))
 
 (define (print-optimize name w h sliding [core #f])
   (if core
       (begin
         (pretty-display (format "(define name \"~a-~a\")" name core))
+        (pretty-display (format "(define dir \"~a\")" outdir))
         (pretty-display (format "(define real-opts (superoptimize program name ~a ~a ~a #:id ~a))" w h sliding core))
-        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.rkt\" outdir name) (lambda () (aforth-struct-print real-opts)))")
-        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.aforth\" outdir name)")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.rkt\" dir name) (lambda () (aforth-struct-print real-opts)))")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.aforth\" dir name)")
         (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a #:id ~a)))" w h core)))
       (begin
         (pretty-display (format "(define name \"~a_cont\")" name))
