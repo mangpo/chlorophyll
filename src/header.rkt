@@ -29,11 +29,22 @@
 (define accurate-flow #t)
 
 (define srcdir "/home/mangpo/work/greensyn/src")
-(define outdir #f)
 (define datadir "/home/mangpo/work/greensyn/testdata")
+(define outdir #f)
+(define path2src #f)
 
 (define (set-outdir x)
   (set! outdir x)
+
+  (define outdir-split (string-split outdir "/"))
+  (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
+  (define outdir-down-count (- (length outdir-split) outdir-up-count))
+
+  (define srcdir-split (string-split srcdir "/"))
+
+  (define path-list (append (for/list ([i (in-range outdir-down-count)]) "..")
+			    (reverse (take (reverse srcdir-split) outdir-up-count))))
+  (set! path2src (string-join path-list "/"))
   )
 
 (struct meminfo (addr virtual data))

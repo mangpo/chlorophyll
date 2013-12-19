@@ -97,6 +97,12 @@
 		       #:weight [weight #t]
 		       #:partition [syn #t])
   
+  ;; Create output directory at the same level as input file.
+  (set-outdir (string-append
+	       (substring file 0 (cdr (last (regexp-match-positions* #rx"/" file))))
+	       name))
+  (system (format "mkdir ~a" outdir))
+
   (define n (* w h))
   (define my-ast (parse file))
   (define concise-printer (new printer% [out #t]))
@@ -151,10 +157,6 @@
 ;; compile HLP to optimized one-core machine code.
 ;; for testing only.
 (define (compile-and-optimize-percore file name core w h)
-  (set-outdir (string-append
-	       (substring file 0 (cdr (last (regexp-match-positions* #rx"/" file))))
-	       name))
-  (system (format "mkdir ~a" outdir))
 
   (pretty-display "------------------ AST ----------------------")
   (define program (parse file))
@@ -184,11 +186,6 @@
 			      #:partition [xxx #t]
                               #:sliding [sliding #t]
 			      #:run [run #f])
-  ;; Create output directory at the same level as input file.
-  (set-outdir (string-append
-	       (substring file 0 (cdr (last (regexp-match-positions* #rx"/" file))))
-	       name))
-  (system (format "mkdir ~a" outdir))
     
   (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
 				  #:weight layout #:partition xxx))
@@ -248,8 +245,8 @@
 
 (define testdir "../tests/run")
 
-(define (test-simulate name input capacity w h partition)
-  (compile-to-IR (format "~a/~a.cll" testdir name) name capacity input w h
+(define (test-simulate file name input capacity w h partition)
+  (compile-to-IR file name capacity input w h
                  #:run #t #:partition partition)
   (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))

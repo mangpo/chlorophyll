@@ -465,18 +465,8 @@
    [else (raise (format "arrayforth-print: unimplemented for ~a" x))]))
 
 (define (print-header)
-  (define outdir-split (string-split outdir "/"))
-  (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
-  (define outdir-down-count (- (length outdir-split) outdir-up-count))
-
-  (define srcdir-split (string-split srcdir "/"))
-
-  (define path-list (append (for/list ([i (in-range outdir-down-count)]) "..")
-			    (reverse (take (reverse srcdir-split) outdir-up-count))))
-  (define path (string-join path-list "/"))
-
   (pretty-display "#lang racket")
-  (pretty-display (format "(require \"~a/header.rkt\" \"~a/arrayforth.rkt\" \"~a/arrayforth-optimize.rkt\" \"~a/arrayforth-print.rkt\")" path path path path)))
+  (pretty-display (format "(require \"~a/header.rkt\" \"~a/arrayforth.rkt\" \"~a/arrayforth-optimize.rkt\" \"~a/arrayforth-print.rkt\")" path2src path2src path2src path2src)))
 
 (define (print-optimize name w h sliding [core #f])
   (if core

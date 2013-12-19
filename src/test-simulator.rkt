@@ -4,9 +4,9 @@
 
 (define result (list))
 
-(define (test name input capacity #:w [w 5] #:h [h 4] #:partition [part #t])
+(define (test file name input capacity #:w [w 5] #:h [h 4] #:partition [part #t])
   (set! result (cons 
-                (cons name (test-simulate name input capacity w h part))
+                (cons name (test-simulate file name input capacity w h part))
                 result)))
 
 ;(test "array" "10" 256)
@@ -40,7 +40,7 @@
 ;(test "swap" "null" 512 #:w 8 #:h 8)
 ;(test "prefixsum" "null" 512 #:w 8 #:h 8)
 ;(test "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
-(test "convolution3" "null" 400 #:w 4 #:h 4 #:partition #f)
+(test "../tests/run/convolution3.cll" "convolution3" "null" 400 #:w 4 #:h 4 #:partition #f)
 ;(test "convolution2" "null" 512 #:w 8 #:h 8)
 ;(test "fir" "1" 1000 #:w 3 #:h 3)
 ;(test "interp2" "1" 256 #:w 3 #:h 3)
