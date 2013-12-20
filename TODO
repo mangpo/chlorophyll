@@ -7,8 +7,6 @@ TODO
 - optimize MD5 more
 
 REORGANIZATION
-- change test-compiler.rkt & test.rkt
-- test on arrayforth simulator: md5, rom benchmarks
 - .configure
 
 MISC

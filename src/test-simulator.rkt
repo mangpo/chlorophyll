@@ -44,8 +44,8 @@
 ;(test "../examples/parallel/ssd_simple.cll" "ssd-simple" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/swap.cll" "swap" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/prefixsum.cll" "prefixsum" "null" 512 #:w 8 #:h 8)
-;(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)
-(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
+(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)
+;(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
 
 
 

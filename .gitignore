@@ -1,7 +1,7 @@
 compiled/*
-output/*
 testdata/out*
 src/qap/sa_qap
+*output-*
 
 *~
 */compiled/*

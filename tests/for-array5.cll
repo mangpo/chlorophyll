@@ -1,9 +1,8 @@
 void main() {
-  cluster int@{[0:20]=0,[20:40]=1} x[40];
-  cluster int@{[0:20]=0,[20:40]=1} y[40];
-  int@2 j;
+  int@{[0:10]} x[10];
+  cluster int@0 y[10];
 
-  for(i from 0 to 40)@{[0:20]=0,[20:40]=1} {
-    x[j] = x[j] +@2 y[j];
+  for(i from 0 to 10)@0 {
+    x[i] = y[x[i]] + i;
   }
 }

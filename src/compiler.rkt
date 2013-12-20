@@ -98,10 +98,7 @@
 		       #:partition [syn #t])
   
   ;; Create output directory at the same level as input file.
-  (set-outdir (string-append
-	       (substring file 0 (cdr (last (regexp-match-positions* #rx"/" file))))
-	       name))
-  (system (format "mkdir ~a" outdir))
+  (set-outdir file name)
 
   (define n (* w h))
   (define my-ast (parse file))

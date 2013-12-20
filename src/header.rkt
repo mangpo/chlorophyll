@@ -33,8 +33,11 @@
 (define outdir #f)
 (define path2src #f)
 
-(define (set-outdir x)
-  (set! outdir x)
+(define (set-outdir filepath name)
+  (set! outdir (string-append
+                (substring filepath 0 (cdr (last (regexp-match-positions* #rx"/" filepath))))
+                "output-" name))
+  (system (format "mkdir ~a" outdir))
 
   (define outdir-split (string-split outdir "/"))
   (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
