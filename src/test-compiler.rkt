@@ -2,7 +2,7 @@
 
 (require "compiler.rkt")
 
-(compile-and-optimize "../examples/test.cll" "test" 
+(compile-and-optimize "../examples/simple/test.cll" "test" 
                       256 "null" #:opt #t)
 
 ;; Simple

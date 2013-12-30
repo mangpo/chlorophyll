@@ -2,6 +2,7 @@
 
 (require (only-in rosette [sym? symbolic?]))
 (require (only-in racket foldl log))
+(require "path.rkt")
 
 (provide symbolic? foldl log rosette-number?
          (all-defined-out))
@@ -28,8 +29,8 @@
 (define max-unroll 20)
 (define accurate-flow #t)
 
-(define srcdir "/home/mangpo/work/greensyn/src")
-(define datadir "/home/mangpo/work/greensyn/testdata")
+(define srcdir srcpath)
+(define datadir datapath)
 (define outdir #f)
 (define path2src #f)
 
