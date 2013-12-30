@@ -7,7 +7,10 @@ TODO
 - optimize MD5 more
 
 REORGANIZATION
-- .configure
+- forth-interpreter: merge dev with master, and make dev master
+- hardcoded path in forth-interpreter cache
+- greensyn: make dev master
+- planet forth-interpreter
 
 MISC
 - data type check (x[i] + y) when y is array
