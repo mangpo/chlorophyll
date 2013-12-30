@@ -5,10 +5,6 @@ Requirements
 - [F18A superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter)
 - [Z3](http://z3.codeplex.com/)
 
-
-Installations
--------------
-
 ### Rosette ### 
 
 1. Rosette depends on Racket >= 5.3.1 and Java >= 7, which must be the default on your system.  Type "java -version" into a terminal, to check your java version.
@@ -42,4 +38,12 @@ $ raco planet link mangpo aforth-optimizer.plt 1 0 <path to F18A_superoptimizer 
 #!command
 
 PATH=@PATH:/path/to/z3/binary/directory
+```
+
+Installation
+------------
+
+After setting up all the requirements, run
+```
+make
 ```
