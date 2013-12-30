@@ -14,8 +14,8 @@ Requirements
 3. Install as a library.  In command terminal, type:
 
 ```
-$ cd <path to your rosette repository directory, with subdirectories rosette, demo, etc.>
-$ raco link rosette
+cd <path to your rosette repository directory, with subdirectories rosette, demo, etc.>
+raco link rosette
 ```
 
 ### F18A Superoptimizer
@@ -25,7 +25,7 @@ $ raco link rosette
 2. Install as local package. In command terminal, type:
 
 ```
-$ raco planet link mangpo aforth-optimizer.plt 1 0 <path to F18A_superoptimizer repo>
+raco planet link mangpo aforth-optimizer.plt 1 0 <path to F18A_superoptimizer repo>
 ```
 
 ### Z3

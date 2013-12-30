@@ -16,7 +16,7 @@ if output.find("mangpo") == -1:
 status, output = commands.getstatusoutput("z3")
 
 if not (output.find("not found") == -1):
-  print "Please edit $PATH to point to z3."
+  print "Please edit environmental variable PATH to point to z3."
   sys.exit(0)
 
 
