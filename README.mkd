@@ -9,65 +9,37 @@ Requirements
 Installations
 -------------
 
-1) Rosette
+### Rosette ### 
 
-  - Rosette depends on Racket >= 5.3.1 and Java >= 7, which must be the default on your system.  Type "java -version" into a terminal, to check your java version.
+1. Rosette depends on Racket >= 5.3.1 and Java >= 7, which must be the default on your system.  Type "java -version" into a terminal, to check your java version.
 
-  - Download [Rosette](http://bitbucket.org/emina/rosette). You will need to ask [Emina Torlak](http://bitbucket.org/emina) for permission to access the repo.
+2. Download [Rosette](http://bitbucket.org/emina/rosette). You will need to ask [Emina Torlak](http://bitbucket.org/emina) for permission to access the repo.
 
-  - Install as a library.  In shell command, type
+3. Install as a library.  In command terminal, type:
 
 ```
 $ cd <path to your rosette repository directory, with subdirectories rosette, demo, etc.>
 $ raco link rosette
 ```
 
-2) GreeynSyn F18A Superoptimizer
+### F18A Superoptimizer ### 
 
-  - Download [F18A Superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter)
+1. Download [F18A Superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter)
 
-  - Install as local package. In shell command, type
+2. Install as local package. In command terminal, type:
 
 ```
-$ raco planet link mangpo aforth-optimizer.plt 1 0 <path to repo>
+$ raco planet link mangpo aforth-optimizer.plt 1 0 <path to F18A_superoptimizer repo>
 ```
 
-3) Z3
+### Z3 ### 
 
-### Linux ###
+1. Download pre-built z3 binary from http://z3.codeplex.com/
 
-- Download and install z3.
-
-   - Download and install z3 from http://z3.codeplex.com/
-
-   - Add directory that contains z3 binary to your PATH environment variable.
+2. Add directory that contains z3 binary to your PATH environment variable.
 
 ```
 #!command
 
 PATH=@PATH:/path/to/z3/binary/directory
 ```
-
-- Download and install DrRacket or Racket.
-DrRacket comes with both Racket interpreter and Racket IDE. If you prefer to use 
-your own choice of editor, you can just install Racket.
-
-  - DrRacket: download from http://racket-lang.org/download/
-
-  - Racket:   sudo apt-get install racket
-
-### Windows###
-
-- Download and install z3.
-
-  - Download z3 from http://z3.codeplex.com/
-
-  - Add directory that contains z3 binary to your PATH environment variable.
-
-       - My Computer -> Properties
-       - In the System Properties window, click on Advanced tab.
-       - Click the Environment Variables button.
-       - Hightlight the "Path" variable in the Systems Variable section, 
-         and click the "Edit" button. Add ";Path\to\z3\directory" at the end.
-
-- Download and install DrRacket from http://racket-lang.org/download/
