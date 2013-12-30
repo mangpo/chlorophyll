@@ -1,1 +1,0 @@
-See [online wiki](https://bitbucket.org/rohinmshah/forth-interpreter/wiki/Home) for documentation.
