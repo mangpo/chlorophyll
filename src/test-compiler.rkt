@@ -2,12 +2,12 @@
 
 (require "compiler.rkt")
 
-(compile-and-optimize "../examples/simple/test.cll" "test" 
-                      256 "null" #:opt #t)
+;(compile-and-optimize "../examples/simple/test.cll" "test" 
+;                      256 "null" #:opt #t)
 
 ;; Simple
-;(compile-and-optimize "../examples/simple/array.cll" "array" 
-;                      256 "null" #:opt #f)
+(compile-and-optimize "../examples/simple/array.cll" "array" 
+                      256 "null" #:w 2 #:h 3 #:opt #t)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/simple/function.cll" "function" 

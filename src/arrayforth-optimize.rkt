@@ -1,10 +1,14 @@
 #lang racket
 
 (require "header.rkt" "arrayforth.rkt" "arrayforth-print.rkt" "arrayforth-def.rkt")
-(require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+(require "../../2forth-interpreter/machine/cegis.rkt" 
+         "../../2forth-interpreter/machine/state.rkt" 
+         "../../2forth-interpreter/machine/programs.rkt" 
+         "../../2forth-interpreter/machine/track-constant.rkt")
+;; (require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 
 (provide superoptimize renameindex)
 
