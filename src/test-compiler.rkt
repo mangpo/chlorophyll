@@ -6,10 +6,10 @@
 ;                      256 "null" #:opt #t)
 
 ;; Simple
-(compile-and-optimize "../examples/simple/array.cll" "array" 
-                      256 "null" #:w 2 #:h 3 #:opt #t)
+;(compile-and-optimize "../examples/simple/array.cll" "array" 
+;                      256 "null" #:w 2 #:h 3 #:opt #t)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
-;                      256 "null" #:opt #t)
+;                      512 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/simple/function.cll" "function" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/simple/function-pair.cll" "function-pair" 
@@ -25,22 +25,22 @@
 ;; Single-core
 ;(compile-and-optimize "../examples/rom/fir.cll" "fir" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/rom/fir0.cll" "fir0" 
+;                      150 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/rom/fir-par2.cll" "fir-par2" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../examples/rom/fir-par4.cll" "fir-par4" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../examples/rom/interp.cll" "interp" 
-;                      256 "null" #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/rom/fir.cll" "fir" 
-;                      256 "null" #:w 3 #:h 3 #:opt #t)
+;                      256 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/rom/cos.cll" "cos" 
 ;                      300 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/rom/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 
 ;; Multicore
-;(compile-and-optimize "../examples/parallel/swap.cll" "swap" 
-;                      256 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../examples/parallel/swap0.cll" "swap0" 
+;                      256 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/parallel/ssd.cll" "ssd" 
 ;                      310 "null" #:w 8 #:h 8 #:opt #t #:sliding #f)
 ;(compile-and-optimize "../examples/parallel/ssd-heu.cll" "ssd-heu" 
@@ -64,8 +64,8 @@
 ;		      1024 "null" #:w 8 #:h 8 #:opt #f)
 
 ;; Map & Reduce
-;(compile-and-optimize "../examples/mapreduce/map.cll" "map" 
-;                      290 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../examples/mapreduce/map.cll" "map" 
+                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/mapreduce/map-pair.cll" "map-pair" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/mapreduce/map.cll" "reduce" 

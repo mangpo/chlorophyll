@@ -6,7 +6,7 @@
 
 (define factor 0.95)
 
-(define debug #f)
+(define debug #t)
 
 (define (merge-sym-partition n space flow-graph capacity conflict-list)
   (define sol-map (make-hash))
@@ -112,7 +112,12 @@
     (super-new)
     (init-field [space (make-hash)])
 
-    (define network (make-hash))
+    (struct graphset (graph set))
+    (define function-network (make-hash))
+    
+    ;; Declare IO function: in(), out(data)
+    (hash-set! function-network "in" (graphset (list) (set)))
+    (hash-set! function-network "out" (graphset (list) (set)))
 
     (define (inc-space place sp)
       ;(pretty-display `(inc-space ,place))
@@ -122,20 +127,21 @@
           (if (hash-has-key? space place)
               (hash-set! space place (+ (hash-ref space place) sp))
               (hash-set! space place sp))))
-    
-    (define (add-network p1 p2)
-      (when debug (pretty-display `(add-network ,p1 ,p2)))
+
+    (define (network p1 p2)
+      (when debug (pretty-display `(network ,p1 ,p2)))
       (cond
        [(and (is-a? p1 TypeExpansion%) (is-a? p2 TypeExpansion%))
-        (for ([x (get-field place-list p1)]
-              [y (get-field place-list p2)])
-             (add-network x y))]
+	(flatten
+	 (for/list ([x (get-field place-list p1)]
+		    [y (get-field place-list p2)])
+		   (network x y)))]
 
        [(is-a? p1 TypeExpansion%)
-        (add-network (car (get-field place-list p1)) p2)]
+        (network (car (get-field place-list p1)) p2)]
 
        [(is-a? p2 TypeExpansion%)
-        (add-network (car (get-field place-list p2)) p1)]
+        (network (car (get-field place-list p2)) p1)]
 
        [(and (not (equal? p1 p2)) 
              ;; (not (equal? p1 (* 2 w)))
@@ -143,17 +149,33 @@
              (rosette-number? p1)
              (rosette-number? p2)
              (or (symbolic? p1) (symbolic? p2)))
-        (when debug (pretty-display `(add-network-real ,p1 ,p2)))
-        (define key1 (cons p1 p2))
-        (define key2 (cons p2 p1))
-        (cond
-         [(hash-has-key? network key1)
-          (hash-set! network key1 (add1 (hash-ref network key1)))]
-         [(hash-has-key? network key2)
-          (hash-set! network key2 (add1 (hash-ref network key2)))]
-         [else
-          (hash-set! network key1 1)])
-        ]))
+        (when debug (pretty-display `(network-real ,p1 ,p2)))
+	(list (cons (cons p1 p2) 1))
+        ]
+
+       [else (list)]))
+
+    (define (multiply-weight graph w)
+      (map (lambda (e) (cons (car e) (* (cdr e) w))) graph))
+
+    (define (graph->list graph)
+      (define h (make-hash))
+      (for ([edge graph])
+	   (let* ([e1 (car edge)]
+		  [e2 (cons (cdr e1) (car e1))]
+		  [w (cdr edge)])
+	     (cond
+	      [(hash-has-key? h e1)
+	       (hash-set! h e1 (+ (hash-ref h e1) w))]
+	      
+	      [(hash-has-key? h e2)
+	       (hash-set! h e2 (+ (hash-ref h e2) w))]
+
+	      [else
+	       (hash-set! h e1 w)])))
+
+      (hash->list h))
+	      
     
     (define/public (visit ast)
       (cond
@@ -161,7 +183,7 @@
         (when debug 
               (pretty-display (format "HUE: Num ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-num)
-        (set (get-field place-type ast))
+        (graphset (list) (set (get-field place-type ast)))
         ]
 
        [(is-a? ast Array%)
@@ -175,15 +197,16 @@
         (send index infer-place place-type)
         (define index-ret (send index accept this))
         
-        (add-network place-type (get-field place-type index))
-        (set-add index-ret place-type)
+        (graphset (append (graphset-graph index-ret)
+			  (network place-type (get-field place-type index)))
+		  (set-add (graphset-set index-ret) place-type))
         ]
 
        [(is-a? ast Var%)
         (when debug 
               (pretty-display (format "HUE: Var ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-var)
-        (set (get-field place-type ast))
+        (graphset (list) (set (get-field place-type ast)))
         ]
 
        [(is-a? ast UnaExp%)
@@ -200,8 +223,10 @@
         (define e1-ret (send e1 accept this))
         
         (inc-space place-type (hash-ref space-map (get-field op op)))
-        (add-network place-type (get-field place-type e1))
-        (set-add e1-ret place-type)
+	(graphset
+	 (append (graphset-graph e1-ret)
+		 (network place-type (get-field place-type e1)))
+	 (set-add (graphset-set e1-ret) place-type))
         ]
 
        [(is-a? ast BinExp%)
@@ -220,26 +245,36 @@
         (define e2-ret (send e2 accept this))
         
         (inc-space place-type (hash-ref space-map (get-field op op)))
-        (add-network place-type (get-field place-type e1))
-        (add-network place-type (get-field place-type e2))
-        (set-union e1-ret e2-ret (set place-type))
+	(graphset
+	 (append
+	  (graphset-graph e1-ret)
+	  (graphset-graph e2-ret)
+	  (network place-type (get-field place-type e1))
+	  (network place-type (get-field place-type e2)))
+	 (set-union (graphset-set e1-ret) (graphset-set e2-ret) (set place-type)))
         ]
 
        [(is-a? ast FuncCall%)
         (when debug 
               (pretty-display (format "HUE: FuncCall ~a" (send ast to-string))))
+	(define funccall-ret (hash-ref function-network (get-field name ast)))
+	(define networks (graphset-graph funccall-ret))
+        (define places (graphset-set funccall-ret))
+
         ;; infer place-type
-        (for ([param (get-field stmts (get-field args (get-field signature ast)))]
-              [arg (flatten-arg (get-field args ast))])
-             (send arg infer-place (get-field place-type param))
-             (add-network (get-field place-type arg) (get-field place-type param))
-             )
-        
+	(for ([param (get-field stmts (get-field args (get-field signature ast)))]
+	      [arg (flatten-arg (get-field args ast))])
+	     (send arg infer-place (get-field place-type param))
+	     (set! networks 
+		   (append networks
+			   (network (get-field place-type arg) (get-field place-type param)))))
+       
         ;; visit children
-        (define args-ret (set))
         (for ([arg (get-field args ast)])
-             (set! args-ret (set-union args-ret (send arg accept this))))
-        args-ret
+	     (let ([arg-ret (send arg accept this)])
+	       (set! networks (append networks (graphset-graph arg-ret)))
+	       (set! places (set-union places (graphset-set arg-ret)))))
+        (graphset networks places)
         ]
 
        [(is-a? ast Assign%)
@@ -257,8 +292,11 @@
         (define rhs-ret (send rhs accept this))
         (define lhs-ret (send lhs accept this))
 
-        (add-network (get-field place-type lhs) (get-field place-type rhs))
-        (set-union rhs-ret lhs-ret)
+	(graphset
+	 (append (graphset-graph lhs-ret)
+		 (graphset-graph rhs-ret)
+		 (network (get-field place-type lhs) (get-field place-type rhs)))
+	 (set-union (graphset-set rhs-ret) (graphset-set lhs-ret)))
         ]
 
        [(is-a? ast VarDecl%)
@@ -267,7 +305,7 @@
                             (if (is-a? ast Param%)
                                 (add1 est-data)
                                 est-data)))
-        (set place)
+        (graphset (list) (set place))
         ]
 
        [(is-a? ast ArrayDecl%)
@@ -286,7 +324,7 @@
 
         (when (not (= (get-field bound ast) last))
               (send ast bound-error))
-        place-set
+	(graphset (list) place-set)
         ]
 
        [(is-a? ast For%)
@@ -302,7 +340,10 @@
                            (send ast bound-error))
                      (set! last to))))
 
-        (send (get-field body ast) accept this)
+        (define body-ret (send (get-field body ast) accept this))
+	(graphset
+	 (multiply-weight (graphset-graph body-ret) (- (get-field to ast) (get-field from ast)))
+	 (graphset-set body-ret))
         ]
 
        [(is-a? ast If%)
@@ -310,12 +351,19 @@
 
         (define body-ret (send (get-field true-block ast) accept this))
         (when (get-field false-block ast)
-            (set! body-ret 
-                  (set-union body-ret (send (get-field false-block ast) accept this))))
-        (for* ([a cond-ret]
-               [b body-ret])
-              (add-network a b))
-        (set-union cond-ret body-ret)
+	      (define false-ret (send (get-field false-block ast) accept this))
+	      (set! body-ret 
+		    (graphset 
+		     (append (graphset-graph body-ret) (graphset-graph false-ret))
+		     (set-union (graphset-set body-ret) (graphset-set false-ret)))))
+
+	(define networks (append (graphset-graph cond-ret) (graphset-graph body-ret)))
+        (for* ([a (graphset-set cond-ret)]
+	       [b (graphset-set body-ret)])
+	      (set! networks (append networks (network a b))))
+
+	(graphset networks
+		  (set-union (graphset-set cond-ret) (graphset-set body-ret)))
         ]
 
        [(is-a? ast While%)
@@ -323,33 +371,46 @@
         (define cond-ret (send (get-field condition ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
 
-        (for* ([a cond-ret]
-               [b (set-union body-ret pre-ret)])
-              (add-network a b))
-        (set-union pre-ret cond-ret body-ret)
+	(define networks (append (graphset-graph cond-ret) 
+				 (graphset-graph body-ret)
+				 (graphset-graph pre-ret)))
+        (for* ([a (graphset-set cond-ret)]
+               [b (set-union (graphset-set body-ret) (graphset-set pre-ret))])
+              (set! networks (append networks (network a b))))
+
+	(graphset (multiply-weight networks (get-field bound ast))
+		  (set-union (graphset-set pre-ret) (graphset-set cond-ret) (graphset-set body-ret)))
         ]
 
-       [(is-a? ast Return%) (set)]
+       [(is-a? ast Return%) (graphset (list) (set))]
        
        [(is-a? ast FuncDecl%)
         (when (get-field return ast)
               (send (get-field return ast) accept this))
-        (send (get-field args ast) accept this)
-        (send (get-field body ast) accept this)]
+	(define args-ret (send (get-field args ast) accept this))
+        (define body-ret (send (get-field body ast) accept this))
+	(hash-set! function-network (get-field name ast)
+		   (graphset (append (graphset-graph args-ret) (graphset-graph body-ret))
+			     (set-union (graphset-set args-ret) (graphset-set body-ret))))
+	(graphset (list) (set))
+	]
 
        [(is-a? ast Program%)
-        (for ([stmt (get-field stmts ast)])
-             (send stmt accept this))
+	(for/list ([stmt (get-field stmts ast)])
+		  (send stmt accept this))
 
-        ;(pretty-display `(network1 ,network))
-
-        (define sorted-edges (sort (hash->list network) (lambda (x y) (> (cdr x) (cdr y)))))
-        ;(pretty-display `(sorted-edges ,sorted-edges))
+        (define sorted-edges (sort (graph->list (graphset-graph (hash-ref function-network "main")))
+				   (lambda (x y) (> (cdr x) (cdr y)))))
+        (pretty-display `(sorted-edges ,sorted-edges))
         (values space (map car sorted-edges) (get-field conflict-list ast))]
 
        [(is-a? ast Block%)
-        (foldl (lambda (stmt all) (set-union all (send stmt accept this)))
-               (set) (get-field stmts ast))]
+        (foldl (lambda (stmt all) 
+		 (define stmt-ret (send stmt accept this))
+		 (graphset
+		  (append (graphset-graph all) (graphset-graph stmt-ret))
+		  (set-union (graphset-set all) (graphset-set stmt-ret))))
+               (graphset (list) (set)) (get-field stmts ast))]
 
        [else
         (raise (format "visitor-heupartition: unimplemented for ~a" ast))]

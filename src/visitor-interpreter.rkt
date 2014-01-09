@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -195,6 +195,18 @@
     (define (pop-scope)
       ;(pretty-display `(pop-scope))
       (set! env (dict-ref env "__up__")))
+
+    (define/public (assert-conflict ast)
+
+      (pretty-display `(conflict-list ,(get-field conflict-list ast)))
+      
+      (for ([lst (get-field conflict-list ast)])
+	   (for* ([set-x lst]
+		  [set-y lst])
+		 (unless (equal? set-x set-y)
+			 (for* ([x set-x]
+				[y set-y])
+			       (assert (not (= x y))))))))
       
     (define/public (visit ast)
       (cond
@@ -530,14 +542,6 @@
        [(is-a? ast Program%)
         (when debug
             (pretty-display ">> Program"))
-
-        (for ([lst (get-field conflict-list ast)])
-          (for* ([set-x lst]
-                 [set-y lst])
-            (unless (equal? set-x set-y)
-              (for* ([x set-x]
-                     [y set-y])
-                (assert (not (= x y)))))))
 
 	(define ret #f)
 	(for ([decl (get-field stmts ast)])

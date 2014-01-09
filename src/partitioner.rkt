@@ -266,6 +266,7 @@
   (cond
    [synthesis
     (pretty-display "Running partitioning synthesizer ...")
+    (send interpreter assert-conflict my-ast)
     (for ([decl (get-field stmts my-ast)])
 	 (if 
 	  ;;(is-a? decl FuncDecl%) ;; Use this for solving function by function
