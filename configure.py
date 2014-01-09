@@ -1,5 +1,6 @@
 import commands, sys, os
 
+# F18A superoptimizer
 status, output = commands.getstatusoutput("raco planet show | grep aforth-optimizer.plt")
 
 if len(output) == 0:
@@ -13,13 +14,17 @@ if output.find("mangpo") == -1:
   print "raco planet link mangpo aforth-optimizer.plt 1 0 <path to repo>"
   sys.exit(0)
 
+# Z3
 status, output = commands.getstatusoutput("z3")
 
 if not (output.find("not found") == -1):
   print "Please edit environmental variable PATH to point to z3."
   sys.exit(0)
 
+# Simulated Annealing
+os.system("g++ src/qap/sa_qap_fix.cpp -o src/qap/sa_qap")
 
+# Create path.rtk
 status, abs_path = commands.getstatusoutput("pwd")
 f = open("src/path.rkt", "w")
 f.write("#lang racket\n")
