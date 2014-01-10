@@ -49,7 +49,7 @@
         (define ranges (get-field unroll ast))
         (pretty-display ranges)
 
-        ;; prepare to cllect newly created functions from reduce construct
+        ;; prepare to cllect newly created bodies from map-reduce construct
         (set-field! new-funcs cloner (list))
 
         (define ret
@@ -70,17 +70,19 @@
               ast))
         
         ;; add newly created functions from reduce to program AST
-        (set-field! stmts program (append (get-field new-funcs cloner)
+	(define new-funcs (get-field new-funcs cloner))
+        (set-field! stmts program (append new-funcs
                                           (get-field stmts program)))
 
-        (pretty-display (format "UNROLL: For unroll, new-funcs = ~a" 
-                                (get-field new-funcs cloner)))
-        
+        (pretty-display (format "UNROLL: For unroll, new-funcs = ~a" new-funcs))
+
         ;; add to conflict-list
-        (set-field! conflict-list program
-                    (cons (for/list ([func (get-field new-funcs cloner)])
-                                    (send func accept placeset-collector))
-                          (get-field conflict-list program)))
+	(when (and (is-a? ast ParFor%) ranges)
+	      (send placeset-collector set-functions new-funcs)
+	      (set-field! conflict-list program
+			  (cons (for/list ([x ret])
+					  (send (get-field body x) accept placeset-collector))
+				(get-field conflict-list program))))
         
         ret
         ]

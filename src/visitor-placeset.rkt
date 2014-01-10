@@ -8,13 +8,25 @@
 (define placeset-collector%
   (class* object% (visitor<%>)
     (super-new)
+    (define functions (make-hash))
 
     (define (make-set x)
       (cond
        [(rosette-number? x) (set x)]
        [(equal? x #f) (set)]
-       [(list? x) (raise `(make-set ,x))]
+       [(and (is-a? x Place%) (equal? (get-field at x) "any")) (set)]
+       [(is-a? x TypeExpansion%)
+	(define ret (set))
+	(for ([p (get-field place-list x)])
+	     (set! ret (set-union ret (make-set p))))
+	ret]
+       [(and (list? x) (is-a? (car x) ProxyReturn%)) (set)]
        [else (raise `(make-set ,x))]))
+
+    (define/public (set-functions funcs)
+      (set! functions (make-hash))
+      (for ([f funcs])
+	   (hash-set! functions (get-field name f) f)))
 
     (define/public (visit ast)
       (cond
@@ -39,9 +51,13 @@
 
        [(is-a? ast FuncCall%)
         (define ret (make-set (get-field place-type ast)))
+	(when (hash-has-key? functions (get-field name ast))
+	      (set! ret (set-union ret 
+				   (send (hash-ref functions (get-field name ast)) accept this))))
+
         (for ([arg (get-field args ast)])
-             (set! ret (set-union ret (make-set (get-field place-type ast)))))
-        ret] ;; doesn't include places of the corresponding FuncDecl
+             (set! ret (set-union ret (make-set (get-field place-type arg)))))
+        ret]
 
        [(is-a? ast VarDecl%)
         (make-set (get-field place ast))]

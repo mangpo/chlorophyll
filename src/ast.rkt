@@ -840,8 +840,23 @@
       (when unroll
             (pretty-display (format "~a(unroll: ~a)" (inc indent) unroll)))
       (send body pretty-print (inc indent)))
-
 ))
+
+(define ParFor%
+  (class For%
+    (super-new)
+    (inherit-field iter from to body known place-list address iter-type unroll)
+    (inherit print-send-path print-body-placeset)
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(PARFOR ~a from ~a to ~a) @{~a}" 
+			      indent (send iter to-string) from to 
+                              (place-to-string place-list)))
+      (print-body-placeset indent)
+      (print-send-path indent)
+      (when unroll
+            (pretty-display (format "~a(unroll: ~a)" (inc indent) unroll)))
+      (send body pretty-print (inc indent)))))
 
 (define ArrayDecl%
   (class LivableGroup%

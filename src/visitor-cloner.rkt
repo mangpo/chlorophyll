@@ -195,7 +195,6 @@
 	(define new-func (send (hash-ref functions func-name) accept this))
 	(define new-name (format "_~a~a" id func-name))
 	(set-field! name new-func new-name)
-	;(set-field! stmts program (cons new-func (get-field stmts program)))
         (set! new-funcs (cons new-func new-funcs))
 
 	(define return-place (and (get-field return new-func)

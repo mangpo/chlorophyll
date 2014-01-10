@@ -64,13 +64,13 @@
 ;		      1024 "null" #:w 8 #:h 8 #:opt #f)
 
 ;; Map & Reduce
-(compile-and-optimize "../examples/mapreduce/map.cll" "map" 
-                      290 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/mapreduce/map.cll" "map" 
+;                      290 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/mapreduce/map-pair.cll" "map-pair" 
-;                      290 "null" #:w 3 #:h 3 #:opt #f)
+;                      290 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/mapreduce/map.cll" "reduce" 
-;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #t)
+;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/mapreduce/reduce-pair.cll" "reduce-pair" 
 ;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
-;(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
-;                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
+                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)

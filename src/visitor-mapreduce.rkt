@@ -70,7 +70,7 @@
                [pos pos]))
 	
         
-	(new For% 
+	(new ParFor% 
              [iter (new Var% [name "i"] [known-type #t])] [from 0] [to n] [pos pos]
 	     [body (new Block% [stmts (list body)])])
 	]
@@ -116,7 +116,7 @@
                          [pos pos])]
                [pos pos]))
         (define reduce-loop
-          (new For% [iter (new Var% [name "i"] [known-type #t] [pos pos])] [from 0] [to n] 
+          (new ParFor% [iter (new Var% [name "i"] [known-type #t] [pos pos])] [from 0] [to n] 
                [body (new Block% [stmts (list body)])]
                [pos pos]))
 
