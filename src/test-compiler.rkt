@@ -6,8 +6,8 @@
 ;                      256 "null" #:opt #t)
 
 ;; Simple
-;(compile-and-optimize "../examples/simple/array.cll" "array" 
-;                      256 "null" #:w 2 #:h 3 #:opt #t)
+(compile-and-optimize "../examples/simple/array.cll" "array" 
+                      256 "null" #:w 2 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
 ;                      512 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/simple/function.cll" "function" 
@@ -72,5 +72,5 @@
 ;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/mapreduce/reduce-pair.cll" "reduce-pair" 
 ;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
-                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
+;                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)

@@ -7,7 +7,7 @@
 
 (struct core (space costly-op))
 
-(define capacity 256)
+(define capacity #f)
 (define max-cores 144)
 
 (define (display-cores cores)
@@ -31,7 +31,12 @@
        (equal? (core-costly-op c1) (core-costly-op c2))))
   
 (define (make-cores #:capacity [c 256] #:max-cores [len 144])
-  (set! capacity c)
+  (if (vector? c)
+      (if (= (vector-length c) len)
+          (set! capacity c)
+          (raise "The given capacity vector size does not match the given number of cores."))
+      (set! capacity (make-vector len c)))
+
   (set! max-cores len)
   (core (make-vector len 0) (make-vector len (set)))
   )
@@ -41,13 +46,6 @@
     (apply +
            (for/list ([i (in-range 0 max-cores)])
              (if (= (vector-ref v i) 0) 0 1)))))
-
-(define (cores-assert cores)
-  (assert (<= (cores-count cores) max-cores))
-  (let ([space (core-space cores)])
-    (for ([i (in-range 0 max-cores)])
-      (assert (<= (vector-ref space i) capacity) `cores-assert)
-      )))
 
 (define (cores-inc-space cores i add-space)
   (let ([space (core-space cores)])
@@ -59,14 +57,15 @@
                (let ([val-space (vector-ref space j)])
                  (vector-set! space j (if (= i j) 
                                           (let ([new-space (+ val-space add-space)])
-                                            (assert (<= new-space capacity)
+                                            (assert (<= new-space (vector-ref capacity i))
                                                     `(<= new-space capacity))
                                             new-space)
                                           val-space)))))
            (let* ([val-space (vector-ref space i)] 
                   [new-space (+ val-space add-space)]) ; <-- optimization
              ;(pretty-display `(cores-inc-space ,i ,add-space))
-             (assert (<= new-space capacity) `(<= new-space capacity ,new-space))
+             (assert (<= new-space (vector-ref capacity i)) 
+                     `(<= new-space capacity ,new-space))
              (vector-set! space i new-space))))
   ;(assert (<= (cores-count cores) max-cores))
   )
@@ -86,7 +85,7 @@
                      (vector-set! space j (if (= i j) 
                                               (let* ([more-space (if (set-member? val-ops op) 4 add-space)]
                                                      [new-space (+ val-space more-space)])
-                                                (assert (<= new-space capacity)
+                                                (assert (<= new-space (vector-ref capacity i))
                                                         `(<= new-space capacity))
                                                 new-space)
                                               val-space))
@@ -97,7 +96,8 @@
                       [val-ops (vector-ref costly-op i)]
                       [more-space (if (set-member? val-ops op) 4 add-space)]
                       [new-space (+ val-space more-space)])  ; <-- optimization
-                 (assert (<= new-space capacity) `(<= new-space capacity ,new-space))
+                 (assert (<= new-space (vector-ref capacity i)) 
+                         `(<= new-space capacity ,new-space))
                  (vector-set! space i new-space)
                  (vector-set! costly-op i (set-add val-ops op))
                  ))

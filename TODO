@@ -6,11 +6,8 @@ link: bad variable linkage;
   variable module: "/home/mangpo/work/2forth-interpreter/machine/programs.rkt"
   variable phase: 0
   reference in module: "/home/mangpo/work/2greensyn/src/arrayforth-optimize.rkt" in: port-number
-
-* better hueristic: consider frequency
 * iterative partition
 - reuse memory space (variables of different loops that are not on stack at the same time)
-- inline
 - clustered array and function
 - optimize MD5 more
 

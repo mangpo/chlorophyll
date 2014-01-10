@@ -1,14 +1,14 @@
 #lang racket
 
 (require "header.rkt" "arrayforth.rkt" "arrayforth-print.rkt" "arrayforth-def.rkt")
-;; (require "../../forth-interpreter/machine/cegis.rkt" 
-;;          "../../forth-interpreter/machine/state.rkt" 
-;;          "../../forth-interpreter/machine/programs.rkt" 
-;;          "../../forth-interpreter/machine/track-constant.rkt")
-(require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+(require "../../forth-interpreter/machine/cegis.rkt" 
+         "../../forth-interpreter/machine/state.rkt" 
+         "../../forth-interpreter/machine/programs.rkt" 
+         "../../forth-interpreter/machine/track-constant.rkt")
+;; (require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 
 (provide superoptimize renameindex)
 
@@ -106,8 +106,9 @@
                                                (default-state)
                                                (in-constraint (block-incnstr ast) 
                                                               (car body-list)))
-                             #:mem mem-size #:start mem-size #:bin-search `time))
+                             #:mem mem-size #:start mem-size #:bin-search `length))
 
+    (pretty-display `(result ,result))
     (define opt (if (equal? result 'timeout)
                     ast
                     (new-block result (block-in ast) out (block-cnstr ast) (block-org ast))))
@@ -153,7 +154,7 @@
                                                    (in-constraint 
                                                     (block-incnstr block-noopt)
                                                     (car body)))
-				 #:mem mem-size #:start mem-size #:bin-search `time))
+				 #:mem mem-size #:start mem-size #:bin-search `length))
 
         (cond
          [(and sliding (equal? result 'timeout))
