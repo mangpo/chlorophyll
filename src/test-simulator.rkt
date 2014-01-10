@@ -11,7 +11,7 @@
 
 ;(test "../examples/simple/array.cll"     "array" "10" 256)
 ;(test "../examples/simple/assign.cll"    "assign" "null" 512)
-;(test "../examples/simple/if.cll" "if"   "4_1" 512)
+;(test "../examples/simple/if.cll"        "if"   "4_1" 512)
 ;(test "../examples/simple/offset.cll"    "offset" "4_1" 512)
 ;(test "../examples/simple/add.cll"       "add" "200" 1024)
 ;(test "../examples/simple/function.cll"  "function" "null" 256)
@@ -39,12 +39,12 @@
 ;(test "../examples/rom/sqrt2.cll"       "sqrt2" "2" 400 #:w 3 #:h 3)
 ;(test "../examples/rom/complex3.cll"    "complex3" "1" 300 #:w 4 #:h 4)
 
-;(test "../examples/md5/md5-1.cll" "md5-1" "null" 1024 #:w 8 #:h 8)
+;(test "../examples/md5/md5-optopt.cll" "md5" "null" 1024 #:w 8 #:h 8)
 
-;(test "../examples/parallel/ssd_simple.cll" "ssd-simple" "null" 512 #:w 8 #:h 8)
+(test "../examples/parallel/ssd.cll"  "ssd" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/swap.cll" "swap" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/prefixsum.cll" "prefixsum" "null" 512 #:w 8 #:h 8)
-(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)
+;(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)
 ;(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
 
 
