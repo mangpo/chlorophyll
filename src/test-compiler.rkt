@@ -3,11 +3,11 @@
 (require "compiler.rkt")
 
 ;(compile-and-optimize "../examples/simple/test.cll" "test" 
-;                      256 "null" #:opt #t)
+;                      256 "null" #:opt #f)
 
 ;; Simple
-(compile-and-optimize "../examples/simple/array.cll" "array" 
-                      256 "null" #:w 2 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/simple/array.cll" "array" 
+;                      256 "null" #:w 2 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
 ;                      512 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/simple/function.cll" "function" 
@@ -26,7 +26,7 @@
 ;(compile-and-optimize "../examples/rom/fir.cll" "fir" 
 ;                      512 "null" #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/rom/fir0.cll" "fir0" 
-;                      150 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
+;                      256 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/rom/fir-par2.cll" "fir-par2" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../examples/rom/fir-par4.cll" "fir-par4" 
@@ -34,7 +34,7 @@
 ;(compile-and-optimize "../examples/rom/interp.cll" "interp" 
 ;                      256 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/rom/cos.cll" "cos" 
-;                      300 "null" #:w 3 #:h 3 #:opt #f)
+;                      300 "null" #:opt #f)
 ;(compile-and-optimize "../examples/rom/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 
@@ -60,8 +60,8 @@
 ;                      290 "null" #:w 5 #:h 5 #:opt #f #:partition #f #:layout #t) ;; factor = 0.4
 
 ;; MD5
-;(compile-and-optimize "../examples/md5/md5-nolayout.cll" "md5nolayout"
-;		      1024 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../examples/md5/md5-nolayout.cll" "md5nolayout"
+		      1024 "null" #:w 8 #:h 8 #:opt #f)
 
 ;; Map & Reduce
 ;(compile-and-optimize "../examples/mapreduce/map.cll" "map" 

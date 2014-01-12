@@ -4,13 +4,14 @@
 (require "../../forth-interpreter/machine/cegis.rkt" 
          "../../forth-interpreter/machine/state.rkt" 
          "../../forth-interpreter/machine/programs.rkt" 
-         "../../forth-interpreter/machine/track-constant.rkt")
+         "../../forth-interpreter/machine/track-constant.rkt"
+         "../../forth-interpreter/ArrayForth/arrayforth.rkt")
 ;; (require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 ;; (require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 ;; (require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 ;; (require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 
-(provide superoptimize renameindex)
+(provide superoptimize renameindex program-sizes)
 
 (define (out-space out cnstr)
   (define result
@@ -368,3 +369,18 @@
   (if index-map
       (renameindex-inner)
       (new-block (block-body ast) (block-in ast) (block-out ast) (block-cnstr ast) (block-org ast))))
+
+(define (program-sizes programs w h)
+  (define n (* w h))
+  (define sizes (make-vector n))
+  (for ([i (in-range n)])
+       (let ([code (with-output-to-string 
+                     (lambda () 
+                       (aforth-syntax-print (vector-ref programs i) w h 
+                                            #:id i #:original-format #f)))])
+         ;; TODO check format
+         (pretty-display ">>>>>>>>>> CODE >>>>>>>>>>>")
+         (pretty-display code)
+         (vector-set! sizes i (program-size code))))
+  (pretty-display `(sizes ,sizes))
+  sizes)

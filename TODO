@@ -1,12 +1,7 @@
 TODO
-* raco link error:
-link: bad variable linkage;
- reference to a variable that has the wrong procedure or structure-type shape
-  reference phase level: 0
-  variable module: "/home/mangpo/work/2forth-interpreter/machine/programs.rkt"
-  variable phase: 0
-  reference in module: "/home/mangpo/work/2greensyn/src/arrayforth-optimize.rkt" in: port-number
-* iterative partition
+- iterative partition
+  = partitioning synthesis
+  = heuristic
 - reuse memory space (variables of different loops that are not on stack at the same time)
 - clustered array and function
 - optimize MD5 more

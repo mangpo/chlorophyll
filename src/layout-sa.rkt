@@ -4,7 +4,7 @@
 
 (provide (all-defined-out) (struct-out layoutinfo))
 
-(struct layoutinfo (routes part2core))
+(struct layoutinfo (routes part2core core2part))
 
 (define (display-edges edges n w h)
   (pretty-display (format "~a ~a ~a" n w h))
@@ -129,5 +129,5 @@
   ;; Create map from pair of core (x1,y1) (x2,y2) to routing
   (define routing-table (gen-route flow-graph part2core w h))
 
-  (layoutinfo routing-table part2core)
+  (layoutinfo routing-table part2core (list->vector core2part))
   )

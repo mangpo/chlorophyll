@@ -15,6 +15,7 @@
          "visitor-arrayaccess.rkt"
          "visitor-codegen.rkt"
          "visitor-desugar.rkt"
+         "visitor-funccalllink.rkt"
          "visitor-linker.rkt" 
          "visitor-loopopt.rkt"
 	 "visitor-mapreduce.rkt"
@@ -26,6 +27,8 @@
          )
 
 (provide compile test-simulate parse compile-to-IR compile-and-optimize)
+
+(struct astinfo (ast info))
 
 ;; Parse HLP from file to AST
 (define (parse file)
@@ -91,17 +94,15 @@
 
 
 ;; Compile HLP read from file to per-core machine codes.
-(define (compile-to-IR file name capacity input [w 5] [h 4] 
+(define (compile-to-IR my-ast name capacity input [w 5] [h 4] 
                        #:verbose [verbose #t]
                        #:run [run #f]
 		       #:weight [weight #t]
 		       #:partition [syn #t])
   
   ;; Create output directory at the same level as input file.
-  (set-outdir file name)
 
   (define n (* w h))
-  (define my-ast (parse file))
   (define concise-printer (new printer% [out #t]))
   
   ;; generate sequantial simulation code
@@ -118,7 +119,7 @@
                                    #:capacity capacity 
                                    #:verbose #t
 				   #:synthesis syn))
-  
+
   (when verbose
     (pretty-display "--- after partition ---")
     (send my-ast pretty-print))
@@ -141,9 +142,8 @@
                                        (layoutinfo-part2core layout-res)
                                        #:verbose #t))
 
-  programs)
-
-
+  (astinfo programs (layoutinfo-core2part layout-res))
+)
 
 ;; Compile per-core HLP read from file to machine code.
 (define (compile-percore file core w h)
@@ -176,28 +176,61 @@
   
 ;; compile HLP to optimized many-core machine code
 (define (compile-and-optimize file name capacity input 
-                              #:w [w 5] #:h [h 4] 
+                              #:w [w 2] #:h [h 3] 
                               #:verbose [verbose #t]
                               #:opt [opt #t] 
 			      #:layout [layout #t] 
 			      #:partition [xxx #t]
                               #:sliding [sliding #t]
 			      #:run [run #f])
-    
-  (define programs (compile-to-IR file name capacity input w h #:verbose verbose 
-				  #:weight layout #:partition xxx))
-  (when run
-	(pretty-display (format "running ~a ..." name))
-	(simulate-multicore name input))
 
-  (define real-codes (generate-codes programs w h #f))
-  
-  (with-output-to-file #:exists 'truncate (format "~a/~a-gen1.rkt" outdir name)
-    (lambda () (aforth-struct-print real-codes)))
-  
-  (define shorter-codes (define-repeating-codes real-codes w h))
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; init ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (set-outdir file name)
+  (define ast (parse file))
+
+  (define n (* w h))
+  (define programs #f)
+  (define real-codes #f)
+  (define shorter-codes #f)
+  (define buffer (- capacity (floor (/ capacity 10))))
+  ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+  (define (iterative-refinement current-capacity)
+    (define result (compile-to-IR (clone ast) name current-capacity input w h 
+                                  #:verbose verbose 
+				  #:weight layout #:partition xxx))
+    (set! programs (astinfo-ast result))
+    (define core2part (astinfo-info result))
+    (when run
+          (pretty-display (format "running ~a ..." name))
+          (simulate-multicore name input))
+
+    (set! real-codes (generate-codes programs w h #f))
+    (set! shorter-codes (define-repeating-codes real-codes w h))
+
+    (define new-capacity (vector-copy current-capacity))
+    ;; (define sizes (program-sizes shorter-codes w h))
+    ;; (define refine #f)
+    ;; (for ([i (in-range n)])
+    ;;      (let* ([part (vector-ref core2part i)]
+    ;;             [est (vector-ref current-capacity part)]
+    ;;             [real (vector-ref sizes part)])
+    ;;        (when (> real capacity)
+    ;;              (vector-set! new-capacity part (floor (* (/ capacity real) est)))
+    ;;              (set! refine #t))))
+
+    (when #f ;;refine
+          (iterative-refinement new-capacity)))
+
+  (iterative-refinement (make-vector n capacity))
+
+  ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
   (define real-opts shorter-codes)
   
+  (with-output-to-file #:exists 'truncate (format "~a/~a-gen1.rkt" outdir name)
+                       (lambda () (aforth-struct-print real-codes)))
+
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen2.rkt" outdir name)
     (lambda () (aforth-struct-print shorter-codes)))
   
@@ -243,7 +276,8 @@
 (define testdir "../tests/run")
 
 (define (test-simulate file name input capacity w h partition)
-  (compile-to-IR file name capacity input w h
+  (set-outdir file name)
+  (compile-to-IR (parse file) name capacity input w h
                  #:run #t #:partition partition)
   (pretty-display (format "running ~a ..." name))
   (define diff (simulate-multicore name input))

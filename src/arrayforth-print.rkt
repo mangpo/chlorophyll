@@ -12,7 +12,7 @@
 ;; false -> rohin's interpreter
 (define original #t)
 
-(define (aforth-syntax-print code my-w my-h #:id [my-id 0] #:format [format #t])
+(define (aforth-syntax-print code my-w my-h #:id [my-id 0] #:original-format [format #t])
   (set! w my-w)
   (set! h my-h)
   (set! id my-id)
@@ -90,8 +90,11 @@
     (display "a! dup dup or 17 for +* unext drop drop a ")]
    
    [(funccall? x)
-    (display (funccall-name x))
-    (display " ")]
+    (define name (funccall-name x))
+    (when (or original (not (member name (list "in" "out"))))
+          (display (funccall-name x))
+          (display " "))
+    ]
    
    [(forloop? x)
     (when original (display "| cr"))
@@ -151,20 +154,22 @@
 
     (print (funcdecl-body x) "  ")
 
-    (when (equal? (funcdecl-name x) "main")
+    (when original 
+          (when (equal? (funcdecl-name x) "main")
 	  (display "warm "))
-    (when original (display "= $0 "))
+          (display "= $0 "))
     (display "; ")
     (when original (display "| cr"))
     (newline)
     ]
    
    [(vardecl? x)
-    (when original
-          (for ([val (vardecl-val x)])
-               (display val)
-               (display " , "))
-          (pretty-display "| br"))
+    (for ([val (vardecl-val x)])
+         (display val)
+         (display " , "))
+    (if original
+        (pretty-display "| br")
+        (pretty-display "green"))
     ]
 
    [(aforth? x)
@@ -176,13 +181,13 @@
           (pretty-display (format "{block ~a}" (+ block-offset (* 2 id))))
           (pretty-display (format "( -) # ~a ( id ~a mem ~a) 0 org | cr" node id memsize)))
         (begin
-          (pretty-display (format "yellow ~a node" node))
-          (pretty-display (format "~a org green" memsize))))
+          (pretty-display (format "yellow ~a node" id))
+          (pretty-display (format "0 org"))))
     
     (print (aforth-code x))
 
-    (unless original
-            (pretty-display (format ".. start main .ns 0 ~a .mem" memsize)))
+    ;; (unless original
+    ;;         (pretty-display (format ".. start main .ns 0 ~a .mem" memsize)))
 
     (newline)
     ]

@@ -317,6 +317,8 @@
 
 	  (define func-ret (lookup env ast))
           (define func-ast (get-field signature ast))
+          (when debug
+                (pretty-display (format ">> FuncCall ~a, signature = ~a" (send ast to-string) func-ast)))
 
           (define msgs (comminfo-msgs func-ret))
 	  (define placeset (comminfo-placeset func-ret))

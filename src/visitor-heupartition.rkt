@@ -4,13 +4,17 @@
 
 (provide heuristic-partitioner% merge-sym-partition)
 
-(define factor 0.95)
+;;(define factor 0.95)
 
 (define debug #t)
 
 (define (merge-sym-partition n space flow-graph capacity conflict-list)
   (define sol-map (make-hash))
   (define conflict-map (make-hash))
+  (define av-capacity 0)
+  (for ([i (in-range n)])
+       (set! av-capacity (+ av-capacity (vector-ref capacity i))))
+  (set! av-capacity (floor (/ av-capacity n)))
   
   (when debug (pretty-display `(conflict-list ,conflict-list)))
   ;; Construct conflict-map
@@ -42,12 +46,17 @@
     (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
+    (define limit
+      (cond
+       [(not (symbolic? r1)) (vector-ref capacity r1)]
+       [(not (symbolic? r2)) (vector-ref capacity r2)]
+       [else av-capacity]))
     (when (and (not (equal? r1 r2))
                (or (symbolic? r1) (symbolic? r2))
                (not (hash-has-key? conflict-map (cons r1 r2)))
                (not (hash-has-key? conflict-map (cons r2 r1)))
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
-                  (inexact->exact (floor (* capacity factor scale)))))
+                  (inexact->exact (floor (* limit scale)))))
 	  (when debug (pretty-display `(merge ,p1 ,p2)))
 	  ;(pretty-display `(parents ,r1 ,r2))
           (if (symbolic? r1)

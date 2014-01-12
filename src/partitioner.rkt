@@ -274,7 +274,8 @@
 	  (begin
 	    (solve-function decl)
 	    (when verbose (pretty-display "------------------------------------------------")))
-	  (send decl accept interpreter)))]
+	  (send decl accept interpreter)))
+    ]
 
    [else
     (pretty-display "Running heuristic partitioner ...")
@@ -290,7 +291,6 @@
 	(pretty-display (format "heuristic partition time: ~a s" 
 				(- (current-seconds) heu-start)))))])
 
-  
   (let ([evaluator (new symbolic-evaluator% [num-cores num-core])])
     (send my-ast accept evaluator)
     ;(send my-ast pretty-print)
