@@ -8,6 +8,7 @@
 (define placeset-collector%
   (class* object% (visitor<%>)
     (super-new)
+    (init-field for-conflict)
     (define functions (make-hash))
 
     (define (make-set x)

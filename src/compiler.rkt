@@ -28,7 +28,7 @@
 
 (provide compile test-simulate parse compile-to-IR compile-and-optimize)
 
-(struct astinfo (ast info))
+(struct astinfo (ast core2part part2sym))
 
 ;; Parse HLP from file to AST
 (define (parse file)
@@ -95,6 +95,8 @@
 
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile-to-IR my-ast name capacity input [w 5] [h 4] 
+                       #:refine-capacity [refine-capacity (make-vector (* w h) #f)]
+                       #:refine-part2sym [refine-part2sym (make-vector (* w h) #f)]
                        #:verbose [verbose #t]
                        #:run [run #f]
 		       #:weight [weight #t]
@@ -113,10 +115,12 @@
     (send my-ast pretty-print))
   
   ;; partition
-  (define partition (optimize-comm my-ast
+  (define concrete2sym (optimize-comm my-ast
                                    #:name name
                                    #:cores (* w h) 
                                    #:capacity capacity 
+                                   #:refine-capacity refine-capacity
+                                   #:refine-part2sym refine-part2sym
                                    #:verbose #t
 				   #:synthesis syn))
 
@@ -142,7 +146,7 @@
                                        (layoutinfo-part2core layout-res)
                                        #:verbose #t))
 
-  (astinfo programs (layoutinfo-core2part layout-res))
+  (astinfo programs (layoutinfo-core2part layout-res) concrete2sym)
 )
 
 ;; Compile per-core HLP read from file to machine code.
@@ -177,6 +181,7 @@
 ;; compile HLP to optimized many-core machine code
 (define (compile-and-optimize file name capacity input 
                               #:w [w 2] #:h [h 3] 
+                              #:soft-capacity [soft-capacity capacity]
                               #:verbose [verbose #t]
                               #:opt [opt #t] 
 			      #:layout [layout #t] 
@@ -192,15 +197,21 @@
   (define programs #f)
   (define real-codes #f)
   (define shorter-codes #f)
-  (define buffer (- capacity (floor (/ capacity 10))))
   ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
-  (define (iterative-refinement current-capacity)
-    (define result (compile-to-IR (clone ast) name current-capacity input w h 
+  (define (iterative-refinement current-capacity current-part2sym)
+    ;; Clone the AST before partitioning because partitioning mutates the AST.
+    (define result (compile-to-IR (clone ast) name soft-capacity 
+                                  input w h 
                                   #:verbose verbose 
-				  #:weight layout #:partition xxx))
+				  #:weight layout #:partition xxx
+                                  #:refine-capacity current-capacity
+                                  #:refine-part2sym current-part2sym))
     (set! programs (astinfo-ast result))
-    (define core2part (astinfo-info result))
+    (define core2part (astinfo-core2part result))
+    (define part2sym (astinfo-part2sym result))
+    (pretty-display `(core2part ,core2part))
+    (pretty-display `(part2sym ,part2sym))
     (when run
           (pretty-display (format "running ~a ..." name))
           (simulate-multicore name input))
@@ -209,20 +220,20 @@
     (set! shorter-codes (define-repeating-codes real-codes w h))
 
     (define new-capacity (vector-copy current-capacity))
-    ;; (define sizes (program-sizes shorter-codes w h))
-    ;; (define refine #f)
-    ;; (for ([i (in-range n)])
-    ;;      (let* ([part (vector-ref core2part i)]
-    ;;             [est (vector-ref current-capacity part)]
-    ;;             [real (vector-ref sizes part)])
-    ;;        (when (> real capacity)
-    ;;              (vector-set! new-capacity part (floor (* (/ capacity real) est)))
-    ;;              (set! refine #t))))
+    (define sizes (program-sizes shorter-codes w h))
+    (define refine #f)
+    (for ([core (in-range n)])
+         (let* ([part (vector-ref core2part core)]
+                [est (vector-ref current-capacity part)]
+                [real (vector-ref sizes core)])
+           (when (> real capacity)
+                 (vector-set! new-capacity part (floor (* (/ capacity real) est)))
+                 (set! refine #t))))
 
-    (when #f ;;refine
-          (iterative-refinement new-capacity)))
+    (when refine
+          (iterative-refinement new-capacity part2sym)))
 
-  (iterative-refinement (make-vector n capacity))
+  (iterative-refinement (make-vector n soft-capacity) (make-vector n #f))
 
   ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

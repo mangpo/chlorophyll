@@ -2,7 +2,6 @@
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt"
-         "parser.rkt" 
          "partition-storage.rkt"
          "visitor-collector.rkt" 
          "visitor-evaluator.rkt"
@@ -31,6 +30,8 @@
 (define (optimize-comm my-ast #:name [name "temp"]
                         #:cores [num-core 144] 
                         #:capacity [capacity 256] 
+                        #:refine-capacity [refine-capacity (make-vector num-core #f)]
+                        #:refine-part2sym [refine-part2sym (make-vector num-core #f)]
                         #:max-msgs [max-msgs #f]
 			#:synthesis [synthesis #t]
                         #:verbose [verbose #f])
@@ -101,7 +102,10 @@
   
   (define (solve-function func-ast)
     (define start (current-seconds))
-    (set! num-msg (comminfo-msgs (send func-ast accept interpreter)))
+    (define comm-result (send func-ast accept interpreter))
+    (cores-refine cores refine-capacity refine-part2sym)
+
+    (set! num-msg (comminfo-msgs comm-result))
     
     (when verbose
       (pretty-display "\n=== After interpreter ===")
@@ -252,6 +256,7 @@
                          (begin
                            (update-global-sol)
                            (clear-asserts)
+                           (comminfo-placeset comm-result)
                            )
                          (begin
                            (pretty-display e)
@@ -262,19 +267,34 @@
     
     (outter-loop)
     )
+
+  ;; For iterative refinement.
+  (define concrete2sym (make-vector num-core #f))
     
   (cond
    [synthesis
     (pretty-display "Running partitioning synthesizer ...")
+    (clear-asserts)
     (send interpreter assert-conflict my-ast)
+
+    (define placeset #f)
     (for ([decl (get-field stmts my-ast)])
 	 (if 
 	  ;;(is-a? decl FuncDecl%) ;; Use this for solving function by function
 	  (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
 	  (begin
-	    (solve-function decl)
+	    (set! placeset (solve-function decl))
 	    (when verbose (pretty-display "------------------------------------------------")))
 	  (send decl accept interpreter)))
+
+    ;; Construct concrete2sym.
+    (for ([p placeset])
+         (unless (symbolic? p) (vector-set! concrete2sym p p)))
+
+    (pretty-display global-sol)
+    (for ([sol-pair (solution->list global-sol)])
+         (when (equal? (vector-ref concrete2sym (cdr sol-pair)) #f)
+               (vector-set! concrete2sym (cdr sol-pair) (car sol-pair))))
     ]
 
    [else
@@ -307,32 +327,8 @@
     (pretty-display "\n=== After evaluate ===")
     (send my-ast accept concise-printer))
   
-  (result (evaluate-with-sol num-msg) 
-          cores 
-          my-ast)
+  concrete2sym
 )
-
-(require "visitor-linker.rkt" "visitor-tempinsert.rkt" "visitor-desugar.rkt")
- 
-(define (parse file)
-  (define concise-printer (new printer% [out #t]))
-  (define my-ast (ast-from-file file))
-  (pretty-display "--------------- ast ------------------")
-  (send my-ast pretty-print)
-  
-  (define need-temp (send my-ast accept (new linker%)))
-  (pretty-display "--------------- linker ------------------")
-  (send my-ast pretty-print)
-  
-  (send my-ast accept (new temp-inserter%))
-  (pretty-display "--------------- temp ------------------")
-  (send my-ast pretty-print)
-  
-  (send my-ast accept (new desugar%))
-  (pretty-display "--------------- desugar ------------------")
-  (send my-ast pretty-print)
-  
-  my-ast)
 
 #|
 (define t (current-seconds))

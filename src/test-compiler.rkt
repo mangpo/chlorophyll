@@ -2,8 +2,8 @@
 
 (require "compiler.rkt")
 
-;(compile-and-optimize "../examples/simple/test.cll" "test" 
-;                      256 "null" #:opt #f)
+(compile-and-optimize "../examples/simple/test.cll" "test" 
+                      20 "null" #:opt #f #:soft-capacity 24)
 
 ;; Simple
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
@@ -11,9 +11,9 @@
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
 ;                      512 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/simple/function.cll" "function" 
-;                      256 "null" #:opt #t)
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/simple/function-pair.cll" "function-pair" 
-;                      512 "null" #:opt #t)
+;                      512 "null" #:opt #f)
 ;(compile-and-optimize "../examples/simple/while.cll" "while" 
 ;                      256 "null" #:opt #t)
 
@@ -60,8 +60,8 @@
 ;                      290 "null" #:w 5 #:h 5 #:opt #f #:partition #f #:layout #t) ;; factor = 0.4
 
 ;; MD5
-(compile-and-optimize "../examples/md5/md5-nolayout.cll" "md5nolayout"
-		      1024 "null" #:w 8 #:h 8 #:opt #f)
+;(compile-and-optimize "../examples/md5/md5-nolayout.cll" "md5nolayout"
+;		      1024 "null" #:w 8 #:h 8 #:opt #f)
 
 ;; Map & Reduce
 ;(compile-and-optimize "../examples/mapreduce/map.cll" "map" 

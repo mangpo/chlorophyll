@@ -662,11 +662,11 @@
   (class Livable%
     (super-new)
     (init-field op)
-    (inherit-field pos)
+    (inherit-field pos place)
     (inherit get-place print-send-path)
 
     (define/override (clone)
-      (new Op% [op op] [pos pos]))
+      (new Op% [op op] [place place] [pos pos]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Op:~a @~a)" indent op (get-place)))
@@ -688,11 +688,12 @@
             (set! place p)))
 
     (define/override (clone)
-      (new VarDecl% [var-list var-list] [type type] [known known] [place (clone-place place)] [pos pos]))
+      (new VarDecl% [var-list var-list] [type type] [known known] 
+           [place (clone-place place)] [pos pos]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(VARDECL ~a ~a @~a (address=~a))" 
-                              indent type var-list (place-to-string place) address))
+                              indent type var-list place address))
       (print-send-path indent))
 
     (define/public (partition-mismatch)
@@ -893,7 +894,8 @@
 
     (define/override (clone)
       (new ArrayDecl% [var var] [type type] [bound bound] [cluster cluster] [init init]
-           [place-list (clone-place place-list)] [ghost ghost] [offset offset] [compress compress]))
+           [place-list (clone-place place-list)] [ghost ghost] [offset offset] 
+           [compress compress]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ARRAYDECL ~a ~a @{~a} (known=~a) (cluster=~a) (compress=~a) " 

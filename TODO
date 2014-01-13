@@ -1,5 +1,6 @@
 TODO
 - iterative partition
+  = ask Emina how to clear currently unrelated symbolic variables from the solution?
   = partitioning synthesis
   = heuristic
 - reuse memory space (variables of different loops that are not on stack at the same time)
