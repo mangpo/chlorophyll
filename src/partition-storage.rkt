@@ -38,6 +38,8 @@
 
 (define (cores-refine cores refine-capacity part2sym)
   (pretty-display `(cores-refine ,refine-capacity ,part2sym))
+  (unless part2sym
+	  (set! part2sym (make-vector max-cores #f)))
   (for ([i max-cores])
        (let ([part (vector-ref part2sym i)])
          (unless (equal? part #f)

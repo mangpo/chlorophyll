@@ -2,8 +2,10 @@
 
 (require "compiler.rkt")
 
+;(compile-and-optimize "../examples/simple/array2.cll" "array2" 
+;                      128 "null" #:opt #f #:soft-capacity 175 #:partition #t)
 (compile-and-optimize "../examples/simple/function2.cll" "function2" 
-                      128 "null" #:opt #f #:soft-capacity 175)
+                      128 "null" #:opt #f #:soft-capacity 175 #:partition #f)
 
 ;; Simple
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 

@@ -8,13 +8,13 @@
 
 (define debug #t)
 
-(define (merge-sym-partition n space flow-graph capacity conflict-list)
+(define (merge-sym-partition n space flow-graph capacity 
+			     refine-capacity refine-info 
+			     conflict-list)
   (define sol-map (make-hash))
   (define conflict-map (make-hash))
-  (define av-capacity 0)
-  (for ([i (in-range n)])
-       (set! av-capacity (+ av-capacity (vector-ref capacity i))))
-  (set! av-capacity (floor (/ av-capacity n)))
+  (define refine-part2sym (if refine-info (car refine-info) (make-vector n #f)))
+  (define part2capacity (if refine-info (cdr refine-info) (make-hash)))
   
   (when debug (pretty-display `(conflict-list ,conflict-list)))
   ;; Construct conflict-map
@@ -27,6 +27,16 @@
            (hash-set! conflict-map (cons x y) 1)
            (hash-set! conflict-map (cons y x) 1)))))
   (when debug (pretty-display `(conflict-map ,conflict-map)))
+ 
+  ;; Construct part2capacity
+  (for ([part (in-range n)])
+       (let ([sym (vector-ref refine-part2sym part)]
+	     [cap (vector-ref refine-capacity part)])
+	 (when (and (not (equal? sym #f))
+		    (or (not (hash-has-key? part2capacity sym))
+			(> (hash-ref part2capacity sym) cap)))
+		 (hash-set! part2capacity sym cap))))
+  (when debug (pretty-display `(part2capacity ,part2capacity)))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
@@ -48,9 +58,11 @@
     (define r2 (root p2))
     (define limit
       (cond
-       [(not (symbolic? r1)) (vector-ref capacity r1)]
-       [(not (symbolic? r2)) (vector-ref capacity r2)]
-       [else av-capacity]))
+       [(hash-has-key? part2capacity r1) (hash-ref part2capacity r1)]
+       [(hash-has-key? part2capacity r2) (hash-ref part2capacity r2)]
+       [else capacity]))
+    (when debug (pretty-display `(root ,r1 ,r2 ,limit)))
+
     (when (and (not (equal? r1 r2))
                (or (symbolic? r1) (symbolic? r2))
                (not (hash-has-key? conflict-map (cons r1 r2)))
@@ -59,10 +71,10 @@
                   (inexact->exact (floor (* limit scale)))))
 	  (when debug (pretty-display `(merge ,p1 ,p2)))
 	  ;(pretty-display `(parents ,r1 ,r2))
-          (if (symbolic? r1)
+          (if (or (and (hash-has-key? part2capacity r2) (symbolic? r1))
+		  (not (symbolic? r2)))
               (point r1 r2)
               (point r2 r1))
-	  (pretty-display `(after ,(root p1) ,(root p2)))
 	  ))
 
 
@@ -71,7 +83,7 @@
         (pretty-display space)
         (pretty-display `(flow-graph ,flow-graph ,(list? flow-graph))))
 
-  ;; point ot itself
+  ;; point to itself
   (for ([key (hash-keys space)])
        (hash-set! sol-map key key))
 
@@ -95,25 +107,28 @@
           (set! counter (add1 counter))
           (next-counter))
         counter))
-  ;(define more-sol (make-hash))
-  ;(pretty-display `(sol-map ,sol-map))
+  (pretty-display `(sol-map ,sol-map))
+
+  (define concrete2sym (make-vector n #f))
   (for ([key (hash-keys sol-map)])
        ;(pretty-display `(key ,key))
        (let ([val (root key)])
-         (when (symbolic? val)
-               ;; (unless (hash-has-key? more-sol val)
-               ;;         (hash-set! more-sol val (next-counter))
-               ;;         (set! counter (add1 counter)))
+         (if (symbolic? val)
+	     (begin
                (hash-set! sol-map val (next-counter))
+	       (pretty-display `(set-concrete2sym ,counter val))
+	       (vector-set! concrete2sym counter val) ;; set concrete2sym
 	       (when debug (pretty-display `(hash-set ,val ,counter)))
 	       (hash-set! sol-map counter counter)
 	       (set! counter (add1 counter))
-	       (root key))))
+	       (root key))
+	     (when (equal? (vector-ref concrete2sym val) #f)
+		   (vector-set! concrete2sym val val))))) ;; set concrete2sym
   
   (when debug
         (pretty-display "------------------ after merge sym partition ---------------------")
         (pretty-display sol-map))
-  sol-map)
+  (cons sol-map (cons concrete2sym part2capacity)))
   
 
 (define heuristic-partitioner%

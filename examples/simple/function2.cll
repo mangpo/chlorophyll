@@ -1,0 +1,15 @@
+int sum(int a,int b,int c,int d) {
+  return a + b + c + d;
+}
+
+void main() {
+  int@0 a;
+  int b;
+  int c;
+  int d;
+  a = 1;
+  b = 2;
+  c = 3;
+  d = 4;
+  out(sum(a,b,c,256 + sum(d,c,b,a)));
+}

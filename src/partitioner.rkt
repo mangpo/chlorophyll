@@ -31,7 +31,7 @@
                         #:cores [num-core 144] 
                         #:capacity [capacity 256] 
                         #:refine-capacity [refine-capacity (make-vector num-core #f)]
-                        #:refine-part2sym [refine-part2sym (make-vector num-core #f)]
+                        #:refine-part2sym [refine-part2sym #f]
                         #:max-msgs [max-msgs #f]
 			#:synthesis [synthesis #t]
                         #:verbose [verbose #f])
@@ -270,7 +270,7 @@
     )
 
   ;; For iterative refinement.
-  (define concrete2sym (make-vector num-core #f))
+  (define concrete2sym #f)
     
   (cond
    [synthesis
@@ -302,9 +302,11 @@
     (define heu-start (current-seconds))
     (define-values (space network conflict-list) 
       (send my-ast accept (new heuristic-partitioner%)))
-    (set-global-sol (sat (make-immutable-hash 
-			  (hash->list (merge-sym-partition num-core space network capacity 
-                                                           conflict-list)))))
+    (define result (merge-sym-partition num-core space network capacity 
+					refine-capacity refine-part2sym
+					conflict-list))
+    (set-global-sol (sat (make-immutable-hash (hash->list (car result)))))
+    (set! concrete2sym (cdr result))
     
     (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
       (lambda ()

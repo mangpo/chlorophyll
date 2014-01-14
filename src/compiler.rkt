@@ -96,7 +96,7 @@
 ;; Compile HLP read from file to per-core machine codes.
 (define (compile-to-IR my-ast name capacity input [w 5] [h 4] 
                        #:refine-capacity [refine-capacity (make-vector (* w h) #f)]
-                       #:refine-part2sym [refine-part2sym (make-vector (* w h) #f)]
+                       #:refine-part2sym [refine-part2sym #f]
                        #:verbose [verbose #t]
                        #:run [run #f]
 		       #:weight [weight #t]
@@ -223,8 +223,8 @@
     (define sizes (program-sizes shorter-codes w h))
     (pretty-display `(current-capacity ,current-capacity))
     (pretty-display `(sizes ,sizes))
-    ;; (pretty-display `(core2part ,core2part))
-    ;; (pretty-display `(part2sym ,part2sym))
+    (pretty-display `(core2part ,core2part))
+    (pretty-display `(part2sym ,part2sym))
     (define refine #f)
     (for ([core (in-range n)])
          (let* ([part (vector-ref core2part core)]
@@ -237,7 +237,7 @@
     (when refine
           (iterative-refinement new-capacity part2sym)))
 
-  (iterative-refinement (make-vector n soft-capacity) (make-vector n #f))
+  (iterative-refinement (make-vector n soft-capacity) #f)
 
   ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
