@@ -228,6 +228,7 @@
 			(loop))
 
 	(clear-asserts)
+	(current-solution (empty-solution))
 	(pretty-display (format "Loopbound Synthesis time = ~a" (- (current-seconds) t)))
         ]
 

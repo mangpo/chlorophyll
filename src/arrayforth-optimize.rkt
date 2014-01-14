@@ -382,5 +382,4 @@
          (pretty-display ">>>>>>>>>> CODE >>>>>>>>>>>")
          (pretty-display code)
          (vector-set! sizes i (program-size code))))
-  (pretty-display `(sizes ,sizes))
   sizes)

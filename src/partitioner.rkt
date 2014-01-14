@@ -256,6 +256,7 @@
                          (begin
                            (update-global-sol)
                            (clear-asserts)
+			   (current-solution (empty-solution))
                            (comminfo-placeset comm-result)
                            )
                          (begin
@@ -274,7 +275,6 @@
   (cond
    [synthesis
     (pretty-display "Running partitioning synthesizer ...")
-    (clear-asserts)
     (send interpreter assert-conflict my-ast)
 
     (define placeset #f)

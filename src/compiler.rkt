@@ -221,6 +221,10 @@
 
     (define new-capacity (vector-copy current-capacity))
     (define sizes (program-sizes shorter-codes w h))
+    (pretty-display `(current-capacity ,current-capacity))
+    (pretty-display `(sizes ,sizes))
+    ;; (pretty-display `(core2part ,core2part))
+    ;; (pretty-display `(part2sym ,part2sym))
     (define refine #f)
     (for ([core (in-range n)])
          (let* ([part (vector-ref core2part core)]
