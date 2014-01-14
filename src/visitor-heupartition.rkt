@@ -44,11 +44,32 @@
     (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
-    (define limit
-      (cond
-       [(hash-has-key? part2capacity r1) (hash-ref part2capacity r1)]
-       [(hash-has-key? part2capacity r2) (hash-ref part2capacity r2)]
-       [else capacity]))
+    (define limit capacity)
+    (define parent #f)
+    (define child #f)
+    (when (hash-has-key? part2capacity r1)
+	  (set! limit (hash-ref part2capacity r1))
+	  (set! parent r1)
+	  (set! child r2)
+	  )
+    (when (and (hash-has-key? part2capacity r2) (< (hash-ref part2capacity r2) limit))
+	  (set! limit (hash-ref part2capacity r2))
+	  (set! parent r2)
+	  (set! child r1)
+	  )
+
+    (when (and (symbolic? r1) (not (symbolic? r2)))
+	  (set! parent r2)
+	  (set! child r1))
+
+    (when (and (symbolic? r2) (not (symbolic? r1)))
+	  (set! parent r1)
+	  (set! child r2))
+
+    (unless parent
+	    (set! parent r1)
+	    (set! child r2))
+
     (when debug (pretty-display `(root ,r1 ,r2 ,limit)))
 
     (when (and (not (equal? r1 r2))
@@ -58,11 +79,7 @@
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
                   (inexact->exact (floor (* limit scale)))))
 	  (when debug (pretty-display `(merge ,p1 ,p2)))
-	  ;(pretty-display `(parents ,r1 ,r2))
-          (if (or (and (hash-has-key? part2capacity r2) (symbolic? r1))
-		  (not (symbolic? r2)))
-              (point r1 r2)
-              (point r2 r1))
+	  (point child parent)
 	  ))
 
 

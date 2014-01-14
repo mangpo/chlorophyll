@@ -3,7 +3,7 @@ int sum(int a,int b,int c,int d) {
 }
 
 void main() {
-  int a;
+  int@0 a;
   int b;
   int c;
   int d;
