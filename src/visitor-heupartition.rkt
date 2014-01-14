@@ -9,12 +9,10 @@
 (define debug #t)
 
 (define (merge-sym-partition n space flow-graph capacity 
-			     refine-capacity refine-info 
+			     refine-capacity part2capacity
 			     conflict-list)
   (define sol-map (make-hash))
   (define conflict-map (make-hash))
-  (define refine-part2sym (if refine-info (car refine-info) (make-vector n #f)))
-  (define part2capacity (if refine-info (cdr refine-info) (make-hash)))
   
   (when debug (pretty-display `(conflict-list ,conflict-list)))
   ;; Construct conflict-map
@@ -27,16 +25,6 @@
            (hash-set! conflict-map (cons x y) 1)
            (hash-set! conflict-map (cons y x) 1)))))
   (when debug (pretty-display `(conflict-map ,conflict-map)))
- 
-  ;; Construct part2capacity
-  (for ([part (in-range n)])
-       (let ([sym (vector-ref refine-part2sym part)]
-	     [cap (vector-ref refine-capacity part)])
-	 (when (and (not (equal? sym #f))
-		    (or (not (hash-has-key? part2capacity sym))
-			(> (hash-ref part2capacity sym) cap)))
-		 (hash-set! part2capacity sym cap))))
-  (when debug (pretty-display `(part2capacity ,part2capacity)))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
@@ -128,7 +116,7 @@
   (when debug
         (pretty-display "------------------ after merge sym partition ---------------------")
         (pretty-display sol-map))
-  (cons sol-map (cons concrete2sym part2capacity)))
+  (cons sol-map concrete2sym))
   
 
 (define heuristic-partitioner%

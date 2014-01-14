@@ -31,7 +31,7 @@
                         #:cores [num-core 144] 
                         #:capacity [capacity 256] 
                         #:refine-capacity [refine-capacity (make-vector num-core #f)]
-                        #:refine-part2sym [refine-part2sym #f]
+                        #:refine-info [refine-info #f]
                         #:max-msgs [max-msgs #f]
 			#:synthesis [synthesis #t]
                         #:verbose [verbose #f])
@@ -99,11 +99,12 @@
   ;; Place holder for solution
   (define num-msg #f)
   (define partial-hash (make-hash))
+
   
-  (define (solve-function func-ast)
+  (define (solve-function func-ast refine-capacity refine-part2capacity)
     (define start (current-seconds))
     (define comm-result (send func-ast accept interpreter))
-    (cores-refine cores refine-capacity refine-part2sym)
+    (cores-refine cores part2capacity)
 
     (set! num-msg (comminfo-msgs comm-result))
     
@@ -270,7 +271,18 @@
     )
 
   ;; For iterative refinement.
-  (define concrete2sym #f)
+  (define refine-part2sym (if refine-info (car refine-info) (make-vector num-core #f)))
+  (define part2capacity (if refine-info (cdr refine-info) (make-hash)))
+  (define new-part2sym (make-vector num-core #f))
+ 
+  ;; Construct part2capacity
+  (for ([part (in-range num-core)])
+       (let ([sym (vector-ref refine-part2sym part)]
+	     [cap (vector-ref refine-capacity part)])
+	 (when (and (not (equal? sym #f))
+		    (or (not (hash-has-key? part2capacity sym))
+			(> (hash-ref part2capacity sym) cap)))
+		 (hash-set! part2capacity sym cap))))
     
   (cond
    [synthesis
@@ -283,18 +295,18 @@
 	  ;;(is-a? decl FuncDecl%) ;; Use this for solving function by function
 	  (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
 	  (begin
-	    (set! placeset (solve-function decl))
+	    (set! placeset (solve-function decl refine-capacity part2capacity))
 	    (when verbose (pretty-display "------------------------------------------------")))
 	  (send decl accept interpreter)))
 
-    ;; Construct concrete2sym.
+    ;; Construct new-part2sym.
     (for ([p placeset])
-         (unless (symbolic? p) (vector-set! concrete2sym p p)))
+         (unless (symbolic? p) (vector-set! new-part2sym p p)))
 
     (pretty-display global-sol)
     (for ([sol-pair (solution->list global-sol)])
-         (when (equal? (vector-ref concrete2sym (cdr sol-pair)) #f)
-               (vector-set! concrete2sym (cdr sol-pair) (car sol-pair))))
+         (when (equal? (vector-ref new-part2sym (cdr sol-pair)) #f)
+               (vector-set! new-part2sym (cdr sol-pair) (car sol-pair))))
     ]
 
    [else
@@ -303,10 +315,10 @@
     (define-values (space network conflict-list) 
       (send my-ast accept (new heuristic-partitioner%)))
     (define result (merge-sym-partition num-core space network capacity 
-					refine-capacity refine-part2sym
+					refine-capacity part2capacity
 					conflict-list))
     (set-global-sol (sat (make-immutable-hash (hash->list (car result)))))
-    (set! concrete2sym (cdr result))
+    (set! new-part2sym (cdr result))
     
     (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
       (lambda ()
@@ -329,7 +341,7 @@
     (pretty-display "\n=== After evaluate ===")
     (send my-ast accept concise-printer))
   
-  concrete2sym
+  (cons new-part2sym part2capacity)
 )
 
 #|

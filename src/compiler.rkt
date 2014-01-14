@@ -115,12 +115,12 @@
     (send my-ast pretty-print))
   
   ;; partition
-  (define concrete2sym (optimize-comm my-ast
+  (define refine-info (optimize-comm my-ast
                                    #:name name
                                    #:cores (* w h) 
                                    #:capacity capacity 
                                    #:refine-capacity refine-capacity
-                                   #:refine-part2sym refine-part2sym
+                                   #:refine-info refine-part2sym
                                    #:verbose #t
 				   #:synthesis syn))
 
@@ -146,7 +146,7 @@
                                        (layoutinfo-part2core layout-res)
                                        #:verbose #t))
 
-  (astinfo programs (layoutinfo-core2part layout-res) concrete2sym)
+  (astinfo programs (layoutinfo-core2part layout-res) refine-info)
 )
 
 ;; Compile per-core HLP read from file to machine code.
@@ -231,7 +231,8 @@
                 [est (vector-ref current-capacity part)]
                 [real (vector-ref sizes core)])
            (when (> real capacity)
-                 (vector-set! new-capacity part (floor (* (/ capacity real) est)))
+                 (vector-set! new-capacity part 
+                              (floor (* (/ 75 100) (/ capacity real) est)))
                  (set! refine #t))))
 
     (when refine

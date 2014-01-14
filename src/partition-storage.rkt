@@ -36,15 +36,20 @@
   (core (make-vector len 0) (make-vector len (set)))
   )
 
-(define (cores-refine cores refine-capacity part2sym)
-  (pretty-display `(cores-refine ,refine-capacity ,part2sym))
-  (unless part2sym
-	  (set! part2sym (make-vector max-cores #f)))
-  (for ([i max-cores])
-       (let ([part (vector-ref part2sym i)])
-         (unless (equal? part #f)
-               (cores-inc-space cores part 0
-                                (vector-ref refine-capacity i))))))
+(define (cores-refine cores part2capacity)
+  (pretty-display `(cores-refine ,part2capacity))
+
+  (for ([pair (hash->list part2capacity)])
+       (cores-inc-space cores (car pair) 0 (cdr pair))))
+
+  ;; (pretty-display `(cores-refine ,refine-capacity ,part2sym))
+  ;; (unless part2sym
+  ;;         (set! part2sym (make-vector max-cores #f)))
+  ;; (for ([i max-cores])
+  ;;      (let ([part (vector-ref part2sym i)])
+  ;;        (unless (equal? part #f)
+  ;;              (cores-inc-space cores part 0
+  ;;                               (vector-ref refine-capacity i))))))
        
 
 (define (cores-count cores)
