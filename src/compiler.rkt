@@ -219,30 +219,31 @@
     (set! real-codes (generate-codes programs w h #f))
     (set! shorter-codes (define-repeating-codes real-codes w h))
 
-    (define new-capacity (vector-copy current-capacity))
-    (define sizes (program-sizes shorter-codes w h))
-    (pretty-display `(current-capacity ,current-capacity))
-    (pretty-display `(sizes ,sizes))
-    (pretty-display `(core2part ,core2part))
-    (pretty-display `(part2sym ,part2sym))
-    (pretty-display `(part2capacity ,part2capacity))
-    (define refine #f)
-    (for ([core (in-range n)])
-         (let* ([part (vector-ref core2part core)]
-		[sym (vector-ref part2sym part)]
-                [est (vector-ref current-capacity part)]
-                [real (vector-ref sizes core)])
-           (when (> real capacity)
-		 (when (or (= est capacity)
-			   (and (hash-has-key? part2capacity sym)
-				(<= (hash-ref part2capacity sym) est)))
-		       (vector-set! new-capacity part 
-				    (floor (* (/ 75 100) (/ capacity real) est)))
-		       )
-                 (set! refine #t))))
+    ;; (define new-capacity (vector-copy current-capacity))
+    ;; (define sizes (program-sizes shorter-codes w h))
+    ;; (pretty-display `(current-capacity ,current-capacity))
+    ;; (pretty-display `(sizes ,sizes))
+    ;; (pretty-display `(core2part ,core2part))
+    ;; (pretty-display `(part2sym ,part2sym))
+    ;; (pretty-display `(part2capacity ,part2capacity))
+    ;; (define refine #f)
+    ;; (for ([core (in-range n)])
+    ;;      (let* ([part (vector-ref core2part core)]
+    ;;     	[sym (vector-ref part2sym part)]
+    ;;             [est (vector-ref current-capacity part)]
+    ;;             [real (vector-ref sizes core)])
+    ;;        (when (> real capacity)
+    ;;     	 (when (or (= est capacity)
+    ;;     		   (and (hash-has-key? part2capacity sym)
+    ;;     			(<= (hash-ref part2capacity sym) est)))
+    ;;     	       (vector-set! new-capacity part 
+    ;;     			    (floor (* (/ 75 100) (/ capacity real) est)))
+    ;;     	       )
+    ;;              (set! refine #t))))
 
-    (when refine
-          (iterative-refinement new-capacity refine-info)))
+    ;; (when refine
+    ;;       (iterative-refinement new-capacity refine-info))
+    )
 
   (iterative-refinement (make-vector n soft-capacity) #f)
 

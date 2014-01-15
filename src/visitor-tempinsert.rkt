@@ -12,7 +12,7 @@
     (super-new)
     (init-field [count 0] [new-decls (list)])
     (define replace #f)
-    (define debug #f)
+    (define debug #t)
 
     (struct entry (temp type expand))
 
@@ -79,6 +79,7 @@
          (when debug (pretty-display (format "TEMPINSERT: ~a" (send ast to-string))))
          (set! replace #f)
          (define e1-ret (send (get-field e1 ast) accept this))
+         (set! replace #f)
          (define e2-ret (send (get-field e2 ast) accept this))
          (set-field! e1 ast (cdr e1-ret))
          (set-field! e2 ast (cdr e2-ret))
@@ -120,7 +121,7 @@
          (set-field! place-type ast expanded-return)
          (when (and my-arg (is-a? return-place TypeExpansion%))
                (set-field! might-need-storage ast #t))
-         
+
          ;; only insert temp for function call that is not an argument of another
          ;; function call AND return type is a tuple type.
          (if (get-field is-stmt ast)
@@ -136,7 +137,7 @@
                         (get-field expect ast)
                         return-place
                         #t)])
-                   ;; send expect = 1 so that it doesn't get expanded in desugarin step
+                   ;; send expect = 1 so that it doesn't get expanded in desugaring step
                    (set-field! expect tmp1 1)
                    (let ([stmt1 (new AssignTemp% [lhs tmp1] [rhs ast])])
                      (cons (list new-stmts stmt1) tmp2)))
@@ -164,6 +165,7 @@
          ;; will be store in an variable.
 	 (set! replace #f)
          (define lhs-ret (send (get-field lhs ast) accept this))
+	 (set! replace #f)
          (define rhs-ret (send (get-field rhs ast) accept this))
          
          (set-field! lhs ast (cdr lhs-ret))

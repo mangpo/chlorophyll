@@ -1,0 +1,134 @@
+int::2 rightrotate(int::2 x, int r) {
+  int::2 out;
+  int swap;
+  int r2;
+  int::2 x2;
+  if(r > 16) {
+    swap = x::0;
+    x::0 = x::1;
+    x::1 = swap;
+    r = r - 16;
+  }
+  x2 = x;
+  r2 = r;
+  out::0 = ((x2::1 << (16 - r2)) | (x2::0 >> r2)) & 65535;
+  out::1 = ((x2::0 << (16 - r2)) | (x2::1 >> r2)) & 65535;
+  return out;
+}
+
+int::2 rightshift(int::2 x, int r) {
+  int::2 out;
+  int swap;
+  if(r > 16) {
+    x::0 = x::1;
+    x::1 = 0;
+    r = r - 16;
+  }
+  out::0 = ((x::1 << (16 - r)) | (x::0 >> r)) & 65535;
+  out::1 = x::1 >> r;
+  return out;
+}
+
+int::2 wadd(int::2 x, int::2 y) {
+  int::2 z;
+  z::0 = x::0 + y::0;
+  z::1 = x::1 + y::1 + ((z::0 >> 16) & 3);
+  z::0 = z::0 & 65535;
+  z::1 = z::1 & 65535;
+  return z;
+}
+
+int::2 hadd(int::2 x, int::2 y) {
+  int::2 z;
+  z::0 = x::0 + y::0;
+  z::1 = x::1 + y::1 + ((z::0 >> 16) & 3);
+  z::0 = z::0 & 65535;
+  z::1 = z::1 & 65535;
+  return z;
+}
+
+int::2 add0(int::2 x, int::2 y) {
+  int::2 z;
+  z::0 = x::0 + y::0;
+  z::1 = x::1 + y::1 + ((z::0 >> 16) & 3);
+  z::0 = z::0 & 65535;
+  z::1 = z::1 & 65535;
+  return z;
+}
+
+void main() {
+  int::2 hash[8];
+  int::2 k[64];
+  int::2 message[16];
+  int::2 w[64];
+
+  int::2 a;
+  int::2 b;
+  int::2 c;
+  int::2 d;
+  int::2 e;
+  int::2 f;
+  int::2 g;
+  int::2 h;
+
+  int::2 s0;
+  int::2 s1;
+
+
+    int::2 w15;
+    int::2 w2;
+    //int::2 x1;
+    int::2 ch;
+    int::2 temp1;
+    //int::2 x0;
+    int::2 maj;
+    int::2 temp2;
+  
+  // For each 512-bit chunks
+  for(i from 0 to 16) {
+    w[i] = message[i];
+  }
+
+  for(i from 16 to 63) {
+    w15 = w[i-15];
+    w2 = w[i-2];
+    s0 = rightrotate(w15,7) ^ rightrotate(w15,18) ^ rightshift(w15,3);
+    s1 = rightrotate(w2,17) ^ rightrotate(w2,19)  ^ rightshift(w2,3);
+    w[i] = wadd(w[i-16] + w[i-7], s0 + s1);
+  }
+
+  a = hash[0];
+  b = hash[1];
+  c = hash[2];
+  d = hash[3];
+  e = hash[4];
+  f = hash[5];
+  g = hash[6];
+
+  for(i from 0 to 63) {
+    s1 = rightrotate(e,6) ^ rightrotate(e,11) ^ rightrotate(e,25);
+    ch = (e & f) ^ ((~e) & g);
+    temp1 = add0(h + s1, ch + k[i]) + w[i];
+    s0 = rightrotate(a,2) ^ rightrotate(a,13) ^ rightrotate(a,22);
+    maj = (a & b) ^ (a & c) ^ (b & c);
+    temp2 = s0 + maj;
+
+    h = g;
+    g = f;
+    f = e;
+    e = add0(d,temp1);
+    d = c;
+    c = b;
+    b = a;
+    a = add0(temp1,temp2);
+  }
+
+  hash[0] = hadd(hash[0],a);
+  hash[1] = hadd(hash[1],b);
+  hash[2] = hadd(hash[2],c);
+  hash[3] = hadd(hash[3],d);
+  hash[4] = hadd(hash[4],e);
+  hash[5] = hadd(hash[5],f);
+  hash[6] = hadd(hash[6],g);
+  hash[7] = hadd(hash[7],h);
+}

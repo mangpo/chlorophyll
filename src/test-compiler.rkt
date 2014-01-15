@@ -4,8 +4,8 @@
 
 ;(compile-and-optimize "../examples/simple/array2.cll" "array2" 
 ;                      128 "null" #:opt #f #:soft-capacity 175 #:partition #t)
-(compile-and-optimize "../examples/simple/function2.cll" "function2" 
-                      128 "null" #:opt #f #:soft-capacity 175 #:partition #t)
+;(compile-and-optimize "../examples/simple/function2.cll" "function2" 
+;                      128 "null" #:opt #f #:soft-capacity 175 #:partition #t)
 
 ;; Simple
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
@@ -62,8 +62,12 @@
 ;                      290 "null" #:w 5 #:h 5 #:opt #f #:partition #f #:layout #t) ;; factor = 0.4
 
 ;; MD5
-;(compile-and-optimize "../examples/md5/md5-nolayout.cll" "md5nolayout"
+;(compile-and-optimize "../examples/md5/md5-optopt.cll" "md5-optopt"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../examples/sha/sha.cll" "sha"
+		      512 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/sha/sha-small.cll" "small"
+;		      1024 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 
 ;; Map & Reduce
 ;(compile-and-optimize "../examples/mapreduce/map.cll" "map" 
