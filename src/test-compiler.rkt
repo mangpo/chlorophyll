@@ -63,7 +63,7 @@
 
 ;; MD5
 (compile-and-optimize "../examples/md5/md1-optopt.cll" "md1"
-		      1024 "null" #:w 8 #:h 8 #:opt #t)
+		      1024 "null" #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"
 ;		      512 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 

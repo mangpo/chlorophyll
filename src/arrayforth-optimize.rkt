@@ -160,9 +160,12 @@
         (cond
          [(and sliding (equal? result 'timeout))
           (let* ([last-block (linklist-entry (linklist-prev next))]
-                   [last-body (block-body last-block)]
-                   [last-list (if (string? last-body) (string-split last-body) last-body)])
-              (optimize-loop (- (length body) (max 1 (length last-list)))))]
+                 [last-body (block-body last-block)]
+                 [last-list (if (string? last-body) (string-split last-body) last-body)]
+                 [len (- (length body) (max 1 (length last-list)))])
+            (if (> len 0)
+                (optimize-loop len)
+                (values next block-noopt)))]
 
          [(equal? result 'timeout)
           (values next block-noopt)]
