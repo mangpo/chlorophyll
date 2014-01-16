@@ -74,10 +74,6 @@
   
   core2route)
 
-;;test
-;;(gen-route (list (edge 0 1 1) (edge 1 2 1) (edge 2 3 1))
-;;           (list 0 1 2 3) 2 2)
-
 (define (layout ast num-cores w h name weight)
   ;; Generate flow graph represented by a list of edges
   (define flow-gen (new flow-generator%))
@@ -97,6 +93,8 @@
     (lambda () 
       (define fix (make-vector (* w h)))
       (vector-set! fix (* w 2) (* w h))
+      ;; (vector-set! fix (* w 3) 5)
+      ;; (vector-set! fix (add1 (* w 2)) 6)
       (for ([i (in-range (* w h))])
            (display (vector-ref fix i)) (display " "))
       (newline)))
