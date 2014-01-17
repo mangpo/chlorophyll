@@ -1,8 +1,6 @@
 TODO
-- iterative partition
-  = ask Emina how to clear currently unrelated symbolic variables from the solution?
-  = partitioning synthesis
-  = heuristic
+- after rohin fixes "if": test iterative refinement on md5
+- after rohin fixes (compile-to-string "+"): remove condition in programs.rkt: compile-to-string-wrap
 - reuse memory space (variables of different loops that are not on stack at the same time)
 - clustered array and function
 - optimize MD5 more
