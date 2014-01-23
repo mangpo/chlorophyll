@@ -62,7 +62,7 @@
 ;                      290 "null" #:w 5 #:h 5 #:opt #f #:partition #f #:layout #t) ;; factor = 0.4
 
 ;; MD5
-(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-circular2"
+(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-circular-goodlayout"
 		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"
 ;		      512 "null" #:w 8 #:h 8 #:opt #f #:partition #f)

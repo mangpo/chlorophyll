@@ -10,7 +10,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field [functions (make-hash '(("in" . ()) ("out" . ())))])
-    (define debug #f)
+    (define debug #t)
 
     (define (cross-product-raw x y)
       (when debug (pretty-display `(cross-product-raw ,x ,y)))
@@ -56,28 +56,21 @@
 
        [(is-a? ast FuncCall%)
         (when debug (pretty-display (format "FLOW: FuncCall ~a" (send ast to-string))))
-	(define interface
-	  (let ([edges (list)]
-		[func-ast (get-field signature ast)])
-            
-            (when accurate-flow
-              (for ([arg (get-field args ast)])
-                (when (list? (get-field place-type arg))
-                  ;; Proxy return: need to include flow edges here
-                      (set! edges (append (hash-ref functions (get-field name arg)))))))
-            
-	    (for ([param (get-field stmts (get-field args func-ast))] ; signature
-		  [arg   (flatten-arg (get-field args ast))]) ; actual
-                 
-                 (when debug (pretty-display (format ">> ARG ~a: visit ~a" (send ast to-string)
-						     (send arg to-string))))
-		 (set! edges (append (cross-product param arg) edges))
-		 (set! edges (append (send arg accept this) edges)))
-                 edges))
-        
-        (if accurate-flow
-            (append interface (hash-ref functions (get-field name ast)))
-            interface)
+        (let ([edges (if accurate-flow
+			 (hash-ref functions (get-field name ast))
+			 (list))]
+	      [func-ast (get-field signature ast)])
+	  
+	  (for ([arg (get-field args ast)])
+	       (when debug (pretty-display (format ">> ARG ~a: visit ~a" (send ast to-string)
+						   (send arg to-string))))
+	       (set! edges (append (send arg accept this) edges)))
+	  
+	  (for ([param (get-field stmts (get-field args func-ast))] ; signature
+		[arg   (flatten-arg (get-field args ast))]) ; actual
+	       
+	       (set! edges (append (cross-product param arg) edges)))
+	  edges)
         ]
 
        [(is-a? ast ProxyReturn%)
