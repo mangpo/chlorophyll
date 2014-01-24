@@ -20,7 +20,7 @@
     (super-new)
     ;; mem-p = data mem pointer
     ;; mem-rp = data mem reduced pointer
-    ;; max-temp = number of temp mem neede
+    ;; max-temp = number of temp mem needed
     (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] 
                 [max-temp 0] [max-iter 0])
 
@@ -56,15 +56,18 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
-        (when debug 
-              (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast))))
+        ;(when debug 
+              (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast)))
+              ;)
         (define reg-for (get-field address ast))
 	(for ([var (get-field var-list ast)])
              (cond 
               [(equal? var reg-for)
+               (pretty-display `(variable ,var t))
                (dict-set! mem-map var 't)]
 
               [(need-mem? var)
+               (pretty-display `(variable ,var mem ,mem-rp))
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
                (set-field! address ast (gen-mem mem-p mem-rp))
                (set! mem-p (add1 mem-p))
@@ -74,8 +77,10 @@
                (define type (get-field type ast))
                (if (pair? type)
                    (when (> (cdr type) 0)
+                         (pretty-display `(variable ,var temp ,(cdr type)))
                          (set! max-temp (cdr type)))
                    (when (= max-temp 0)
+                         (pretty-display `(variable ,var temp 1))
                          (set! max-temp 1)))
                        
                ]))
