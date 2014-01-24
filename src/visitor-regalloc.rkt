@@ -175,6 +175,7 @@
              (send decl accept this))
         (send (get-field body ast) accept this)
 
+        (pretty-display `(regalloc hash->list ,(hash->list var-map)))
         (define var
           (car (foldl (lambda (x res) (if (> (cdr x) (cdr res)) x res))
                       (cons #f -100) (hash->list var-map))))
