@@ -1,6 +1,9 @@
 TODO
+- check if programs fit on cores
+- tikhon's sketch
 - optimize entire function (test first)
 - circular array (test first)
+- hash->list core 18: issue with different racket versions (i think)
 
 FASTER PARTITIONER
 - infer each function first (see issue about racket)
