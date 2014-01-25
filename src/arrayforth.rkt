@@ -7,7 +7,7 @@
 (struct block (body in out cnstr incnstr org) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
-(struct funcdecl (name body) #:mutable)
+(struct funcdecl (name body simple) #:mutable)
 (struct vardecl (val))
 (struct forloop (init body iter from to) #:mutable)
 (struct ift (t))
@@ -441,7 +441,7 @@
    [(funcdecl? x)
     (pretty-display (format "~a(funcdecl \"~a\""  indent (funcdecl-name x)))
     (aforth-struct-print (funcdecl-body x) (inc indent))
-    (pretty-display (format "~a)" indent))]
+    (pretty-display (format "~a~a)" indent (funcdecl-simple x)))]
 
    [(vardecl? x)
     (pretty-display (format "~a(vardecl '~a)" indent (vardecl-val x)))]

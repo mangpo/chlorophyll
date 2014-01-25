@@ -155,7 +155,7 @@
 
     (define (define-if body)
       (define name (get-if-name))
-      (define new-if (funcdecl name body))
+      (define new-if (funcdecl name body #f))
       (set! helper-funcs (cons new-if helper-funcs))
       (list (funccall name)))
 
@@ -722,7 +722,7 @@
             (set-restrict-mem! (block-cnstr b) #f)
             (list b)))
         
-        (funcdecl name (prog-append args-ret body-ret return-ret))]
+        (funcdecl name (prog-append args-ret body-ret return-ret) (get-field simple ast))]
 
        [(is-a? ast Program%)
         (when debug 

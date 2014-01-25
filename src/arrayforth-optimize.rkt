@@ -13,13 +13,13 @@
 
 (provide superoptimize renameindex program-sizes)
 
-(define (out-space out cnstr)
+(define (out-space out cnstr #:mem [mem #t])
   (define result
     (if (= out 0)
 	(constraint s t r)
 	(constraint (data out) s t r)))
   (struct-copy progstate result 
-               [memory (restrict-mem cnstr)] 
+               [memory (and mem (restrict-mem cnstr))] 
                [a (restrict-a cnstr)]
                [b (restrict-b cnstr)]
                [r #t]
@@ -43,6 +43,7 @@
 (define index-map #f)
 (define mem-size #f)
 (define bit #f)
+(define simple #f)
 
 (define name #f)
 (define w #f)
@@ -149,7 +150,9 @@
         (define result (optimize (string-join body)
 				 #:f18a #f
 				 #:num-bits max-bit #:name name
-				 #:constraint (out-space out cnstr)
+				 ;; Not constraining mem when len > block-limit because
+				 ;; we optimize the entire function.
+				 #:constraint (out-space out cnstr #:mem (<= len block-limit))
                                  #:start-state (if (empty? body)
                                                    (default-state)
                                                    (in-constraint 
@@ -162,9 +165,11 @@
           (let* ([last-block (linklist-entry (linklist-prev next))]
                  [last-body (block-body last-block)]
                  [last-list (if (string? last-body) (string-split last-body) last-body)]
-                 [len (- (length body) (max 1 (length last-list)))])
-            (if (> len 0)
-                (optimize-loop len)
+                 [new-len (if (> len block-limit)
+			      (raise "Optimizing entire function takes too long.")
+			      (- (length body) (max 1 (length last-list))))])
+            (if (> new-len 0)
+                (optimize-loop new-len)
                 (values next block-noopt)))]
 
          [(equal? result 'timeout)
@@ -174,7 +179,8 @@
           (set-block-body! block-noopt result)
           (values next block-noopt)]))
 
-      (define-values (next opt) (optimize-loop block-limit))
+      ;; If simple function, set limit to more than max.
+      (define-values (next opt) (optimize-loop (if simple 1000 block-limit)))
       (pretty-display "OPTMIZE: DONE")
       (define renamed (renameindex opt mem-size index-map))
       (pretty-display "RENAME: DONE")
@@ -269,9 +275,11 @@
            (superoptimize-inner (-iftf-f ast)))]
 
    [(funcdecl? ast)
+    (set! simple (funcdecl-simple ast))
     ;(pretty-display "superoptimize: funcdecl")
     (funcdecl (funcdecl-name ast)
-              (superoptimize-inner (funcdecl-body ast)))]
+              (superoptimize-inner (funcdecl-body ast))
+	      (funcdecl-simple ast))]
 
    [(vardecl? ast)
     ;(pretty-display "superoptimize: vardel")

@@ -47,10 +47,10 @@ int::2@(0,1) fff(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
 int::2@(0,1) ggg(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
   return (d &@(0,1) b) |@(0,1) ((d ^@(0,1) 65535) &@(0,1) c);
 }
-int::2@(0,1) iii(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
+int::2@(0,1) hhh(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
   return b ^@(0,1) c ^@(0,1) d;
 }
-int::2@(0,1) jjj(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
+int::2@(0,1) iii(int::2@(0,1) b, int::2@(0,1) c, int::2@(0,1) d) {
   return c ^@(0,1) (b |@(0,1) (d ^@(0,1) 65535));
 }
 
@@ -107,7 +107,7 @@ void main() {
     g = 5;
     inc = 3;
     for(i from 32 to 48) { 
-      temp = iii(b,c,d);
+      temp = hhh(b,c,d);
       xxx = sumrotate(a,b,temp,k[i],message[g],r[i]);
 	    a = d;
 	    d = c;
@@ -118,7 +118,7 @@ void main() {
     g = 0;
     inc = 7;
     for(i from 48 to 64) { 
-      temp = jjj(b,c,d);
+      temp = iii(b,c,d);
       xxx = sumrotate(a,b,temp,k[i],message[g],r[i]);
 	    a = d;
 	    d = c;

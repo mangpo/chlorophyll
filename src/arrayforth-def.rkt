@@ -89,7 +89,8 @@
 
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
-              (aforth-linklist (funcdecl-body ast)))
+              (aforth-linklist (funcdecl-body ast))
+	      (funcdecl-simple ast))
     ]
 
    [(aforth? ast)
@@ -135,7 +136,7 @@
   ;; insert new funcdecl into program
   (define def-entry (first-funcdecl-linklist (aforth-code program)))
   (define pre-entry (linklist-prev def-entry))
-  (define new-entry (linklist pre-entry (funcdecl new-name head) def-entry))
+  (define new-entry (linklist pre-entry (funcdecl new-name head #f) def-entry))
   (set-linklist-next! pre-entry new-entry)
   (set-linklist-prev! def-entry new-entry))
 

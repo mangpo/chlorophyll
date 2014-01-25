@@ -1,6 +1,7 @@
 #lang racket
 
-(require "header.rkt" "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
+(require "header.rkt" "ast.rkt" "ast-util.rkt" "visitor-interface.rkt"
+	 "space-estimator.rkt")
 
 (provide (all-defined-out))
 
@@ -15,16 +16,63 @@
       (regexp-match #rx"_cond" name)
       (regexp-match #rx"#return" name)))
 
+(define complexity-estimator%
+  (class* object% (visitor<%>)
+    (super-new)
+
+    (define/public (visit ast)
+      (cond
+       [(or (is-a? ast VarDecl%) (is-a? ast ArrayDecl%) (is-a? ast Var%))
+	0]
+       
+       [(is-a? ast Num%) 1]
+       
+       [(is-a? ast UnaExp%)
+	(+ (send (get-field e1 ast) accept this)
+	   (est-space (get-field op (get-field op ast))))]
+       
+       [(is-a? ast BinExp%)
+	(+ (send (get-field e1 ast) accept this)
+	   (send (get-field e2 ast) accept this)
+	   (est-space (get-field op (get-field op ast))))]
+       
+       [(is-a? ast Recv%) 3]
+       
+       [(is-a? ast Send%) 
+	(+ 3 (send (get-field data ast) accept this))]
+       
+       [(is-a? ast Assign%)
+	(+ (send (get-field lhs ast) accept this)
+	   (send (get-field rhs ast) accept this))]
+       
+       [(is-a? ast Return%)
+	(if (list? (get-field val ast))
+	    (foldl (lambda (v all) (+ all (send v accept this))) 0 (get-field val ast))
+	    (send (get-field val ast) accept this))]
+       
+       [(is-a? ast Block%)
+	(foldl (lambda (stmt all) (+ all (send stmt accept this))) 0 (get-field stmts ast))]
+
+       [(is-a? ast FuncDecl%)
+	(send (get-field body ast) accept this)]
+       
+       [else 
+	1000]))))
+
 (define memory-mapper%
   (class* object% (visitor<%>)
     (super-new)
     ;; mem-p = data mem pointer
     ;; mem-rp = data mem reduced pointer
     ;; max-temp = number of temp mem needed
-    (init-field [mem-map (make-hash)] [mem-p 0] [mem-rp 0] [iter-p 0] 
+    (init-field [mem-map (make-hash)] 
+		[mem-p 0] [mem-rp 0] [max-mem-p 0] [max-mem-rp 0]
+		[iter-p 0] 
                 [max-temp 0] [max-iter 0])
 
     (define debug #f)
+    
+    (define complexity-estimator (new complexity-estimator%))
 
     (define (push-scope)
       (let ([new-env (make-hash)])
@@ -63,11 +111,11 @@
 	(for ([var (get-field var-list ast)])
              (cond 
               [(equal? var reg-for)
-               (pretty-display `(variable ,var t))
+               (when debug (pretty-display `(variable ,var t)))
                (dict-set! mem-map var 't)]
 
               [(need-mem? var)
-               (pretty-display `(variable ,var mem ,mem-rp))
+               (when debug (pretty-display `(variable ,var mem ,mem-rp)))
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
                (set-field! address ast (gen-mem mem-p mem-rp))
                (set! mem-p (add1 mem-p))
@@ -77,10 +125,10 @@
                (define type (get-field type ast))
                (if (pair? type)
                    (when (> (cdr type) 0)
-                         (pretty-display `(variable ,var temp ,(cdr type)))
+                         (when debug (pretty-display `(variable ,var temp ,(cdr type))))
                          (set! max-temp (cdr type)))
                    (when (= max-temp 0)
-                         (pretty-display `(variable ,var temp 1))
+                         (when debug (pretty-display `(variable ,var temp 1)))
                          (set! max-temp 1)))
                        
                ]))
@@ -205,19 +253,33 @@
 	]
 
        [(is-a? ast FuncDecl%)
+	(define complexity (send ast accept complexity-estimator))
+	(when debug (pretty-display `(complexity!!!!!!!!!!!!! ,(get-field name ast) ,complexity)))
+	(define current-mem-p mem-p)
+	(define current-mem-rp mem-rp)
 	;; no memory for return
 	(push-scope)
 	(for ([arg (reverse (get-field stmts (get-field args ast)))])
 	     (send arg accept this))
 	(send (get-field body ast) accept this)
 	(pop-scope)
+
+	(when (> mem-p max-mem-p)
+	      (set! max-mem-p mem-p)
+	      (set! max-mem-rp mem-rp))
+
+	;; We will optimize the entire function. No memory needed
+	(when (and (not (equal? (get-field name ast) "main")) (< complexity 10))
+	      (set! mem-p current-mem-p)
+	      (set! mem-rp current-mem-rp)
+	      (set-field! simple ast #t))
 	]
 	
        [(is-a? ast Program%)
         (when debug (pretty-display (format "MEMORY: Program")))
 	(for ([decl (get-field stmts ast)])
 	     (send decl accept this))
-	(cons (meminfo (+ mem-p max-temp) (+ mem-rp max-temp) null) max-iter)]
+	(cons (meminfo (+ max-mem-p max-temp) (+ max-mem-rp max-temp) null) max-iter)]
 
        [(is-a? ast Block%)
 	(for ([stmt (get-field stmts ast)])

@@ -1,4 +1,4 @@
-#lang s-exp rosette
+#lang racket
 
 (provide (all-defined-out))
 

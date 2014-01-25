@@ -1180,7 +1180,7 @@
 (define FuncDecl%
   (class Scope%
     (super-new)
-    (init-field name args body return [temps (list)] [regs 0])
+    (init-field name args body return [temps (list)] [regs 0] [simple #f])
     (inherit-field pos body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%
@@ -1197,7 +1197,7 @@
            [body #f]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "(FUNCTION ~a" name))
+      (pretty-display (format "(FUNCTION ~a simple=~a" name simple))
       (print-body-placeset indent)
       (when return
             (send return pretty-print (inc indent)))

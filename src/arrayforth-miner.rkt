@@ -102,14 +102,16 @@
     (define seqs (set))
     (define lens (list))
     (define func #f)
+    (define collect #f)
 
     (define/public (visit ast)
       (cond
        [(linklist? ast)
         (define-values (next insts) (collect-from-block ast func))
 	;(pretty-display (format "FUNC: ~a, SEQ: ~a" func insts))
-        (set! seqs (set-add seqs insts))
-	(set! lens (cons (length insts) lens))
+	(when collect
+	      (set! seqs (set-add seqs insts))
+	      (set! lens (cons (length insts) lens)))
         (send this visit (linklist-entry next))
         (send this visit (linklist-next next))]
 
@@ -139,6 +141,8 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
+	(set! collect (not (funcdecl-simple ast)))
+
 	(set! func (funcdecl-name ast))
 	(send this visit (funcdecl-body ast))
 	(set! func #f)
@@ -177,6 +181,7 @@
     (init-field exp)
     (define result (list)) ;; list of (linklist . start-pos)
     (define func #f)
+    (define collect #t)
 
     (define/public (visit ast)
       (define (add-to-result insts)
@@ -204,7 +209,8 @@
       (cond
        [(linklist? ast)
         (define-values (next insts) (collect-from-block ast func))
-        (add-to-result insts)
+	(when collect
+	      (add-to-result insts))
 
         (send this visit (linklist-entry next))
         (send this visit (linklist-next next))]
@@ -228,6 +234,7 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
+	(set! collect (not (funcdecl-simple ast)))
 	(set! func (funcdecl-name ast))
 	(send this visit (funcdecl-body ast))
 	(set! func #f)

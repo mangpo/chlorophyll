@@ -1,9 +1,10 @@
 TODO
-- check if programs fit on cores
-- tikhon's sketch
-- optimize entire function (test first)
-- circular array (test first)
+- optimize entire function + remove unused memory (5%)
+- circular array (1%)
+- other optimizations: leftrotate, dce, instr fetch, first order funcs
 - hash->list core 18: issue with different racket versions (i think)
+- no need to use lock in cache.rkt
+- why compiling md5 is so slow
 
 FASTER PARTITIONER
 - infer each function first (see issue about racket)
