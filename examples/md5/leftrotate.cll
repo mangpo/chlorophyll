@@ -1,0 +1,53 @@
+// comment
+
+int::2@(2, 2) leftrotate2(int::2@(6,7) x, int@8 r) {
+  int::2@(2, 2) output;
+  int@8 swap;
+  if(r >@8 16) {
+    swap = x::0;
+    x::0 = x::1;
+    x::1 = swap;
+    r = r -@8 16;
+  }
+  r = 16 -@8 r;
+
+  int::2@(6,6) y0;
+  int::2@(7,7) y1;
+  y0 = x::0 >>>@6 r;
+  y1 = x::1 >>>@7 r;
+  output::0 = (y1::0 +@6 (y0::1 >>@6 2)) &@6 65535;
+  output::1 = (y0::0 +@7 (y1::1 >>@7 2)) &@7 65535;
+  return output;
+}
+
+int::2@(2, 2) leftrotate1(int::2@(0,0) x, int@0 r) {
+  int::2@(2, 2) output;
+  int@0 swap;
+  int@1 r2;
+  int::2@(1,1) x2;
+  if(r >@0 16) {
+    swap = x::0;
+    x::0 = x::1;
+    x::1 = swap;
+    r = r -@0 16;
+  }
+  x2 = x;
+  r2 = r;
+  output::0 = ((x2::1 >>@1 (16 -@1 r2)) |@1 (x2::0 <<@1 r2)) &@1 65535;
+  output::1 = ((x2::0 >>@1 (16 -@1 r2)) |@1 (x2::1 <<@1 r2)) &@1 65535;
+  return output;
+}
+
+void main() {
+  int::2 out1;
+  int::2 out2;
+  int::2 input;
+  input::0 = 8614;
+  input::1 = 23318;
+  out1 = leftrotate1(input, 23);
+  out2 = leftrotate2(input, 23);
+  out(out1::0);
+  out(out1::1);
+  out(out2::0);
+  out(out2::1);
+}

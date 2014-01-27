@@ -166,7 +166,7 @@
                  [last-body (block-body last-block)]
                  [last-list (if (string? last-body) (string-split last-body) last-body)]
                  [new-len (if (> len block-limit)
-			      (raise "Optimizing entire function takes too long.")
+			      block-limit
 			      (- (length body) (max 1 (length last-list))))])
             (if (> new-len 0)
                 (optimize-loop new-len)

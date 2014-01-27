@@ -108,6 +108,15 @@
                          (gen-block "dup" 1 2)))
               (gen-block "drop" 1 0))]
 
+       [(equal? op ">>>") 
+        (list (ift 
+               (save-a
+                (list (gen-block "-1" "+" "push" "push" "dup" "dup" "or" "dup" "a!" "pop" "pop" 2 3)
+                      (forloop (gen-block) (list (gen-block "+*" 1 1)) #f #f #f)
+                      (gen-block "push" "drop" "pop" "a" "dup" 2 3))))
+              (gen-block "drop" 1 0))]
+        
+
        [(equal? op "&") (list (gen-block "and" 2 1))]
        [(equal? op "^") (list (gen-block "or" 2 1))]
        [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]

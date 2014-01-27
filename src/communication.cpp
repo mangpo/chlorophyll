@@ -106,6 +106,13 @@ long2 mult2(long x, long y) {
   return long2(h,l);
 }
 
+long2 rightrot(long x, long y) {
+  long h, l;
+  h = x >> y;
+  l = (x << (18 - y)) & 0x3ffff;
+  return long2(h,l);
+}
+
 ////////////////////////////////////////////////////////////////////
 
 int channel[N];

@@ -5,6 +5,7 @@ TODO
 - hash->list core 18: issue with different racket versions (i think)
 - no need to use lock in cache.rkt
 - why compiling md5 is so slow
+- modify the language to aid synthesis-based compiler
 
 FASTER PARTITIONER
 - infer each function first (see issue about racket)

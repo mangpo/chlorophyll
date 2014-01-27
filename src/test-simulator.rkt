@@ -20,6 +20,7 @@
 ;(test "../examples/simple/pair2.cll"     "pair2" "null" 512)
 ;(test "../examples/simple/while.cll"     "while" "10" 256)
 ;(test "../examples/simple/unroll.cll"    "unroll" "null" 1024 #:w 2 #:h 3)
+;(test "../examples/simple/extendshift.cll"     "extendshift" "null" 256)
 
 ;(test "../examples/matrixmultiply/matrixmult6.cll"     "matrixmult6" "72" 500) ;capacity issue
 ;(test "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" "null" 500)
@@ -40,8 +41,10 @@
 ;(test "../examples/rom/complex3.cll"    "complex3" "1" 300 #:w 4 #:h 4)
 
 ;(test "../examples/md5/md5-optopt.cll" "md5" "null" 1024 #:w 8 #:h 8)
+(test "../examples/md5/md1-rightrot.cll" "md5-rightrot" "null" 1024 #:w 8 #:h 8)
+;(test "../examples/md5/leftrotate.cll" "leftrotate" "null" 1024 #:w 3 #:h 4)
 
-(test "../examples/parallel/ssd.cll"  "ssd" "null" 512 #:w 8 #:h 8)
+;(test "../examples/parallel/ssd.cll"  "ssd" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/swap.cll" "swap" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/prefixsum.cll" "prefixsum" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)

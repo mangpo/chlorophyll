@@ -31,7 +31,7 @@
   (number10 (number digit10))
   (arith-op1 (re-or "*" "*/17" "*/16" "/" "%" "/%" "*:2"))
   (arith-op2 (re-or "+" "-" "~"))
-  (arith-op3 (re-or "<<" ">>" ">>:2"))
+  (arith-op3 (re-or "<<" ">>" ">>:2" ">>>"))
   (rel-op (re-or "<" "<=" ">=" ">"))
   (eq-op (re-or "==" "!="))
   (identifier-characters (re-or (char-range "A" "Z") (char-range "a" "z")))

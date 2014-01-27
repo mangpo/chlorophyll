@@ -132,10 +132,11 @@
         [(is-a? ast BinExp%)
 	 (define op (get-field op (get-field op ast)))
          (cond
-          [(member op (list "/%" "*:2"))
-           (if (equal? op "/%")
-               (display "divmod(")
-               (display "mult2("))
+          [(member op (list "/%" "*:2" ">>>"))
+           (cond
+            [(equal? op "/%") (display "divmod(")]
+            [(equal? op "*:2") (display "mult2(")]
+            [(equal? op ">>>") (display "rightrot(")])
            (send (get-field e1 ast) accept this)
            (display ", ")
            (send (get-field e2 ast) accept this)

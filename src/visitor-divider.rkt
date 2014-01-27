@@ -400,7 +400,7 @@
 		(set-field! e2 ast (pop-stack place))
 		(set-field! e1 ast (pop-stack place)))
 
-        (when (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2"))
+        (when (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2" ">>>"))
               (let ([r (new ProxyReturn% [place-type place])])
                 (set-field! place-type ast (list r r))))
 	

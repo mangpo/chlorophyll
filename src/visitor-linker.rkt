@@ -289,7 +289,7 @@
         
         [(is-a? ast BinExp%)
          ;(pretty-display (format "LINKER: BinExp ~a" (send ast to-string)))
-	 (when (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2"))
+	 (when (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2" ">>>"))
 	       (if (= entry 2)
 		   (set! entry 1)
 		   (raise (format "visitor-linker: return value entries mismatched at ~a l:~a"

@@ -85,7 +85,7 @@
          (set-field! e2 ast (cdr e2-ret))
 
          (define place (get-field place (get-field op ast)))
-         (if (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2"))
+         (if (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2" ">>>"))
              (let-values 
                  ([(tmp1 tmp2) 
                    (get-temp "int" 2 2 (new TypeExpansion%
