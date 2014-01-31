@@ -115,7 +115,7 @@
 		 (save-a
 		  (list (gen-block-a "-1" "+" "push" "push" "dup" "dup" "or" "dup" "a!" "pop" "pop" 
 				     2 3)
-			(forloop (gen-block) (list (gen-block "+*" 1 1)) #f #f #f)
+			(forloop (gen-block) (list (gen-block-a "+*" 1 1)) #f #f #f)
 			(gen-block "push" "drop" "pop" "a" 2 2)))
 		 (list (gen-block "dup" "or" 1 1))
 		 )))]
