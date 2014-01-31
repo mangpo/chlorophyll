@@ -104,9 +104,9 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDecl%)
-        ;(when debug 
+        (when debug 
               (pretty-display (format "\nMEMORY: VarDecl ~a" (get-field var-list ast)))
-              ;)
+              )
         (define reg-for (get-field address ast))
 	(for ([var (get-field var-list ast)])
              (cond 

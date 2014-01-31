@@ -38,7 +38,6 @@
     (default-state (a (port-number data)))]
    [else
     (default-state)]))
-  
 
 (define index-map #f)
 (define mem-size #f)
@@ -147,17 +146,18 @@
         (define body (block-body block-noopt))
         (pretty-display `(optimize-loop ,len ,body ,sliding))
         (define cnstr (block-cnstr block-noopt))
+        (define start-state (if (empty? body)
+                                (default-state)
+                                (in-constraint 
+                                 (block-incnstr block-noopt)
+                                 (car body))))
         (define result (optimize (string-join body)
 				 #:f18a #f
 				 #:num-bits max-bit #:name name
 				 ;; Not constraining mem when len > block-limit because
 				 ;; we optimize the entire function.
 				 #:constraint (out-space out cnstr #:mem (<= len block-limit))
-                                 #:start-state (if (empty? body)
-                                                   (default-state)
-                                                   (in-constraint 
-                                                    (block-incnstr block-noopt)
-                                                    (car body)))
+                                 #:start-state (constrain-stack start-state simple)
 				 #:mem mem-size #:start mem-size #:bin-search `length))
 
         (cond

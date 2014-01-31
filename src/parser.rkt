@@ -11,6 +11,7 @@
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
+                               ASSUME
 			       READ WRITE
                                PLACE HERE ANY GHOST))
 
@@ -54,6 +55,7 @@
    ("else"  (token-ELSE))
    ("from"  (token-FROM))
    ("to"    (token-TO))
+   ("assume" (token-ASSUME))
    ("place" (token-PLACE))
    ("ghost" (token-GHOST))
    ("here"  (token-HERE))
@@ -227,6 +229,13 @@
 	 ((READ LPAREN VAR RPAREN)   (new Recv% [port (string->symbol $3)]))
 	 ((WRITE LPAREN VAR COMMA exp RPAREN)  
 	  (new Send% [port (string->symbol $3)] [data $5])))
+
+    (assume
+         ((ASSUME LPAREN exp RPAREN SEMICOL) (new Assume% [e1 $3])))
+
+    (assumes
+         (() (list))
+         ((assume assumes) (cons $1 $2)))
 
     (exp ((lit) $1)
 	 ((ele) $1)
@@ -422,28 +431,11 @@
 
     (block ((stmts) (new Block% [stmts $1])))
 
-    ;; (var-decls
-    ;;      (() (list))
-    ;;      ((var-decl) (list $1))
-    ;;      ((var-decl var-decls) (cons $1 $2)))
-
-    ;; (decl-block ((var-decls) (new Block% [stmts $1])))
-
-    ;; (func-decl
-    ;;      ((data-place-type VAR LPAREN params RPAREN LBRACK var-decls stmts RBRACK)
-    ;;       (new FuncDecl% [name $2] [args (new Block% [stmts $4])] 
-    ;;            [body (new Block% [stmts (list 
-    ;;                                      (new Block% [stmts $7])
-    ;;                                      (new Block% [stmts $8]))])]
-    ;;            [return (and (not (equal? (car $1) "void"))
-    ;;                         (new ReturnDecl% [var-list (list "#return")] 
-    ;;                              [type (car $1)] [place (cdr $1)]))]
-    ;;            [pos $2-start-pos])))
-
     (func-decl
-         ((data-place-type VAR LPAREN params RPAREN LBRACK stmts RBRACK)
+         ((data-place-type VAR LPAREN params RPAREN LBRACK assumes stmts RBRACK)
           (new FuncDecl% [name $2] [args (new Block% [stmts $4])] 
-               [body (new Block% [stmts $7])]
+               [precond (new Block% [stmts $7])]
+               [body (new Block% [stmts $8])]
                [return (and (not (equal? (car $1) "void"))
                             (new ReturnDecl% [var-list (list "#return")] 
                                  [type (car $1)] [place (cdr $1)]))]
