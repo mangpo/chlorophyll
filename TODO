@@ -1,4 +1,6 @@
 TODO
+- (aforth-bit x) set to 18
+- rethink key for cache (no mem-size, etc.)
 - optimize entire function + remove unused memory (5%)
 - circular array (1%)
 - right rotate (large%)

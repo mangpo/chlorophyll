@@ -18,8 +18,8 @@
 ;                      512 "null" #:opt #f)
 ;(compile-and-optimize "../examples/simple/while.cll" "while" 
 ;                      256 "null" #:opt #t)
-(compile-and-optimize "../examples/simple/extendshift.cll" "extendshift" 
-                      256 "null" #:opt #f)
+;(compile-and-optimize "../examples/simple/extendshift.cll" "extendshift" 
+;                      256 "null" #:opt #f)
 
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
 ;                      220 "null" #:w 5 #:h 4 #:opt #t)

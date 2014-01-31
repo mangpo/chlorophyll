@@ -441,7 +441,9 @@
    [(funcdecl? x)
     (pretty-display (format "~a(funcdecl \"~a\""  indent (funcdecl-name x)))
     (aforth-struct-print (funcdecl-body x) (inc indent))
-    (pretty-display (format "~a~a)" indent (funcdecl-simple x)))]
+    (display indent)
+    (when (list? (funcdecl-simple x)) (display "'"))
+    (pretty-display (format "~a)" (funcdecl-simple x)))]
 
    [(vardecl? x)
     (pretty-display (format "~a(vardecl '~a)" indent (vardecl-val x)))]
@@ -450,7 +452,7 @@
     (pretty-display (format "~a(aforth " indent))
     (aforth-struct-print (aforth-code x) (inc indent))
     (pretty-display (format "~a~a ~a ~a)" 
-			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x)))]
+			    indent (aforth-memsize x) 18 (aforth-indexmap x)))]
 
    [(vector? x)
     (pretty-display "(define programs")
