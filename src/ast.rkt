@@ -413,7 +413,10 @@
                               expand expect type compact))
       (print-send-path indent))
 
-    (define/override (to-string) name)
+    (define/override (to-string) 
+      (if sub
+          (format "~a::~a" name sub)
+          name))
 
     (define/public (not-found-error)
       (if pos
@@ -559,6 +562,18 @@
     
     ))
 
+(define Assume%
+  (class Base%
+    (super-new)
+    (init-field e1)
+
+    (define/override (clone)
+      (new Assume% [e1 e1]))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Assume" indent))
+      (send e1 pretty-print (inc indent)))
+    ))
 
 (define FuncCall%
   (class Exp%
@@ -735,13 +750,13 @@
 (define Param%
   (class VarDecl%
     (super-new)
-    (init-field [place-type #f] [known-type #t])
+    (init-field [place-type #f] [known-type #t] [assume #f])
     (inherit-field var-list type known place)
 
     (define/override (clone)
       (new Param% [var-list var-list] [type type] 
            [known known] [place (clone-place place)]
-           [known-type known-type] [place-type place-type]))
+           [known-type known-type] [place-type place-type] [assume assume]))
 
     (define/public (set-known val)
       (set! known val)
@@ -754,7 +769,9 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(PARAM ~a ~a @~a (place-type=~a)" 
-                              indent type var-list place place-type)))
+                              indent type var-list place place-type))
+      (when assume
+            (send assume pretty-print (inc indent))))
 
     (define/public (to-string)
       (format "param:~a" (car var-list)))
@@ -1180,7 +1197,8 @@
 (define FuncDecl%
   (class Scope%
     (super-new)
-    (init-field name args body return [temps (list)] [regs 0] [simple #f])
+    (init-field name args body return [precond (new Block% [stmts (list)])] 
+                [temps (list)] [regs 0] [simple #f])
     (inherit-field pos body-placeset)
     (inherit print-body-placeset)
     ;; args = list of VarDecl%
@@ -1188,6 +1206,7 @@
 
     (define/override (clone)
       (new FuncDecl% [name name] [args (send args clone)]
+           [precond (send precond clone)]
            [return (and return (send return clone))]
            [body (send body clone)] [temps temps]))
 
@@ -1202,6 +1221,7 @@
       (when return
             (send return pretty-print (inc indent)))
       (send args pretty-print (inc indent))
+      (send precond pretty-print (inc indent))
       (send body pretty-print (inc indent)))
 
     (define/public (not-found-error)

@@ -10,7 +10,9 @@
 (define placetype-linker%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [env (make-hash)])
+    (define env (make-hash))
+    (define param-decls (make-hash))
+    
 
     (define debug #f)
     
@@ -267,11 +269,28 @@
         
         ;; Param% only
         (when (is-a? ast Param%)
-              (set-field! place-type ast place))
+              (set-field! place-type ast place)
+              (hash-set! param-decls (car (get-field var-list ast)) ast)
+              )
         
         ;; put vars into env
         (for ([var var-list])
              (declare env var place))]
+
+       [(is-a? ast Assume%)
+        (define exp (get-field e1 ast))
+        (unless (and (is-a? exp BinExp%) 
+                     (is-a? (get-field e1 exp) Var%)
+                     (is-a? (get-field e2 exp) Num%)
+                     (member (get-field op (get-field op exp)) (list "<=" "=")))
+                (raise (format "Assume only supports expression in this form assume(var op n) where op can either be <= or =. Error at line ~a." (send ast get-line))))
+
+        (define e1 (get-field e1 exp))
+        (unless (hash-has-key? param-decls (send e1 to-string))
+                (raise (format "Variable inside assume has to be function parameter. Error at line ~a." (send ast get-line))))
+
+        (define param (hash-ref param-decls (send e1 to-string)))
+        (set-field! assume param exp)]
 
        [(is-a? ast ArrayDecl%)
         (when debug (pretty-display (format "PLACETYPE: ArrayDecl")))
@@ -359,6 +378,8 @@
         (when debug (pretty-display (format "\nPLACETYPE: FuncDecl ~a" (get-field name ast))))
         (push-scope)
         (send (get-field args ast) accept this)
+        (when (get-field precond ast)
+              (send (get-field precond ast) accept this))
         (when (get-field return ast)
               (send (get-field return ast) accept this))
         (send (get-field body ast) accept this)

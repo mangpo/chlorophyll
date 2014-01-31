@@ -21,7 +21,7 @@
                 [index-map (make-hash)]
                 [n-regs 0])
 
-    (define debug #t)
+    (define debug #f)
     (define const-a (list #f))
     (define cond-onstack #f)
     (define in-pre #f)
@@ -740,8 +740,16 @@
             ;; TODO: is setting memomy constraint to false in main too aggressive?
             (set-restrict-mem! (block-cnstr b) #f)
             (list b)))
+
+        (define precond
+          (and (get-field simple ast)
+               (map (lambda (param) 
+                      (let ([assume (get-field assume param)])
+                        (and assume (cons (get-field op (get-field op assume))
+                                          (send (get-field e2 assume) get-value)))))
+                    decls)))
         
-        (funcdecl name (prog-append args-ret body-ret return-ret) (get-field simple ast))]
+        (funcdecl name (prog-append args-ret body-ret return-ret) precond)]
 
        [(is-a? ast Program%)
         (when debug 

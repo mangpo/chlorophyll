@@ -1,7 +1,8 @@
 TODO
 - optimize entire function + remove unused memory (5%)
 - circular array (1%)
-- other optimizations: leftrotate, dce, instr fetch, first order funcs
+- right rotate (large%)
+- other optimizations: dce, instr fetch, first order funcs
 - hash->list core 18: issue with different racket versions (i think)
 - no need to use lock in cache.rkt
 - why compiling md5 is so slow

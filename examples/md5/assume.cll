@@ -1,0 +1,32 @@
+/* syntax */
+
+int@0 fff(int@0 b, int@0 c, int@0 d) {
+  assume(b <= 65535);
+  assume(c <= 65535);
+  assume(d <= 65535);
+  return (b &@0 c) |@0 ((b ^@0 65535) &@0 d);
+}
+
+/*int::2@(1,1) fff2(int::2@(1,1) b, int::2@(1,1) c, int::2@(1,1) d) {
+  assume(b::0 <= 65535);
+  assume(b::1 <= 65535);
+  assume(c::0 <= 65535);
+  assume(d::1 <= 65535);
+  return (b &@(1,1) c) |@(1,1) ((b ^@(1,1) 65535) &@(1,1) d);
+}*/
+
+/*int ggg(int b, int c, int d) {
+  return (d & b) | ((d ^ 65535) & c);
+}
+int iii(int b, int c, int d) {
+  return b ^ c ^ d;
+}
+int jjj(int b, int c, int d) {
+  return c ^ (b | (d ^ 65535));
+}*/
+
+void main() {
+  out(fff(1,2,3));
+  /*int::2@(1,1) x;
+  x = fff2(1,2,3);*/
+}

@@ -23,7 +23,7 @@
 
 (define node-offset 10)
 (define block-offset 800)
-(define procs 8)
+(define procs 4)
 (define check-interval 60)
 (define distributed #t)
 (define max-unroll 20)
