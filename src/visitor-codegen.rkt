@@ -25,6 +25,7 @@
     (define const-a (list #f))
     (define cond-onstack #f)
     (define in-pre #f)
+    (define rotate #f)
 
     (define-syntax gen-block
       (syntax-rules ()
@@ -109,12 +110,15 @@
               (gen-block "drop" 1 0))]
 
        [(equal? op ">>>") 
-        (list (ift 
-               (save-a
-                (list (gen-block "-1" "+" "push" "push" "dup" "dup" "or" "dup" "a!" "pop" "pop" 2 3)
-                      (forloop (gen-block) (list (gen-block "+*" 1 1)) #f #f #f)
-                      (gen-block "push" "drop" "pop" "a" "dup" 2 3))))
-              (gen-block "drop" 1 0))]
+	(define-rotate
+	  (list (iftf 
+		 (save-a
+		  (list (gen-block-a "-1" "+" "push" "push" "dup" "dup" "or" "dup" "a!" "pop" "pop" 
+				     2 3)
+			(forloop (gen-block) (list (gen-block "+*" 1 1)) #f #f #f)
+			(gen-block "push" "drop" "pop" "a" 2 2)))
+		 (list (gen-block "dup" "or" 1 1))
+		 )))]
         
 
        [(equal? op "&") (list (gen-block "and" 2 1))]
@@ -167,6 +171,12 @@
       (define new-if (funcdecl name body #f))
       (set! helper-funcs (cons new-if helper-funcs))
       (list (funccall name)))
+
+    (define (define-rotate body)
+      (unless rotate
+	      (set! rotate #t)
+	      (set! helper-funcs (cons (funcdecl "rrotate" body #f) helper-funcs)))
+      (list (funccall "rrotate")))
 
     (define (get-op exp)
       (get-field op (get-field op exp)))

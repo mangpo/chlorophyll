@@ -18,6 +18,8 @@
 ;                      512 "null" #:opt #f)
 ;(compile-and-optimize "../examples/simple/while.cll" "while" 
 ;                      256 "null" #:opt #t)
+(compile-and-optimize "../examples/simple/extendshift.cll" "extendshift" 
+                      256 "null" #:opt #f)
 
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
 ;                      220 "null" #:w 5 #:h 4 #:opt #t)
@@ -64,10 +66,10 @@
 ;; MD5
 ;(compile-and-optimize "../examples/md5/leftrotate.cll" "leftrotate"
 ;		      1024 "null" #:w 4 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire-betterlayout"
-;		      1024 "null" #:w 8 #:h 8 #:opt #t)
 (compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
 		      1024 "null" #:w 8 #:h 8 #:opt #t)
+;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire"
+;		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"
 ;		      512 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 
