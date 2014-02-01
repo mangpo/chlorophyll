@@ -452,7 +452,7 @@
     (pretty-display (format "~a(aforth " indent))
     (aforth-struct-print (aforth-code x) (inc indent))
     (pretty-display (format "~a~a ~a ~a)" 
-			    indent (aforth-memsize x) 18 (aforth-indexmap x)))]
+			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x)))]
 
    [(vector? x)
     (pretty-display "(define programs")

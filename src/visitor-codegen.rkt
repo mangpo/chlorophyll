@@ -771,7 +771,8 @@
                               (reverse helper-funcs) 
                               main-funcs) 
                       (+ (get-var data-size) iter-size) 
-                      (max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
+		      18
+                      ;(max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
                       (if virtual index-map #f))))
         ]
 

@@ -170,12 +170,16 @@
 			      (- (length body) (max 1 (length last-list))))])
             (if (> new-len 0)
                 (optimize-loop new-len)
-                (values next block-noopt)))]
+                (begin
+		  (set! simple #f)
+		  (values next block-noopt))))]
 
          [(equal? result 'timeout)
+	  (set! simple #f)
           (values next block-noopt)]
 
          [else
+	  (set! simple #f)
           (set-block-body! block-noopt result)
           (values next block-noopt)]))
 
