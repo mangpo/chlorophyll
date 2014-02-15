@@ -584,7 +584,7 @@
 
     (define/override (clone)
       (new FuncCall% [name name] [args (map (lambda (x) (send x clone)) args)]
-           [place-type (clone-place place-type)] ;[signature (send signature get-signature)]
+           [place-type (clone-place place-type)] [signature signature]
            [type type] [is-stmt is-stmt] [might-need-storage might-need-storage]
            [pos pos]))
 
@@ -695,7 +695,9 @@
   (class Livable%
     (super-new)
     (inherit-field place pos)
-    (init-field var-list type [known #t] [address #f] [compact #f] [loop #f])
+    (init-field var-list type [known #t] [address #f] [compact #f] 
+		[loop #f] ;; for mapreduce
+		)
     (inherit get-place print-send-path)
 
     (define/public (infer-place p)
@@ -720,11 +722,11 @@
 (define VarDeclDup%
   (class VarDecl%
     (super-new)
-    (inherit-field var-list type known place pos)
+    (inherit-field var-list type known place pos loop)
     
     (define/override (clone)
       (new VarDeclDup% [var-list var-list] [type type] [known known] [place (clone-place place)] 
-           [pos pos]))))
+           [pos pos] [loop loop]))))
 
 
 (define ReturnDecl%
@@ -861,7 +863,7 @@
 
     (define/override (clone)
       (new For% [iter iter] [from from] [to to] [place-list (clone-place place-list)] 
-           [body (send body clone)] [known known] [unroll unroll]))
+	   [body (send body clone)] [known known] [unroll unroll]))
 
     (define/public (to-concrete)
       (set! place-list (concrete-place place-list)))
@@ -885,11 +887,15 @@
   (class For%
     (super-new)
     (inherit-field iter from to body known place-list address iter-type unroll)
+    (init-field [myclone #f])
     (inherit print-send-path print-body-placeset)
 
     (define/override (clone)
-      (new ParFor% [iter iter] [from from] [to to] [place-list (clone-place place-list)] 
-           [body (send body clone)] [known known] [unroll unroll]))
+      (define new-for
+	(new ParFor% [iter iter] [from from] [to to] [place-list (clone-place place-list)] 
+	     [body (send body clone)] [known known] [unroll unroll]))
+      (set! myclone new-for)
+      new-for)
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(PARFOR ~a from ~a to ~a) @{~a}" 
@@ -1176,7 +1182,7 @@
 (define BlockDup%
   (class Block%
     (super-new)
-    (init-field loop)
+    (init-field loop) ;; for mapreduce
     (inherit-field stmts)
 
     (define/override (clone)

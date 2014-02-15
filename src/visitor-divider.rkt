@@ -471,14 +471,15 @@
         (for ([arg (get-field args ast)])
              (send arg accept this))
 
-	(when debug 
-              (pretty-display (format "\nDIVIDE: FuncCall ~a\n" (send ast to-string))))
-
         (let* ([place (get-field place-type ast)]
 	       [sig (get-field signature ast)]
 	       [type (if (get-field return sig)
                          (get-field type (get-field return sig))
                          "void")])
+
+	(when debug 
+              (pretty-display (format "\nDIVIDE: FuncCall ~a, sig=~a\n" 
+				      (send ast to-string) (get-field body-placeset sig))))
           (for ([c (get-field body-placeset sig)])
 	       ;; body-placeset of IO function is empty
                (let ([func (new-funccall c)])

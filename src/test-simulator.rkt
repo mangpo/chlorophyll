@@ -41,14 +41,14 @@
 ;(test "../examples/rom/complex3.cll"    "complex3" "1" 300 #:w 4 #:h 4)
 
 ;(test "../examples/md5/md5-optopt.cll" "md5" "null" 1024 #:w 8 #:h 8)
-(test "../examples/md5/md1-rightrot.cll" "md5-rightrot" "null" 1024 #:w 8 #:h 8)
+;(test "../examples/md5/md1-rightrot.cll" "md5-rightrot" "null" 1024 #:w 8 #:h 8)
 ;(test "../examples/md5/leftrotate.cll" "leftrotate" "null" 1024 #:w 3 #:h 4)
 
 ;(test "../examples/parallel/ssd.cll"  "ssd" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/swap.cll" "swap" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/prefixsum.cll" "prefixsum" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)
-;(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
+(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
 
 
 

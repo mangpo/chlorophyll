@@ -285,7 +285,9 @@
 
        [(is-a? ast FuncCall%)
         (when debug 
-              (pretty-display (format "HUE: FuncCall ~a" (send ast to-string))))
+              (pretty-display (format "HEU: FuncCall(1) ~a, sig=~a" 
+				      (send ast to-string)
+				      (get-field signature ast))))
 	(define funccall-ret (hash-ref function-network (get-field name ast)))
 	(define networks (graphset-graph funccall-ret))
         (define places (graphset-set funccall-ret))
@@ -293,16 +295,19 @@
         ;; infer place-type
 	(for ([param (get-field stmts (get-field args (get-field signature ast)))]
 	      [arg (flatten-arg (get-field args ast))])
+	     (when debug 
+		   (pretty-display (format "HEU: FuncCall(2) param=~a, arg=~a" param arg)))
 	     (send arg infer-place (get-field place-type param))
 	     (set! networks 
 		   (append networks
 			   (network (get-field place-type arg) (get-field place-type param)))))
-       
         ;; visit children
         (for ([arg (get-field args ast)])
 	     (let ([arg-ret (send arg accept this)])
 	       (set! networks (append networks (graphset-graph arg-ret)))
 	       (set! places (set-union places (graphset-set arg-ret)))))
+        (when debug 
+              (pretty-display (format "HUE: FuncCall(3) ~a" (send ast to-string))))
         (graphset networks places)
         ]
 

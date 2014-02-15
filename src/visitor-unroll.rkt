@@ -22,6 +22,8 @@
     (define/public (visit ast)
       (cond
        [(is-a? ast VarDeclDup%)
+        (pretty-display (format "UNROLL: VarDeclDup ~a" 
+                                (get-field var-list ast)))
         (define n (length (get-field unroll (get-field loop ast))))
         (pretty-display (format "UNROLL: VarDeclDup ~a unroll = ~a" 
                                 (get-field var-list ast) n))
