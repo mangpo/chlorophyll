@@ -24,9 +24,7 @@
             (set-linklist-prev! rest me))
           me)))
   
-  ;; why not working?
-  (define non-empty
-    (filter (lambda (x) (not (empty-block? x))) lst))
+  (define non-empty (filter (lambda (x) (not (empty-block? x))) lst))
   (define start (inner non-empty))
   (define head (linklist #f #f start))
   (set-linklist-prev! start head)
