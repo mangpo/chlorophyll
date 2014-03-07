@@ -1,6 +1,7 @@
 #lang racket
 
 (require "arrayforth.rkt" "header.rkt")
+(require "arrayforth-superopt-api.rkt")
 (provide distribute-and-optimize)
 
 (struct task (sp o i))
@@ -9,11 +10,13 @@
 (define (print-file program name core w h sliding)
   (with-output-to-file #:exists 'truncate (format "~a/~a-~a-gen-red.rkt" outdir name core)
     (lambda () 
-      (print-header)
-      (pretty-display "(define program")
-      (aforth-struct-print program)
+      (print-generic-header) ;;(print-header)
+      (pretty-display "(define code") ;;(pretty-display "(define program")
+      (print-generic program) ;;(aforth-struct-print program)
       (pretty-display ")")
-      (print-optimize name w h sliding core))))
+      (print-generic-optimize name w h sliding core) ;;(print-optimize name w h sliding core)
+      ))
+  )
 
 (define (close-ports i o)
   (close-output-port i)
@@ -74,12 +77,14 @@
 ;; Create file for each core and optimize each core on a subprocess.
 ;; Combine result to one file.
 (define (distribute-and-optimize programs name w h sliding)
+  (set! programs (generic-form programs))
+
   ;; Create file for each core.
   (define files
     (for/list ([i (in-range (* w h))])
 	      (print-file (vector-ref programs i) name i w h sliding)
 	      (format "~a-~a" name i)))
-  
+  (raise "done")
   ;; Run each core file.
   (run files (list))
   

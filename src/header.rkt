@@ -4,8 +4,7 @@
 (require (only-in racket foldl log))
 (require "path.rkt")
 
-(provide symbolic? foldl log rosette-number?
-         (all-defined-out))
+(provide (all-defined-out))
 
 (define global-sol (sat (hash)))
 (define (set-global-sol sol)
@@ -53,3 +52,5 @@
 
 (struct meminfo (addr virtual data))
 
+(define (index-of l x)
+  (for/or ([y l] [i (in-naturals)] #:when (equal? x y)) i))

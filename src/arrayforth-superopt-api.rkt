@@ -2,7 +2,9 @@
 
 (require "header.rkt" "arrayforth.rkt")
 
-(provide (all-defined-out))
+(provide (except-out (all-defined-out) stack-precond))
+
+(define stack-precond #f)
 
 (define (print-generic x [indent ""])
   (define (inc indent)
@@ -10,10 +12,11 @@
   (define (dec indent)
     (substring indent 2))
   
+  (cond
    [(list? x)
     (pretty-display (format "~a(list " indent))
     (for ([i x])
-	 (aforth-struct-print i (inc indent)))
+	 (print-generic i (inc indent)))
     (pretty-display (format "~a)" indent))
     ]
 
@@ -21,20 +24,40 @@
     (unless (linklist-prev x)
 	    (pretty-display (format "~a(list " indent)))
     (when (linklist-entry x)
-	  (aforth-struct-print (linklist-entry x) (inc indent)))
+	  (print-generic (linklist-entry x) (inc indent)))
     (if (linklist-next x)
-	(aforth-struct-print (linklist-next x) indent)
+	(print-generic (linklist-next x) indent)
 	(pretty-display (format "~a)" indent)))
     ]
    
    [(block? x)
+    (define body (if (list? (block-body x))
+                      (string-join (block-body x))
+                      (block-body x)))
+    ;; STACK PRECONDITION from funcdecl
+    (when stack-precond
+	  (pretty-display (format "~a(assumption '(stack . ~a))" indent stack-precond))
+	  (set! stack-precond #f)
+	  )
+
+    ;; EXTRA ASSUMPTION
+    (define assume (block-incnstr x))
+    (define-syntax-rule (print-assume reg)
+      (pretty-display (format "~a(assumption '(~a . (= . ~a)))" indent reg assume)))
+    (when assume
+	  (let ([inst (first (string-split body))])
+	    (cond
+	     [(member inst (list "!b" "@b"))
+	      (print-assume 'b)]
+	     [(member inst (list "!" "!+" "@" "@+"))
+	      (print-assume 'a)]
+	     [(member inst (list "b!" "a!"))
+	      (print-assume 't)])))
+
     (pretty-display (format "~a(block" indent))
 
     ;; BODY
     (display (format "~a\"" (inc indent)))
-    (define body (if (list? (block-body x))
-                      (string-join (block-body x))
-                      (block-body x)))
     (pretty-display (format "~a\"" body))
 
     ;; ORG
@@ -49,24 +72,11 @@
     ;; cnstr
     (define cnstr (block-cnstr x))
     (display (format "(data . ~a) " (block-out x)))  ;; out = data stack
-    (display (format "(return . ~a) " (restrict-r cnstr))) ;; in = return stack
+    (display (format "(return . ~a) " (restrict-r cnstr))) ;; restrict-r = return stack
     (when (restrict-mem cnstr) (display "memory "))
     (when (restrict-a cnstr) (display "a "))
     (when (restrict-b cnstr) (display "b "))
     (display ") ")
-    ;; assume
-    (if (block-incnstr x)
-        (let ([inst (first (string-split body))])
-          (cond
-           [(member inst (list "!b" "@b"))
-            (display (format "'(b . ~a) " (block-incnstr x)))]
-           [(member inst (list "!" "!+" "@" "@+"))
-            (display (format "'(a . ~a) " (block-incnstr x)))]
-           [(member inst (list "b!" "a!"))
-            (display (format "'(t . ~a) " (block-incnstr x)))]
-           [else 
-            (raise (format "block with assume start with illegal instruction ~a" inst))]))
-        (display "#f "))
     ;; recv (in)
     (pretty-display (format "~a))" (block-in x)))]
    
@@ -74,52 +84,177 @@
     (pretty-display (format "~a(special \"mult\")" indent))]
 
    [(funccall? x)
-    (pretty-display (format "~a(call \"~a\")"  indent (funccall-name x)))]
+    (pretty-display (format "~a(call \"~a\")" indent (funccall-name x)))]
 
    [(forloop? x)
     (pretty-display (format "~a(forloop "  indent))
-    (aforth-struct-print (forloop-init x) (inc indent))
-    (aforth-struct-print (forloop-body x) (inc indent))
+    (print-generic (forloop-init x) (inc indent))
+    (print-generic (forloop-body x) (inc indent))
     (pretty-display (format "~a~a)" (inc indent) (- (forloop-to x) (forloop-from x))))]
 
    [(ift? x)
     (pretty-display (format "~a(ift "  indent))
-    (aforth-struct-print (ift-t x) (inc indent))
+    (print-generic (ift-t x) (inc indent))
     (pretty-display (format "~a)" indent))]
    
    [(iftf? x)
     (pretty-display (format "~a(iftf "  indent))
-    (aforth-struct-print (iftf-t x) (inc indent))
-    (aforth-struct-print (iftf-f x) (inc indent))
+    (print-generic (iftf-t x) (inc indent))
+    (print-generic (iftf-f x) (inc indent))
     (pretty-display (format "~a)" indent))]
    
    [(-ift? x)
     (pretty-display (format "~a(-ift "  indent))
-    (aforth-struct-print (-ift-t x) (inc indent))
+    (print-generic (-ift-t x) (inc indent))
     (pretty-display (format "~a)" indent))]
    
    [(-iftf? x)
     (pretty-display (format "~a(-iftf "  indent))
-    (aforth-struct-print (-iftf-t x) (inc indent))
-    (aforth-struct-print (-iftf-f x) (inc indent))
+    (print-generic (-iftf-t x) (inc indent))
+    (print-generic (-iftf-f x) (inc indent))
     (pretty-display (format "~a)" indent))]
     
    [(funcdecl? x)
     (pretty-display (format "~a(label \"~a\""  indent (funcdecl-name x)))
-    (aforth-struct-print (funcdecl-body x) (inc indent))
+    (print-generic (funcdecl-body x) (inc indent))
 
     (define info (funcdecl-simple x))
     (pretty-display (format "~a(labelinfo ~a ~a ~a))"
-                            (labelinfo-data info) 
-                            (labelinfo-return info) 
-                            (labelinfo-simple info)))
+			    (inc indent)
+                            0 ;;(labelinfo-data info) 
+                            0 ;;(labelinfo-return info) 
+                            #f)) ;;(not (equal? #f (labelinfo-simple info)))))
 
-    ;; TODO: precondition
+    ;; set STACK PRECONDITION
+    ;; (when (list? (labelinfo-simple info))
+    ;; 	  (set! stack-precond (labelinfo-simple info)))
     ]
 
+   [(vardecl? x)
+    (pretty-display (format "~a(vardecl '~a)" indent (vardecl-val x)))]
+
+   [(aforth? x)
+    (pretty-display (format "~a(program " indent))
+    (print-generic (aforth-code x) (inc indent))
+    (pretty-display (format "~a~a ~a)" 
+			    indent (aforth-memsize x) (aforth-indexmap x)))]
    
+   [else (pretty-display (format "~a~a" indent x))]))
 
+(define (print-generic-header)
+  (define modular-dir "/home/mangpo/work/modular-optimizer")
+  (pretty-display "#lang racket")
+  (pretty-display "(require")
+  (pretty-display (format "  (file \"~a/ast.rkt\")" modular-dir))
+  (pretty-display (format "  (file \"~a/controller.rkt\")" modular-dir))
+  (pretty-display (format "  (file \"~a/f18a.rkt\")" modular-dir))
+  (pretty-display "  )"))
 
+(define (print-generic-optimize name w h sliding [core #f])
+  ;; Always use sliding windows.
+  (if core
+      (begin
+        (pretty-display (format "(define name \"~a-~a\")" name core))
+        (pretty-display (format "(define dir \"~a\")" outdir))
+        (pretty-display (format "(define real-opts (optimize code))"))
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.rkt\" dir name) (lambda () (print-struct real-opts)))")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.aforth\" dir name)")
+        (pretty-display (format "(lambda () (print-syntax real-opts ~a ~a ~a)))" w h core)))
+      (begin
+        (pretty-display (format "(define name \"~a_cont\")" name))
+        (pretty-display (format "(define real-opts (optimize code))"))
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.rkt\"  name) (lambda () (print-struct real-opts)))")
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a-opt.aforth\"  name)")
+        (pretty-display (format "(lambda () (print-syntax real-opts ~a ~a)))" w h))
+        )))
 
-;; (struct blockinfo (cnstr assume recv))
-;; (struct labelinfo (data return simple))
+(define (generic-form programs)
+
+  (define (generic-func x)
+    (define dstack 0) ;; TODO: init to #reg on stack
+    (define rstack 0)
+    (define recv 0)
+    (define begin #t)
+    
+    (define (f x)
+      (cond
+       [(list? x)
+	(for ([i x]) (f i))]
+       
+       [(linklist? x)
+	(when (linklist-entry x) (f (linklist-entry x)))
+	(when (linklist-next x) (f (linklist-next x)))]
+       
+       [(block? x)
+	(define body (if (string? (block-body x)) 
+			 (string-split (block-body x)) 
+			 (block-body body)))
+	(set! dstack (+ dstack (- (block-out x) (block-in x))))
+	(set-block-out! x dstack) ;; dstack
+	(for ([i body])
+	     (cond
+	      [(equal? i "push") (set! rstack (add1 rstack))]
+	      [(equal? i "pop") (set! rstack (sub1 rstack))]))
+	(set-restrict-r! (block-restrict x) rstack) ;; rstack
+
+	(define index (index-of body "@b"))
+	(cond
+	 [(and (>= index 2) 
+	       (equal? (list-ref body (- index 1)) "b!")
+	       (member (list-ref body (- index 2)) (list "up" "down" "left" "right" "io")))
+	  (set-block-in! x 1)]
+	 [(and (< index 2) begin)
+	  (set-block-in! x 1)
+	  (unless (block-incnstr x) (set-block-incnstr! x "uplr"))
+	  ]
+	 [else
+	  (set-block-in! x 0)])
+	 
+	(set! begin #f)
+	]
+
+       [(mult? x)
+	(set! begin #f)
+	(set! dstack (sub1 dstack))]
+
+       [(funccall? x)
+	(set! begin #f)
+	;; TODO: how many items does x comsume and return?
+	;; TODO: collect how deep the current stack is for funcdecl x.
+	(set! dstack ?)
+	]
+
+       [(forloop? x)
+	(f (forloop-init x))
+	(set! dstack (sub1 dstack))
+	(set! rstack (add1 dstack))
+	(f (forloop-body x))
+	(set! rstack (sub1 dstack))
+	]
+       
+       [(ift? x)
+	(f (ift-t x))]
+       
+       [(iftf? x)
+	(define my-dstack dstack)
+	(f (iftf-t x))
+	(set! dstack my-dstack)
+	(f (iftf-f x))]
+       
+       [(-ift? x)
+	(f (-ift-t x))]
+       
+       [(-iftf? x)
+	(define my-dstack dstack)
+	(f (-iftf-t x))
+	(set! dstack my-dstack)
+	(f (-iftf-f x))])))
+
+  (define (generic-program x)
+    (for ([i x])
+	 (when (funcdecl? (generic-func i))
+	       ;; TODO: (labelinfo data return simple)
+	       (funcdecl-body (generic-func i)))))
+
+  (for ([program (aforth-code programs)])
+       (generic-program program)))
