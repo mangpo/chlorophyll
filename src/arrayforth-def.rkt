@@ -88,7 +88,7 @@
    [(funcdecl? ast)
     (funcdecl (funcdecl-name ast)
               (aforth-linklist (funcdecl-body ast))
-	      (funcdecl-simple ast))
+	      (funcdecl-info ast))
     ]
 
    [(aforth? ast)

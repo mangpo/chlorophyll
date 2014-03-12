@@ -141,7 +141,7 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-	(set! collect (not (funcdecl-simple ast)))
+	(set! collect (not (funcinfo-simple (funcdecl-info ast))))
 
 	(set! func (funcdecl-name ast))
 	(send this visit (funcdecl-body ast))
@@ -234,7 +234,7 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-	(set! collect (not (funcdecl-simple ast)))
+	(set! collect (not (funcinfo-simple (funcdecl-info ast))))
 	(set! func (funcdecl-name ast))
 	(send this visit (funcdecl-body ast))
 	(set! func #f)

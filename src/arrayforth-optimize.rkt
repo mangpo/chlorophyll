@@ -279,11 +279,11 @@
            (superoptimize-inner (-iftf-f ast)))]
 
    [(funcdecl? ast)
-    (set! simple (funcinfo-simple (funcdecl-simple ast)))
+    (set! simple (funcinfo-simple (funcdecl-info ast)))
     ;(pretty-display "superoptimize: funcdecl")
     (funcdecl (funcdecl-name ast)
               (superoptimize-inner (funcdecl-body ast))
-	      (funcdecl-simple ast))]
+	      (funcdecl-info ast))]
 
    [(vardecl? ast)
     ;(pretty-display "superoptimize: vardel")
