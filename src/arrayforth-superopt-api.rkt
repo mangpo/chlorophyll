@@ -115,19 +115,23 @@
     (pretty-display (format "~a)" indent))]
     
    [(funcdecl? x)
+    (define info (funcdecl-info x))
+    (define simple (labelinfo-simple x)
     (pretty-display (format "~a(label \"~a\""  indent (funcdecl-name x)))
+    ;; PRECOND
+    (when (list? (labelinfo-simple info))
+	  (pretty-display (format "~a(assumption '(stack . ~a))" 
+				  (inc indent) (labelinfo-simple info))))
+
+    ;; BODY
     (print-generic (funcdecl-body x) (inc indent))
 
-    (define info (funcdecl-simple x))
-    (pretty-display (format "~a(labelinfo ~a ~a ~a))"
+    ;; INFO
+    (display (format "~a(labelinfo ~a ~a ~a)"
 			    (inc indent)
-                            0 ;;(labelinfo-data info) 
-                            0 ;;(labelinfo-return info) 
-                            #f)) ;;(not (equal? #f (labelinfo-simple info)))))
-
-    ;; set STACK PRECONDITION
-    ;; (when (list? (labelinfo-simple info))
-    ;; 	  (set! stack-precond (labelinfo-simple info)))
+                            (labelinfo-data info) 
+                            (labelinfo-return info)
+			    (if simple #t #f)))
     ]
 
    [(vardecl? x)
@@ -170,8 +174,12 @@
 
 (define (generic-form programs)
 
+  (define func-dict (make-hash))
+  (define data-cnstr (make-hash))
+  (define return-cnstr (make-hash))
+
   (define (generic-func x)
-    (define dstack 0) ;; TODO: init to #reg on stack
+    (define dstack 0) ;; TODO: init to #reg on stack (no need)
     (define rstack 0)
     (define recv 0)
     (define begin #t)
@@ -195,7 +203,7 @@
 	     (cond
 	      [(equal? i "push") (set! rstack (add1 rstack))]
 	      [(equal? i "pop") (set! rstack (sub1 rstack))]))
-	(set-restrict-r! (block-restrict x) rstack) ;; rstack
+	(set-restrict-r! (block-cnstr x) rstack) ;; rstack
 
 	(define index (index-of body "@b"))
 	(cond
@@ -219,9 +227,15 @@
 
        [(funccall? x)
 	(set! begin #f)
-	;; TODO: how many items does x comsume and return?
-	;; TODO: collect how deep the current stack is for funcdecl x.
-	(set! dstack ?)
+	(define name (funccall-name x))
+	(define info (hash-ref func-dict name))
+	;; Collect how deep the current stack is for funcdecl x.
+	(when (< (hash-ref data-cnstr name) dstack)
+	      (hash-set! data-cnstr name dstack))
+	(when (< (hash-ref return-cnstr name) rstack)
+	      (hash-set! return-cnstr name rstack))
+	;; Update dstack.
+	(set! dstack (+ (- dstack (funcinfo-in info)) (funcinfo-out info)))
 	]
 
        [(forloop? x)
@@ -248,13 +262,25 @@
 	(define my-dstack dstack)
 	(f (-iftf-t x))
 	(set! dstack my-dstack)
-	(f (-iftf-f x))])))
+	(f (-iftf-f x))]))
+    (f x))
 
   (define (generic-program x)
+    ;; Modify body.
     (for ([i x])
-	 (when (funcdecl? (generic-func i))
-	       ;; TODO: (labelinfo data return simple)
-	       (funcdecl-body (generic-func i)))))
+	 (when (funcdecl? i)
+	       (define name (funcdecl-name i))
+	       (hash-set! func-dict name (funcdecl-info i))
+	       (hash-set! data-cnstr name 0)
+	       (hash-set! return-cnstr name 0)
+	       (generic-func (funcdecl-body i))))
+    ;; Update funcinfo to labelinfo
+    (for ([i x])
+	 (when (funcdecl? i)
+	       (define name (funcdecl-name i))
+	       (set-funcdecl-info! i (labelinfo (hash-ref data-cnstr name)
+						(hash-ref return-cnstr name)
+						(funcinfo-simple (funcdecl-info i)))))))
 
   (for ([program (aforth-code programs)])
        (generic-program program)))

@@ -279,7 +279,7 @@
            (superoptimize-inner (-iftf-f ast)))]
 
    [(funcdecl? ast)
-    (set! simple (funcdecl-simple ast))
+    (set! simple (funcinfo-simple (funcdecl-simple ast)))
     ;(pretty-display "superoptimize: funcdecl")
     (funcdecl (funcdecl-name ast)
               (superoptimize-inner (funcdecl-body ast))

@@ -7,7 +7,7 @@
 (struct block (body in out cnstr incnstr org) #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
-(struct funcdecl (name body simple) #:mutable)
+(struct funcdecl (name body info) #:mutable)
 (struct vardecl (val))
 (struct forloop (init body iter from to) #:mutable)
 (struct ift (t))
@@ -16,6 +16,9 @@
 (struct -iftf (t f))
 (struct aforth (code memsize bit indexmap))
 (struct restrict (mem a b r) #:mutable)
+
+(struct labelinfo (data return simple))
+(struct funcinfo (in out simple))
 
 (struct linklist (prev entry next) #:mutable)
 
@@ -441,9 +444,18 @@
    [(funcdecl? x)
     (pretty-display (format "~a(funcdecl \"~a\""  indent (funcdecl-name x)))
     (aforth-struct-print (funcdecl-body x) (inc indent))
-    (display indent)
-    (when (list? (funcdecl-simple x)) (display "'"))
-    (pretty-display (format "~a)" (funcdecl-simple x)))]
+    (aforth-struct-print (funcdecl-info x) (inc indent))
+    (pretty-display (format "~a)" (inc indent)))]
+
+   [(funcinfo? x)
+    (display (format "~a(funcinfo ~a ~a " indent (funcinfo-in x) (funcinfo-out x)))
+    (when (list? (funcinfo-simple x)) (display "'"))
+    (pretty-display (format "~a)" (funcinfo-simple x)))]
+
+   [(funcinfo? x)
+    (display (format "~a(labelinfo ~a ~a " indent (labelinfo-data x) (labelinfo-return x)))
+    (when (list? (labelinfo-simple x)) (display "'"))
+    (pretty-display (format "~a)" (labelinfo-simple x)))]
 
    [(vardecl? x)
     (pretty-display (format "~a(vardecl '~a)" indent (vardecl-val x)))]

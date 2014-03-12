@@ -4,7 +4,8 @@
 (require (only-in racket foldl log))
 (require "path.rkt")
 
-(provide (all-defined-out))
+(provide symbolic? foldl log rosette-number?
+	 (all-defined-out))
 
 (define global-sol (sat (hash)))
 (define (set-global-sol sol)

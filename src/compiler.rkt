@@ -78,11 +78,8 @@
     (pretty-display ">>> result")
     (codegen-print res)
     res
-    ;; (pretty-display ">>> repeating def")
-    ;; (pretty-display virtual)
-    ;; (define concise (define-repeating-code res))
-    ;; concise
-    ))
+    )
+  )
 
 ;; Compile per-core IRs to per-core machine codes.
 (define (generate-codes programs w h virtual)

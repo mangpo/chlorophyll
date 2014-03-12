@@ -6,6 +6,8 @@
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/simple/function2.cll" "function2" 
 ;                      128 "null" #:opt #f #:soft-capacity 175 #:partition #t)
+(compile-and-optimize "../examples/simple/function3.cll" "function3" 
+                      256 "null" #:opt #f)
 
 ;; Simple
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
@@ -23,8 +25,8 @@
 
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
 ;                      220 "null" #:w 5 #:h 4 #:opt #t)
-(compile-and-optimize "../examples/bithack/bithack3.cll" "bithack3"
-		      300 "null" #:w 2 #:h 3 #:opt #t)
+;(compile-and-optimize "../examples/bithack/bithack3.cll" "bithack3"
+;		      300 "null" #:w 2 #:h 3 #:opt #t)
 
 ;; Single-core
 ;(compile-and-optimize "../examples/rom/fir.cll" "fir" 

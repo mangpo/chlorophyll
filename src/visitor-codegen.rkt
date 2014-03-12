@@ -727,10 +727,17 @@
 	(define body-ret (send (get-field body ast) accept this))
 
         ;; return
+	(define return (get-field return ast))
+	(define n-returns
+	  (if return
+	      (if (pair? (get-field type return))
+		  (cdr (get-field type return))
+		  1)
+	      0))
         (define return-ret
           (let ([b (if (or (= n-regs 0) 
                            ;; there is nothing to drop.
-                           (get-field return ast) 
+                           return
                            ;; if it not void, return% clears the return stack.
                            (equal? name "main")
                            ;; if main, just leave thing on stack.
@@ -749,7 +756,8 @@
                                           (send (get-field e2 assume) get-value)))))
                     decls)))
         
-        (funcdecl name (prog-append args-ret body-ret return-ret) precond)]
+        (funcdecl name (prog-append args-ret body-ret return-ret) 
+		  (labelinfo n-decls n-returns precond))]
 
        [(is-a? ast Program%)
         (when debug 
