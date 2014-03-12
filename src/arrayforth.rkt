@@ -197,6 +197,10 @@
    [(and (= (length a-list) 1) (empty-block? (car a-list)))
     b-list]
    [(and (= (length b-list) 1) (empty-block? (car b-list)))
+    (when (block? (last a-list))
+          (define a-last (block-cnstr (last a-list)))
+          (define b-first (block-cnstr (car b-list)))
+          (set-restrict-mem! a-last (restrict-mem b-first)))
     a-list]
 
    [(and (forloop? (last a-list)) (forloop? (car b-list)))

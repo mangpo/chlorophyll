@@ -137,9 +137,10 @@
                                         (forloop (gen-block)
                                                  (list (gen-block "+*" 1 1)) #f #f #f)
                                         (gen-block "push" "drop" "pop" "a" 2 2)))]
-
+       ;; *.17: x y - x x*y
        [(equal? op "*/17") (save-a (list (funccall "*.17")
 					 (gen-block "push" "drop" "pop" 2 1)))]
+       ;; *.: x y - x x*y
        [(equal? op "*/16") (save-a (list (funccall "*.")
 					 (gen-block "push" "drop" "pop" 2 1)))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))
@@ -168,14 +169,15 @@
 
     (define (define-if body)
       (define name (get-if-name))
-      (define new-if (funcdecl name body #f))
+      (define new-if (funcdecl name body (funcinfo 1 0 #f)))
       (set! helper-funcs (cons new-if helper-funcs))
       (list (funccall name)))
 
     (define (define-rotate body)
       (unless rotate
 	      (set! rotate #t)
-	      (set! helper-funcs (cons (funcdecl "rrotate" body #f) helper-funcs)))
+	      (set! helper-funcs (cons (funcdecl "rrotate" body (funcinfo 2 2 #f)) 
+                                       helper-funcs)))
       (list (funccall "rrotate")))
 
     (define (get-op exp)
@@ -280,7 +282,9 @@
                     (list (number->string actual-addr-org) "+" "b!" "@b")))))
 
         (define array-ret
-          (list (gen-block-list insts insts-org 1 1)))
+          (if opt
+              (list (gen-block-list insts insts-org 0 1))
+              (list (gen-block-list insts insts-org 1 1))))
 
         
         (define ret
@@ -757,7 +761,7 @@
                     decls)))
         
         (funcdecl name (prog-append args-ret body-ret return-ret) 
-		  (labelinfo n-decls n-returns precond))]
+		  (funcinfo n-decls n-returns precond))]
 
        [(is-a? ast Program%)
         (when debug 

@@ -90,7 +90,11 @@
     (pretty-display (format "~a(forloop "  indent))
     (print-generic (forloop-init x) (inc indent))
     (print-generic (forloop-body x) (inc indent))
-    (pretty-display (format "~a~a)" (inc indent) (- (forloop-to x) (forloop-from x))))]
+    (pretty-display (format "~a~a)" 
+                            (inc indent) 
+                            (if (forloop-to x) 
+                                (- (forloop-to x) (forloop-from x))
+                                #f)))]
 
    [(ift? x)
     (pretty-display (format "~a(ift "  indent))
@@ -116,18 +120,18 @@
     
    [(funcdecl? x)
     (define info (funcdecl-info x))
-    (define simple (labelinfo-simple x)
+    (define simple (labelinfo-simple info))
     (pretty-display (format "~a(label \"~a\""  indent (funcdecl-name x)))
     ;; PRECOND
-    (when (list? (labelinfo-simple info))
-	  (pretty-display (format "~a(assumption '(stack . ~a))" 
-				  (inc indent) (labelinfo-simple info))))
+    (when (and (list? (labelinfo-simple info)) 
+               (ormap (lambda (x) x) (labelinfo-simple info)))
+          (set! stack-precond (labelinfo-simple info)))
 
     ;; BODY
     (print-generic (funcdecl-body x) (inc indent))
 
     ;; INFO
-    (display (format "~a(labelinfo ~a ~a ~a)"
+    (pretty-display (format "~a(labelinfo ~a ~a ~a))"
 			    (inc indent)
                             (labelinfo-data info) 
                             (labelinfo-return info)
@@ -173,10 +177,23 @@
         )))
 
 (define (generic-form programs)
+  (pretty-display `(generic-form ,programs))
 
   (define func-dict (make-hash))
   (define data-cnstr (make-hash))
   (define return-cnstr (make-hash))
+
+  (define built-in (list (list "in" 0 1)
+                         (list "out" 1 0)
+                         (list "--u/mod" 3 2)
+                         (list "*.17" 2 2)
+                         (list "*." 2 2)))
+
+  (for ([f built-in])
+       (let ([name (first f)])
+         (hash-set! func-dict name (funcinfo (second f) (third f) #f))
+         (hash-set! data-cnstr name 0)
+         (hash-set! return-cnstr name 0)))
 
   (define (generic-func x)
     (define dstack 0) ;; TODO: init to #reg on stack (no need)
@@ -196,7 +213,7 @@
        [(block? x)
 	(define body (if (string? (block-body x)) 
 			 (string-split (block-body x)) 
-			 (block-body body)))
+			 (block-body x)))
 	(set! dstack (+ dstack (- (block-out x) (block-in x))))
 	(set-block-out! x dstack) ;; dstack
 	(for ([i body])
@@ -207,6 +224,8 @@
 
 	(define index (index-of body "@b"))
 	(cond
+         [(equal? index #f)
+          (set-block-in! x 0)]
 	 [(and (>= index 2) 
 	       (equal? (list-ref body (- index 1)) "b!")
 	       (member (list-ref body (- index 2)) (list "up" "down" "left" "right" "io")))
@@ -241,9 +260,9 @@
        [(forloop? x)
 	(f (forloop-init x))
 	(set! dstack (sub1 dstack))
-	(set! rstack (add1 dstack))
+	(set! rstack (add1 rstack))
 	(f (forloop-body x))
-	(set! rstack (sub1 dstack))
+	(set! rstack (sub1 rstack))
 	]
        
        [(ift? x)
@@ -266,21 +285,31 @@
     (f x))
 
   (define (generic-program x)
-    ;; Modify body.
-    (for ([i x])
-	 (when (funcdecl? i)
-	       (define name (funcdecl-name i))
-	       (hash-set! func-dict name (funcdecl-info i))
-	       (hash-set! data-cnstr name 0)
-	       (hash-set! return-cnstr name 0)
-	       (generic-func (funcdecl-body i))))
-    ;; Update funcinfo to labelinfo
-    (for ([i x])
-	 (when (funcdecl? i)
-	       (define name (funcdecl-name i))
-	       (set-funcdecl-info! i (labelinfo (hash-ref data-cnstr name)
-						(hash-ref return-cnstr name)
-						(funcinfo-simple (funcdecl-info i)))))))
+    (define (modify-body i)
+      (define name (funcdecl-name i))
+      (hash-set! func-dict name (funcdecl-info i))
+      (hash-set! data-cnstr name 0)
+      (hash-set! return-cnstr name 0)
+      (generic-func (funcdecl-body i)))
 
-  (for ([program (aforth-code programs)])
-       (generic-program program)))
+    (define (update-funcdecl i)
+      (define name (funcdecl-name i))
+      (set-funcdecl-info! i (labelinfo (hash-ref data-cnstr name)
+                                       (hash-ref return-cnstr name)
+                                       (funcinfo-simple (funcdecl-info i)))))
+    
+    (define (traverse-linklist ll lam)
+      (define (inner ll)
+        (when (and (linklist-entry ll) (funcdecl? (linklist-entry ll)))
+              (lam (linklist-entry ll)))
+        (when (linklist-next ll)
+              (inner (linklist-next ll))))
+      (inner ll))
+            
+    ;; Modify body.
+    (traverse-linklist x modify-body)
+    ;; Update funcinfo to labelinfo
+    (traverse-linklist x update-funcdecl))
+
+  (for ([program programs])
+       (when program (generic-program (aforth-code program)))))

@@ -563,6 +563,7 @@
 (define (define-repeating-code program)
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program)])
+        (aforth-struct-print program)
         (when debug (pretty-display ">>> EXTRACT-STRUCTURES"))
 	(extract-all-structure linklist-program)
         (when debug (pretty-display ">>> EXTRACT-SEQUENCES"))

@@ -77,7 +77,7 @@
 ;; Create file for each core and optimize each core on a subprocess.
 ;; Combine result to one file.
 (define (distribute-and-optimize programs name w h sliding)
-  (set! programs (generic-form programs))
+  (generic-form programs)
 
   ;; Create file for each core.
   (define files

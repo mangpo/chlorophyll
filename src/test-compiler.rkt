@@ -6,8 +6,8 @@
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/simple/function2.cll" "function2" 
 ;                      128 "null" #:opt #f #:soft-capacity 175 #:partition #t)
-(compile-and-optimize "../examples/simple/function3.cll" "function3" 
-                      256 "null" #:opt #f)
+(compile-and-optimize "../examples/rom/fir.cll" "fir" 
+                      300 "null" #:opt #t)
 
 ;; Simple
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
