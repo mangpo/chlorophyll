@@ -29,8 +29,8 @@
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
 
 ;; Single-core
-;(compile-and-optimize "../examples/rom/fir.cll" "fir" 
-;                      512 "null" #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../examples/rom/fir.cll" "fir" 
+                      512 "null" #:w 3 #:h 3 #:opt #t)
 ;(compile-and-optimize "../examples/rom/fir0.cll" "fir0" 
 ;                      256 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/rom/fir-par2.cll" "fir-par2" 
@@ -68,8 +68,8 @@
 ;; MD5
 ;(compile-and-optimize "../examples/md5/leftrotate.cll" "leftrotate"
 ;		      1024 "null" #:w 4 #:h 3 #:opt #f)
-(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
-		      1024 "null" #:w 8 #:h 8 #:opt #t)
+;(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
+;		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"

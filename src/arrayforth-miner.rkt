@@ -141,7 +141,7 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-	(pretty-display `(sequence-miner ,(funcdecl-name ast) ,(funcdecl-info ast)))
+	;(pretty-display `(sequence-miner ,(funcdecl-name ast) ,(funcdecl-info ast)))
 	(set! collect (not (funcinfo-simple (funcdecl-info ast))))
 
 	(set! func (funcdecl-name ast))
@@ -235,7 +235,7 @@
 	(send this visit (-iftf-f ast))]
 
        [(funcdecl? ast)
-	(pretty-display `(sequence-matcher ,(funcdecl-name ast) ,(funcdecl-info ast)))
+	;(pretty-display `(sequence-matcher ,(funcdecl-name ast) ,(funcdecl-info ast)))
 	(set! collect (not (funcinfo-simple (funcdecl-info ast))))
 	(set! func (funcdecl-name ast))
 	(send this visit (funcdecl-body ast))

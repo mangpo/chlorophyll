@@ -29,6 +29,11 @@
 	(print-generic (linklist-next x) indent)
 	(pretty-display (format "~a)" indent)))
     ]
+
+   [(and (block? x) 
+         (or (and (list? (block-body x)) (empty? (block-body x)))
+             (and (string? (block-body x)) (equal? (string-trim (block-body x)) ""))))
+    (void)]
    
    [(block? x)
     (define body (if (list? (block-body x))
@@ -42,6 +47,7 @@
 
     ;; EXTRA ASSUMPTION
     (define assume (block-incnstr x))
+    ;(pretty-display (format "PRINT-GENERIC: block, body = ~a, incnstr = ~a" body assume))
     (define-syntax-rule (print-assume reg)
       (pretty-display (format "~a(assumption '(~a . (= . ~a)))" indent reg assume)))
     (when assume
@@ -180,6 +186,8 @@
   (pretty-display `(generic-form ,programs))
 
   (define func-dict (make-hash))
+  (define stack-graph (make-hash))
+  (struct edge (to data return))
   (define data-cnstr (make-hash))
   (define return-cnstr (make-hash))
 
@@ -192,10 +200,11 @@
   (for ([f built-in])
        (let ([name (first f)])
          (hash-set! func-dict name (funcinfo (second f) (third f) #f))
-         (hash-set! data-cnstr name 0)
-         (hash-set! return-cnstr name 0)))
+         ;(hash-set! data-cnstr name 0)
+         ;(hash-set! return-cnstr name 0)
+         ))
 
-  (define (generic-func x)
+  (define (generic-func my-name x)
     (define dstack 0) ;; TODO: init to #reg on stack (no need)
     (define rstack 0)
     (define recv 0)
@@ -249,10 +258,18 @@
 	(define name (funccall-name x))
 	(define info (hash-ref func-dict name))
 	;; Collect how deep the current stack is for funcdecl x.
-	(when (< (hash-ref data-cnstr name) dstack)
-	      (hash-set! data-cnstr name dstack))
-	(when (< (hash-ref return-cnstr name) rstack)
-	      (hash-set! return-cnstr name rstack))
+
+	;; (when (< (hash-ref data-cnstr name) dstack)
+	;;       (hash-set! data-cnstr name dstack))
+	;; (when (< (hash-ref return-cnstr name) rstack)
+	;;       (hash-set! return-cnstr name rstack))
+
+        ;; Only collect when the dest is not special function.
+        (when (hash-has-key? stack-graph name)
+              (pretty-display (format "Add to stack graph: (~a,~a) ~a ~a" my-name name dstack rstack))
+              (hash-set! stack-graph my-name (cons (edge name dstack rstack) 
+                                                   (hash-ref stack-graph my-name))))
+
 	;; Update dstack.
 	(set! dstack (+ (- dstack (funcinfo-in info)) (funcinfo-out info)))
 	]
@@ -282,22 +299,36 @@
 	(f (-iftf-t x))
 	(set! dstack my-dstack)
 	(f (-iftf-f x))]))
-    (f x))
+    (f x)
+    dstack)
 
   (define (generic-program x)
     (define (modify-body i)
       (define name (funcdecl-name i))
-      (hash-set! func-dict name (funcdecl-info i))
-      (hash-set! data-cnstr name 0)
-      (hash-set! return-cnstr name 0)
-      (generic-func (funcdecl-body i)))
+      (define info (funcdecl-info i))
+      (hash-set! func-dict name info)
+      (hash-set! stack-graph name (list))
+      ;; (hash-set! data-cnstr name 0)
+      ;; (hash-set! return-cnstr name 0)
+
+      ;; Call generic-func
+      (define depth (generic-func name (funcdecl-body i)))
+      (if (funcinfo-in info)
+          (unless (or (= depth (- (funcinfo-out info) (funcinfo-in info)))
+                      (and (equal? name "main") (= depth 1)))
+            (raise (format "arrayforth-superopt-api: modify-body: at function ~a, depth != out - in, depth = ~a, out = ~a, in = ~a" name depth (funcinfo-out info) (funcinfo-in info))))
+          ;; update funcinfo for Xrep functions
+          (hash-set! func-dict name (funcinfo 0 depth #f)))
+      )
 
     (define (update-funcdecl i)
       (define name (funcdecl-name i))
+      (pretty-display (format "Lebalinfo: ~a ~a ~a" 
+                              name (hash-ref data-cnstr name) (hash-ref return-cnstr name)))
       (set-funcdecl-info! i (labelinfo (hash-ref data-cnstr name)
                                        (hash-ref return-cnstr name)
                                        (funcinfo-simple (funcdecl-info i)))))
-    
+    (define func-names (list))
     (define (traverse-linklist ll lam)
       (define (inner ll)
         (when (and (linklist-entry ll) (funcdecl? (linklist-entry ll)))
@@ -308,8 +339,28 @@
             
     ;; Modify body.
     (traverse-linklist x modify-body)
+    ;; Get all function names (in topo order)
+    (traverse-linklist x (lambda (i) (set! func-names (cons (funcdecl-name i) func-names))))
+    ;; Construct data-cnstr, return-cnstr for each function
+    (pretty-display (format "Topo sort: ~a" func-names))
+    (for ([func func-names])
+         (hash-set! data-cnstr func 0)
+         (hash-set! return-cnstr func 0))
+    (for ([func func-names])
+         (let ([my-data (hash-ref data-cnstr func)]
+               [my-return (hash-ref return-cnstr func)])
+           (pretty-display (format "Construct: ~a ~a" func (hash-ref stack-graph func)))
+           (for ([e (hash-ref stack-graph func)])
+                (let ([to (edge-to e)])
+                  (when (> (+ my-data (edge-data e)) (hash-ref data-cnstr to))
+                        (hash-set! data-cnstr to (+ my-data (edge-data e))))
+                  (when (> (+ my-return (edge-return e)) (hash-ref return-cnstr to))
+                        (hash-set! return-cnstr to (+ my-return (edge-return e))))))
+           ))
     ;; Update funcinfo to labelinfo
     (traverse-linklist x update-funcdecl))
 
-  (for ([program programs])
+  (for ([program programs]
+        [i (in-range (vector-length programs))])
+       (pretty-display (format "generic-form ~a >>>" i))
        (when program (generic-program (aforth-code program)))))

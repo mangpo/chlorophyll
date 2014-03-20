@@ -82,6 +82,7 @@
   ;; Create file for each core.
   (define files
     (for/list ([i (in-range (* w h))])
+              (pretty-display (format ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> print ~a" i))
 	      (print-file (vector-ref programs i) name i w h sliding)
 	      (format "~a-~a" name i)))
   (raise "done")

@@ -1,6 +1,5 @@
 TODO
-- funcinfo for 1rep => arrayforth-def.rkt::L137
-- test reg on fir again.
+- regression test for codegen
 - collect 
   = # of live items in stack and return stack 
   = # of recv
@@ -10,6 +9,11 @@ TODO
 - other optimizations: dce, instr fetch, first order funcs
 - no need to use lock in cache.rkt
 - why compiling md5 is so slow
+
+OPTIMIZATION
+: sumrotate dup down b! !b drop ;
+: main 0 a! 31 for @+ a push sumrotate pop a! next ;
+- can we remove a push?
 
 FASTER PARTITIONER
 - infer each function first (see issue about racket)

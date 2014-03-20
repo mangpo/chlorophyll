@@ -7,7 +7,7 @@
 
 (provide define-repeating-code define-repeating-codes aforth-linklist)
 
-(define debug #t)
+(define debug #f)
 
 (define (list->linklist lst)
   (define (copy x)
@@ -134,7 +134,10 @@
   ;; insert new funcdecl into program
   (define def-entry (first-funcdecl-linklist (aforth-code program)))
   (define pre-entry (linklist-prev def-entry))
-  (define new-entry (linklist pre-entry (funcdecl new-name head #f) def-entry))
+  (define new-entry (linklist pre-entry 
+                              ;; funcinfo needs to be updated later!
+                              (funcdecl new-name head (funcinfo #f #f #f))
+                              def-entry))
   (set-linklist-next! pre-entry new-entry)
   (set-linklist-prev! def-entry new-entry))
 
