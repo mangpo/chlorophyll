@@ -7,7 +7,7 @@
 
 (provide define-repeating-code define-repeating-codes aforth-linklist)
 
-(define debug #f)
+(define debug #t)
 
 (define (list->linklist lst)
   (define (copy x)

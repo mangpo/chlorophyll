@@ -709,6 +709,7 @@
         (define n-mem-decls (length mem-decls))
         (set! n-regs (- n-decls n-mem-decls))
         (when (> n-regs 1)
+	      (pretty-display (format "n-decls = ~a, n-mem-decls = ~a" n-decls n-mem-decls))
               (raise "visitor-codegen: only support one variable on return stack"))
 
         ;; args

@@ -1,4 +1,6 @@
 TODO
+- funcinfo for 1rep => arrayforth-def.rkt::L137
+- test reg on fir again.
 - collect 
   = # of live items in stack and return stack 
   = # of recv
