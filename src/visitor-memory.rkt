@@ -117,7 +117,8 @@
               [(need-mem? var)
                (when debug (pretty-display `(variable ,var mem ,mem-rp)))
                (dict-set! mem-map var (gen-mem mem-p mem-rp))
-               (set-field! address ast (gen-mem mem-p mem-rp))
+               (when (is-a? ast Param%)
+                     (set-field! address ast (gen-mem mem-p mem-rp)))
                (set! mem-p (add1 mem-p))
                (set! mem-rp (add1 mem-rp))]
 
