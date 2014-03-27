@@ -272,6 +272,7 @@
     (if distributed
         (distribute-and-optimize virtual-codes name w h sliding)
         (begin
+          (raise "non-distributed optimization is not support in modular branch.")
           (with-output-to-file #:exists 'truncate (format "~a/~a-gen-red.rkt" outdir name)
                                (lambda () 
                                  (print-header)

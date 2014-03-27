@@ -2,6 +2,8 @@
 
 (require "compiler.rkt")
 
+;(compile-and-optimize "../examples/simple/test.cll" "test" 
+;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/md5/assume.cll" "assume" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/simple/function2.cll" "function2" 

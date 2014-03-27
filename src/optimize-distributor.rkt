@@ -85,7 +85,6 @@
               (pretty-display (format ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> print ~a" i))
 	      (print-file (vector-ref programs i) name i w h sliding)
 	      (format "~a-~a" name i)))
-  (raise "done")
   ;; Run each core file.
   (run files (list))
   

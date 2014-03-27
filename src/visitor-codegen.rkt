@@ -750,7 +750,8 @@
                        (gen-block)
                        (gen-block "drop" 1 0))])
             ;; TODO: is setting memomy constraint to false in main too aggressive?
-            (set-restrict-mem! (block-cnstr b) #f)
+            (unless (equal? name "main")
+                    (set-restrict-mem! (block-cnstr b) #f))
             (list b)))
 
         (define precond
