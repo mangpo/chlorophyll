@@ -392,13 +392,23 @@
        [(is-a? ast BinExp%)
         (define place (get-field place-type ast))
 	(set! is-index #f)
-	
-	(unless (unique-place ast)
-		(send (get-field e1 ast) accept this)
-		(send (get-field e2 ast) accept this)
-		;; pop in the reverse order
-		(set-field! e2 ast (pop-stack place))
-		(set-field! e1 ast (pop-stack place)))
+
+        (define whole (unique-place ast))
+        (define right-part (unique-place (get-field e2 ast)))
+        
+        (cond
+         [whole (void)]
+
+         [(and right-part (equal? (get-field place-type ast) right-part))
+          (send (get-field e1 ast) accept this)
+          (set-field! e1 ast (pop-stack place))]
+
+         [else
+          (send (get-field e1 ast) accept this)
+          (send (get-field e2 ast) accept this)
+          ;; pop in the reverse order
+          (set-field! e2 ast (pop-stack place))
+          (set-field! e1 ast (pop-stack place))])
 
         (when (member (get-field op (get-field op ast)) (list "/%" "*:2" ">>:2" ">>>"))
               (let ([r (new ProxyReturn% [place-type place])])

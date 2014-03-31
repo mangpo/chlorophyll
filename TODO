@@ -1,9 +1,7 @@
 TODO
+- fir, cos, and one more for testing
+- don't expand >> x, << x for superopt
 - regression test for codegen
-- collect 
-  = # of live items in stack and return stack 
-  = # of recv
-  = assumption for a! b! ?
 
 - rethink key for cache (no mem-size, etc.)
 - other optimizations: dce, instr fetch, first order funcs
