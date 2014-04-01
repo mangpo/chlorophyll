@@ -2,8 +2,8 @@
 
 (require "compiler.rkt")
 
-(compile-and-optimize "../examples/simple/test.cll" "test" 
-                      256 "null" #:opt #f)
+;(compile-and-optimize "../examples/simple/test.cll" "test" 
+;                      256 "null" #:opt #f)
 ;(compile-and-optimize "../examples/md5/assume.cll" "assume" 
 ;                      256 "null" #:opt #t)
 ;(compile-and-optimize "../examples/simple/function2.cll" "function2" 
@@ -41,8 +41,8 @@
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../examples/rom/interp.cll" "interp" 
 ;                      256 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
-;(compile-and-optimize "../examples/rom/cos.cll" "cos" 
-;                      300 "null" #:opt #t)
+(compile-and-optimize "../examples/rom/cos.cll" "cos" 
+                      300 "null" #:opt #t)
 ;(compile-and-optimize "../examples/rom/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 

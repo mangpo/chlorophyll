@@ -187,6 +187,7 @@
 
   (define func-dict (make-hash))
   (define stack-graph (make-hash))
+
   (struct edge (to data return))
   (define data-cnstr (make-hash))
   (define return-cnstr (make-hash))
@@ -354,8 +355,8 @@
                 (let ([to (edge-to e)])
                   (when (> (+ my-data (edge-data e)) (hash-ref data-cnstr to))
                         (hash-set! data-cnstr to (+ my-data (edge-data e))))
-                  (when (> (+ my-return (edge-return e)) (hash-ref return-cnstr to))
-                        (hash-set! return-cnstr to (+ my-return (edge-return e))))))
+                  (when (> (add1 (+ my-return (edge-return e))) (hash-ref return-cnstr to))
+                        (hash-set! return-cnstr to (add1 (+ my-return (edge-return e)))))))
            ))
     ;; Update funcinfo to labelinfo
     (traverse-linklist x update-funcdecl))
