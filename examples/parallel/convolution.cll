@@ -20,7 +20,9 @@ void main() {
     x[i] = sum;
   }
 
-  for(i from 0 to 40) {
+  out(x[39]);
+
+  /*for(i from 0 to 40) {
     out(x[i]);
-  }
+  }*/
 }

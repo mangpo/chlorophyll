@@ -668,6 +668,12 @@
               "b!" "!b" (number->string (- to from 1)))
              0 1)
             ])) ;; loop bound
+
+	;; Comment this out if using the old superoptimizer. Use 2 becuase we compress array to size 2.
+	(when (> (- to from) 2)
+	      (define init-code (block-body init-ret))
+	      (set-block-body! init-ret (append (take init-code (sub1 (length init-code))) 
+						(list "2"))))
          
         (define body-ret (send (get-field body ast) accept this))
 	;; pop restriction on a

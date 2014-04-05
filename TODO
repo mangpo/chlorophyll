@@ -1,4 +1,7 @@
 TODO
+- open-input-file: cannot open input file
+  path: /home/mangpo/work/greensyn/src/../examples/md5/output-md1-rightrot/md1-rightrot-16-opt.aforth
+
 - fir, cos, and one more for testing
 - don't expand >> x, << x for superopt
 - regression test for codegen

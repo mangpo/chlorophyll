@@ -41,8 +41,8 @@
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../examples/rom/interp.cll" "interp" 
 ;                      256 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/rom/cos.cll" "cos" 
-                      300 "null" #:opt #t)
+;(compile-and-optimize "../examples/rom/cos.cll" "cos" 
+;                      300 "null" #:opt #t)
 ;(compile-and-optimize "../examples/rom/sin.cll" "sin" 
 ;                      290 "null" #:w 3 #:h 3 #:opt #f)
 
@@ -56,7 +56,7 @@
 ;(compile-and-optimize "../tests/run/prefixsum.cll" "prefixsum" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/parallel/convolution.cll" "convolution" 
-;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f) ;; factor = 0.4
+;                      290 "null" #:w 8 #:h 8 #:opt #t #:partition #t) ;; factor = 0.4
 ;(compile-and-optimize "../examples/parallel/convolution-pair.cll" "convolutionpair" 
 ;                      290 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 
@@ -70,8 +70,8 @@
 ;; MD5
 ;(compile-and-optimize "../examples/md5/leftrotate.cll" "leftrotate"
 ;		      1024 "null" #:w 4 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
-;		      1024 "null" #:w 8 #:h 8 #:opt #t)
+(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
+		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"

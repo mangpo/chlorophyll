@@ -209,7 +209,7 @@
     (define dstack 0) ;; TODO: init to #reg on stack (no need)
     (define rstack 0)
     (define recv 0)
-    (define begin #t)
+    (define start #t)
     
     (define (f x)
       (cond
@@ -240,22 +240,21 @@
 	       (equal? (list-ref body (- index 1)) "b!")
 	       (member (list-ref body (- index 2)) (list "up" "down" "left" "right" "io")))
 	  (set-block-in! x 1)]
-	 [(and (< index 2) begin)
+	 [(and (< index 2) start)
 	  (set-block-in! x 1)
 	  (unless (block-incnstr x) (set-block-incnstr! x "uplr"))
 	  ]
 	 [else
 	  (set-block-in! x 0)])
 	 
-	(set! begin #f)
+	(set! start #f)
 	]
 
        [(mult? x)
-	(set! begin #f)
+	(set! start #f)
 	(set! dstack (sub1 dstack))]
 
        [(funccall? x)
-	(set! begin #f)
 	(define name (funccall-name x))
 	(define info (hash-ref func-dict name))
 	;; Collect how deep the current stack is for funcdecl x.
@@ -273,6 +272,10 @@
 
 	;; Update dstack.
 	(set! dstack (+ (- dstack (funcinfo-in info)) (funcinfo-out info)))
+
+	(if (regexp-match #rx"rep" (funccall-name x))
+	    (set! start #t)
+	    (set! start #f))
 	]
 
        [(forloop? x)
