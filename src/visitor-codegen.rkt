@@ -638,8 +638,10 @@
 	    (set! const-a (cons #t const-a))
             (define offset (get-field offset array))
             (define address (get-field address array))
-            (define actual-addr-str (number->string (- (get-var address) offset)))
-            (define actual-addr-org-str (number->string (- (meminfo-addr address) offset)))
+            (define actual-addr-str (number->string 
+                                     (+ (- (get-var address) offset) from)))
+            (define actual-addr-org-str (number->string 
+                                         (+ (- (meminfo-addr address) offset) from)))
 	    (set! addr-pair (cons (cons actual-addr-str `opt)
 				  (cons actual-addr-org-str `opt)))
             (gen-block-org
