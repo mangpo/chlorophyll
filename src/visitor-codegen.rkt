@@ -642,8 +642,10 @@
 	    (set! const-a (cons #t const-a))
             (define offset (get-field offset array))
             (define address (get-field address array))
-            (define actual-addr-str (number->string (- (get-var address) offset)))
-            (define actual-addr-org-str (number->string (- (meminfo-addr address) offset)))
+            (define actual-addr-str (number->string 
+                                     (+ (- (get-var address) offset) from)))
+            (define actual-addr-org-str (number->string 
+                                         (+ (- (meminfo-addr address) offset) from)))
 	    (set! addr-pair (cons (cons actual-addr-str `opt)
 				  (cons actual-addr-org-str `opt)))
             (gen-block-org
@@ -668,12 +670,6 @@
               "b!" "!b" (number->string (- to from 1)))
              0 1)
             ])) ;; loop bound
-
-	;; Comment this out if using the old superoptimizer. Use 2 becuase we compress array to size 2.
-	(when (> (- to from) 2)
-	      (define init-code (block-body init-ret))
-	      (set-block-body! init-ret (append (take init-code (sub1 (length init-code))) 
-						(list "2"))))
          
         (define body-ret (send (get-field body ast) accept this))
 	;; pop restriction on a

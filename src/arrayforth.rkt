@@ -175,20 +175,21 @@
 		[to   (forloop-to b-for)]
 		[bound-str (number->string (- to from 1))])
            (set-forloop-to! a-for to)
-           (set-forloop-init! a-for
-			      (cond
-			       [(equal? addr #f)
-				(new-block (list bound-str) 0 1 (restrict #t #t #f #t) (list bound-str))]
-
-			       [(pair? addr)
-				(new-block (list (car addr) "a!" bound-str)
-				       0 1 (restrict #t #t #f #t)
-				       (list (car addr-org) "a!" bound-str))]
-
-			       [else
-				(new-block (list (number->string from) addr "b!" "!b" bound-str)
-				       0 1 (restrict #t #t #f #t)
-				       (list (number->string from) addr-org "b!" "!b" bound-str))]))
+           (set-forloop-init! 
+            a-for
+            (cond
+             [(equal? addr #f)
+              (new-block (list bound-str) 0 1 (restrict #t #t #f #t) (list bound-str))]
+             
+             [(pair? addr)
+              (new-block (list (car addr) "a!" bound-str)
+                         0 1 (restrict #t #t #f #t)
+                         (list (car addr-org) "a!" bound-str))]
+             
+             [else
+              (new-block (list (number->string from) addr "b!" "!b" bound-str)
+                         0 1 (restrict #t #t #f #t)
+                         (list (number->string from) addr-org "b!" "!b" bound-str))]))
            #t)))
   
   (cond

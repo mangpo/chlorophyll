@@ -469,7 +469,7 @@
 (define Array%
   (class Var%
     (super-new)
-    (inherit-field known-type place-type pos name expand expect type)
+    (inherit-field known-type place-type pos name expand expect type address)
     (init-field index [offset 0] [opt #f] [ghost #f])
     (inherit print-send-path)
 
@@ -486,6 +486,11 @@
       (print-send-path indent)
       (when (> offset 0)
 	    (pretty-display (format "~a(offset: ~a)" (inc indent) offset)))
+      (when (meminfo? address)
+	    (pretty-display (format "~a(address: ~a ~a ~a)" (inc indent) 
+                                    (meminfo-addr address)
+                                    (meminfo-virtual address)
+                                    (meminfo-data address))))
       (send index pretty-print (inc indent)))
 
     (define/override (to-string)

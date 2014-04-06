@@ -280,6 +280,18 @@
 
        [(forloop? x)
 	(f (forloop-init x))
+
+        ;; Compress loopbound.
+        (aforth-struct-print x)
+        (define init-block (linklist-entry (linklist-next (forloop-init x))))
+        (when init-block
+              (define init-list (block-body init-block))
+              (define c (string->number (last init-list)))
+              (when (and c (> c 1))
+                    (set-block-body! 
+                     init-block 
+                     (append (take init-list (sub1 (length init-list))) (list "1")))))
+              
 	(set! dstack (sub1 dstack))
 	(set! rstack (add1 rstack))
 	(f (forloop-body x))
