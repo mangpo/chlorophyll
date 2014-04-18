@@ -162,6 +162,7 @@
   (pretty-display (format "  (file \"~a/ast.rkt\")" modular-dir))
   (pretty-display (format "  (file \"~a/controller.rkt\")" modular-dir))
   (pretty-display (format "  (file \"~a/f18a.rkt\")" modular-dir))
+  (pretty-display (format "  (file \"~a/state.rkt\")" modular-dir))
   (pretty-display "  )"))
 
 (define (print-generic-optimize name w h sliding [core #f])
