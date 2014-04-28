@@ -1,6 +1,8 @@
 // 2**16-1 = 65535
 // 2**32-1 = 4294967295
 
+//a,b,c,d + hash = 2d + 11
+//r@6 or r@17
 int::2@(28, 29) leftrotate(int::2@(16,17) x, int@15 r) {
   int::2@(28, 29) output;
   int@16 swap;

@@ -85,6 +85,10 @@
               (pretty-display (format ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> print ~a" i))
 	      (print-file (vector-ref programs i) name i w h sliding)
 	      (format "~a-~a" name i)))
+  ;; Filter ones that already have optimized versions.
+  (set! files (filter (lambda (x) (not (file-exists? (format "~a/~a-opt.aforth" outdir x)))) 
+		      files))
+
   ;; Run each core file.
   (run files (list))
   

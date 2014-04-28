@@ -70,7 +70,7 @@
 ;; MD5
 ;(compile-and-optimize "../examples/md5/leftrotate.cll" "leftrotate"
 ;		      1024 "null" #:w 4 #:h 3 #:opt #f)
-(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
+(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot-liveness"
 		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
