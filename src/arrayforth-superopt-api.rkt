@@ -243,7 +243,7 @@
 	  (set-block-in! x 1)]
 	 [(and (< index 2) start)
 	  (set-block-in! x 1)
-	  (unless (block-incnstr x) (set-block-incnstr! x "uplr"))
+	  (unless (block-incnstr x) (set-block-incnstr! x "udlr"))
 	  ]
 	 [else
 	  (set-block-in! x 0)])
