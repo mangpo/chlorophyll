@@ -1,0 +1,16 @@
+int p21_cycle(int x, int a, int b, int c) {
+  int o1,o2,o3,o4;
+  o1 = -(x == c);
+  o2 = a ^ c;
+  o3 = -(x == a);
+  o4 = b ^ c;
+  o1 = o1 & o2;
+  o3 = o3 & o4;
+  o1 = o1 ^ o3;
+  return o1 ^ c;
+}
+
+void main() {
+  int x;
+  x = p21_cycle(1,1,2,3);
+}

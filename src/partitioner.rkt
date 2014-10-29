@@ -17,12 +17,9 @@
          )
 
 (require rosette/solver/kodkod/kodkod)
-(require rosette/solver/z3/z3)
+(require rosette/solver/smt/z3)
 
 (provide optimize-comm (struct-out result))
-
-;; Set bidwidth for rosette
-;(configure [bitwidth bitwidth])
 
 ;; struct used to return result from optimize-comm
 (struct result (msgs cores ast))
@@ -90,7 +87,7 @@
   ;(current-solver (new z3%))
   ;(current-solver (new kodkod%))
 
-  (configure [bitwidth 32])
+  (current-bitwidth 32)
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))

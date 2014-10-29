@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require (only-in rosette [sym? symbolic?]))
+(require (only-in rosette [term? symbolic?]))
 (require (only-in racket foldl log))
 (require "path.rkt")
 
@@ -23,7 +23,7 @@
 
 (define node-offset 10)
 (define block-offset 800)
-(define procs 8)
+(define procs 2)
 (define check-interval 60)
 (define distributed #t)
 (define max-unroll 20)

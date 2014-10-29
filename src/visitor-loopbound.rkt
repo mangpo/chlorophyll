@@ -6,7 +6,7 @@
          "visitor-expr-interpreter.rkt")
 
 (require rosette/solver/kodkod/kodkod)
-(require rosette/solver/z3/z3)
+(require rosette/solver/smt/z3)
 
 (provide (all-defined-out))
 
@@ -190,7 +190,7 @@
        [(is-a? ast Program%)
                   
 	(current-solver (new kodkod-incremental%))
-	(configure [bitwidth 32])
+	(current-bitwidth 32)
 
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))

@@ -1,0 +1,8 @@
+int::2 f1(int::2 e, int::2 f, int::2 g) {
+  return (e & f) ^ ((~e) & g);
+}
+
+void main() {
+  int::2 a, b, c;
+  a = f1(a,b,c);
+}

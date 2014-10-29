@@ -1,0 +1,8 @@
+int::2 f2(int::2 a, int::2 b, int::2 c) {
+  return (a & b) ^ (a & c) ^ (b & c);
+}
+
+void main() {
+  int::2 a, b, c;
+  a = f2(a,b,c);
+}

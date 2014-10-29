@@ -23,8 +23,12 @@
 
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
 ;                      220 "null" #:w 5 #:h 4 #:opt #t)
+
+;; Bithack
 ;(compile-and-optimize "../examples/bithack/bithack3.cll" "bithack3"
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
+(compile-and-optimize "../examples/bithack/count.cll" "count"
+		      1000 "null" #:w 2 #:h 3 #:opt #t)
 
 ;; Single-core
 ;(compile-and-optimize "../examples/rom/fir.cll" "fir" 
@@ -82,5 +86,5 @@
 ;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/mapreduce/reduce-pair.cll" "reduce-pair" 
 ;                      290 "null" #:w 4 #:h 4 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
-                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
+;                      290 "null" #:w 5 #:h 4 #:opt #f #:partition #f)

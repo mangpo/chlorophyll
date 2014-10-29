@@ -475,7 +475,9 @@
       (begin
         (pretty-display (format "(define name \"~a-~a\")" name core))
         (pretty-display (format "(define dir \"~a\")" outdir))
+        (pretty-display "(define time (current-seconds))")
         (pretty-display (format "(define real-opts (superoptimize program name ~a ~a ~a dir #:id ~a))" w h sliding core))
+        (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.time\" dir name) (lambda () (pretty-display (- (current-seconds) time))))")
         (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.rkt\" dir name) (lambda () (aforth-struct-print real-opts)))")
         (pretty-display "(with-output-to-file #:exists 'truncate (format \"~a/~a-opt.aforth\" dir name)")
         (pretty-display (format "(lambda () (aforth-syntax-print real-opts ~a ~a #:id ~a)))" w h core)))
