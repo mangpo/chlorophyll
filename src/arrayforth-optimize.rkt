@@ -184,7 +184,7 @@
           (values next block-noopt)]))
 
       ;; If simple function, set limit to more than max.
-      (define-values (next opt) (optimize-loop (if simple 1000 block-limit)))
+      (define-values (next opt) (optimize-loop (if #f 1000 block-limit)))
       (pretty-display "OPTMIZE: DONE")
       (define renamed (renameindex opt mem-size index-map))
       (pretty-display "RENAME: DONE")

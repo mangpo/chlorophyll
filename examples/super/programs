@@ -1,0 +1,60 @@
+LARGE
+
+: p14_floor_avg = $0 0 a! !+ !+ 0 1 b! @b 0 b! @b and 2 b! !b 1 b! @b 0 b! @b or push drop pop dup 2/ push drop pop 2 b! @b over . + push drop pop = $0 ; | cr
+(data . 1)
+
+: p15_ceil_avg = $0 3 a! !+ !+ 0 4 b! @b 3 b! @b over - and . + 5 b! !b 4 b! @b 3 b! @b or push drop pop dup 2/ push drop pop 5 b! @b over - 1 . + . + push drop pop = $0 ; | cr
+(data . 1)
+
+p23_count
+@b 87381 and 0 b! !b dup 0 b! @b - 1 . + . + push drop pop dup 209715 and 0 b! !b dup 2/ 2/ 1 b! !b 1 b! @b 209715 and 1 b! !b 0 b! @b 1 b! @b . + push drop pop dup
+(data . 1)
+
+p24_roundpower
+: main = $0 0 dup 1 - 1 . + . + push drop pop dup over 2/ over - and . + push drop pop dup over 2/ 2/ over - and . + push drop pop dup over 2/ 2/ 2/ 2/ over - and . + push drop pop dup over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ over - and . + push drop pop dup over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ over - and . + push drop pop dup 1 . + push drop pop warm = $0 ; | cr
+(data . 1)
+
+interp_large
+0 right b! @b push drop pop dup 63 and 3 b! !b dup 2/ 2/ 2/ 2/ 2/ 2/ 2 b! !b 2 b! @b b! @b 2 b! @b 1 . + b! @b 2 b! @b b! @b - 1 . + . + 3 b! @b
+(data . 3) (memory)
+
+-------------------------------------------
+SMALL
+
+: fff = $0 0 a! !+ !+ push pop dup 1 b! @b and over 65535 or 0 b! @b and over - and . + push drop pop = $0 ; | cr
+: ggg = $0 0 a! push !+ !+ pop dup 1 b! @b and over 65535 or 0 b! @b and over - and . + push drop pop = $0 ; | cr
+: hhh = $0 0 a! !+ push !+ pop 1 b! @b over or 0 b! @b or push drop pop = $0 ; | cr
+: iii = $0 0 a! !+ push !+ pop dup 1 b! @b 0 b! @b 65535 or over - and . + or push drop pop = $0 ; | cr
+
+shaf_a
+: f1 = 0 a! !+ !+ push pop dup 1 b! @b and over - 0 b! @b and or push drop pop ;
+(constraint (data . 2) (return . 1))
+
+shaf_b
+: f2 = $0 0 a! !+ !+ push pop dup 1 b! @b and over 0 b! @b and or 1 b! @b 0 b! @b and or push drop pop ;
+(constraint (data . 2) (return . 1))
+
+fir
+push drop pop pop a! right b! !b dup 1 + 15 and push drop pop
+(constraint (data . 1) a memory)
+
+complexA
+drop pop a 3 b! !b 0 b! !b 3 b! @b up b! !b 0 b! @b 2* 2* up b! @b 3 and +
+((data . 2))
+
+complexB
+drop 3 and . + push drop pop dup 0 b! @b
+((data . 2))
+
+complexC
+drop 65536 over - 1 . + . + push drop pop
+((data . 2))
+
+rrotate
+2 b! !b push drop pop 2 b! @b 0 b! !b up b! @b 0 b! @b 2/ 2/ + 65535 and
+((data . 2) (return . 1))
+
+interp
+2 b! !b 2 b! @b b! @b 2 b! @b 1 + b! @b 2 b! @b b! @b - 1 + +
+((data . 2))
+

@@ -1,0 +1,15 @@
+
+int p19_exchange(int x, int m, int k) {
+  int o1,o4;
+  // assert(k <=16);
+  o1 = x >> k;
+  o1 = x ^ o1;
+  o1 = o1 & m;
+  o4 = o1 << k;
+  o4 = o4 ^ o1;
+  return o4 ^ x;
+}
+void main() {
+  int x;
+  x = p19_exchange(1,2,3);
+}

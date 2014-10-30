@@ -27,12 +27,18 @@
 ;; Bithack
 ;(compile-and-optimize "../examples/bithack/bithack3.cll" "bithack3"
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
-(compile-and-optimize "../examples/bithack/count.cll" "count"
-		      1000 "null" #:w 2 #:h 3 #:opt #t)
+(compile-and-optimize "../examples/bithack/ceil_avg.cll" "ceil"
+		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
+;(compile-and-optimize "../examples/bithack/count.cll" "count"
+;		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
+;(compile-and-optimize "../examples/bithack/roundpower.cll" "roundpower"
+;		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
+;(compile-and-optimize "../examples/sha/sha_f.cll" "sha_f"
+;		      300 "null" #:w 2 #:h 3 #:opt #t)
 
 ;; Single-core
-;(compile-and-optimize "../examples/rom/fir.cll" "fir" 
-;                      512 "null" #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/rom/fir.cll" "fir-old" 
+;                      512 "null" #:w 3 #:h 3 #:opt #t)
 ;(compile-and-optimize "../examples/rom/fir0.cll" "fir0" 
 ;                      256 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/rom/fir-par2.cll" "fir-par2" 
@@ -40,7 +46,7 @@
 ;(compile-and-optimize "../examples/rom/fir-par4.cll" "fir-par4" 
 ;                      512 "null" #:w 4 #:h 4 #:opt #f)
 ;(compile-and-optimize "../examples/rom/interp.cll" "interp" 
-;                      256 "null" #:w 3 #:h 3 #:opt #f #:partition #f)
+;                      256 "null" #:w 3 #:h 3 #:opt #t #:partition #f)
 ;(compile-and-optimize "../examples/rom/cos.cll" "cos" 
 ;                      300 "null" #:opt #f)
 ;(compile-and-optimize "../examples/rom/sin.cll" "sin" 
@@ -62,18 +68,19 @@
 
 ;(compile-and-optimize "../examples/rom/sqrt0.cll" "sqrt0"
 ;		      290 "null" #:w 4 #:h 4 #:opt #t #:sliding #f) ;; factor = 0.4
-;(compile-and-optimize "../examples/rom/complex3.cll" "complex" 
-;                      290 "null" #:w 4 #:h 4 #:opt #t #:sliding #f)
+;(compile-and-optimize "../examples/rom/complex3.cll" "complex-old" 
+;                      290 "null" #:w 4 #:h 4 #:opt #t)
 ;(compile-and-optimize "../examples/rom/complex0.cll" "complex0" 
 ;                      290 "null" #:w 5 #:h 5 #:opt #f #:partition #f #:layout #t) ;; factor = 0.4
 
 ;; MD5
 ;(compile-and-optimize "../examples/md5/leftrotate.cll" "leftrotate"
 ;		      1024 "null" #:w 4 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/md5/md1-rightrot-noassume.cll" "md1-rightrot-noassume"
+;(compile-and-optimize "../examples/md5/md1-rightrot.cll" "md1-rightrot"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire"
 ;		      1024 "null" #:w 8 #:h 8 #:opt #t)
+
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"
 ;		      512 "null" #:w 8 #:h 8 #:opt #f #:partition #f)
 
