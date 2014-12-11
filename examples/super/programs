@@ -10,6 +10,9 @@ p23_count
 @b 87381 and 0 b! !b dup 0 b! @b - 1 . + . + push drop pop dup 209715 and 0 b! !b dup 2/ 2/ 1 b! !b 1 b! @b 209715 and 1 b! !b 0 b! @b 1 b! @b . + push drop pop dup
 (data . 1)
 
+p23_count_full
+dup 2/ 0 b! !b 0 b! @b 87381 and 0 b! !b dup 0 b! @b - 1 . + . + push drop pop dup 209715 and 0 b! !b dup 2/ 2/ 1 b! !b 1 b! @b 209715 and 1 b! !b 0 b! @b 1 b! @b . + push drop pop dup 2/ 2/ 2/ 2/ 0 b! !b 0 b! @b over . + push drop pop dup 3855 and push drop pop dup over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ . + push drop pop dup over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ . + push drop pop dup 63 and push drop pop 
+
 p24_roundpower
 : main = $0 0 dup 1 - 1 . + . + push drop pop dup over 2/ over - and . + push drop pop dup over 2/ 2/ over - and . + push drop pop dup over 2/ 2/ 2/ 2/ over - and . + push drop pop dup over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ over - and . + push drop pop dup over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ over - and . + push drop pop dup 1 . + push drop pop warm = $0 ; | cr
 (data . 1)

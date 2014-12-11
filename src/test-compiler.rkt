@@ -27,14 +27,16 @@
 ;; Bithack
 ;(compile-and-optimize "../examples/bithack/bithack3.cll" "bithack3"
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
-(compile-and-optimize "../examples/bithack/ceil_avg.cll" "ceil"
-		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
+;(compile-and-optimize "../examples/bithack/ceil_avg.cll" "ceil"
+;		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
 ;(compile-and-optimize "../examples/bithack/count.cll" "count"
 ;		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
 ;(compile-and-optimize "../examples/bithack/roundpower.cll" "roundpower"
 ;		      1000 "null" #:w 2 #:h 3 #:opt #t #:partition #f)
 ;(compile-and-optimize "../examples/sha/sha_f.cll" "sha_f"
 ;		      300 "null" #:w 2 #:h 3 #:opt #t)
+(compile-and-optimize "../examples/bithack/intro.cll" "intro"
+		      300 "null" #:w 2 #:h 3 #:opt #f #:partition #f)
 
 ;; Single-core
 ;(compile-and-optimize "../examples/rom/fir.cll" "fir-old" 
