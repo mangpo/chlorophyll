@@ -6,7 +6,7 @@
 
 ;;(define factor 0.95)
 
-(define debug #t)
+(define debug #f)
 
 (define (merge-sym-partition n space flow-graph capacity 
 			     refine-capacity part2capacity

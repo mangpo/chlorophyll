@@ -10,7 +10,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field [functions (make-hash '(("in" . ()) ("out" . ())))])
-    (define debug #t)
+    (define debug #f)
 
     (define (cross-product-raw x y)
       (when debug (pretty-display `(cross-product-raw ,x ,y)))

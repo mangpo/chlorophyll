@@ -12,7 +12,7 @@
     (super-new)
     (init-field [count 0] [new-decls (list)])
     (define replace #f)
-    (define debug #t)
+    (define debug #f)
 
     (struct entry (temp type expand))
 

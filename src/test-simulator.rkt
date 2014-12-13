@@ -25,30 +25,26 @@
 ;(test "../examples/matrixmultiply/matrixmult6.cll"     "matrixmult6" "72" 500) ;capacity issue
 ;(test "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" "null" 500)
 
-;(test "../examples/cluster/cluster.cll" "cluster" "null" 256)
-
 ;(test "../examples/mapreduce/map.cll"         "map" "null" 290)
 ;(test "../examples/mapreduce/map-pair.cll"    "map-pair" "null" 290)
 ;(test "../examples/mapreduce/reduce.cll"      "reduce" "null" 290)
 ;(test "../examples/mapreduce/reduce-pair.cll" "reduce-pair" "null" 290 #:partition #f)
 ;(test "../examples/mapreduce/mapreduce.cll"   "mapreduce" "null" 290 #:partition #f)
 
-;(test "../examples/rom/fir.cll"         "fir" "1" 1000 #:w 3 #:h 3)
 ;(test "../examples/rom/interp.cll"      "interp" "1" 256 #:w 3 #:h 3)
 ;(test "../examples/rom/poly.cll"        "poly" "1" 256 #:w 3 #:h 3)
 ;(test "../examples/rom/cos.cll"         "cos" "1" 300 #:w 3 #:h 3)
 ;(test "../examples/rom/sqrt2.cll"       "sqrt2" "2" 400 #:w 3 #:h 3)
 ;(test "../examples/rom/complex3.cll"    "complex3" "1" 300 #:w 4 #:h 4)
 
-;(test "../examples/md5/md5-optopt.cll" "md5" "null" 1024 #:w 8 #:h 8)
-;(test "../examples/md5/md1-rightrot.cll" "md5-rightrot" "null" 1024 #:w 8 #:h 8)
+(test "../examples/md5/md1-rightrot-sim.cll" "md5-rightrot-sim" "null" 1024 #:w 8 #:h 8)
 ;(test "../examples/md5/leftrotate.cll" "leftrotate" "null" 1024 #:w 3 #:h 4)
 
 ;(test "../examples/parallel/ssd.cll"  "ssd" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/swap.cll" "swap" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/prefixsum.cll" "prefixsum" "null" 512 #:w 8 #:h 8)
 ;(test "../examples/parallel/convolution.cll" "convolution" "null" 400 #:w 4 #:h 4 #:partition #f)
-(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
+;(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
 
 
 

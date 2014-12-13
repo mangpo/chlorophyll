@@ -179,15 +179,14 @@
   )
   
 ;; compile HLP to optimized many-core machine code
-(define (compile-and-optimize file name capacity input 
+(define (compile-and-optimize file name capacity  
                               #:w [w 2] #:h [h 3] 
                               #:soft-capacity [soft-capacity capacity]
                               #:verbose [verbose #t]
                               #:opt [opt #t] 
 			      #:layout [layout #t] 
 			      #:partition [xxx #t]
-                              #:sliding [sliding #t]
-			      #:run [run #f])
+                              #:sliding [sliding #t])
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; init ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (set-outdir file name)
@@ -202,7 +201,7 @@
   (define (iterative-refinement current-capacity current-part2sym)
     ;; Clone the AST before partitioning because partitioning mutates the AST.
     (define result (compile-to-IR (clone ast) name soft-capacity 
-                                  input w h 
+                                  "null" w h 
                                   #:verbose verbose 
 				  #:weight layout #:partition xxx
                                   #:refine-capacity current-capacity
@@ -212,9 +211,6 @@
     (define refine-info (astinfo-part2sym result))
     (define part2sym (car refine-info))
     (define part2capacity (cdr refine-info))
-    (when run
-          (pretty-display (format "running ~a ..." name))
-          (simulate-multicore name input))
 
     (set! real-codes (generate-codes programs w h #f))
     (set! shorter-codes (define-repeating-codes real-codes w h))

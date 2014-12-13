@@ -149,8 +149,5 @@
                   output)) ;; output
 
   (system/exit-code (format "diff ~a ~a" output expect)))
-  
-  ;; (with-output-to-string 
-  ;;   (lambda () (system (format "diff ~a ~a" output expect)))))
       
   

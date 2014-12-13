@@ -21,7 +21,7 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #t)
+    (define debug #f)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)

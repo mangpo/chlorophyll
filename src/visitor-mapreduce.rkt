@@ -93,6 +93,7 @@
               ;; map reduce case
               (get-reduce-length last-reduce-arg)
               (hash-ref arrays array-map-name)))
+        (define pos (get-field pos ast))
 
         (define array-or-map
           (if (equal? array-map-name "map")
@@ -104,7 +105,6 @@
                    [pos pos])))
 
         (define reduce-name (get-reduce-name))
-        (define pos (get-field pos ast))
 	
 	(define body
 	  (new Assign% 

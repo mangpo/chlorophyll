@@ -17,7 +17,7 @@
     (define cloner (new range-cloner%))
     (define placeset-collector (new placeset-collector% [for-conflict #t]))
 
-    (define debug #t)
+    (define debug #f)
 
     (define/public (visit ast)
       (cond
@@ -107,8 +107,8 @@
 
 
        [(is-a? ast BlockDup%)
-        (pretty-display (format "UNROLL: BlockDup unroll = ~a" n))
         (define n (length (get-field unroll (get-field loop ast))))
+        (pretty-display (format "UNROLL: BlockDup unroll = ~a" n))
         (set-field! stmts ast
                     (flatten (map (lambda (x) (send x accept this)) 
                                   (get-field stmts ast))))
