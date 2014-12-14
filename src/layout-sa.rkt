@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "header.rkt" "ast-util.rkt" "visitor-flow.rkt")
+(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt")
 
 (provide (all-defined-out) (struct-out layoutinfo))
 
@@ -84,7 +84,8 @@
   
   ;; Convert a list of edges into a matrix
   (with-output-to-string 
-   (lambda () (system (format "./qap/graph2matrix.py ~a/~a.graph ~a > ~a/~a.dat" 
+   (lambda () (system (format "~a/qap/graph2matrix.py ~a/~a.graph ~a > ~a/~a.dat" 
+                              srcpath
 			      outdir name 
 			      (if weight "--weight" "--noweight")
 			      outdir name))))
@@ -108,7 +109,8 @@
          (string-split
           (last (string-split
                  (with-output-to-string
-                  (lambda () (system (format "./qap/sa_qap ~a/~a.dat 10000000 3" outdir name))))
+                  (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
+                                             srcpath outdir name))))
                   ;(lambda () (system (format "./qap/sa_qap ~a/~a.dat 20000000 6" outdir name))))
                  "\n")))))
   (define stop (current-seconds))

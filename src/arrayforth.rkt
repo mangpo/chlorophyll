@@ -468,7 +468,7 @@
 
 (define (print-header)
   (pretty-display "#lang racket")
-  (pretty-display (format "(require \"~a/header.rkt\" \"~a/arrayforth.rkt\" \"~a/arrayforth-optimize.rkt\" \"~a/arrayforth-print.rkt\")" path2src path2src path2src path2src)))
+  (pretty-display (format "(require (file \"~a/header.rkt\") (file \"~a/arrayforth.rkt\") (file \"~a/arrayforth-optimize.rkt\") (file \"~a/arrayforth-print.rkt\"))" srcdir srcdir srcdir srcdir)))
 
 (define (print-optimize name w h sliding [core #f])
   (if core

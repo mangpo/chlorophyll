@@ -1,47 +1,94 @@
-Requirements
-------------
+# Chlorophyll Language and Compiler
 
-- [Rosette](http://bitbucket.org/emina/rosette)
-- [F18A superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter)
-- [Z3](http://z3.codeplex.com/)
+Chlorophyll language is a language for spatial computation. It is a subset of C with *partition annotation* for pinning data or computation onto computing units (multiple cores). Chlorophyll compiler is a prototype of a *synthesis-aided* compiler. It is built for GreenArrays 144.
 
-### Rosette
+Please refer to [Chlorophyll: Synthesis-Aided Compiler for Low-Power Spatial Architectures (PLDI'14)](http://www.eecs.berkeley.edu/~mangpo/www/papers/chlorophyll-pldi14.pdf) for more details on the concept of the *synthesis-aided* compiler and the compilation strategies used in Chlorophyll.
 
-1. Rosette depends on Racket >= 5.3.1 and Java >= 7, which must be the default on your system.  Type "java -version" into a terminal, to check your java version.
+Note: Chlorophyll compiler has only been tested on Linux OS, so it might be incompatible with other operation systems. Please report bugs to mangpo@eecs.berkeley.edu.
 
-2. Download [Rosette](http://bitbucket.org/emina/rosette). You will need to ask [Emina Torlak](http://bitbucket.org/emina) for permission to access the repo.
+# Setting Up
 
-3. Install as a library.  In command terminal, type:
+### Requirements
 
-```
-cd <path to your rosette repository directory, with subdirectories rosette, demo, etc.>
-raco link rosette
-```
-
-### F18A Superoptimizer
-
-1. Download [F18A Superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter)
-
-2. Install as local package. In command terminal, type:
+- [Racket](http://download.racket-lang.org)
+- [Rosette](http://github.com/emina/rosette)
+- [F18A superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter): install as a local package. In command terminal, type:
 
 ```
-raco planet link mangpo aforth-optimizer.plt 1 0 <path to F18A_superoptimizer repo>
+raco planet link mangpo aforth-optimizer.plt 1 0 path/to/F18A_superoptimizer/repo
 ```
 
-### Z3
-
-1. Download pre-built z3 binary from http://z3.codeplex.com/
-
-2. Add directory that contains z3 binary to your PATH environment variable.
-
-```
-PATH=@PATH:/path/to/z3/binary/directory
-```
-
-Installation
-------------
+### Installation
 
 After setting up all the requirements, run
 ```
 make
 ```
+
+# First Program
+
+Let compile a simple addition program (examples/simple/hello.cll).
+
+```
+void main() {
+  int@0 a;
+  int@1 b;
+  int@2 c;
+  a = 1; 
+  b = 2
+  c = a +@2 b;
+}
+```
+This program simply adds 1 and 2, and stores the result in variable *c*. "@" is an annotation for pinning data and computation onto *logical cores*, which are mapped to physical cores later by the compiler. In this example, we assign varaible *a*, *b*, and *c* to different cores, and specify that the addition happens at where *c* is. Thus, logical core 0 and 1 send value of *a* and *b* to logical core 2 respectively.
+
+### Compile
+```
+./src/chlorophyll examples/simple/hello.cll
+```
+
+The compiler will generate directory `examples/simple/output-hello`, in which contains many files. If everything goes well, you should see the final arrayForth program geneated by the compiler, `examples/simple/output-hello/hello-noopt2.aforth`.
+
+### Compile -o
+Compile with `-o` to turn on the superoptimizer (optimizing back-end code generator). Note that the compiler is much slower when compiling with `-o`, but the output program is more efficient. The superoptimzer caches its outputs, so if you have already compiled a program with `-o`, the subsequent compilation of the same program will be fast. The final optimized arrayForth program is `examples/simple/output-hello/hello.aforth`. 
+
+The compiler invokes multiple superoptimizers to optimize code of multiple GA nodes in parallel. The default number of threads used is 4. To change the number of threads, in `src/header.rkt`, modiy the following line:
+```
+(define procs 4)
+```
+Only compiling with `-o` when you are certian that your progam is corect.
+
+### Other Compiler Options
+To view all compiler options and the default settings, run
+```
+./src/chlorophyll -h
+```
+
+Note that the heuristic partitioner is much faster than the default synthesizing partitioner, but the output partitioning is less optimal.
+
+# Compilation Strategies
+
+Chlorophyll compiler consists the following components.
+1. **Partitioner** partitions data and computations onto logical cores.
+2. **Layout** maps logical cores to physical cores and determine the routing between cores.
+3. **Code seperator** seperates the program into multiple program fragments that fit in GA cores and insert communication code at the appropriate places in the program fragments.
+4. **Code generator** generates arrayForth code. Our code generator uses a superoptimization technique to optimize code.
+
+When we compile `xxx.cll`, the compiler will generate a directory `output-xxx` which contains
+- **xxx.part**: output from the partitioner, a fully partitioned xxx program (all varaibles and operaters are annoatated with logical cores)
+- **xxx.dat** and **xxx.graph**: input to the layout
+- **xxx.layout** output from the layout
+- **xxx-gen1.rkt** and **xxx-gen2.rkt**: outputs from the code separator as Racket objects. When we discover repeating sequences of instructions, we define a function that executes such sequence of instructions, and replace each of those repeating sequences with a function call.
+- **xxx.cpp**: output of compling xxx-gen1.rkt into C++ programs. Each thread represents each GA core. xxx.cpp can be compiled to an executable using `g++ -pthread -std=c++0x xxx.cpp`.
+- **xxx-noopt1.rkt** and **xxx-noopt2.rkt**: outputs from compiling xxx-gen1.rkt and xxx-gen2.rkt to arrayForth respectively. xxx-noopt1.rkt and xxx-noopt2.rkt are generated without superoptimization.
+- 
+
+
+# Input/Output
+
+# Language Constructs
+
+- pair/tuple
+- map reduce
+
+# Features
+- mapping logical cores to physical cores

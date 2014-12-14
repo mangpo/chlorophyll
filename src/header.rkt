@@ -23,7 +23,7 @@
 
 (define node-offset 10)
 (define block-offset 800)
-(define procs 2)
+(define procs 4)
 (define check-interval 60)
 (define distributed #t)
 (define max-unroll 20)
@@ -32,23 +32,23 @@
 (define srcdir srcpath)
 (define datadir datapath)
 (define outdir #f)
-(define path2src #f)
+;; (define path2src #f)
 
 (define (set-outdir filepath name)
   (set! outdir (string-append
                 (substring filepath 0 (cdr (last (regexp-match-positions* #rx"/" filepath))))
                 "output-" name))
-  (system (format "mkdir ~a" outdir))
+  ;; (system (format "mkdir ~a" outdir))
 
-  (define outdir-split (string-split outdir "/"))
-  (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
-  (define outdir-down-count (- (length outdir-split) outdir-up-count))
+  ;; (define outdir-split (string-split outdir "/"))
+  ;; (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
+  ;; (define outdir-down-count (- (length outdir-split) outdir-up-count))
 
-  (define srcdir-split (string-split srcdir "/"))
+  ;; (define srcdir-split (string-split srcdir "/"))
 
-  (define path-list (append (for/list ([i (in-range outdir-down-count)]) "..")
-			    (reverse (take (reverse srcdir-split) outdir-up-count))))
-  (set! path2src (string-join path-list "/"))
+  ;; (define path-list (append (for/list ([i (in-range outdir-down-count)]) "..")
+  ;;       		    (reverse (take (reverse srcdir-split) outdir-up-count))))
+  ;; (set! path2src (string-join path-list "/"))
   )
 
 (struct meminfo (addr virtual data))

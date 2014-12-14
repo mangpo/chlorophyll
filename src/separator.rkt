@@ -51,7 +51,7 @@
   (define (print-to-file programs [ext ""])
     (with-output-to-file #:exists 'truncate (format "~a/~a~a.cpp" outdir name ext)
       (lambda ()
-	(pretty-display (format "#include \"~a/communication.cpp\"\n" path2src))
+	(pretty-display (format "#include \"~a/communication.cpp\"\n" srcdir))
 	(for ([i (in-range n)])
 	     (pretty-display (format "//-------------------- CORE ~a(~a,~a) ---------------------"
 				     i (floor (/ i w)) (modulo i w)))
@@ -108,7 +108,7 @@
   (with-output-to-file #:exists 'truncate file
     (lambda ()
       (define cprinter (new cprinter% [thread #f]))
-      (pretty-display (format "#include \"~a/communication.cpp\"\n" path2src))
+      (pretty-display (format "#include \"~a/communication.cpp\"\n" srcdir))
       (send ast accept cprinter)))
   )
 
