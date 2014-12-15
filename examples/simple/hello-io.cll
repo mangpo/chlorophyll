@@ -1,0 +1,9 @@
+void main() {
+  int@0 a;
+  int@1 b;
+  int@2 c;
+  a = in(); 
+  b = in();
+  c = a +@2 b;
+  out(c);
+}

@@ -65,6 +65,40 @@ To view all compiler options and the default settings, run
 
 Note that the heuristic partitioner is much faster than the default synthesizing partitioner, but the output partitioning is less optimal.
 
+### Testing Your Programs
+To facilitate testing, we introduce `in()` and `out()` constructs that read from standard input and write to standard output respectively in the testing mode. In `examples/simple/hello-io.cll`, we modify `examples/simple/hello.cll` to read *a* and *b* from standard input, and write *c* to stardard output.
+
+You can test your implementation before fully compiling by running
+```
+./src/chlorophyll-test examples/simple/hello-io.cll 2
+```
+
+The second argument is the input data file in `testdata` directory. In this case, `testdata/2` is the input data, which contains two integers, since our program now takes 2 intgers from standard input. `chlorophyll-test` generates
+- **examples/simple/output-hello/hello-io_seq.cpp**, a sequential C++ program that is semantically equivalent to the source program
+- **examples/simple/output-hello/hello-io.cpp**, a multi-threaded C++ program that simulates mutiple GA nodes and is semantically equivalent to the source program
+
+Given `testdata/2` as the input, the outputs of hello-io_seq.cpp and hello-io.cpp are `testdata/out/hello-io_null.out` and `testdata/out/hello-io_null.tmp`. `chlorophyll-test` displays **PASSED** at the end if the two output data files are the same, and display **FAILED** otherwise. We expect `chlorophyll-test` to always report **PASSED**. If not, there is a problem with the compiler (not your implementation). In such case, please file a bug report.
+
+If all goes well, you can refer to either output data file as the output from your implementation.
+
+##### in()/out()
+If you left `in()` and `out()` in your program and compile all the way down to arrayForth code. `in()` and `out()` correspond to reading from and writing to IO pin, respectively. However, keep in mind that not all nodes have IO pins.
+
+### Forth to colorForth
+`cforth_tools` directory contains scripts for converting the generated arrayForth program in text file into colorForth binary compatible with [GreenArrays 144 IDE](http://www.greenarraychips.com/home/support/download-02b.html). 
+
+First, you start from `template.cfs`, and then replacing block 790, 792, and 800 with the generated code from the compiler (e.g. `examples/simple/output-hello/hello-noopt2.aforth`). Second, change the following line of `cforth_tools/Makefile` to match the .cfs file you want to convert.
+```
+NEW_CFS=template.cfs
+```
+
+Run
+```
+make clean
+make install
+```
+Copy the generated `OkadWork.cf` to GreenArrays 144 IDE directory. Compile the program in the IDE, and modify block 792 so that all nodes start executing at the appropriate word (where main starts) and not 0, which is the default. For `hello-noopt2.aforth`, all mains are at 0, so we do not have to modify block 792. Now you can run the GreenArrays 144 softsim.
+
 # Compilation Strategies
 
 Chlorophyll compiler consists the following components.
@@ -80,15 +114,79 @@ When we compile `xxx.cll`, the compiler will generate a directory `output-xxx` w
 - **xxx-gen1.rkt** and **xxx-gen2.rkt**: outputs from the code separator as Racket objects. When we discover repeating sequences of instructions, we define a function that executes such sequence of instructions, and replace each of those repeating sequences with a function call.
 - **xxx.cpp**: output of compling xxx-gen1.rkt into C++ programs. Each thread represents each GA core. xxx.cpp can be compiled to an executable using `g++ -pthread -std=c++0x xxx.cpp`.
 - **xxx-noopt1.rkt** and **xxx-noopt2.rkt**: outputs from compiling xxx-gen1.rkt and xxx-gen2.rkt to arrayForth respectively. xxx-noopt1.rkt and xxx-noopt2.rkt are generated without superoptimization.
-- 
-
-
-# Input/Output
+- **xxx.aforth**: the output optimized arrayForth program from the superoptimizer.
+- and many more files generated during superoptimization process.
 
 # Language Constructs
 
-- pair/tuple
-- map reduce
+### Partition Annotation
 
-# Features
-- mapping logical cores to physical cores
+You can choose to annotate all varaibles and operaters with partitions (logical cores) they belong to, to annotate parts of them, or to not annotate the program at all.
+
+For example, if we modify `examples/simple/hello.cll` by removing the parittion annotations of variable *a* and *b* as follows:
+
+```
+void main() {
+  int a;
+  int b;
+  int@2 c;
+  a = 1; 
+  b = 2;
+  c = a +@2 b;
+}
+```
+
+The partitioner will complete those annotations. In this example, the entire program can fit in one core, so the partitioner will assign both *a* and *b* to logical core 2 as it tries to minimize communication between cores. You can check this by rerunning the compiler and look at `example/simple/output-hello/hello.part`.
+
+### Data Type
+
+Chlorophyll currently support only one primitive data type, `int`, 18-bit integer, as GreenArrays is a 18-bit architecture It supports tuples and arrays of `int`.
+
+##### Tuples
+Define *x* as a tuple whose elements live at logical core 0, 1, and 2.
+```
+int::3@(0,1,2) x;
+```
+
+Reference to the first element in tuple *x*
+```
+x::0
+```
+
+See `examples/simple/function-pair.cll` for an example program with tuples.
+
+##### Arrays
+
+Non-distribued array:
+```
+int@6 k[10];
+```
+
+Distributed array:
+```
+int@{[0:5]=6, [5:10]=7} k[10];
+```
+k[0] to k[4] are on core 6, and k[5] to k[9] are on core 7. Note that the begining of the range is inclusive, while the end of the range is exclusive.
+
+Distributed array of tuples:
+```
+int::2@{[0:10]=(6,7)} k[10];
+```
+All first elements of the tuples are in core 6, and all second elements of the tuples are in core 7.
+
+### Parallel Map and Reduce
+
+Parallel map:
+```
+output_array = map(func, input_array1, input_array2, ...);
+```
+
+Parallel reduce:
+```
+output_var = reduce(func, init, input_array);
+```
+
+`example/mapreduce` contains example programs that use map and reduce constructs.
+
+# Bugs and Features
+For a bug report or a feature request, please contact mangpo@eecs.berkeley.edu.
