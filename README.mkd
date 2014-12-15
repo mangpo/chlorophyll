@@ -1,10 +1,10 @@
 # Chlorophyll Language and Compiler
 
-Chlorophyll language is a language for spatial computation. It is a subset of C with *partition annotation* for pinning data or computation onto computing units (multiple cores). Chlorophyll compiler is a prototype of a *synthesis-aided* compiler. It is built for GreenArrays 144.
+Chlorophyll language is a language for spatial computation. It is a subset of C with *partition annotation* for pinning data and computation onto computing units (multiple cores). Chlorophyll compiler is a prototype of a *synthesis-aided* compiler. It is built for [GreenArrays 144](http://www.greenarraychips.com/).
 
 Please refer to [Chlorophyll: Synthesis-Aided Compiler for Low-Power Spatial Architectures (PLDI'14)](http://www.eecs.berkeley.edu/~mangpo/www/papers/chlorophyll-pldi14.pdf) for more details on the concept of the *synthesis-aided* compiler and the compilation strategies used in Chlorophyll.
 
-Note: Chlorophyll compiler has only been tested on Linux OS, so it might be incompatible with other operation systems. Please report bugs to mangpo@eecs.berkeley.edu.
+Note: Chlorophyll compiler has only been tested on Linux OS, so it might be incompatible with other operating systems. Please report bugs to mangpo@eecs.berkeley.edu.
 
 # Setting Up
 
@@ -49,7 +49,7 @@ This program simply adds 1 and 2, and stores the result in variable *c*. "@" is 
 The compiler will generate directory `examples/simple/output-hello`, in which contains many files. If everything goes well, you should see the final arrayForth program geneated by the compiler, `examples/simple/output-hello/hello-noopt2.aforth`.
 
 ### Compile -o
-Compile with `-o` to turn on the superoptimizer (optimizing back-end code generator). Note that the compiler is much slower when compiling with `-o`, but the output program is more efficient. The superoptimzer caches its outputs, so if you have already compiled a program with `-o`, the subsequent compilation of the same program will be fast. The final optimized arrayForth program is `examples/simple/output-hello/hello.aforth`. 
+Compile with `-o` to turn the superoptimizer (optimizing back-end code generator) on. Note that the compiler is much slower when compiling with `-o`, but the output program is more efficient. The superoptimizer caches its outputs, so if you have already compiled a program with `-o`, the subsequent compilation of the same program will be fast. The final optimized arrayForth program is `examples/simple/output-hello/hello.aforth`. 
 
 The compiler invokes multiple superoptimizers to optimize code of multiple GA nodes in parallel. The default number of threads used is 4. To change the number of threads, in `src/header.rkt`, modiy the following line:
 ```
@@ -58,64 +58,65 @@ The compiler invokes multiple superoptimizers to optimize code of multiple GA no
 Only compiling with `-o` when you are certian that your progam is corect.
 
 ### Other Compiler Options
+
+The default number of rows of nodes is 2, and the default number of columns of nodes is 3. Modify the number of rows and columns using `-r` and `-c` options. `--heu-partition` uses a heuristic partitioner (greedy algorithm) instead of the default synthesizing partitioner.  Note that the heuristic partitioner is much faster than the synthesizing partitioner, but the output partitioning from the heuristic partitioner is less optimal.
+
 To view all compiler options and the default settings, run
 ```
 ./src/chlorophyll -h
 ```
 
-Note that the heuristic partitioner is much faster than the default synthesizing partitioner, but the output partitioning is less optimal.
-
 ### Testing Your Programs
-To facilitate testing, we introduce `in()` and `out()` constructs that read from standard input and write to standard output respectively in the testing mode. In `examples/simple/hello-io.cll`, we modify `examples/simple/hello.cll` to read *a* and *b* from standard input, and write *c* to stardard output.
+To facilitate testing, in the testing mode, we introduce `in()` and `out()` constructs that read from standard input and write to standard output respectively. In `examples/simple/hello-io.cll`, we modify `examples/simple/hello.cll` to read *a* and *b* from standard input, and write *c* to stardard output.
 
-You can test your implementation before fully compiling by running
+You can test your implementation before fully compiling the program by running
 ```
 ./src/chlorophyll-test examples/simple/hello-io.cll 2
 ```
 
-The second argument is the input data file in `testdata` directory. In this case, `testdata/2` is the input data, which contains two integers, since our program now takes 2 intgers from standard input. `chlorophyll-test` generates
-- **examples/simple/output-hello/hello-io_seq.cpp**, a sequential C++ program that is semantically equivalent to the source program
-- **examples/simple/output-hello/hello-io.cpp**, a multi-threaded C++ program that simulates mutiple GA nodes and is semantically equivalent to the source program
+The second argument is the input data file in `testdata` directory. In this case, `testdata/2` is the input data, which contains two integers, since our program takes two intgers from standard input. `chlorophyll-test` generates
+- **examples/simple/output-hello/hello-io_seq.cpp**, a sequential C++ program that is semantically equivalent to the source program, and
+- **examples/simple/output-hello/hello-io.cpp**, a multi-threaded C++ program that simulates mutiple GA nodes and is semantically equivalent to the source program.
 
-Given `testdata/2` as the input, the outputs of hello-io_seq.cpp and hello-io.cpp are `testdata/out/hello-io_null.out` and `testdata/out/hello-io_null.tmp`. `chlorophyll-test` displays **PASSED** at the end if the two output data files are the same, and display **FAILED** otherwise. We expect `chlorophyll-test` to always report **PASSED**. If not, there is a problem with the compiler (not your implementation). In such case, please file a bug report.
+Given `testdata/2` as the input, the outputs of hello-io_seq.cpp and hello-io.cpp are `testdata/out/hello-io_2.out` and `testdata/out/hello-io_2.tmp`. `chlorophyll-test` displays **PASSED** at the end if the two output data files are the same, or displays **FAILED** otherwise. We expect `chlorophyll-test` to always display **PASSED**. If not, there is a problem with the compiler (not your implementation). In such case, please file a bug report.
 
-If all goes well, you can refer to either output data file as the output from your implementation.
+If all go well, you can refer to either `hello-io_2.out` or `hello-io_2.tmp` as the output from your implementation.
 
 ##### in()/out()
-If you left `in()` and `out()` in your program and compile all the way down to arrayForth code. `in()` and `out()` correspond to reading from and writing to IO pin, respectively. However, keep in mind that not all nodes have IO pins.
+If you left `in()` and `out()` in your program and compile all the way down to arrayForth code. `in()` and `out()` correspond to reading from and writing to I/O pin, respectively. However, keep in mind that not all nodes have I/O pins.
 
 ### Forth to colorForth
 `cforth_tools` directory contains scripts for converting the generated arrayForth program in text file into colorForth binary compatible with [GreenArrays 144 IDE](http://www.greenarraychips.com/home/support/download-02b.html). 
 
-First, you start from `template.cfs`, and then replacing block 790, 792, and 800 with the generated code from the compiler (e.g. `examples/simple/output-hello/hello-noopt2.aforth`). Second, change the following line of `cforth_tools/Makefile` to match the .cfs file you want to convert.
+Starting from `template.cfs`, replace block 790, 792, and 800 with the generated code from the compiler (e.g. `examples/simple/output-hello/hello-noopt2.aforth`). Then, change the following line of `cforth_tools/Makefile` to match the .cfs file you want to convert.
 ```
 NEW_CFS=template.cfs
 ```
 
-Run
+Under `cforth_tools` directory, run
 ```
 make clean
 make install
 ```
-Copy the generated `OkadWork.cf` to GreenArrays 144 IDE directory. Compile the program in the IDE, and modify block 792 so that all nodes start executing at the appropriate word (where main starts) and not 0, which is the default. For `hello-noopt2.aforth`, all mains are at 0, so we do not have to modify block 792. Now you can run the GreenArrays 144 softsim.
+Copy the generated `OkadWork.cf` to GreenArrays 144 IDE directory. Compile the program in the IDE, and modify block 792 so that all nodes start executing at the appropriate words (where main functions start) and not 0, which is the default. For `hello-noopt2.aforth`, all main functions are at 0, so we do not have to modify block 792. Now, you can run the GreenArrays 144 softsim.
 
 # Compilation Strategies
 
 Chlorophyll compiler consists the following components.
 1. **Partitioner** partitions data and computations onto logical cores.
-2. **Layout** maps logical cores to physical cores and determine the routing between cores.
-3. **Code seperator** seperates the program into multiple program fragments that fit in GA cores and insert communication code at the appropriate places in the program fragments.
+2. **Layout** maps logical cores to physical cores and determines the routing between cores.
+3. **Code seperator** seperates the program into multiple program fragments that fit in GA cores and inserts communication code at the appropriate places in the program fragments.
 4. **Code generator** generates arrayForth code. Our code generator uses a superoptimization technique to optimize code.
 
-When we compile `xxx.cll`, the compiler will generate a directory `output-xxx` which contains
+When you compile `xxx.cll`, the compiler will generate a directory `output-xxx` which contains
 - **xxx.part**: output from the partitioner, a fully partitioned xxx program (all varaibles and operaters are annoatated with logical cores)
-- **xxx.dat** and **xxx.graph**: input to the layout
-- **xxx.layout** output from the layout
-- **xxx-gen1.rkt** and **xxx-gen2.rkt**: outputs from the code separator as Racket objects. When we discover repeating sequences of instructions, we define a function that executes such sequence of instructions, and replace each of those repeating sequences with a function call.
-- **xxx.cpp**: output of compling xxx-gen1.rkt into C++ programs. Each thread represents each GA core. xxx.cpp can be compiled to an executable using `g++ -pthread -std=c++0x xxx.cpp`.
-- **xxx-noopt1.rkt** and **xxx-noopt2.rkt**: outputs from compiling xxx-gen1.rkt and xxx-gen2.rkt to arrayForth respectively. xxx-noopt1.rkt and xxx-noopt2.rkt are generated without superoptimization.
-- **xxx.aforth**: the output optimized arrayForth program from the superoptimizer.
-- and many more files generated during superoptimization process.
+- **xxx.dat** and **xxx.graph**: inputs to the layout
+- **xxx.layout**: output from the layout
+- **xxx-gen1.rkt** and **xxx-gen2.rkt**: outputs from the code separator as Racket objects. When we discover repeating sequences of instructions, we define a function that executes such sequence of instructions, and replace each of those repeating sequences with a function call. *xxx-gen2.rkt* is the version that replaces the repeating sequences with function calls.
+- **xxx.cpp**: output of compling *xxx-gen1.rkt* into C++ programs. Each thread represents each GA core. *xxx.cpp* can be compiled to an executable using `g++ -pthread -std=c++0x xxx.cpp`.
+- **xxx-noopt1.rkt** and **xxx-noopt2.rkt**: outputs from compiling *xxx-gen1.rkt* and *xxx-gen2.rkt* to arrayForth respectively. xxx-noopt1.rkt and xxx-noopt2.rkt are generated without superoptimization.
+- **xxx.aforth**: the final optimized arrayForth program from the superoptimizer.
+- many more files generated during superoptimization process.
 
 # Language Constructs
 
@@ -136,19 +137,21 @@ void main() {
 }
 ```
 
-The partitioner will complete those annotations. In this example, the entire program can fit in one core, so the partitioner will assign both *a* and *b* to logical core 2 as it tries to minimize communication between cores. You can check this by rerunning the compiler and look at `example/simple/output-hello/hello.part`.
+The partitioner will complete those annotations automatically. In this example, the entire program can fit in one core, so the partitioner will assign both *a* and *b* to logical core 2 as it tries to minimize communication between cores. You can check this by rerunning the compiler and look at `example/simple/output-hello/hello.part`. 
+
+Note that the partitioner can be very slow if it partitions a large program without much annotation. When it is very slow, you can try to annotation more, or use `--hue-partition` option when compiling.
 
 ### Data Type
 
-Chlorophyll currently support only one primitive data type, `int`, 18-bit integer, as GreenArrays is a 18-bit architecture It supports tuples and arrays of `int`.
+Chlorophyll currently supports only one primitive data type, `int`, 18-bit integer, as GreenArrays is a 18-bit architecture. Chlorophyll supports tuples and arrays of `int`.
 
 ##### Tuples
-Define *x* as a tuple whose elements live at logical core 0, 1, and 2.
+Define *x* as a tuple of 3 elements whose elements live at logical core 0, 1, and 2:
 ```
 int::3@(0,1,2) x;
 ```
 
-Reference to the first element in tuple *x*
+Reference to the first element in tuple *x*:
 ```
 x::0
 ```
