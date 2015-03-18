@@ -1,0 +1,2 @@
+30 21 "0 a! !+ !+ push pop dup 1 b! @b and over - 0 b! @b" "0 a! !+ dup !+ over and 0 b! over - nop @b"
+6 6 "and or push drop pop" "and or push drop pop"

@@ -1,0 +1,13 @@
+
+int p15_ceil_avg(int x, int y) {
+  int o1,o2;
+  o1 = x | y;
+  o2 = x ^ y;
+  o2 = o2 >> 1;
+  return o1 - o2;
+}
+
+void main() {
+  int x;
+  x = p15_ceil_avg(1,2);
+}

@@ -1,0 +1,5 @@
+{block 802}
+( -) # 11 ( id 1 mem 2) 0 org | cr
+0 , 0 , | br
+: f1 = $0 0 a! !+ dup !+ over and 0 b! over - @b and or push drop pop = $0 ; | cr
+
