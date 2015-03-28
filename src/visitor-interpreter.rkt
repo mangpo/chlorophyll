@@ -21,16 +21,19 @@
                 [has-func-temp #f]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
     (declare env "in" (comminfo 0 (set)))
     (declare env "out" (comminfo 0 (set)))
+    (for ([node digital-nodes])
+      (declare env (format "digital_write~a" node) (comminfo 0 (set))))
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
       ;(assert (or (number? place) (list? place)))
+      (pretty-display (format "place = ~a" place))
       (cond
         [(number? place)
          (cores-inc-space places place add-space)]

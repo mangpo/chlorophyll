@@ -350,7 +350,10 @@
 	(define func-sig (get-field signature ast))
 	(define name (get-field name ast))
 	(define args-ret 
-	  (if (or (equal? name "in") (equal? name "out"))
+	  (if (or (equal? name "in")
+		  (equal? name "out")
+		  (regexp-match #rx"digital_write" name)
+		  (regexp-match #rx"digital_read" name))
 	      (send func-sig accept this)
 	      (get-field body-placeset func-sig)))
 

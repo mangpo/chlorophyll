@@ -87,7 +87,10 @@
         (when (at-io? (get-field place-type ast))
               (set-field! place-type ast (sub1 num-cores)))
         
-        (when (or (equal? name "in") (equal? name "out"))
+        (when (or (equal? name "in")
+		  (equal? name "out")
+		  (regexp-match #rx"digital_write" name)
+		  (regexp-match #rx"digital_read" name))
               (send func-ast accept this))
 
 	;; infer

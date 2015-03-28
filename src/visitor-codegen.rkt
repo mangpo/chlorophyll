@@ -395,6 +395,29 @@
 
         (drop-cond (and (not send-cond) my-cond) (prog-append data-ret temp-ret send-ret))]
 
+       [(and (is-a? ast FuncCall%)
+	     (regexp-match #rx"digital_write" (get-field name ast)))
+	(let* ([args (reverse (get-field args ast))]
+	       [n-pins (length args)]
+	       [io 0])
+	  (when (= n-pins 4) ;;pin 4, bit 5
+	    (set! io (arithmetic-shift (send (car args) get-value) 4))
+	    (set! args (cdr args)))
+	  (when (>= n-pins 3) ;;pin 3, bit 3
+	    (set! io (bitwise-ior io (arithmetic-shift (send (car args) get-value)
+						       2)))
+	    (set! args (cdr args)))
+	  (when (>= n-pins 2) ;;pin 2, bit 1
+	    (set! io (bitwise-ior io (send (car args) get-value)))
+	    (set! args (cdr args)))
+	  (when (>= n-pins 1);; pin 1, bit 17
+	    (set! io (bitwise-ior io (arithmetic-shift (send (car args) get-value)
+						       16))))
+	  (list (gen-block "io" "b!" (number->string io) "!b" 0 0)))]
+
+       [(and (is-a? ast FuncCall%)
+	     (regexp-match #rx"digital_read" (get-field name ast)))
+	]
        [(is-a? ast FuncCall%)
         (define my-cond cond-onstack)
         (set! cond-onstack #f)

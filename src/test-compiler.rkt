@@ -4,7 +4,8 @@
 
 ;; Simple
 (compile-and-optimize "../examples/simple/hello.cll" "hello" 
-                      256 #:w 2 #:h 3 #:opt #f)
+                      256 #:w 18 #:h 8 #:opt #f)
+
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
 ;                      256 #:w 2 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
@@ -85,12 +86,12 @@
 ;(compile-and-optimize "../examples/mapreduce/reduce-pair.cll" "reduce-pair" 
 ;                      290 #:w 4 #lang racket
 
-(require "compiler.rkt")
+;(require "compiler.rkt")
 
 ;; Simple
-(compile-and-optimize "../examples/simple/hello.cll" "hello" 
-                      256 #:w 2 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/simple/array.cll" "array" 
+;(compile-and-optimize "../examples/simple/hello.cll" "hello"
+;                      256 #:w 2 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/simple/array.cll" "array"
 ;                      256 #:w 2 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
 ;                      512 #:w 2 #:h 3 #:opt #f #:partition #f)

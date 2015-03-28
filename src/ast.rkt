@@ -1278,6 +1278,12 @@
     (define/public (to-string)
       (format "[~a,~a]" from to))
     ))
-    
 
+(define digital-nodes '(705))
 
+(define node-to-symbolic-core (make-hash))
+(for ([core digital-nodes])
+  (hash-set! node-to-symbolic-core core (get-sym)))
+
+(define node-to-num-pins #hash((705 . 2) ;; 4
+			       ))

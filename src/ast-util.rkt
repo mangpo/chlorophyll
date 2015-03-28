@@ -37,6 +37,46 @@
 		      [place (new Place% [at "io"])])]))
   stdout)
 
+;; returns the ast for a call to digital_write for NODE
+(define (get-digital-write node)
+  (define ast
+    (let ([sym (hash-ref node-to-symbolic-core node)])
+      (new FuncDecl% [name (format "digital_write~a" node)]
+	   [args (new Block% [stmts (for/list ([i (hash-ref node-to-num-pins
+							    node)])
+				      (new Param%
+					   [var-list (list (format "state~a" i))]
+					   [type "int"]
+					   [known #f]
+					   [place sym]
+					   [place-type sym]))])]
+	   [body (new Block% [stmts (list)])]
+	   [body-placeset (set sym)]
+	   [return (new VarDecl% [var-list (list "#return")]
+			[type "void"]
+			[known #f]
+			[place sym])])))
+  ast)
+
+;; returns the ast for a call to digital_read for NODE
+(define (get-digital-read node)
+  (define ast
+    (let ([sym (hash-ref node-to-symbolic-core node)])
+      (new FuncDecl% [name (format "digital_read~a" node)]
+	   [args (new Block% [stmts (list (new Param%
+					       [var-list (list "pin")]
+					       [type "int"]
+					       [known #f]
+					       [place sym]
+					       [place-type sym]))])]
+	   [body (new Block% [stmts (list)])]
+	   [body-placeset (set sym)]
+	   [return (new VarDecl% [var-list (list "#return")]
+			[type "int"]
+			[known #f]
+			[place sym])])))
+  ast)
+
 (define (get-op exp)
   (get-field op (get-field op exp)))
 

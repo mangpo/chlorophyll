@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt")
+(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt" "ast.rkt")
 
 (provide (all-defined-out) (struct-out layoutinfo))
 
@@ -89,13 +89,26 @@
 			      outdir name 
 			      (if weight "--weight" "--noweight")
 			      outdir name))))
+
+  (for ([core (hash-keys node-to-symbolic-core)])
+    (let ([n (evaluate-with-sol (hash-ref node-to-symbolic-core core))])
+      (unless (term? n)
+	(pretty-display (format "====> ~a, ~a, ~a\n"
+				n
+				(+ (* (quotient core 100) 18) (modulo core 100))
+				(add1 n))))))
   
   (with-output-to-file #:exists 'append (format "~a/~a.dat" outdir name)
     (lambda () 
       (define fix (make-vector (* w h)))
-      (vector-set! fix (* w 2) (* w h))
+      ;;(vector-set! fix (* w 2) (* w h))
       ;; (vector-set! fix (* w 3) 5)
       ;; (vector-set! fix (add1 (* w 2)) 6)
+      (for ([core (hash-keys node-to-symbolic-core)])
+	(let ([n (evaluate-with-sol (hash-ref node-to-symbolic-core core))])
+	  (unless (term? n)
+	    (vector-set! fix (+ (* (quotient core 100) 18) (modulo core 100))
+			 (add1 n)))))
       (for ([i (in-range (* w h))])
            (display (vector-ref fix i)) (display " "))
       (newline)))
@@ -125,6 +138,9 @@
   (define part2core (make-vector n #f))
   (for ([partition core2part]
         [index (range n)])
+    (when (or (= index 131)
+	      (= index 132))
+      (pretty-display (format "PARTITION = ~a\n" partition)))
        (vector-set! part2core partition index))
   
   ;; Create map from pair of core (x1,y1) (x2,y2) to routing

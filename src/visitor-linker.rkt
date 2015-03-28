@@ -30,6 +30,8 @@
     ;; Declare IO function: in(), out(data)
     (declare env "in" (get-stdin))
     (declare env "out" (get-stdout))
+    (for ([node digital-nodes])
+      (declare env (format "digital_write~a" node) (get-digital-write node)))
 
     (struct val (type expand known) #:mutable)
 
@@ -309,7 +311,15 @@
 	 (and e1-known e2-known)]
         
         [(is-a? ast FuncCall%)
-         ;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
+         (pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
+	 (when (or (equal? (get-field name ast) "digital_write")
+		   (equal? (get-field name ast) "digital_read"))
+	   (set-field! name ast (format "~a~a"
+					(get-field name ast)
+					(send (car (get-field args ast))
+					      get-value)))
+	   (set-field! args ast (cdr (get-field args ast))))
+
          (define func-ast (lookup env ast))
          (define type (if (get-field return func-ast)
                           (get-field type (get-field return func-ast))

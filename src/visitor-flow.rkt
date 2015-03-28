@@ -9,7 +9,12 @@
 (define flow-generator%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [functions (make-hash '(("in" . ()) ("out" . ())))])
+    (init-field [functions (make-hash (append '(("in" . ()) ("out" . ()))
+					      (for/list ([node digital-nodes])
+						(cons (format "digital_write~a"
+							      node)
+						      (list))))
+				      )])
     (define debug #f)
 
     (define (cross-product-raw x y)

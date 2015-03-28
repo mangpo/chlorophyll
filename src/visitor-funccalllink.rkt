@@ -13,6 +13,9 @@
 
     (hash-set! funcdecls "in" (get-stdin))
     (hash-set! funcdecls "out" (get-stdout))
+    (for ([node digital-nodes])
+      (hash-set! funcdecls
+		 (format "digital_write~a" node) (get-digital-write node)))
 
     (define/public (visit ast)
       (cond
