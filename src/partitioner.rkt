@@ -101,6 +101,13 @@
   (define (solve-function func-ast refine-capacity refine-part2capacity)
     (define start (current-seconds))
     (define comm-result (send func-ast accept interpreter))
+
+    (for ([node (get-field used-io-nodes interpreter)])
+      (for ([node2 (get-field used-io-nodes interpreter)])
+	(unless (= node node2)
+	  (assert (not (equal? (hash-ref node-to-symbolic-core node)
+			       (hash-ref node-to-symbolic-core node2)))))))
+
     (cores-refine cores part2capacity)
 
     (set! num-msg (comminfo-msgs comm-result))

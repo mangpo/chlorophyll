@@ -19,6 +19,7 @@
     (init-field places
                 [env (make-hash)] ;; map varname -> place, arrayname -> (place cluster)
                 [has-func-temp #f]
+		[used-io-nodes (set)]
 		)
 
     (define debug #t)
@@ -315,6 +316,14 @@
           ]
 
        [(is-a? ast FuncCall%)
+	(let ([ret (or (regexp-match #rx"digital_write([0-9]+)"
+				     (get-field name ast))
+		       (regexp-match #rx"digital_read([0-9]+)"
+				     (get-field name ast)))])
+	  (when (and ret (= (length ret) 2))
+	    (set! used-io-nodes
+	      (set-add used-io-nodes (string->number (cadr ret))))))
+
           (when debug
                 (pretty-display (format ">> FuncCall ~a" (send ast to-string))))
 
