@@ -31,7 +31,8 @@
     (declare env "in" (get-stdin))
     (declare env "out" (get-stdout))
     (for ([node digital-nodes])
-      (declare env (format "digital_write~a" node) (get-digital-write node)))
+      (declare env (format "digital_write~a" node) (get-digital-write node))
+      (declare env (format "digital_read~a" node) (get-digital-read node)))
 
     (struct val (type expand known) #:mutable)
 

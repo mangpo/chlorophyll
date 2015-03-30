@@ -417,7 +417,10 @@
 
        [(and (is-a? ast FuncCall%)
 	     (regexp-match #rx"digital_read" (get-field name ast)))
-	]
+	(let* ([pin (send (car (get-field args ast)) get-value)]
+	       [mask (vector-ref (vector #x20000 #x2 #x4 #x20) pin)])
+	  (list (gen-block "io" "b!" "@b" (number->string mask) "and")))]
+
        [(is-a? ast FuncCall%)
         (define my-cond cond-onstack)
         (set! cond-onstack #f)

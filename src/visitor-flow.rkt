@@ -13,6 +13,10 @@
 					      (for/list ([node digital-nodes])
 						(cons (format "digital_write~a"
 							      node)
+						      (list)))
+					      (for/list ([node digital-nodes])
+						(cons (format "digital_read~a"
+							      node)
 						      (list))))
 				      )])
     (define debug #f)
