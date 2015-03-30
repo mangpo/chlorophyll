@@ -102,11 +102,14 @@
     (define start (current-seconds))
     (define comm-result (send func-ast accept interpreter))
 
-    (for ([node (get-field used-io-nodes interpreter)])
-      (for ([node2 (get-field used-io-nodes interpreter)])
-	(unless (= node node2)
-	  (assert (not (equal? (hash-ref node-to-symbolic-core node)
-			       (hash-ref node-to-symbolic-core node2)))))))
+    (let* ([nodes (list->vector (set->list (get-field used-io-nodes interpreter)))]
+	   [len (vector-length nodes)])
+      (for ([i (in-range len)])
+	(for ([j (in-range (add1 i) len)])
+	  (assert (not (equal? (hash-ref node-to-symbolic-core
+					 (vector-ref nodes i))
+			       (hash-ref node-to-symbolic-core
+					 (vector-ref nodes j))))))))
 
     (cores-refine cores part2capacity)
 

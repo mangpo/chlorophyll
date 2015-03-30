@@ -90,14 +90,6 @@
 			      (if weight "--weight" "--noweight")
 			      outdir name))))
 
-  (for ([core (hash-keys node-to-symbolic-core)])
-    (let ([n (evaluate-with-sol (hash-ref node-to-symbolic-core core))])
-      (unless (term? n)
-	(pretty-display (format "====> ~a, ~a, ~a\n"
-				n
-				(+ (* (quotient core 100) 18) (modulo core 100))
-				(add1 n))))))
-  
   (with-output-to-file #:exists 'append (format "~a/~a.dat" outdir name)
     (lambda () 
       (define fix (make-vector (* w h)))
@@ -138,9 +130,6 @@
   (define part2core (make-vector n #f))
   (for ([partition core2part]
         [index (range n)])
-    (when (or (= index 131)
-	      (= index 132))
-      (pretty-display (format "PARTITION = ~a\n" partition)))
        (vector-set! part2core partition index))
   
   ;; Create map from pair of core (x1,y1) (x2,y2) to routing
