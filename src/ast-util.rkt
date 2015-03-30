@@ -77,6 +77,32 @@
 			[place sym])])))
   ast)
 
+
+;; returns the ast for a call to delay
+(define (get-delay-ns node)
+  (define ast
+    (let ([sym (hash-ref node-to-symbolic-core node)])
+      (new FuncDecl% [name (format "delay_ns~a" node)]
+	   [args (new Block% [stmts (list (new Param%
+					       [var-list (list "time")]
+					       [type "int"]
+					       [known #f]
+					       [place sym]
+					       [place-type sym])
+					  (new Param%
+					       [var-list (list "volts")]
+					       [type "int"]
+					       [known #f]
+					       [place sym]
+					       [place-type sym]))])]
+	   [body (new Block% [stmts (list)])]
+	   [body-placeset (set sym)]
+	   [return (new VarDecl% [var-list (list "#return")]
+			[type "int"]
+			[known #f]
+			[place sym])])))
+  ast)
+
 (define (get-op exp)
   (get-field op (get-field op exp)))
 

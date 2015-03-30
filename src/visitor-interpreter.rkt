@@ -30,7 +30,10 @@
     (declare env "out" (comminfo 0 (set)))
     (for ([node digital-nodes])
       (declare env (format "digital_write~a" node) (comminfo 0 (set)))
-      (declare env (format "digital_read~a" node) (comminfo 0 (set))))
+      (declare env (format "digital_read~a" node) (comminfo 0 (set)))
+      (declare env (format "delay_ns~a" node) (comminfo 0 (set))))
+    (for ([node analog-nodes])
+      (declare env (format "delay_ns~a" node) (comminfo 0 (set))))
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
@@ -320,6 +323,8 @@
 	(let ([ret (or (regexp-match #rx"digital_write([0-9]+)"
 				     (get-field name ast))
 		       (regexp-match #rx"digital_read([0-9]+)"
+				     (get-field name ast))
+		       (regexp-match #rx"delay_ns([0-9]+)"
 				     (get-field name ast)))])
 	  (when (and ret (= (length ret) 2))
 	    (set! used-io-nodes

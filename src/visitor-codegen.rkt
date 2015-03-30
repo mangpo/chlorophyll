@@ -420,6 +420,21 @@
 	(let* ([pin (send (car (get-field args ast)) get-value)]
 	       [mask (vector-ref (vector #x20000 #x2 #x4 #x20) pin)])
 	  (list (gen-block "io" "b!" "@b" (number->string mask) "and")))]
+       [(and (is-a? ast FuncCall%)
+	     (regexp-match #rx"delay_ns" (get-field name ast)))
+	(let* ([args (get-field args ast)]
+	       [ns (send (car args) get-value)]
+	       [volts (send (cadr args) get-value)]
+	       ;; execution time at x volts relative to 1.8v at any temperature
+	       ;; from DB002 page20
+	       ;;   t = -0.6775*x^3 + 4.2904*x^2 - 9.4878*x + 8.1287
+	       ;;typical empty micronext time is 2.4ns at 1.8v, 22deg Celsius
+	       [unext-time (* 2.4 (+ (* -0.6775 volts volts volts)
+				     (* 4.2904 volts volts)
+				     (* -9.4878 volts)
+				     8.1287))]
+	       [iter (floor (/ ns unext-time))])
+	  (list (gen-block (number->string iter) "for" "unext")))]
 
        [(is-a? ast FuncCall%)
         (define my-cond cond-onstack)

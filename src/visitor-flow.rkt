@@ -17,6 +17,10 @@
 					      (for/list ([node digital-nodes])
 						(cons (format "digital_read~a"
 							      node)
+						      (list)))
+					      (for/list ([node digital-nodes])
+						(cons (format "delay_ns~a"
+							      node)
 						      (list))))
 				      )])
     (define debug #f)

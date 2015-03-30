@@ -90,7 +90,8 @@
         (when (or (equal? name "in")
 		  (equal? name "out")
 		  (regexp-match #rx"digital_write" name)
-		  (regexp-match #rx"digital_read" name))
+		  (regexp-match #rx"digital_read" name)
+		  (regexp-match #rx"delay_ns" name))
               (send func-ast accept this))
 
 	;; infer

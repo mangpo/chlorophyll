@@ -17,7 +17,13 @@
       (hash-set! funcdecls
 		 (format "digital_write~a" node) (get-digital-write node))
       (hash-set! funcdecls
-		 (format "digital_read~a" node) (get-digital-read node)))
+		 (format "digital_read~a" node) (get-digital-read node))
+      (hash-set! funcdecls
+		 (format "delay_ns~a" node) (get-delay-ns node)))
+
+    (for ([node analog-nodes])
+      (hash-set! funcdecls
+		 (format "delay_ns~a" node) (get-delay-ns node)))
 
     (define/public (visit ast)
       (cond
