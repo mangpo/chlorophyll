@@ -1279,11 +1279,29 @@
       (format "[~a,~a]" from to))
     ))
 
-(define digital-nodes '(705))
+(define digital-nodes '(701 705 708 715 517 317 217 8 1 100 200 300 500 600))
+(define analog-nodes '(709 713 717 617 117))
 
 (define node-to-symbolic-core (make-hash))
-(for ([core digital-nodes])
+(for ([core (append digital-nodes analog-nodes)])
   (hash-set! node-to-symbolic-core core (get-sym)))
 
-(define node-to-num-pins #hash((705 . 2) ;; 4
-			       ))
+(define node-to-num-pins #hash((701 . 2)
+			       (705 . 4)
+			       (708 . 2)
+			       (709 . 2);analog
+			       (713 . 2);analog
+			       (715 . 1)
+			       (717 . 2);analog
+			       (617 . 2);analog
+			       (517 . 1)
+			       (317 . 1)
+			       (217 . 1)
+			       (117 . 2);analog
+			       (008 . 4)
+			       (001 . 2)
+			       (100 . 1)
+			       (200 . 1)
+			       (300 . 2)
+			       (500 . 1)
+			       (600 . 1)))
