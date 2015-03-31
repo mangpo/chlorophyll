@@ -93,7 +93,7 @@
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set sym)]
 	 [return (new VarDecl% [var-list (list "#return")]
-		      [type "int"]
+		      [type "void"]
 		      [known #f]
 		      [place sym])])))
 

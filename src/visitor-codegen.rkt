@@ -418,7 +418,7 @@
        	     (regexp-match #rx"digital_read" (get-field name ast)))
        	(let* ([pin (send (car (get-field args ast)) get-value)]
        	       [mask (vector-ref (vector #x20000 #x2 #x4 #x20) pin)])
-       	  (list (gen-block "io" "b!" "@b" (number->string mask) "and")))]
+       	  (list (gen-block "io" "b!" "@b" (number->string mask) "and" 0 1)))]
 
        [(and (is-a? ast FuncCall%)
 	     (regexp-match #rx"delay_ns" (get-field name ast)))
@@ -433,8 +433,8 @@
 				     (* 4.2904 volts volts)
 				     (* -9.4878 volts)
 				     8.1287))]
-	       [iter (floor (/ ns unext-time))])
-	  (list (gen-block (number->string iter) "for" "unext")))]
+	       [iter (inexact->exact (floor (/ ns unext-time)))])
+	  (list (gen-block (number->string iter) "for" "unext" 0 0)))]
 
        [(is-a? ast FuncCall%)
         (define my-cond cond-onstack)
