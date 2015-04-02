@@ -1279,7 +1279,7 @@
       (format "[~a,~a]" from to))
     ))
 
-(define digital-nodes '(701 705 708 715 517 317 217 8 1 100 200 300 500 600))
+(define digital-nodes '(701 705 708 715 517 417 317 217 8 1 100 200 300 500 600))
 (define analog-nodes '(709 713 717 617 117))
 
 (define node-to-symbolic-core (make-hash))
@@ -1295,6 +1295,7 @@
 			       (717 . 2);analog
 			       (617 . 2);analog
 			       (517 . 1)
+                               (417 . 1)
 			       (317 . 1)
 			       (217 . 1)
 			       (117 . 2);analog
