@@ -35,6 +35,18 @@
               ast))]
 
        [(is-a? ast FuncCall%)
+        (let* ([name (get-field name ast)]
+               [i (vector-member name
+                                 (vector 0 "delay_us" "delay_ms" "delay_s"))])
+          (when i
+            (let* ([args (get-field args ast)]
+                   [delay (cadr args)])
+              (unless (is-a? delay Num%)
+                (raise (format "not implemented: non-constant delay time for ~a"
+                               name)))
+              (set-field! n (get-field n delay) (* (expt 1000 i)
+                                                   (send delay get-value)))
+              (set-field! name ast "delay_ns"))))
         (set-field! args ast (flatten
                               (map (lambda (x) (send x accept this))
                                    (get-field args ast))))
