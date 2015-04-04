@@ -17,11 +17,11 @@
       (hash-set! funcdecls
 		 (format "digital_write~a" node) (get-digital-write node))
       (hash-set! funcdecls
-		 (format "digital_read~a" node) (get-digital-read node))
-      (hash-set! funcdecls
-		 (format "delay_ns~a" node) (get-delay-ns node)))
+		 (format "digital_read~a" node) (get-digital-read node)))
 
-    (for ([node analog-nodes])
+    (for ([node (append analog-nodes digital-nodes)])
+      (hash-set! funcdecls
+		 (format "digital_wait~a" node) (get-digital-wait node))
       (hash-set! funcdecls
 		 (format "delay_ns~a" node) (get-delay-ns node)))
 

@@ -74,6 +74,23 @@
 		      [place sym])])))
 
 
+;; returns the ast for a call to digital_wait for NODE
+(define (get-digital-wait node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "digital_wait~a" node)]
+	 [args (new Block% [stmts (list (new Param%
+                                             [var-list (list "state")]
+                                             [type "int"]
+                                             [known #f]
+                                             [place sym]
+                                             [place-type sym]))])]
+         [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+		      [place sym])])))
+
 ;; returns the ast for a call to delay
 (define (get-delay-ns node)
   (let ([sym (hash-ref node-to-symbolic-core node)])

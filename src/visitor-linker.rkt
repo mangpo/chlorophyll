@@ -32,6 +32,7 @@
     (declare env "out" (get-stdout))
     (for ([node digital-nodes])
       (declare env (format "digital_write~a" node) (get-digital-write node))
+      (declare env (format "digital_wait~a" node) (get-digital-wait node))
       (declare env (format "digital_read~a" node) (get-digital-read node))
       (declare env (format "delay_ns~a" node) (get-delay-ns node)))
     (for ([node analog-nodes])
@@ -315,15 +316,14 @@
 	 (and e1-known e2-known)]
         
         [(is-a? ast FuncCall%)
-         (pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
+         ;;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
 	 (when (or (equal? (get-field name ast) "digital_write")
 		   (equal? (get-field name ast) "digital_read")
+                   (equal? (get-field name ast) "digital_wait")
 		   (equal? (get-field name ast) "delay_ns"))
-	   (set-field! name ast (format "~a~a"
-					(get-field name ast)
-					(send (car (get-field args ast))
-					      get-value)))
-	   (set-field! args ast (cdr (get-field args ast))))
+           (let ([node (send (car (get-field args ast)) get-value)])
+             (set-field! name ast (format "~a~a" (get-field name ast) node))
+             (set-field! args ast (cdr (get-field args ast)))))
 
          (define func-ast (lookup env ast))
          (define type (if (get-field return func-ast)

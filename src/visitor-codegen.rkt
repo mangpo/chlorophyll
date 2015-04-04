@@ -158,6 +158,24 @@
        [(equal? port `IO)
         "io"]))
 
+    ;;returns the port in node NODE for direction DIR
+    ;;coordinates for NODE are from bottom left
+    (define (port-from-node node dir)
+      (let ([x (remainder node 100)]
+            [y (quotient node 100)])
+        (cond
+         [(equal? dir `N)
+          (if (= (modulo y 2) 0) "down" "up")]
+         [(equal? dir `S)
+          (if (= (modulo y 2) 0) "up" "down")]
+         [(equal? dir `E)
+          (if (= (modulo x 2) 0) "right" "left")]
+         [(equal? dir `W)
+          (if (= (modulo x 2) 0) "left" "right")]
+         [(equal? dir `IO)
+          "io"]
+         [else (raise "port-from-node: invalid direction")])))
+
     (define (get-if-name)
       (set! if-count (add1 if-count))
       (format "~aif" if-count))
@@ -416,9 +434,17 @@
 
        [(and (is-a? ast FuncCall%)
        	     (regexp-match #rx"digital_read" (get-field name ast)))
-       	(let* ([pin (send (car (get-field args ast)) get-value)]
+        (let* ([pin (send (car (get-field args ast)) get-value)]
        	       [mask (vector-ref (vector #x20000 #x2 #x4 #x20) pin)])
        	  (list (gen-block "io" "b!" "@b" (number->string mask) "and" 0 1)))]
+
+       [(and (is-a? ast FuncCall%)
+       	     (regexp-match #rx"digital_wait" (get-field name ast)))
+        (let* ([state (send (car (get-field args ast)) get-value)]
+               [io (number->string (if (= state 1) 0 #x800))]
+               [node (get-field fixed-node ast)]
+               [port (if (or (> node 700) (< node 17)) "up" "left")])
+          (list (gen-block "io" "b!" io "!b" port "!b" "@b" "drop" 0 0)))]
 
        [(and (is-a? ast FuncCall%)
 	     (regexp-match #rx"delay_ns" (get-field name ast)))

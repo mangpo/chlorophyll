@@ -18,11 +18,18 @@
 						(cons (format "digital_read~a"
 							      node)
 						      (list)))
-					      (for/list ([node digital-nodes])
+					      (for/list ([node (append
+                                                                digital-nodes
+                                                                analog-nodes)])
+						(cons (format "digital_wait~a"
+							      node)
+						      (list)))
+                                              (for/list ([node (append
+                                                                digital-nodes
+                                                                analog-nodes)])
 						(cons (format "delay_ns~a"
 							      node)
-						      (list))))
-				      )])
+						      (list)))))])
     (define debug #f)
 
     (define (cross-product-raw x y)
