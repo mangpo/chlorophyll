@@ -35,6 +35,12 @@
               ast))]
 
        [(is-a? ast FuncCall%)
+        (when (or (equal? (get-field name ast) "digital_write")
+                  (equal? (get-field name ast) "digital_read")
+                  (equal? (get-field name ast) "digital_wait")
+                  (equal? (get-field name ast) "delay_ns"))
+          (set-field! fixed-node ast (send (car (get-field args ast)) get-value)))
+
         (let* ([name (get-field name ast)]
                [i (vector-member name
                                  (vector 0 "delay_us" "delay_ms" "delay_s"))])

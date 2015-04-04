@@ -465,6 +465,7 @@
                ;; reverse order because we pop from stack
                [args (reverse (get-args (length params)))]
                [place-type new-return-place]
+               [fixed-node (get-field fixed-node ast)]
                [type (if new-return-place type "void")]
                ))
 

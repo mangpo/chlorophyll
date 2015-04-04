@@ -579,14 +579,15 @@
   (class Exp%
     (super-new)
     (inherit-field known-type place-type pos expand expect type)
-    (init-field name args [signature #f] [is-stmt #f] [might-need-storage #f])
+    (init-field name args [fixed-node 'hello]
+                [signature #f] [is-stmt #f] [might-need-storage #f])
     (inherit print-send-path)
 
     (define/override (clone)
       (new FuncCall% [name name] [args (map (lambda (x) (send x clone)) args)]
            [place-type (clone-place place-type)] [signature signature]
            [type type] [is-stmt is-stmt] [might-need-storage might-need-storage]
-           [pos pos]))
+           [fixed-node fixed-node] [pos pos]))
 
     (define/public (copy-at core)
       (new FuncCall% [name name] 
@@ -597,6 +598,7 @@
            [known-type known-type]
            [place-type place-type]
            [signature signature]
+           [fixed-node fixed-node]
            [type type]))
 
     (define/override (pretty-print [indent ""])
