@@ -444,7 +444,9 @@
                [io (number->string (if (= state 1) 0 #x800))]
                [node (get-field fixed-node ast)]
                [port (if (or (> node 700) (< node 17)) "up" "left")])
-          (list (gen-block "io" "b!" io "!b" port "!b" "@b" "drop" 0 0)))]
+          (if (member node digital-nodes)
+              (list (gen-block "io" "b!" io "!b" port "!b" "@b" "drop" 0 0))
+              (list (gen-block "io" "b!" io "!b" port "!b" "dup" "!b"  0 0))))]
 
        [(and (is-a? ast FuncCall%)
 	     (regexp-match #rx"delay_ns" (get-field name ast)))
