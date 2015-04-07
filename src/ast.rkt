@@ -590,7 +590,7 @@
            [fixed-node fixed-node] [pos pos]))
 
     (define/public (copy-at core)
-      (new FuncCall% [name name] 
+      (new FuncCall% [name name]
            [args (filter (lambda (x) 
                            (let ([send-path (get-field send-path x)])
                              (or (not send-path) (= (last send-path) core))))

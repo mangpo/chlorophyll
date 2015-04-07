@@ -54,7 +54,7 @@
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]
-		      [place sym])])))
+		      [place #f])])))
 
 ;; returns the ast for a call to digital_read for NODE
 (define (get-digital-read node)
@@ -89,7 +89,10 @@
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]
-		      [place sym])])))
+                      ;;there is a return value only when in digital nodes
+		      [place (if (member node digital-nodes)
+                                 sym
+                                 #f)])])))
 
 ;; returns the ast for a call to delay
 (define (get-delay-ns node)
@@ -112,7 +115,7 @@
 	 [return (new VarDecl% [var-list (list "#return")]
 		      [type "void"]
 		      [known #f]
-		      [place sym])])))
+		      [place #f])])))
 
 (define (get-op exp)
   (get-field op (get-field op exp)))

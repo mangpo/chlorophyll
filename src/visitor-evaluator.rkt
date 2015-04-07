@@ -43,6 +43,9 @@
 
        [(is-a? ast Num%)
         (send ast to-concrete)
+        ;; convert io
+        (when (at-io? (get-field place-type ast))
+          (set-field! place-type ast (sub1 num-cores)))
         ]
 
        [(is-a? ast Array%)
