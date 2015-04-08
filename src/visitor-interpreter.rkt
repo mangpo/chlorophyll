@@ -513,7 +513,12 @@
        [(is-a? ast While%)
           (define pre-ret (send (get-field pre ast) accept this))
           (define condition (get-field condition ast))
-          (define condition-ret (send condition accept this))
+          (define condition-ret
+            (if (is-a? condition Num%)
+                (begin
+                  (set-field! place-type condition (new Place% [at "any"]))
+                  (comminfo 0 (set)))
+                (send condition accept this)))
           
           (push-scope)
           (define body-ret (send (get-field body ast) accept this))

@@ -112,6 +112,7 @@
                       (let ([place (get-field place p)])
                         (new RangePlace% [from (get-field from p)] [to (get-field to p)]
                              [place place] [send-path (get-path-one-to-many place placeset)])))]
+           [(at-any? x) #f]
            
            [else (raise (format "gen-path-condition: unimplemented ~a" x))]))
         ;`(gen-path-condition ,(get-field condition cond-ast) x ,x placeset ,placeset ,(get-field send-path cond-ast))

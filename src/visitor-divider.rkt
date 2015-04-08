@@ -253,10 +253,14 @@
 		      [pre (get-field pre while)])
 		 (set-field! parent pre while)
 		 (set-workspace c pre)))
-	  
-	  (send (get-field pre ast) accept this)
-	  (send (get-field condition ast) accept this)
-	  (gen-comm-condition)
+
+          (if (is-a? (get-field condition ast) Num%)
+              (for ([c (get-field body-placeset ast)])
+                (push-stack c (get-field condition ast)))
+              (begin
+                (send (get-field pre ast) accept this)
+                (send (get-field condition ast) accept this)
+                (gen-comm-condition)))
 
 	  ;; switch back to body scope
 	  (for ([c (get-field body-placeset ast)])

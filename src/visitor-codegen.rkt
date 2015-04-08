@@ -625,7 +625,23 @@
           (if false-ret
               (define-if (prog-append pre-ret cond-ret (list (iftf true-ret false-ret))))
               (prog-append pre-ret cond-ret (list (ift true-ret))))])]
-       
+
+       [(and (is-a? ast While%)
+             (is-a? (get-field condition ast) Num%))
+        (if (= (send (get-field condition ast) get-value) 0)
+            (list)
+            (let* ([exp (get-field condition ast)]
+                   [name (get-while-name)]
+                   [body (get-field body ast)]
+                   [block (new Block%
+                               [stmts (append (get-field stmts body)
+                                              (list (new FuncCall%
+                                                         [name name]
+                                                         [args (list)])))])])
+              (set! helper-funcs (cons (funcdecl name (send block accept this) #f)
+                                       helper-funcs))
+              (list (funccall name))))]
+
        [(is-a? ast While%)
 	(define pre (get-field pre ast))
         (when debug 
