@@ -74,10 +74,10 @@
 		      [place sym])])))
 
 
-;; returns the ast for a call to digital_wait for NODE
-(define (get-digital-wait node)
+;; returns the ast for a call to digital_wakeup for NODE
+(define (get-digital-wakeup node)
   (let ([sym (hash-ref node-to-symbolic-core node)])
-    (new FuncDecl% [name (format "digital_wait~a" node)]
+    (new FuncDecl% [name (format "digital_wakeup~a" node)]
 	 [args (new Block% [stmts (list (new Param%
                                              [var-list (list "state")]
                                              [type "int"]

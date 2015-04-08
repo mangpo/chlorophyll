@@ -31,11 +31,11 @@
     (for ([node digital-nodes])
       (declare env (format "digital_write~a" node) (comminfo 0 (set)))
       (declare env (format "digital_read~a" node) (comminfo 0 (set)))
-      (declare env (format "digital_wait~a" node) (comminfo 0 (set)))
+      (declare env (format "digital_wakeup~a" node) (comminfo 0 (set)))
       (declare env (format "delay_ns~a" node) (comminfo 0 (set))))
     (for ([node analog-nodes])
       (declare env (format "delay_ns~a" node) (comminfo 0 (set)))
-      (declare env (format "digital_wait~a" node) (comminfo 0 (set))))
+      (declare env (format "digital_wakeup~a" node) (comminfo 0 (set))))
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
@@ -326,7 +326,7 @@
 				     (get-field name ast))
 		       (regexp-match #rx"digital_read([0-9]+)"
 				     (get-field name ast))
-                       (regexp-match #rx"digital_wait([0-9]+)"
+                       (regexp-match #rx"digital_wakeup([0-9]+)"
 				     (get-field name ast))
 		       (regexp-match #rx"delay_ns([0-9]+)"
 				     (get-field name ast)))])

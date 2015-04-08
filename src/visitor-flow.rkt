@@ -21,7 +21,7 @@
 					      (for/list ([node (append
                                                                 digital-nodes
                                                                 analog-nodes)])
-						(cons (format "digital_wait~a"
+						(cons (format "digital_wakeup~a"
 							      node)
 						      (list)))
                                               (for/list ([node (append

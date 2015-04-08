@@ -21,7 +21,7 @@
 
     (for ([node (append analog-nodes digital-nodes)])
       (hash-set! funcdecls
-		 (format "digital_wait~a" node) (get-digital-wait node))
+		 (format "digital_wakeup~a" node) (get-digital-wakeup node))
       (hash-set! funcdecls
 		 (format "delay_ns~a" node) (get-delay-ns node)))
 

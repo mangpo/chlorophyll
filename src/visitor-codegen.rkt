@@ -439,7 +439,8 @@
        	  (list (gen-block "io" "b!" "@b" (number->string mask) "and" 0 1)))]
 
        [(and (is-a? ast FuncCall%)
-       	     (regexp-match #rx"digital_wait" (get-field name ast)))
+             (regexp-match #rx"digital_wakeup" (get-field name ast)))
+
         (let* ([state (send (car (get-field args ast)) get-value)]
                [io (number->string (if (= state 1) 0 #x800))]
                [node (get-field fixed-node ast)]
