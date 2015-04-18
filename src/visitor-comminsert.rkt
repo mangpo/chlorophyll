@@ -356,7 +356,8 @@
 		  (regexp-match #rx"digital_write" name)
 		  (regexp-match #rx"digital_read" name)
                   (regexp-match #rx"digital_wakeup" name)
-		  (regexp-match #rx"delay_ns" name))
+		  (regexp-match #rx"delay_ns" name)
+                  (regexp-match #rx"delay_unext" name))
 	      (send func-sig accept this)
 	      (get-field body-placeset func-sig)))
 

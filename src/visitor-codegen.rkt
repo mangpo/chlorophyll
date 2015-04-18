@@ -464,6 +464,10 @@
 				     8.1287))]
 	       [iter (inexact->exact (floor (/ ns unext-time)))])
 	  (list (gen-block (number->string iter) "for" "unext" 0 0)))]
+       [(and (is-a? ast FuncCall%)
+             (regexp-match #rx"delay_unext" (get-field name ast)))
+        (list (forloop (send (car (get-field args ast)) accept this)
+                       (list (gen-block)) #f #f #f))]
 
        [(is-a? ast FuncCall%)
         (define my-cond cond-onstack)

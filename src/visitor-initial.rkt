@@ -38,7 +38,8 @@
         (when (or (equal? (get-field name ast) "digital_write")
                   (equal? (get-field name ast) "digital_read")
                   (equal? (get-field name ast) "digital_wakeup")
-                  (equal? (get-field name ast) "delay_ns"))
+                  (equal? (get-field name ast) "delay_ns")
+                  (equal? (get-field name ast) "delay_unext"))
           (set-field! fixed-node ast (send (car (get-field args ast)) get-value)))
 
         (let* ([name (get-field name ast)]

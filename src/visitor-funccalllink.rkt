@@ -23,7 +23,9 @@
       (hash-set! funcdecls
 		 (format "digital_wakeup~a" node) (get-digital-wakeup node))
       (hash-set! funcdecls
-		 (format "delay_ns~a" node) (get-delay-ns node)))
+		 (format "delay_ns~a" node) (get-delay-ns node))
+      (hash-set! funcdecls
+		 (format "delay_unext~a" node) (get-delay-unext node)))
 
     (define/public (visit ast)
       (cond

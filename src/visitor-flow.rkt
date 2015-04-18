@@ -29,6 +29,12 @@
                                                                 analog-nodes)])
 						(cons (format "delay_ns~a"
 							      node)
+						      (list)))
+                                              (for/list ([node (append
+                                                                digital-nodes
+                                                                analog-nodes)])
+						(cons (format "delay_unext~a"
+							      node)
 						      (list)))))])
     (define debug #f)
 

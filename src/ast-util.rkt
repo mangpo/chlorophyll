@@ -117,6 +117,23 @@
 		      [known #f]
 		      [place #f])])))
 
+;; returns the ast for a call to delay_unext
+(define (get-delay-unext node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "delay_unext~a" node)]
+	 [args (new Block% [stmts (list (new Param%
+					     [var-list (list "iter")]
+					     [type "int"]
+					     [known #f]
+					     [place sym]
+					     [place-type sym]))])]
+	 [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+		      [place #f])])))
+
 (define (get-op exp)
   (get-field op (get-field op exp)))
 
