@@ -35,7 +35,7 @@
 
 (define (inout inst)
   (cond
-   [(or (member inst (list "@+" "@b" "@" "pop" "a" "up" "down" "left" "right"))
+   [(or (member inst (list "@+" "@b" "@" "pop" "a" "up" "down" "left" "right" "io"))
         (string->number inst))
     (cons 0 1)]
 
