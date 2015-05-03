@@ -442,7 +442,7 @@
              (regexp-match #rx"digital_wakeup" (get-field name ast)))
 
         (let* ([state (send (car (get-field args ast)) get-value)]
-               [io (number->string (if (= state 1) 0 #x800))]
+               [io (number->string (if (= (modulo state 2) 1) 0 #x800))]
                [node (get-field fixed-node ast)]
                [port (if (or (> node 700) (< node 17)) "up" "left")])
           (if (member node digital-nodes)
