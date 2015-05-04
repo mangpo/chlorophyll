@@ -424,7 +424,7 @@
                [n-pins (length args)])
 
           (when (= n-pins 4) ;;pin 4, bit 5
-            (set! io (arithmetic-shift (car args) 4))
+            (set! io (bitwise-ior io (arithmetic-shift (car args) 4)))
             (set! args (cdr args)))
           (when (>= n-pins 3) ;;pin 3, bit 3
             (set! io (bitwise-ior io (arithmetic-shift (car args) 2)))
