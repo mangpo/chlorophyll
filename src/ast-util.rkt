@@ -41,8 +41,8 @@
 (define (get-digital-write node)
   (let ([sym (hash-ref node-to-symbolic-core node)])
     (new FuncDecl% [name (format "digital_write~a" node)]
-	 [args (new Block% [stmts (for/list ([i (hash-ref node-to-num-pins
-							  node)])
+	 [args (new Block% [stmts (for/list ([i (add1 (hash-ref node-to-num-pins
+                                                                node))])
 				    (new Param%
 					 [var-list (list (format "state~a" i))]
 					 [type "int"]
@@ -78,6 +78,7 @@
 (define (get-digital-wakeup node)
   (let ([sym (hash-ref node-to-symbolic-core node)])
     (new FuncDecl% [name (format "digital_wakeup~a" node)]
+         ;;[args (new Block% [stmts (list)])]
 	 [args (new Block% [stmts (list (new Param%
                                              [var-list (list "state")]
                                              [type "int"]

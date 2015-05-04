@@ -414,23 +414,27 @@
         (drop-cond (and (not send-cond) my-cond) (prog-append data-ret temp-ret send-ret))]
 
        [(and (is-a? ast FuncCall%)
-	     (regexp-match #rx"digital_write" (get-field name ast)))
-	(let* ([args (for/list ([arg (reverse (get-field args ast))])
-		       (send arg get-value))]
-	       [n-pins (length args)]
-	       [io 0])
-	  (when (= n-pins 4) ;;pin 4, bit 5
-	    (set! io (arithmetic-shift (car args) 4))
-	    (set! args (cdr args)))
-	  (when (>= n-pins 3) ;;pin 3, bit 3
-	    (set! io (bitwise-ior io (arithmetic-shift (car args) 2)))
-	    (set! args (cdr args)))
-	  (when (>= n-pins 2) ;;pin 2, bit 1
-	    (set! io (bitwise-ior io (car args)))
-	    (set! args (cdr args)))
-	  (when (>= n-pins 1);; pin 1, bit 17
-	    (set! io (bitwise-ior io (arithmetic-shift (car args) 16))))
-	  (list (gen-block "io" "b!" (number->string io) "!b" 0 0)))]
+             (regexp-match #rx"digital_write" (get-field name ast)))
+        (pretty-display "CODEGEN: digital_write")
+        (let* ([args (for/list ([arg (reverse (get-field args ast))])
+                       (send arg get-value))]
+               [wake-state (car args)]
+               [io (if (= (modulo wake-state 2) 1) 0 #x800)]
+               [args  (cdr args)]
+               [n-pins (length args)])
+
+          (when (= n-pins 4) ;;pin 4, bit 5
+            (set! io (arithmetic-shift (car args) 4))
+            (set! args (cdr args)))
+          (when (>= n-pins 3) ;;pin 3, bit 3
+            (set! io (bitwise-ior io (arithmetic-shift (car args) 2)))
+            (set! args (cdr args)))
+          (when (>= n-pins 2) ;;pin 2, bit 1
+            (set! io (bitwise-ior io (car args)))
+            (set! args (cdr args)))
+          (when (>= n-pins 1);; pin 1, bit 17
+            (set! io (bitwise-ior io (arithmetic-shift (car args) 16))))
+          (list (gen-block "io" "b!" (number->string io) "!b" 0 0)))]
 
        [(and (is-a? ast FuncCall%)
        	     (regexp-match #rx"digital_read" (get-field name ast)))
@@ -440,14 +444,11 @@
 
        [(and (is-a? ast FuncCall%)
              (regexp-match #rx"digital_wakeup" (get-field name ast)))
-
-        (let* ([state (send (car (get-field args ast)) get-value)]
-               [io (number->string (if (= (modulo state 2) 1) 0 #x800))]
-               [node (get-field fixed-node ast)]
+        (let* ([node (get-field fixed-node ast)]
                [port (if (or (> node 700) (< node 17)) "up" "left")])
           (if (member node digital-nodes)
-              (list (gen-block "io" "b!" io "!b" port "!b" "@b" "drop" 0 0))
-              (list (gen-block "io" "b!" io "!b" port "!b" "dup" "!b"  0 0))))]
+              (list (gen-block port "b!" "@b" "drop" 0 0))
+              (list (gen-block port "b!" "dup" "!b"  0 0))))]
 
        [(and (is-a? ast FuncCall%)
 	     (regexp-match #rx"delay_ns" (get-field name ast)))

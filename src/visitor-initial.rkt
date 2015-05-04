@@ -9,11 +9,14 @@
 
 (define constant-defs #hash(;;for digital io
                             ("HIGH_IMPEDANCE" . 0) ;;Tristate
+                            ("HIGH_IMPED" . 0)
                             ("WEAK_PULLDOWN" . 1) ;; ~47KOhm
                             ("LOW" . 2) ;;Sink ≤40mA to Vs
                             ("SINK" . 2)
                             ("HIGH" . 3) ;;Source ≤40mA from Vdd
-                            ("SOURCE" . 3)))
+                            ("SOURCE" . 3)
+                            ("WAKEUP_LOW" . 0)
+                            ("WAKEUP_HIGH" . 1)))
 
 (define initial%
   (class* object% (visitor<%>)
@@ -35,6 +38,27 @@
               ast))]
 
        [(is-a? ast FuncCall%)
+        (when (equal? (get-field name ast) "digital_write")
+          (let* ([args (get-field args ast)]
+                 [node (send (car args) get-value)]
+                 [min-args (add1 (hash-ref node-to-num-pins node))])
+            (when (= (length args) min-args)
+               (let ([arg (new Num%
+                                [n (new Const%
+                                        [n 0];;default value
+                                        [pos (get-field pos ast)])];;?
+                                [pos (get-field pos ast)])])
+                  (set-field! args ast (append args (list arg)))))))
+
+        (when (equal? (get-field name ast) "digital_wakeup")
+          ;;JUST A TEMPORARY FIX...
+          ;;If digital_wakeup takes no arguments, the call is entirely
+          ;;eliminated for some reason. As a workaround, an argument
+          ;;is added here that will be ignored during codegen.
+          (set-field! args ast (append (get-field args ast)
+                                       (list (new Num%
+                                                  [n (new Const% [n 666])])))))
+
         (when (or (equal? (get-field name ast) "digital_write")
                   (equal? (get-field name ast) "digital_read")
                   (equal? (get-field name ast) "digital_wakeup")
