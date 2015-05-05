@@ -256,7 +256,7 @@ long Cout;
 type_matrice a, b;
 type_vecteur p, fix;
 
-main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   lire(n, a, b, fix, argv[1]);
   cout << "nr iterations, nr resolutions : \n";
   nb_iterations = atoi(argv[2]);
@@ -290,4 +290,5 @@ main(int argc, char* argv[]) {
     // cout << endl;
     recuit(n,a,b,fix,p,Cout, nb_iterations);
   };
+  return 0;
 }

@@ -17,7 +17,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field places
-                [env (make-hash)] ;; map varname -> place, arrayname -> (place cluster)
+                [env (make-hash)] ;; map function name -> comminfo
                 [has-func-temp #f]
 		[used-io-nodes (set)]
 		)
