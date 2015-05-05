@@ -9,7 +9,7 @@
 
 (define constant-defs #hash(;;for digital io
                             ("HIGH_IMPEDANCE" . 0) ;;Tristate
-                            ("HIGH_IMPED" . 0)
+                            ("IMPED" . 0)
                             ("WEAK_PULLDOWN" . 1) ;; ~47KOhm
                             ("LOW" . 2) ;;Sink ≤40mA to Vs
                             ("SINK" . 2)
@@ -45,7 +45,7 @@
             (when (= (length args) min-args)
                (let ([arg (new Num%
                                 [n (new Const%
-                                        [n 0];;default value
+                                        [n 1];;default value
                                         [pos (get-field pos ast)])];;?
                                 [pos (get-field pos ast)])])
                   (set-field! args ast (append args (list arg)))))))
