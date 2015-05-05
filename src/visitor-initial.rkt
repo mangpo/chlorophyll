@@ -59,11 +59,7 @@
                                        (list (new Num%
                                                   [n (new Const% [n 666])])))))
 
-        (when (or (equal? (get-field name ast) "digital_write")
-                  (equal? (get-field name ast) "digital_read")
-                  (equal? (get-field name ast) "digital_wakeup")
-                  (equal? (get-field name ast) "delay_ns")
-                  (equal? (get-field name ast) "delay_unext"))
+        (when (io-func? (get-field name ast))
           (set-field! fixed-node ast (send (car (get-field args ast)) get-value)))
 
         (let* ([name (get-field name ast)]

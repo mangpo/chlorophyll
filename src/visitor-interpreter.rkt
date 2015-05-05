@@ -28,16 +28,10 @@
     ;; Declare IO function: in(), out(data)
     (declare env "in" (comminfo 0 (set)))
     (declare env "out" (comminfo 0 (set)))
-    (for ([node digital-nodes])
-      (declare env (format "digital_write~a" node) (comminfo 0 (set)))
-      (declare env (format "digital_read~a" node) (comminfo 0 (set)))
-      (declare env (format "digital_wakeup~a" node) (comminfo 0 (set)))
-      (declare env (format "delay_ns~a" node) (comminfo 0 (set)))
-      (declare env (format "delay_unext~a" node) (comminfo 0 (set))))
-    (for ([node analog-nodes])
-      (declare env (format "delay_ns~a" node) (comminfo 0 (set)))
-      (declare env (format "delay_unext~a" node) (comminfo 0 (set)))
-      (declare env (format "digital_wakeup~a" node) (comminfo 0 (set))))
+
+    (for ([node io-nodes])
+      (for ([name built-in-names])
+        (declare env (format "~a~a" name node) (comminfo 0 (set)))))
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
@@ -324,19 +318,10 @@
           ]
 
        [(is-a? ast FuncCall%)
-	(let ([ret (or (regexp-match #rx"digital_write([0-9]+)"
-				     (get-field name ast))
-		       (regexp-match #rx"digital_read([0-9]+)"
-				     (get-field name ast))
-                       (regexp-match #rx"digital_wakeup([0-9]+)"
-				     (get-field name ast))
-		       (regexp-match #rx"delay_ns([0-9]+)"
-				     (get-field name ast))
-                       (regexp-match #rx"delay_unext([0-9]+)"
-				     (get-field name ast)))])
-	  (when (and ret (= (length ret) 2))
-	    (set! used-io-nodes
-	      (set-add used-io-nodes (string->number (cadr ret))))))
+        (when (io-func? (get-field name ast))
+          ;;add the node of this function to the set of used io nodes
+          (set! used-io-nodes
+            (set-add used-io-nodes (get-field fixed-node ast))))
 
           (when debug
                 (pretty-display (format ">> FuncCall ~a" (send ast to-string))))

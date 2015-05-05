@@ -1281,6 +1281,8 @@
       (format "[~a,~a]" from to))
     ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define digital-nodes '(701 705 708 715 517 417 317 217 8 1 100 200 300 500 600))
 (define analog-nodes '(709 713 717 617 117))
 
@@ -1308,3 +1310,19 @@
 			       (300 . 2)
 			       (500 . 1)
 			       (600 . 1)))
+
+(define io-nodes (append digital-nodes analog-nodes))
+
+;;(define analog-fn-names '("analog_read"))
+;;(define digital-fn-names
+
+(define built-in-names '("digital_write" "digital_read"
+                         "digital_wakeup" "delay_unext"
+                         ;;"delay_us" "delay_ms" "delay_s"
+                         "delay_ns"))
+
+(define built-in-re (string-join (map (lambda (x) (format "(^~a[0-9]*$)" x))
+                                      built-in-names) "|"))
+
+(define (io-func? name)
+  (regexp-match built-in-re name))
