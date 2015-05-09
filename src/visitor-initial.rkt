@@ -50,15 +50,6 @@
                                 [pos (get-field pos ast)])])
                   (set-field! args ast (append args (list arg)))))))
 
-        (when (equal? (get-field name ast) "digital_wakeup")
-          ;;JUST A TEMPORARY FIX...
-          ;;If digital_wakeup takes no arguments, the call is entirely
-          ;;eliminated for some reason. As a workaround, an argument
-          ;;is added here that will be ignored during codegen.
-          (set-field! args ast (append (get-field args ast)
-                                       (list (new Num%
-                                                  [n (new Const% [n 666])])))))
-
         (when (io-func? (get-field name ast))
           (set-field! fixed-node ast (send (car (get-field args ast)) get-value)))
 

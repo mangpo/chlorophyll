@@ -15,6 +15,7 @@
     (init-field routing-table part2core n)
 
     (define debug #f)
+    (define visited (make-hash))
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -457,20 +458,27 @@
 
        [(is-a? ast FuncDecl%)
         (when debug 
-	      (pretty-display "\n--------------------------------------------")
-              (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
-        (define return-ret 
-          (if (get-field return ast)
-              (send (get-field return ast) accept this)
-              (set)))
-        (define args-ret (send (get-field args ast) accept this))
-        (define body-ret (send (get-field body ast) accept this))
-        ;(convert-placeset)
-        (let ([ret (set-union return-ret args-ret body-ret)])
-          (set-field! body-placeset ast ret)
-          ret)
-        ]
+          (pretty-display "\n--------------------------------------------")
+          (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
+        (cond [(hash-has-key? visited (get-field name ast))
+               (hash-ref visited (get-field name ast))]
+              [else
 
+               (define return-ret
+                 (if (get-field return ast)
+                     (send (get-field return ast) accept this)
+                     (set)))
+               (define args-ret (send (get-field args ast) accept this))
+               (define body-ret (send (get-field body ast) accept this))
+               (define new-placeset (list->set
+                                     (map (lambda (x) (vector-ref part2core x))
+                                          (set->list (get-field body-placeset ast)))))
+               (let ([ret (set-union return-ret args-ret body-ret new-placeset)])
+                 (set-field! body-placeset ast ret)
+                 (pretty-display (format "ret === ~a" ret))
+                 (hash-set! visited (get-field name ast) ret)
+                 ret)
+               ])]
        [else (raise (format "Error: in comm-inserter, ~a unimplemented!" ast))]
        ))
     ))
