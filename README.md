@@ -191,5 +191,91 @@ output_var = reduce(func, init, input_array);
 
 `example/mapreduce` contains example programs that use map and reduce constructs.
 
+### IO
+
+The following functions are provided for interacting with GA144 IO functionality.
+All IO functions require the pins node coordinate as their first argument.
+
+Set IO pin states:
+```
+set_io(node, state_1, ..., state_N, wakeup)
+```
+state_i: is the state for GPIO pin i. see [pin numbering](#GPIO_states)
+wakeup: sets the state for `digital_wakeup`, either WAKEUP_LOW or WAKEUP_HIGH
+
+
+Read GPIO pins:
+```
+digital_read(node, pin)
+```
+pin: GPIO pin number between 0 and 3. see [pin numbering](#GPIO_pin_numbering)
+
+returns zero if the pin is low, non-zero if the pin is high
+
+
+Pin Wakeup:
+```
+digital_wait(node)
+```
+Suspends execution in the node until pin 0 is in the state specified by the
+last call to set_io. The default is WAKEUP_HIGH.
+
+<a name="GPIO_pin_numbering"></a>
+#### GPIO pin numbering
+In the Greenarrays documentation, pins are referenced by the bit positions
+used to control them in the IO register. In Chlorophyll, they are numbered
+sequentially from 0. For example, in Greenarrays documentation 705.17
+corresponds to 705.0.
+
+Mapping of chlorophyll pin numbers to those used in Greenarrays documentation:
+
+| Chlorophyll | Greenarrays |
+| ----------- | ----------- |
+|           0 |          17 |
+|           1 |           1 |
+|           2 |           3 |
+|           3 |           5 |
+|-------------|-------------|
+
+<a name="GPIO_states"></a>
+#### Digital IO states
+
+Possible states for GPIO pins:
+| -------------- | -------------------------- |
+| HIGH_IMPEDANCE | High impedance (tristate)  |
+| WEAK_PULLDOWN  | Weak pulldown ~47 KΩ       |
+| SINK           | Lo:  Sink ≤40mA to Vss     |
+| SOURCE         | Hi:  Source ≤40mA from Vdd |
+| -------------- | -------------------------- |
+
+### Delay functions
+Like IO functions, delay functions require the node as their first argument.
+The shortest delay time (and resolution) is about 2.4ns.
+These functions use delay loops and therefor cause the node to run at full
+power. The delay time is currently limited by the 18 bit word length, so the
+longest delay time is about 0.629ms.
+
+Nanosecond Delay:
+```
+ delay_ns(node, time, volts)
+```
+time: time in nanoseconds to delay
+volts: voltage used to power the GA144(execution speed is voltage dependent).
+
+
+Delay for unext loop iterations:
+```
+delay_unext(node, iterations)
+```
+iterations: number of 'unext' loop iterations to delay for
+
+This function exposes the arrayforth 'unext' looping instruction.
+The generated code is equivalent to "<iterations> for unext".
+It is currently the only delay function that can take variable arguments.
+Each iteration consumes about 2.4ns.
+It is up to the programmer to turn the iterations into the
+desired time, unlike `delay_ns` changes in voltage are not accounted for.
+
+
 # Bugs and Features
 For a bug report or a feature request, please contact mangpo@eecs.berkeley.edu.
