@@ -78,13 +78,7 @@
 (define (get-digital-wakeup node)
   (let ([sym (hash-ref node-to-symbolic-core node)])
     (new FuncDecl% [name (format "digital_wakeup~a" node)]
-         ;;[args (new Block% [stmts (list)])]
-	 [args (new Block% [stmts (list (new Param%
-                                             [var-list (list "state")]
-                                             [type "int"]
-                                             [known #f]
-                                             [place sym]
-                                             [place-type sym]))])]
+         [args (new Block% [stmts (list)])]
          [body (new Block% [stmts (list)])]
 	 [body-placeset (set sym)]
 	 [return (new VarDecl% [var-list (list "#return")]
