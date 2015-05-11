@@ -1,0 +1,20 @@
+// -*- c -*-
+
+// Blinks an LED connected from a voltage source to pin 0 in node 417
+// pin 417.0 = eval board header pin J36.3
+
+//delay for 0.5 seconds (The measured delay was 0.492 seconds)
+void delay(){
+  for (i from 0 to 1000){
+    delay_ns(417, 500000, 1.8);
+  }
+}
+
+void main(){
+  while (1){
+    set_io(417, SINK);
+    delay();
+    set_io(417, IMPED);
+    delay();
+  }
+}

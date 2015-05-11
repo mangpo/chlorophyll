@@ -1,0 +1,41 @@
+// -*- c -*-
+
+// requires a 32.768 khz watch crystal from 715.0 to gnd
+
+void osc(int k){//, int n){
+  int half;
+  half = k/2;  
+  //for (i from 0 to n){
+  for (i from 0 to 5000){
+    set_io(715, SOURCE);
+    delay_unext(715, half);
+    set_io(715, SINK);
+    delay_unext(715, half);
+  }
+  set_io(715, IMPED);
+  for (i from 0 to 30000){
+    if (digital_read(715, 0)){
+      while (1){
+        
+        set_io(715, SOURCE);
+        set_io(715, HIGH_IMPEDANCE, WAKEUP_LOW);
+        digital_wakeup(715);
+
+        set_io(715, SINK);
+        set_io(715, HIGH_IMPEDANCE, WAKEUP_HIGH);
+        digital_wakeup(715);
+
+      }
+    }
+  }
+}
+
+void main(){
+  int period;
+  period = 12400;
+  while (1){
+    osc(period);
+    period = period + 1;
+  }
+}
+

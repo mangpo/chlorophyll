@@ -1,0 +1,16 @@
+// -*- c -*-
+
+// this waits for the transitions of a square wave on pin 705.0
+// and toggles pin 705.1 to mirror it
+
+// Square wave input on node 705 pin 0, header J32.1
+// Output on node 705 pin 1, header J32.4
+
+void main(){
+  while (1){
+    set_io(705, IMPED, SINK, IMPED, IMPED, WAKEUP_HIGH);
+    digital_wakeup(705);
+    set_io(705, IMPED, HIGH, IMPED, IMPED, WAKEUP_LOW);
+    digital_wakeup(705);
+  }
+}

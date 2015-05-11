@@ -1,0 +1,14 @@
+// -*- c -*-
+// generate a square wave on pin 0 in node 517 (715.17)
+// evalboard header pin J36.2
+//
+// This was used to test accuracy of delay_ns
+
+void main(){
+  while (1){
+    set_io(517, 3);
+    delay_ns(517, 1000, 1.8);
+    set_io(517, 2);
+    delay_ns(517, 1000, 1.8);
+  }
+}
