@@ -201,7 +201,7 @@ Set IO pin states:
 ```
 set_io(node, state_1, ..., state_N, wakeup)
 ```
-`state_i`: The state for GPIO pin i. see [pin numbering](#GPIO_pin_states)  
+`state_i`: The state for GPIO pin i. see [GPIO states](#GPIO_pin_states)  
 `wakeup`: Sets the state for `digital_wakeup`, either WAKEUP_LOW or WAKEUP_HIGH
 
 
@@ -219,7 +219,7 @@ Pin Wakeup:
 digital_wait(node)
 ```
 Suspends execution in the node until pin 0 is in the state specified by the
-last call to set_io. The default is WAKEUP_HIGH.
+last call to `set_io`. The default is WAKEUP_HIGH.
 
 <a name="GPIO_pin_numbering"></a>
 #### GPIO pin numbering
@@ -242,12 +242,13 @@ Mapping of chlorophyll pin numbers to those used in Greenarrays documentation:
 #### GPIO pin states
 
 Possible states for GPIO pins:
+
+| Pin state      | Description                |
 | -------------- | -------------------------- |
 | HIGH_IMPEDANCE | High impedance (tristate)  |
 | WEAK_PULLDOWN  | Weak pulldown ~47 KΩ       |
 | SINK           | Lo:  Sink ≤40mA to Vss     |
 | SOURCE         | Hi:  Source ≤40mA from Vdd |
-
 
 ### Delay functions
 Like IO functions, delay functions require the node as their first argument.
@@ -271,7 +272,7 @@ delay_unext(node, iterations)
 `iterations`: number of 'unext' loop iterations to delay for
 
 This function exposes the arrayforth 'unext' looping instruction.
-The generated code is equivalent to "<iterations> for unext".
+The generated code is equivalent to "*iterations* for unext".
 It is currently the only delay function that can take variable arguments.
 Each iteration consumes about 2.4ns.
 It is up to the programmer to turn the iterations into the
