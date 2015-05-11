@@ -142,6 +142,10 @@
 ;; lst is a list of linklists that point to the starting of the structure
 ;; at multiple places in the program.
 (define (extract-structure lst program)
+  (when debug 
+        (pretty-display `(extract-structure ,lst))
+        (aforth-struct-print lst)
+        )
 
   ;; args: list of linklists
   ;; return: true if their entries are the same
@@ -173,15 +177,24 @@
     (for ([x-linklist linklists]
 	  [x-code inst-lists])
 	 ;; TODO update in, out, org
-      (let* ([b (linklist-entry x-linklist)]
-             [org (if (string? (block-org b)) (string-split (block-org b)) (block-org b))]
-             [inout (estimate-inout x-code)])
-        (set-block-body! b x-code)
-        (set-block-in! b (car inout))
-        (set-block-out! b (cdr inout))
+      (let* ([bbb (linklist-entry x-linklist)]
+             [cnstr (block-cnstr bbb)]
+             [org (if (string? (block-org bbb)) 
+                      (string-split (block-org bbb)) 
+                      (block-org bbb))]
+             [inout (estimate-inout x-code)]
+             [a (estimate-a x-code)]
+             [b (estimate-b x-code)]
+             [r (estimate-r x-code)]
+             )
+        (set-block-body! bbb x-code)
+        (set-block-in! bbb (car inout))
+        (set-block-out! bbb (cdr inout))
+        (set-block-cnstr! bbb (restrict (restrict-mem cnstr)
+                                        (or (restrict-a cnstr) a) b r))
         (if (equal? location `front)
-            (set-block-org! b (string-join (take org (length x-code))))
-            (set-block-org! b (string-join (drop org (- (length org) (length x-code))))))
+            (set-block-org! bbb (string-join (take org (length x-code))))
+            (set-block-org! bbb (string-join (drop org (- (length org) (length x-code))))))
         )))
 
   ;; the first common entries
@@ -504,7 +517,7 @@
   (define subseqs (sort-subsequence seqs min-len max-len 
                                     (add1 (quotient (* 4 occur) (sub1 occur)))))
   
-  ;;(when debug (pretty-display subseqs))
+  (when debug (pretty-display subseqs))
   
   (for ([subseq subseqs])
     (let ([str (string-join subseq)])

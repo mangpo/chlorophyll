@@ -1,16 +1,16 @@
 #lang racket
 
 (require "header.rkt" "arrayforth.rkt" "arrayforth-print.rkt" "arrayforth-def.rkt")
-;; (require "../../forth-interpreter/machine/cegis.rkt" 
-;;          "../../forth-interpreter/machine/state.rkt" 
-;;          "../../forth-interpreter/machine/programs.rkt" 
-;;          "../../forth-interpreter/machine/track-constant.rkt"
-;;          "../../forth-interpreter/ArrayForth/arrayforth.rkt")
-(require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
-(require (planet "ArrayForth/arrayforth.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+(require "../../forth-interpreter/machine/cegis.rkt" 
+         "../../forth-interpreter/machine/state.rkt" 
+         "../../forth-interpreter/machine/programs.rkt" 
+         "../../forth-interpreter/machine/track-constant.rkt"
+         "../../forth-interpreter/ArrayForth/arrayforth.rkt")
+;; (require (planet "machine/cegis.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/state.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/programs.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "machine/track-constant.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
+;; (require (planet "ArrayForth/arrayforth.rkt" ("mangpo" "aforth-optimizer.plt" 1 0)))
 
 (provide superoptimize renameindex program-sizes)
 
