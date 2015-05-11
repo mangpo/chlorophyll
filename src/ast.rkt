@@ -1316,7 +1316,7 @@
 ;;(define analog-fn-names '("analog_read"))
 ;;(define digital-fn-names
 
-(define built-in-names '("digital_write" "digital_read"
+(define built-in-names '("set_io" "digital_read"
                          "digital_wakeup" "delay_unext"
                          ;;"delay_us" "delay_ms" "delay_s"
                          "delay_ns"))

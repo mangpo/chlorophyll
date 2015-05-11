@@ -414,8 +414,8 @@
         (drop-cond (and (not send-cond) my-cond) (prog-append data-ret temp-ret send-ret))]
 
        [(and (is-a? ast FuncCall%)
-             (regexp-match #rx"digital_write" (get-field name ast)))
-        (pretty-display "CODEGEN: digital_write")
+             (regexp-match #rx"set_io" (get-field name ast)))
+        (pretty-display "CODEGEN: set_io")
         (let* ([args (for/list ([arg (reverse (get-field args ast))])
                        (send arg get-value))]
                [wake-state (car args)]

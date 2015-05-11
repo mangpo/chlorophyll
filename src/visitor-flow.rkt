@@ -20,7 +20,7 @@
                                                              digital-nodes
                                                              analog-nodes)])
                                              (list
-                                              (list (format "digital_write~a"
+                                              (list (format "set_io~a"
                                                             node))
                                               (list (format "digital_wakeup~a"
                                                             node))

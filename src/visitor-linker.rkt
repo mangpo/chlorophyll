@@ -33,7 +33,7 @@
     (for ([node digital-nodes])
       (declare env (format "digital_read~a" node) (get-digital-read node)))
     (for ([node (append digital-nodes analog-nodes)])
-      (declare env (format "digital_write~a" node) (get-digital-write node))
+      (declare env (format "set_io~a" node) (get-set-io node))
       (declare env (format "digital_wakeup~a" node) (get-digital-wakeup node))
       (declare env (format "delay_ns~a" node) (get-delay-ns node))
       (declare env (format "delay_unext~a" node) (get-delay-unext node)))

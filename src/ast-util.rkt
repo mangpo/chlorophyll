@@ -37,10 +37,10 @@
 		      [place (new Place% [at "io"])])]))
   stdout)
 
-;; returns the ast for a call to digital_write for NODE
-(define (get-digital-write node)
+;; returns the ast for a call to set_io for NODE
+(define (get-set-io node)
   (let ([sym (hash-ref node-to-symbolic-core node)])
-    (new FuncDecl% [name (format "digital_write~a" node)]
+    (new FuncDecl% [name (format "set_io~a" node)]
 	 [args (new Block% [stmts (for/list ([i (add1 (hash-ref node-to-num-pins
                                                                 node))])
 				    (new Param%

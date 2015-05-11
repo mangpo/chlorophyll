@@ -38,7 +38,7 @@
               ast))]
 
        [(is-a? ast FuncCall%)
-        (when (equal? (get-field name ast) "digital_write")
+        (when (equal? (get-field name ast) "set_io")
           (let* ([args (get-field args ast)]
                  [node (send (car args) get-value)]
                  [min-args (add1 (hash-ref node-to-num-pins node))])

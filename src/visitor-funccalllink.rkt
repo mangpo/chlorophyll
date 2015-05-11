@@ -19,7 +19,7 @@
 
     (for ([node (append analog-nodes digital-nodes)])
       (hash-set! funcdecls
-		 (format "digital_write~a" node) (get-digital-write node))
+		 (format "set_io~a" node) (get-set-io node))
       (hash-set! funcdecls
 		 (format "digital_wakeup~a" node) (get-digital-wakeup node))
       (hash-set! funcdecls
