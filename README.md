@@ -196,21 +196,22 @@ output_var = reduce(func, init, input_array);
 The following functions are provided for interacting with GA144 IO functionality.
 All IO functions require the pins node coordinate as their first argument.
 
+
 Set IO pin states:
 ```
 set_io(node, state_1, ..., state_N, wakeup)
 ```
-state_i: is the state for GPIO pin i. see [pin numbering](#GPIO_states)
-wakeup: sets the state for `digital_wakeup`, either WAKEUP_LOW or WAKEUP_HIGH
+`state_i`: The state for GPIO pin i. see [pin numbering](#GPIO_pin_states)  
+`wakeup`: Sets the state for `digital_wakeup`, either WAKEUP_LOW or WAKEUP_HIGH
 
 
 Read GPIO pins:
 ```
 digital_read(node, pin)
 ```
-pin: GPIO pin number between 0 and 3. see [pin numbering](#GPIO_pin_numbering)
+`pin`: GPIO pin number between 0 and 3. see [pin numbering](#GPIO_pin_numbering)
 
-returns zero if the pin is low, non-zero if the pin is high
+Returns zero if the pin is low, non-zero if the pin is high
 
 
 Pin Wakeup:
@@ -235,10 +236,10 @@ Mapping of chlorophyll pin numbers to those used in Greenarrays documentation:
 |           1 |           1 |
 |           2 |           3 |
 |           3 |           5 |
-|-------------|-------------|
 
-<a name="GPIO_states"></a>
-#### Digital IO states
+
+<a name="GPIO_pin_states"></a>
+#### GPIO pin states
 
 Possible states for GPIO pins:
 | -------------- | -------------------------- |
@@ -246,7 +247,7 @@ Possible states for GPIO pins:
 | WEAK_PULLDOWN  | Weak pulldown ~47 KΩ       |
 | SINK           | Lo:  Sink ≤40mA to Vss     |
 | SOURCE         | Hi:  Source ≤40mA from Vdd |
-| -------------- | -------------------------- |
+
 
 ### Delay functions
 Like IO functions, delay functions require the node as their first argument.
@@ -259,15 +260,15 @@ Nanosecond Delay:
 ```
  delay_ns(node, time, volts)
 ```
-time: time in nanoseconds to delay
-volts: voltage used to power the GA144(execution speed is voltage dependent).
+`time`: time in nanoseconds to delay  
+`volts`: voltage used to power the GA144(execution speed is voltage dependent).
 
 
 Delay for unext loop iterations:
 ```
 delay_unext(node, iterations)
 ```
-iterations: number of 'unext' loop iterations to delay for
+`iterations`: number of 'unext' loop iterations to delay for
 
 This function exposes the arrayforth 'unext' looping instruction.
 The generated code is equivalent to "<iterations> for unext".
