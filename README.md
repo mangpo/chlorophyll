@@ -55,7 +55,7 @@ The compiler invokes multiple superoptimizers to optimize code of multiple GA no
 ```
 (define procs 4)
 ```
-Only compiling with `-o` when you are certian that your progam is corect.
+Only compiling with `-o` when you are certain that your program is correct.
 
 ### Other Compiler Options
 
@@ -67,7 +67,7 @@ To view all compiler options and the default settings, run
 ```
 
 ### Testing Your Programs
-To facilitate testing, in the testing mode, we introduce `in()` and `out()` constructs that read from standard input and write to standard output respectively. In `examples/simple/hello-io.cll`, we modify `examples/simple/hello.cll` to read *a* and *b* from standard input, and write *c* to stardard output.
+To facilitate testing, in the testing mode, we introduce `in()` and `out()` constructs that read from standard input and write to standard output respectively. In `examples/simple/hello-io.cll`, we modify `examples/simple/hello.cll` to read *a* and *b* from standard input, and write *c* to standard output.
 
 You can test your implementation before fully compiling the program by running
 ```
@@ -109,11 +109,11 @@ Chlorophyll compiler consists the following components.
 4. **Code generator** generates arrayForth code. Our code generator uses a superoptimization technique to optimize code.
 
 When you compile `xxx.cll`, the compiler will generate a directory `output-xxx` which contains
-- **xxx.part**: output from the partitioner, a fully partitioned xxx program (all variables and operaters are annoatated with logical cores)
+- **xxx.part**: output from the partitioner, a fully partitioned xxx program (all variables and operators are annotated with logical cores)
 - **xxx.dat** and **xxx.graph**: inputs to the layout
 - **xxx.layout**: output from the layout
 - **xxx-gen1.rkt** and **xxx-gen2.rkt**: outputs from the code separator as Racket objects. When we discover repeating sequences of instructions, we define a function that executes such sequence of instructions, and replace each of those repeating sequences with a function call. *xxx-gen2.rkt* is the version that replaces the repeating sequences with function calls.
-- **xxx.cpp**: output of compling *xxx-gen1.rkt* into C++ programs. Each thread represents each GA core. *xxx.cpp* can be compiled to an executable using `g++ -pthread -std=c++0x xxx.cpp`.
+- **xxx.cpp**: output of compiling *xxx-gen1.rkt* into C++ programs. Each thread represents each GA core. *xxx.cpp* can be compiled to an executable using `g++ -pthread -std=c++0x xxx.cpp`.
 - **xxx-noopt1.rkt** and **xxx-noopt2.rkt**: outputs from compiling *xxx-gen1.rkt* and *xxx-gen2.rkt* to arrayForth respectively. xxx-noopt1.rkt and xxx-noopt2.rkt are generated without superoptimization.
 - **xxx.aforth**: the final optimized arrayForth program from the superoptimizer.
 - many more files generated during superoptimization process.
@@ -122,7 +122,7 @@ When you compile `xxx.cll`, the compiler will generate a directory `output-xxx` 
 
 ### Partition Annotation
 
-You can choose to annotate all variables and operaters with partitions (logical cores) they belong to, to annotate parts of them, or to not annotate the program at all.
+You can choose to annotate all variables and operators with partitions (logical cores) they belong to, to annotate parts of them, or to not annotate the program at all.
 
 For example, if we modify `examples/simple/hello.cll` by removing the partition annotations of variable *a* and *b* as follows:
 
@@ -160,7 +160,7 @@ See `examples/simple/function-pair.cll` for an example program with tuples.
 
 ##### Arrays
 
-Non-distribued array:
+Non-distributed array:
 ```
 int@6 k[10];
 ```
@@ -190,6 +190,94 @@ output_var = reduce(func, init, input_array);
 ```
 
 `example/mapreduce` contains example programs that use map and reduce constructs.
+
+### IO
+
+The following functions are provided for interacting with GA144 IO functionality.
+All IO functions require the pins node coordinate as their first argument.
+
+
+Set IO pin states:
+```
+set_io(node, state_1, ..., state_N, wakeup)
+```
+`state_i`: The state for GPIO pin i. see [GPIO states](#GPIO_pin_states)  
+`wakeup`: Sets the state for `digital_wakeup`, either WAKEUP_LOW or WAKEUP_HIGH
+
+
+Read GPIO pins:
+```
+digital_read(node, pin)
+```
+`pin`: GPIO pin number between 0 and 3. see [pin numbering](#GPIO_pin_numbering)
+
+Returns zero if the pin is low, non-zero if the pin is high
+
+
+Pin Wakeup:
+```
+digital_wait(node)
+```
+Suspends execution in the node until pin 0 is in the state specified by the
+last call to `set_io`. The default is WAKEUP_HIGH.
+
+<a name="GPIO_pin_numbering"></a>
+#### GPIO pin numbering
+In the Greenarrays documentation, pins are referenced by the bit positions
+used to control them in the IO register. In Chlorophyll, they are numbered
+sequentially from 0. For example, in Greenarrays documentation 705.17
+corresponds to 705.0.
+
+Mapping of chlorophyll pin numbers to those used in Greenarrays documentation:
+
+| Chlorophyll | Greenarrays |
+| ----------- | ----------- |
+|           0 |          17 |
+|           1 |           1 |
+|           2 |           3 |
+|           3 |           5 |
+
+
+<a name="GPIO_pin_states"></a>
+#### GPIO pin states
+
+Possible states for GPIO pins:
+
+| Pin state      | Description                |
+| -------------- | -------------------------- |
+| HIGH_IMPEDANCE | High impedance (tristate)  |
+| WEAK_PULLDOWN  | Weak pulldown ~47 KΩ       |
+| SINK           | Lo:  Sink ≤40mA to Vss     |
+| SOURCE         | Hi:  Source ≤40mA from Vdd |
+
+### Delay functions
+Like IO functions, delay functions require the node as their first argument.
+The shortest delay time (and resolution) is about 2.4ns.
+These functions use delay loops and therefor cause the node to run at full
+power. The delay time is currently limited by the 18 bit word length, so the
+longest delay time is about 0.629ms.
+
+Nanosecond Delay:
+```
+ delay_ns(node, time, volts)
+```
+`time`: time in nanoseconds to delay  
+`volts`: voltage used to power the GA144(execution speed is voltage dependent).
+
+
+Delay for unext loop iterations:
+```
+delay_unext(node, iterations)
+```
+`iterations`: number of 'unext' loop iterations to delay for
+
+This function exposes the arrayforth 'unext' looping instruction.
+The generated code is equivalent to "*iterations* for unext".
+It is currently the only delay function that can take variable arguments.
+Each iteration consumes about 2.4ns.
+It is up to the programmer to turn the iterations into the
+desired time, unlike `delay_ns` changes in voltage are not accounted for.
+
 
 # Bugs and Features
 For a bug report or a feature request, please contact mangpo@eecs.berkeley.edu.

@@ -19,6 +19,7 @@
     (init-field places
                 [env (make-hash)] ;; map function name -> comminfo
                 [has-func-temp #f]
+		[used-io-nodes (set)]
 		)
 
     (define debug #f)
@@ -28,9 +29,14 @@
     (declare env "in" (comminfo 0 (set)))
     (declare env "out" (comminfo 0 (set)))
 
+    (for ([node io-nodes])
+      (for ([name built-in-names])
+        (declare env (format "~a~a" name node) (comminfo 0 (set)))))
+
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
       ;(assert (or (number? place) (list? place)))
+      (pretty-display (format "place = ~a" place))
       (cond
         [(number? place)
          (cores-inc-space places place add-space)]
@@ -312,6 +318,11 @@
           ]
 
        [(is-a? ast FuncCall%)
+        (when (io-func? (get-field name ast))
+          ;;add the node of this function to the set of used io nodes
+          (set! used-io-nodes
+            (set-add used-io-nodes (get-field fixed-node ast))))
+
           (when debug
                 (pretty-display (format ">> FuncCall ~a" (send ast to-string))))
 
@@ -491,7 +502,12 @@
        [(is-a? ast While%)
           (define pre-ret (send (get-field pre ast) accept this))
           (define condition (get-field condition ast))
-          (define condition-ret (send condition accept this))
+          (define condition-ret
+            (if (is-a? condition Num%)
+                (begin
+                  (set-field! place-type condition (new Place% [at "any"]))
+                  (comminfo 0 (set)))
+                (send condition accept this)))
           
           (push-scope)
           (define body-ret (send (get-field body ast) accept this))

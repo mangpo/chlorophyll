@@ -12,6 +12,7 @@
 	 "parser.rkt"
          "partitioner.rkt" 
          "separator.rkt"
+         "visitor-initial.rkt"
          "visitor-arrayaccess.rkt"
          "visitor-codegen.rkt"
          "visitor-desugar.rkt"
@@ -34,6 +35,9 @@
 (define (parse file)
   ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
+  (pretty-display "=============== before initial ===============")
+  (send my-ast pretty-print)
+  (send my-ast accept (new initial%))
   (pretty-display "=============== before map-reduce ===============")
   (send my-ast pretty-print)
   (send my-ast accept (new mapper-reducer%))

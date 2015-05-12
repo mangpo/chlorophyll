@@ -158,6 +158,24 @@
        [(equal? port `IO)
         "io"]))
 
+    ;;returns the port in node NODE for direction DIR
+    ;;coordinates for NODE are from bottom left
+    (define (port-from-node node dir)
+      (let ([x (remainder node 100)]
+            [y (quotient node 100)])
+        (cond
+         [(equal? dir `N)
+          (if (= (modulo y 2) 0) "down" "up")]
+         [(equal? dir `S)
+          (if (= (modulo y 2) 0) "up" "down")]
+         [(equal? dir `E)
+          (if (= (modulo x 2) 0) "right" "left")]
+         [(equal? dir `W)
+          (if (= (modulo x 2) 0) "left" "right")]
+         [(equal? dir `IO)
+          "io"]
+         [else (raise "port-from-node: invalid direction")])))
+
     (define (get-if-name)
       (set! if-count (add1 if-count))
       (format "~aif" if-count))
@@ -395,6 +413,63 @@
 
         (drop-cond (and (not send-cond) my-cond) (prog-append data-ret temp-ret send-ret))]
 
+       [(and (is-a? ast FuncCall%)
+             (regexp-match #rx"set_io" (get-field name ast)))
+        (pretty-display "CODEGEN: set_io")
+        (let* ([args (for/list ([arg (reverse (get-field args ast))])
+                       (send arg get-value))]
+               [wake-state (car args)]
+               [io (if (= (modulo wake-state 2) 1) 0 #x800)]
+               [args  (cdr args)]
+               [n-pins (length args)])
+
+          (when (= n-pins 4) ;;pin 4, bit 5
+            (set! io (bitwise-ior io (arithmetic-shift (car args) 4)))
+            (set! args (cdr args)))
+          (when (>= n-pins 3) ;;pin 3, bit 3
+            (set! io (bitwise-ior io (arithmetic-shift (car args) 2)))
+            (set! args (cdr args)))
+          (when (>= n-pins 2) ;;pin 2, bit 1
+            (set! io (bitwise-ior io (car args)))
+            (set! args (cdr args)))
+          (when (>= n-pins 1);; pin 1, bit 17
+            (set! io (bitwise-ior io (arithmetic-shift (car args) 16))))
+          (list (gen-block "io" "b!" (number->string io) "!b" 0 0)))]
+
+       [(and (is-a? ast FuncCall%)
+       	     (regexp-match #rx"digital_read" (get-field name ast)))
+        (let* ([pin (send (car (get-field args ast)) get-value)]
+       	       [mask (vector-ref (vector #x20000 #x2 #x4 #x20) pin)])
+       	  (list (gen-block "io" "b!" "@b" (number->string mask) "and" 0 1)))]
+
+       [(and (is-a? ast FuncCall%)
+             (regexp-match #rx"digital_wakeup" (get-field name ast)))
+        (let* ([node (get-field fixed-node ast)]
+               [port (if (or (> node 700) (< node 17)) "up" "left")])
+          (if (member node digital-nodes)
+              (list (gen-block port "b!" "@b" "drop" 0 0))
+              (list (gen-block port "b!" "dup" "!b"  0 0))))]
+
+       [(and (is-a? ast FuncCall%)
+	     (regexp-match #rx"delay_ns" (get-field name ast)))
+	(let* ([args (get-field args ast)]
+	       [ns (send (car args) get-value)]
+	       [volts (send (cadr args) get-value)]
+	       ;; execution time at x volts relative to 1.8v at any temperature
+	       ;; from DB002 page20
+	       ;;   t = -0.6775*x^3 + 4.2904*x^2 - 9.4878*x + 8.1287
+	       ;;typical empty micronext time is 2.4ns at 1.8v, 22deg Celsius
+	       [unext-time (* 2.4 (+ (* -0.6775 volts volts volts)
+				     (* 4.2904 volts volts)
+				     (* -9.4878 volts)
+				     8.1287))]
+	       [iter (inexact->exact (floor (/ ns unext-time)))])
+	  (list (gen-block (number->string iter) "for" "unext" 0 0)))]
+       [(and (is-a? ast FuncCall%)
+             (regexp-match #rx"delay_unext" (get-field name ast)))
+        (list (forloop (send (car (get-field args ast)) accept this)
+                       (list (gen-block)) #f #f #f))]
+
        [(is-a? ast FuncCall%)
         (define my-cond cond-onstack)
         (set! cond-onstack #f)
@@ -555,7 +630,23 @@
           (if false-ret
               (define-if (prog-append pre-ret cond-ret (list (iftf true-ret false-ret))))
               (prog-append pre-ret cond-ret (list (ift true-ret))))])]
-       
+
+       [(and (is-a? ast While%)
+             (is-a? (get-field condition ast) Num%))
+        (if (= (send (get-field condition ast) get-value) 0)
+            (list)
+            (let* ([exp (get-field condition ast)]
+                   [name (get-while-name)]
+                   [body (get-field body ast)]
+                   [block (new Block%
+                               [stmts (append (get-field stmts body)
+                                              (list (new FuncCall%
+                                                         [name name]
+                                                         [args (list)])))])])
+              (set! helper-funcs (cons (funcdecl name (send block accept this) #f)
+                                       helper-funcs))
+              (list (funccall name))))]
+
        [(is-a? ast While%)
 	(define pre (get-field pre ast))
         (when debug 

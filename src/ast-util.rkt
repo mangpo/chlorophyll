@@ -37,6 +37,98 @@
 		      [place (new Place% [at "io"])])]))
   stdout)
 
+;; returns the ast for a call to set_io for NODE
+(define (get-set-io node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "set_io~a" node)]
+	 [args (new Block% [stmts (for/list ([i (add1 (hash-ref node-to-num-pins
+                                                                node))])
+				    (new Param%
+					 [var-list (list (format "state~a" i))]
+					 [type "int"]
+					 [known #f]
+					 [place sym]
+					 [place-type sym]))])]
+	 [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+		      [place #f])])))
+
+;; returns the ast for a call to digital_read for NODE
+(define (get-digital-read node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "digital_read~a" node)]
+	 [args (new Block% [stmts (list (new Param%
+					     [var-list (list "pin")]
+					     [type "int"]
+					     [known #f]
+					     [place sym]
+					     [place-type sym]))])]
+	 [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "int"]
+		      [known #f]
+		      [place sym])])))
+
+
+;; returns the ast for a call to digital_wakeup for NODE
+(define (get-digital-wakeup node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "digital_wakeup~a" node)]
+         [args (new Block% [stmts (list)])]
+         [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+                      ;;there is a return value only when in digital nodes
+		      [place (if (member node digital-nodes)
+                                 sym
+                                 #f)])])))
+
+;; returns the ast for a call to delay
+(define (get-delay-ns node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "delay_ns~a" node)]
+	 [args (new Block% [stmts (list (new Param%
+					     [var-list (list "time")]
+					     [type "int"]
+					     [known #f]
+					     [place sym]
+					     [place-type sym])
+					(new Param%
+					     [var-list (list "volts")]
+					     [type "int"]
+					     [known #f]
+					     [place sym]
+					     [place-type sym]))])]
+	 [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+		      [place #f])])))
+
+;; returns the ast for a call to delay_unext
+(define (get-delay-unext node)
+  (let ([sym (hash-ref node-to-symbolic-core node)])
+    (new FuncDecl% [name (format "delay_unext~a" node)]
+	 [args (new Block% [stmts (list (new Param%
+					     [var-list (list "iter")]
+					     [type "int"]
+					     [known #f]
+					     [place sym]
+					     [place-type sym]))])]
+	 [body (new Block% [stmts (list)])]
+	 [body-placeset (set sym)]
+	 [return (new VarDecl% [var-list (list "#return")]
+		      [type "void"]
+		      [known #f]
+		      [place #f])])))
+
 (define (get-op exp)
   (get-field op (get-field op exp)))
 

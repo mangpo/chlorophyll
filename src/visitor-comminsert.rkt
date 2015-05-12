@@ -15,6 +15,7 @@
     (init-field routing-table part2core n)
 
     (define debug #f)
+    (define visited (make-hash))
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -112,6 +113,7 @@
                       (let ([place (get-field place p)])
                         (new RangePlace% [from (get-field from p)] [to (get-field to p)]
                              [place place] [send-path (get-path-one-to-many place placeset)])))]
+           [(at-any? x) #f]
            
            [else (raise (format "gen-path-condition: unimplemented ~a" x))]))
         ;`(gen-path-condition ,(get-field condition cond-ast) x ,x placeset ,placeset ,(get-field send-path cond-ast))
@@ -350,7 +352,9 @@
 	(define func-sig (get-field signature ast))
 	(define name (get-field name ast))
 	(define args-ret 
-	  (if (or (equal? name "in") (equal? name "out"))
+	  (if (or (equal? name "in")
+		  (equal? name "out")
+                  (io-func? name))
 	      (send func-sig accept this)
 	      (get-field body-placeset func-sig)))
 
@@ -454,20 +458,30 @@
 
        [(is-a? ast FuncDecl%)
         (when debug 
-	      (pretty-display "\n--------------------------------------------")
-              (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
-        (define return-ret 
-          (if (get-field return ast)
-              (send (get-field return ast) accept this)
-              (set)))
-        (define args-ret (send (get-field args ast) accept this))
-        (define body-ret (send (get-field body ast) accept this))
-        ;(convert-placeset)
-        (let ([ret (set-union return-ret args-ret body-ret)])
-          (set-field! body-placeset ast ret)
-          ret)
-        ]
+          (pretty-display "\n--------------------------------------------")
+          (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
+        (cond [(hash-has-key? visited (get-field name ast))
+               (hash-ref visited (get-field name ast))]
+              [else
 
+               (define return-ret
+                 (if (get-field return ast)
+                     (send (get-field return ast) accept this)
+                     (set)))
+               (define args-ret (send (get-field args ast) accept this))
+               (define body-ret (send (get-field body ast) accept this))
+
+               (define new-placeset
+                 (if (io-func? (get-field name ast))
+                     (list->set (map (lambda (x) (vector-ref part2core x))
+                                     (set->list (get-field body-placeset ast))))
+                     (set)))
+
+               (let ([ret (set-union return-ret args-ret body-ret new-placeset)])
+                 (set-field! body-placeset ast ret)
+                 (hash-set! visited (get-field name ast) ret)
+                 ret)
+               ])]
        [else (raise (format "Error: in comm-inserter, ~a unimplemented!" ast))]
        ))
     ))

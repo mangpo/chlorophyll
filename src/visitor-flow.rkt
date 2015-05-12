@@ -9,7 +9,26 @@
 (define flow-generator%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [functions (make-hash '(("in" . ()) ("out" . ())))])
+    (init-field [functions
+                 (make-hash (append '(("in") ("out"))
+                                    (for/list ([node digital-nodes])
+                                      (list (format "digital_read~a"
+                                                    node)))
+
+                                    (apply append
+                                           (for/list ([node (append
+                                                             digital-nodes
+                                                             analog-nodes)])
+                                             (list
+                                              (list (format "set_io~a"
+                                                            node))
+                                              (list (format "digital_wakeup~a"
+                                                            node))
+                                              (list (format "delay_ns~a"
+                                                            node))
+                                              (list (format "delay_unext~a"
+                                                            node)))))))])
+
     (define debug #f)
 
     (define (cross-product-raw x y)

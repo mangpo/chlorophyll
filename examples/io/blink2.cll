@@ -1,0 +1,30 @@
+// -*- c -*-
+
+// This waits for the transitions of a square wave on pin 705.0
+// and toggles pin 705.1 at a much slower rate. with a
+// 32Khz input, this will switch the output at 1Hz.
+
+// Square wave input on node 705 pin 0, header J32.1
+// LED from source to node 705 pin 1, header J32.4
+
+void main(){
+  int c;
+  c = 0;
+  while (1){
+
+    while (c < 16000){ //off cycle
+      set_io(705, IMPED, IMPED, IMPED, IMPED, WAKEUP_HIGH);
+      digital_wakeup(705);
+      set_io(705, IMPED, IMPED, IMPED, IMPED, WAKEUP_LOW);
+      digital_wakeup(705);
+      c = c + 1;
+    }
+    while (c > 0){
+      set_io(705, IMPED, SINK, IMPED, IMPED, WAKEUP_HIGH);
+      digital_wakeup(705);
+      set_io(705, IMPED, SINK, IMPED, IMPED, WAKEUP_LOW);
+      digital_wakeup(705);
+      c = c - 1;
+    }
+  }
+}

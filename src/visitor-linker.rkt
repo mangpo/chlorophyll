@@ -30,6 +30,13 @@
     ;; Declare IO function: in(), out(data)
     (declare env "in" (get-stdin))
     (declare env "out" (get-stdout))
+    (for ([node digital-nodes])
+      (declare env (format "digital_read~a" node) (get-digital-read node)))
+    (for ([node (append digital-nodes analog-nodes)])
+      (declare env (format "set_io~a" node) (get-set-io node))
+      (declare env (format "digital_wakeup~a" node) (get-digital-wakeup node))
+      (declare env (format "delay_ns~a" node) (get-delay-ns node))
+      (declare env (format "delay_unext~a" node) (get-delay-unext node)))
 
     (struct val (type expand known) #:mutable)
 
@@ -309,7 +316,12 @@
 	 (and e1-known e2-known)]
         
         [(is-a? ast FuncCall%)
-         ;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
+         ;;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
+	 (when (io-func? (get-field name ast))
+           (let ([node (send (car (get-field args ast)) get-value)])
+             (set-field! name ast (format "~a~a" (get-field name ast) node))
+             (set-field! args ast (cdr (get-field args ast)))))
+
          (define func-ast (lookup env ast))
          (define type (if (get-field return func-ast)
                           (get-field type (get-field return func-ast))

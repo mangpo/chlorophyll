@@ -36,21 +36,22 @@
 	    0))
       (if (list? a) (length a) (linklist-length a)))
       
-    (and (= (list-length loopbody) 1) 
-	 ; head linklist is empty
-	 (let ([entry (if (list? loopbody) 
-			  (car loopbody)
-			  (linklist-entry (linklist-next loopbody)))])
-	   (and (block? entry)
-		(let* ([program (block-body entry)]
-		       [inst-list (if (string? program) (string-split program) program)]
-		       [total (length inst-list)]
-		       [count-number 
-			(count (lambda (x)
-				 (or (string->number x)
-				     (member x (list "up" "down" "left" "right" "io"))))
-			       inst-list)])
-		  (< (+ total (* 4 count-number)) 4))))))
+    (or (= (list-length loopbody) 0)
+        (and (= (list-length loopbody) 1)
+                                        ; head linklist is empty
+             (let ([entry (if (list? loopbody)
+                              (car loopbody)
+                              (linklist-entry (linklist-next loopbody)))])
+               (and (block? entry)
+                    (let* ([program (block-body entry)]
+                           [inst-list (if (string? program) (string-split program) program)]
+                           [total (length inst-list)]
+                           [count-number
+                            (count (lambda (x)
+                                     (or (string->number x)
+                                         (member x (list "up" "down" "left" "right" "io"))))
+                                   inst-list)])
+                      (< (+ total (* 4 count-number)) 4)))))))
 
   (cond
    [(list? x)

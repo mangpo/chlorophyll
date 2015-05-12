@@ -43,6 +43,9 @@
 
        [(is-a? ast Num%)
         (send ast to-concrete)
+        ;; convert io
+        (when (at-io? (get-field place-type ast))
+          (set-field! place-type ast (sub1 num-cores)))
         ]
 
        [(is-a? ast Array%)
@@ -87,7 +90,9 @@
         (when (at-io? (get-field place-type ast))
               (set-field! place-type ast (sub1 num-cores)))
         
-        (when (or (equal? name "in") (equal? name "out"))
+        (when (or (equal? name "in")
+		  (equal? name "out")
+                  (io-func? name))
               (send func-ast accept this))
 
 	;; infer

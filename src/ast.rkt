@@ -579,17 +579,18 @@
   (class Exp%
     (super-new)
     (inherit-field known-type place-type pos expand expect type)
-    (init-field name args [signature #f] [is-stmt #f] [might-need-storage #f])
+    (init-field name args [fixed-node 'hello]
+                [signature #f] [is-stmt #f] [might-need-storage #f])
     (inherit print-send-path)
 
     (define/override (clone)
       (new FuncCall% [name name] [args (map (lambda (x) (send x clone)) args)]
            [place-type (clone-place place-type)] [signature signature]
            [type type] [is-stmt is-stmt] [might-need-storage might-need-storage]
-           [pos pos]))
+           [fixed-node fixed-node] [pos pos]))
 
     (define/public (copy-at core)
-      (new FuncCall% [name name] 
+      (new FuncCall% [name name]
            [args (filter (lambda (x) 
                            (let ([send-path (get-field send-path x)])
                              (or (not send-path) (= (last send-path) core))))
@@ -597,6 +598,7 @@
            [known-type known-type]
            [place-type place-type]
            [signature signature]
+           [fixed-node fixed-node]
            [type type]))
 
     (define/override (pretty-print [indent ""])
@@ -1278,6 +1280,49 @@
     (define/public (to-string)
       (format "[~a,~a]" from to))
     ))
-    
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define digital-nodes '(701 705 708 715 517 417 317 217 8 1 100 200 300 500 600))
+(define analog-nodes '(709 713 717 617 117))
+
+(define node-to-symbolic-core (make-hash))
+(for ([core (append digital-nodes analog-nodes)])
+  (hash-set! node-to-symbolic-core core (get-sym)))
+
+(define node-to-num-pins #hash((701 . 2)
+			       (705 . 4)
+			       (708 . 2)
+			       (709 . 2);analog
+			       (713 . 2);analog
+			       (715 . 1)
+			       (717 . 2);analog
+			       (617 . 2);analog
+			       (517 . 1)
+                               (417 . 1)
+			       (317 . 1)
+			       (217 . 1)
+			       (117 . 2);analog
+			       (008 . 4)
+			       (001 . 2)
+			       (100 . 1)
+			       (200 . 1)
+			       (300 . 2)
+			       (500 . 1)
+			       (600 . 1)))
+
+(define io-nodes (append digital-nodes analog-nodes))
+
+;;(define analog-fn-names '("analog_read"))
+;;(define digital-fn-names
+
+(define built-in-names '("set_io" "digital_read"
+                         "digital_wakeup" "delay_unext"
+                         ;;"delay_us" "delay_ms" "delay_s"
+                         "delay_ns"))
+
+(define built-in-re (string-join (map (lambda (x) (format "(^~a[0-9]*$)" x))
+                                      built-in-names) "|"))
+
+(define (io-func? name)
+  (regexp-match built-in-re name))

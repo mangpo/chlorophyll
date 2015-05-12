@@ -253,10 +253,14 @@
 		      [pre (get-field pre while)])
 		 (set-field! parent pre while)
 		 (set-workspace c pre)))
-	  
-	  (send (get-field pre ast) accept this)
-	  (send (get-field condition ast) accept this)
-	  (gen-comm-condition)
+
+          (if (is-a? (get-field condition ast) Num%)
+              (for ([c (get-field body-placeset ast)])
+                (push-stack c (get-field condition ast)))
+              (begin
+                (send (get-field pre ast) accept this)
+                (send (get-field condition ast) accept this)
+                (gen-comm-condition)))
 
 	  ;; switch back to body scope
 	  (for ([c (get-field body-placeset ast)])
@@ -310,7 +314,8 @@
       (cond
        [(is-a? ast Num%)
 	(when debug (pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string))))
-        (push-stack-temp (get-field place-type ast) ast)
+        ;;(push-stack-temp (get-field place-type ast) ast)
+	(push-stack (get-field place-type ast) ast) ;;TODO?
         (gen-comm)
         ]
 
@@ -464,6 +469,7 @@
                ;; reverse order because we pop from stack
                [args (reverse (get-args (length params)))]
                [place-type new-return-place]
+               [fixed-node (get-field fixed-node ast)]
                [type (if new-return-place type "void")]
                ))
 

@@ -1,6 +1,6 @@
 #lang s-exp rosette
 
-(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt")
+(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt" "ast.rkt")
 
 (provide (all-defined-out) (struct-out layoutinfo))
 
@@ -89,13 +89,18 @@
 			      outdir name 
 			      (if weight "--weight" "--noweight")
 			      outdir name))))
-  
+
   (with-output-to-file #:exists 'append (format "~a/~a.dat" outdir name)
     (lambda () 
       (define fix (make-vector (* w h)))
-      (vector-set! fix (* w 2) (* w h)) ;; index (no +1), value (+1)
+      (for ([core (hash-keys node-to-symbolic-core)])
+	(let ([n (evaluate-with-sol (hash-ref node-to-symbolic-core core))])
+	  (unless (term? n)
+	    (vector-set! fix (+ (* (quotient core 100) 18) (modulo core 100))
+			 (add1 n)))))
+      ;;(vector-set! fix (* w 2) (* w h)) ;; index (no +1), value (+1)
       (for ([i (in-range (* w h))])
-           (display (vector-ref fix i)) (display " "))
+        (display (vector-ref fix i)) (display " "))
       (newline)))
   
   ;; Mapping from cores to partitions

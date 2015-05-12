@@ -215,7 +215,8 @@
              [type (get-field type ast)]
              [signature (get-field signature ast)]
              [known-type (get-known-type)]
-             [place-type (get-place-type)])]
+             [place-type (get-place-type)]
+             [fixed-node (get-field fixed-node ast)])]
 
        [(is-a? ast ProxyReturn%)
         (new ProxyReturn% [place-type (get-field place-type ast)])]

@@ -13,6 +13,19 @@
 
     (hash-set! funcdecls "in" (get-stdin))
     (hash-set! funcdecls "out" (get-stdout))
+    (for ([node digital-nodes])
+      (hash-set! funcdecls
+		 (format "digital_read~a" node) (get-digital-read node)))
+
+    (for ([node (append analog-nodes digital-nodes)])
+      (hash-set! funcdecls
+		 (format "set_io~a" node) (get-set-io node))
+      (hash-set! funcdecls
+		 (format "digital_wakeup~a" node) (get-digital-wakeup node))
+      (hash-set! funcdecls
+		 (format "delay_ns~a" node) (get-delay-ns node))
+      (hash-set! funcdecls
+		 (format "delay_unext~a" node) (get-delay-unext node)))
 
     (define/public (visit ast)
       (cond
