@@ -470,12 +470,15 @@
                      (set)))
                (define args-ret (send (get-field args ast) accept this))
                (define body-ret (send (get-field body ast) accept this))
-               (define new-placeset (list->set
-                                     (map (lambda (x) (vector-ref part2core x))
-                                          (set->list (get-field body-placeset ast)))))
+
+               (define new-placeset
+                 (if (io-func? (get-field name ast))
+                     (list->set (map (lambda (x) (vector-ref part2core x))
+                                     (set->list (get-field body-placeset ast))))
+                     (set)))
+
                (let ([ret (set-union return-ret args-ret body-ret new-placeset)])
                  (set-field! body-placeset ast ret)
-                 (pretty-display (format "ret === ~a" ret))
                  (hash-set! visited (get-field name ast) ret)
                  ret)
                ])]
