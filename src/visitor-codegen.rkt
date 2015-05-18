@@ -81,7 +81,7 @@
                      (append (list addr-org "a!") 
                              (for/list ([i (in-range in)]) "!+"))))))
       
-    (define (gen-op op)
+    (define (gen-op op e1 e2)
       (define (save-a code)
 	(if (car const-a)
 	    (append (list (gen-block-r "a" "push" 0 0))
@@ -90,9 +90,39 @@
 	    code))
 
       (cond
-       [(equal? op "~") (list (gen-block "-" 1 1))]
-       [(equal? op "!") (list (gen-block "-" 1 1))]
-       [(equal? op "*") (save-a (list (mult)))]
+       [(equal? op "*") 
+        (define type (get-field type e1))
+        ;; already checked earlier that they are equal
+        (if (fix_t? type)
+            (cond
+             [(= 1 (fix_t-int type))
+              (save-a (list (funccall "*.17")
+                            (gen-block "push" "drop" "pop" 2 1)))]
+
+             [(= 2 (fix_t-int type))
+              (save-a (list (funccall "*.")
+                            (gen-block "push" "drop" "pop" 2 1)))]
+
+             [(= 0 (fix_t-int type))
+              (save-a (list (gen-block-a "a!" "0" "17" 2 3)
+                            (forloop (gen-block)
+                                     (list (gen-block "+*" 1 1)) #f #f #f)
+                            (gen-block "push" "drop" "pop" 2 1)))]
+
+             [else
+              (save-a (list 
+                       (gen-block-a "a!" "0" "17" 2 3)
+                       (forloop (gen-block)
+                                (list (gen-block "+*" 1 1)) #f #f #f)
+                       (gen-block "push" "dup" "or" "pop" 
+                                  (number->string (- 18 (fix_t-int type))) 
+                                  2 3)
+                       (forloop (gen-block)
+                                (list (gen-block "+*" 1 1)) #f #f #f)
+                       (gen-block "drop" "drop" "a" 2 1)))]
+             )
+            ;; else
+            (save-a (list (mult))))]
 
        [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
        [(equal? op "+") (list (gen-block "+" 2 1))]
@@ -385,7 +415,7 @@
         ;;       (pretty-display (format "\nCODEGEN: BinExp ~a (return)" 
         ;;                               (send ast to-string)))
         ;;       (aforth-struct-print (prog-append e1-ret e2-ret (gen-op op))))
-	(prog-append e1-ret e2-ret (gen-op op))
+	(prog-append e1-ret e2-ret (gen-op op (get-field e1 ast) (get-field e2 ast)))
         ]
 
        [(is-a? ast Recv%)

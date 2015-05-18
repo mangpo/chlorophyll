@@ -38,9 +38,12 @@
         (+ (* 2 n) port)]))
 
     (define (print-type type)
-      (if (string? type)
-	  "long"
-	  (format "long~a" (cdr type))))
+      (cond 
+       [(equal? type "int") "long"]
+       [(equal? type "void") "void"]
+       [(fix_t? type) (format "fix~a_t" (fix_t-int type))]
+       [(pair? type) (format "~a~a" (print-type (car type)) (cdr type))]
+       [else (raise (format "visitor-cprinter: print-type: unimplemented for ~a" type))]))
 
     (define (print-name name)
       (regexp-replace* #rx"#" (regexp-replace* #rx"::" name "_") "_"))
@@ -64,7 +67,7 @@
         
         [(is-a? ast ArrayDecl%)
          (display (format "~a ~a_~a[~a]"
-                               (get-field type ast)
+                               (print-type (get-field type ast))
                                (print-name (get-field var ast))
 			       core
 			       (get-field bound ast)))
@@ -338,7 +341,7 @@
 		 (set! expand (cdr type)) ;; TODO: get rid of this
 		 (pretty-display (format "~a _return_~a;" (print-type type) core))]
 		[(not (equal? type "void"))
-		 (pretty-display (format "~a _return_~a;" type core))])
+		 (pretty-display (format "~a _return_~a;" (print-type type) core))])
 
 	       (dec-indent)
 	       ))

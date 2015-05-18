@@ -12,6 +12,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;; Helper Functions ;;;;;;;;;;;;;;;;;;;;;;;;
 
+(struct fix_t (int))
+
 (define (get-sym)
   (define-symbolic* sym-place number?)
   sym-place)
@@ -30,6 +32,18 @@
 
 (define (place-type-dist? p)
   (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
+
+(define (same-type? x y)
+  (cond
+   [(string? x) (equal? x y)]
+   [(and (fix_t? x) (fix_t? y)) (equal? (fix_t-int x) (fix_t-int y))]
+   [(and (pair? x) (pair? y)) (and (equal? (cdr x) (cdr y))
+                                   (same-type? (car x) (car y)))]
+   [else #f]
+   ))
+
+(define (d2fp n k)
+  (bitwise-and #x3ffff (inexact->exact (floor (* n (arithmetic-shift 1 (- 18 k)))))))
 
 ;; list -> string
 (define (list-to-string items [core #f])
@@ -367,24 +381,26 @@
 
 (define Num%
   (class Exp%
-    (super-new [known-type #t] [type "int"] [expand 1])
-    (inherit-field known-type place-type pos expect expand)
+    (super-new [known-type #t] [expand 1])
+    (inherit-field known-type place-type pos expect expand type)
     (init-field n)
     (inherit print-send-path)
 
     (define/override (clone)
-      (new Num% [n (send n clone)] [pos pos] [place-type (clone-place place-type)]))
+      (new Num% [n (send n clone)] [pos pos] [type type]
+           [place-type (clone-place place-type)]))
 
     (define/public (get-value)
       (get-field n n))
+
+    (define/public (set-value x)
+      (set-field! n n x))
     
     (define/override (pretty-print [indent ""])
-      ;; (pretty-display (format "~a(Num:~a @~a (known=~a))" 
-      ;;   		      indent (get-field n n) (place-to-string place-type) known-type))
-      (pretty-display (format "~a(Num:~a @~a @~a (expand=~a/~a))" 
+      (pretty-display (format "~a(Num:~a @~a @~a (type=~a) (expand=~a/~a))" 
 			      indent (get-field n n) place-type
                               (get-field place n)
-                              expand expect))
+                              type expand expect))
       (print-send-path indent))
 
     (define/override (to-string) (send n to-string))
@@ -463,7 +479,8 @@
                   (send decl infer-place (to-place p)))))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(Temp:~a place-type:~a compact:~a sub:~a)" indent name 
+      (pretty-display (format "~a(Temp:~a type:~a place-type:~a compact:~a sub:~a)" 
+                              indent name type
                               (place-to-string place-type) compact sub)))))
 
 (define Array%
@@ -513,8 +530,8 @@
 	   [known-type known-type] [place-type (clone-place place-type)] [pos pos] [type type]))
 
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(BinExp: @~a (known=~a)" 
-			      indent place-type known-type))
+      (pretty-display (format "~a(BinExp: @~a (type=~a) (known=~a)" 
+			      indent place-type type known-type))
       (print-send-path indent)
       (send op pretty-print (inc indent))
       (send e1 pretty-print (inc indent))

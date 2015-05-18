@@ -10,6 +10,7 @@
 ;; 2) Bind expect and expand.
 ;; 3) Interpret known/unknown type.
 ;; 4) Mark array is cluster or not cluster.
+;;    Use known-type to determine if array should be clustered or not.
 ;; 5) Expand place. int::2@?? -> int::2@(??,??)
 (define linker%
   (class* object% (visitor<%>)
@@ -117,9 +118,9 @@
          (for ([name (get-field var-list ast)])
            ;; declare type
            (declare env name 
-		    (if (string? type)
-			(val type 1 known)
-			(val (car type) (cdr type) known))))
+		    (if (pair? type)
+			(val (car type) (cdr type) known)
+			(val type 1 known))))
 
 	 (define expect (get-field expect ast))
 	 (define place (get-field place ast))
@@ -278,8 +279,7 @@
 	       (define place (get-field place ast))
 	       (when (not (is-a? place TypeExpansion%))
 		     (set-field! place ast 
-				 (new TypeExpansion% [place-list (expand-place place entry)]))))
-	 "int"]
+				 (new TypeExpansion% [place-list (expand-place place entry)]))))]
         
         [(is-a? ast UnaExp%)
          ;(pretty-display (format "LINKER: UnaExp ~a" (send ast to-string)))
@@ -290,8 +290,8 @@
 	 (define op (get-field op ast))
 	 (set-field! place-type ast (get-field place op))
 
-         (define op-type (send op accept this))
-	 (set-field! type ast op-type)
+         (send op accept this)
+	 (set-field! type ast (get-field type e1))
 	 e1-known]
         
         [(is-a? ast BinExp%)
@@ -307,12 +307,52 @@
 	 (define e2 (get-field e2 ast))
          (define e1-known (send e1 accept this))
          (define e2-known (send e2 accept this))
+         (define e1-type (get-field type e1))
+         (define e2-type (get-field type e2))
 	 
 	 (define op (get-field op ast))
+         (define op-str (get-field op op))
 	 (set-field! place-type ast (get-field place op))
 
-         (define op-type (send op accept this))
-	 (set-field! type ast op-type)
+         (send op accept this)
+
+         (cond
+          [(and (is-a? e1 Num%) (is-a? e2 Num%)) (set-field! type ast "int")]
+
+          [(member op-str (list "+" "-" "*" "!=" "==" "<" ">" ">=" "<="))
+           (cond
+            [(is-a? e1 Num%)
+             (when (fix_t? e2-type)
+                   (send e1 set-value (d2fp (send e1 get-value) (fix_t-int e2-type)))
+                   (set-field! type e1 e2-type)
+                   )
+             (set-field! type ast e2-type)]
+
+            [(is-a? e2 Num%)
+             (when (fix_t? e1-type)
+                   (send e2 set-value (d2fp (send e2 get-value) (fix_t-int e1-type)))
+                   (set-field! type e2 e1-type)
+                   )
+             (set-field! type ast e1-type)]
+
+            [else
+             ;; TODO: add conversion
+             (unless (same-type? e1-type e2-type)
+                     (raise (format "visitor-linker: operands of ~a have different types." op-str)))
+             (set-field! type ast e1-type)
+             ])
+           ]
+
+          [(member op-str (list "<<" ">>"))
+           (unless (equal? e2-type "int")
+                   (raise (format "visitor-linker: 2nd operand of ~a should be 'int' but ~a is given." op-str e2-type)))
+           (set-field! type ast e1-type)]
+
+          [else
+           (unless (and (equal? e1-type "int") (equal? e2-type "int"))
+                   (raise (format "visitor-linker: ~a only accepts operands of type 'int'." op-str)))
+           (set-field! type ast "int")])
+
 	 (and e1-known e2-known)]
         
         [(is-a? ast FuncCall%)
@@ -397,6 +437,15 @@
          (set! stmt-level #f)
 	 (define lhs-known (send lhs accept this))
 	 (define rhs-known (send rhs accept this))
+	 (define lhs-type (get-field type lhs))
+	 (define rhs-type (get-field type rhs))
+
+         (when (not (same-type? lhs-type rhs-type))
+               (if (and (fix_t? lhs-type) (is-a? rhs Num%))
+                   (begin
+                     (send rhs set-value (d2fp (send rhs get-value) (fix_t-int lhs-type)))
+                     (set-field! type rhs lhs-type))
+                   (raise (format "visitor-linker: cannot convert ~a to ~a at Assigned%" rhs-type lhs-type))))
 
 	 (when (and lhs-known (not rhs-known))
                (set-val-known! (lookup env lhs) #f))
@@ -476,7 +525,9 @@
         
         [(is-a? ast While%)
          ;(pretty-display "LINKER: While")
+         (set! entry 1)
 	 (define exp (get-field condition ast))
+         (send exp accept this)
 	 (define t (get-field body ast))
 	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
 

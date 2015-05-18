@@ -155,7 +155,7 @@
       (set-field! stmts block (reverse (get-field stmts block))))
 
     (define/public (visit ast)
-      (define (gen-comm-path path)    
+      (define (gen-comm-path path type)    
         (define (intermediate path)
           (if (>= (length path) 3)
               (let ([a (car path)]
@@ -168,7 +168,7 @@
 		     [temp (get-temp to 1)]
                      [stmt (new AssignTemp%
                                 [lhs (new Temp% [name temp] [place-type to]
-                                          [type "int"])]
+                                          [type type])]
                                 [rhs (gen-recv to from)])])
                 ;; Need to introduce them here. 
                 ;; Consider: sum1(a@1, sum2(a@1, b@0))
@@ -176,7 +176,7 @@
                 ;; sum2(read(1)); sum1(read(1));
                 ;; notice that the order of reading from 1 is swaped.
 		(push-workspace to stmt)
-                (push-stack to (new Temp% [name temp] [place-type to] [type "int"]
+                (push-stack to (new Temp% [name temp] [place-type to] [type type]
                                     [eqv stmt])))))
         
         (let ([from (car path)]
@@ -195,7 +195,7 @@
         ;; Therefore, we don't have to worry about such case in gen-comm.
         (let ([path (get-field send-path ast)])
           (when path
-                (gen-comm-path path)
+                (gen-comm-path path (get-field type ast))
                 (pop-stack (car path)))))
 
       (define (gen-comm-condition)

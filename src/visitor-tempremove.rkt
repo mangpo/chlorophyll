@@ -65,7 +65,7 @@
         (set-field! stmts body
                     (filter (lambda (x) 
                               (not (and (is-a? x VarDecl%)
-                                        (string? (get-field type x)) ;; not tuple type
+                                        (not (pair? (get-field type x))) ;; not tuple type
                                         (member (car (get-field var-list x)) removed))))
                             (get-field stmts body)))
 	]

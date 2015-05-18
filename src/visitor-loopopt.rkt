@@ -53,7 +53,7 @@
        [(is-a? ast Var%)
         (if (has-var? iter-map (get-field name ast))
             (let ([val (lookup iter-map ast)])
-              (new Num% [n (new Const% [n val])]))
+              (new Num% [n (new Const% [n val])] [type "int"]))
             ast)]
 
        [(is-a? ast UnaExp%)

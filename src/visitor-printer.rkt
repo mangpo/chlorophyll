@@ -16,12 +16,19 @@
 
     (define (dec-indent)
       (set! indent (substring indent 2)))
+
+    (define (print-type x)
+      (cond
+       [(string? x) x]
+       [(fix_t? x) (format "fix~a_t" (fix_t-int x))]
+       [(pair? x) (format "~a::~a" (print-type (car x)) (cdr x))]
+       [else (raise (format "visit-printer: print-type: unimplemented for ~a" x))]))
     
     (define/public (visit ast)
       (cond
         [(is-a? ast VarDecl%)
          (display (format "~a@~a ~a;"
-                               (get-field type ast)
+                               (print-type (get-field type ast))
                                (place-to-string (send ast get-place) out)
                                (list-to-string (get-field var-list ast))
 			       ))
@@ -29,7 +36,7 @@
         
         [(is-a? ast ArrayDecl%)
          (display (format "~a[]@~a ~a[~a]"
-                               (get-field type ast)
+                               (print-type (get-field type ast))
                                (place-to-string (get-field place-list ast) out)
                                (get-field var ast)
 			       (get-field bound ast)))
@@ -200,7 +207,7 @@
         [(is-a? ast FuncDecl%)
          (define (print-arg arg pre)
            (display (format "~a~a@~a ~a" pre
-                           (get-field type arg) 
+                           (print-type (get-field type arg))
                            (send arg get-place) 
                            (car (get-field var-list arg)))))
 
@@ -212,12 +219,13 @@
                           "void")])
            (if (pair? type)
                (display (format "~a::~a@~a ~a(" 
-				(car type) (cdr type)
+				(print-type (car type)) (cdr type)
 				(place-to-string (get-field place return))
 				name))
 	       (if (equal? type "void")
-		   (display (format "~a ~a(" type name))
-		   (display (format "~a@~a ~a(" type (send return get-place) name)))))
+		   (display (format "~a ~a(" (print-type type) name))
+		   (display (format "~a@~a ~a(" 
+                                    (print-type type) (send return get-place) name)))))
 
          ;; Print arguments
          (let ([arg-list (get-field stmts (get-field args ast))])

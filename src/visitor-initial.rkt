@@ -34,6 +34,7 @@
                    [n (new Const%
                            [n (hash-ref constant-defs name #f)]
                            [pos (get-field pos ast)])]
+                   [type "int"]
                    [pos (get-field pos ast)])
               ast))]
 
@@ -47,6 +48,7 @@
                                 [n (new Const%
                                         [n 1];;default value
                                         [pos (get-field pos ast)])];;?
+                                [type "int"]
                                 [pos (get-field pos ast)])])
                   (set-field! args ast (append args (list arg)))))))
 

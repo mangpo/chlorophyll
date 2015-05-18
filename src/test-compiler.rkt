@@ -4,7 +4,7 @@
 
 ;; Simple
 (compile-and-optimize "../examples/simple/hello.cll" "hello" 
-                      256 #:w 18 #:h 8 #:opt #f)
+                      256 #:w 2 #:h 3 #:opt #f)
 
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
 ;                      256 #:w 2 #:h 3 #:opt #f)

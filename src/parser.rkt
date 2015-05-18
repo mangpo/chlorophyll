@@ -6,7 +6,7 @@
 
 (provide ast-from-string ast-from-file)
  
-(define-tokens a (NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
+(define-tokens a (FIX NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
 (define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF 
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
@@ -26,6 +26,7 @@
     ((_ digit) (re-+ digit))))
 
 (define-lex-abbrevs
+  (fixpoint (re-: "fix" (re-+ digit10) "_t"))
   (comment (re-: "/*" (complement (re-: any-string "*/" any-string)) "*/"))
   (line-comment (re-: "//" (re-* (char-complement #\newline)) #\newline))
   (digit10 (char-range "0" "9"))
@@ -43,6 +44,8 @@
 (define simple-math-lexer
   (lexer-src-pos
    ("int"   (token-INT))
+   (fixpoint (token-FIX (string->number 
+                         (substring lexeme 3 (- (string-length lexeme) 2)))))
    ("void"  (token-VOID))
    ("return" (token-RETURN))
    ;; ("known" (token-KNOWN))
@@ -204,7 +207,7 @@
          
     (const ((NUM)           (new Const% [n $1] [pos $1-start-pos])))
 
-    (lit ((const)           (new Num% [n $1])))
+    (lit ((const)           (new Num% [n $1] [type "int"])))
 
     (id  ((VAR)             (new Var% [name $1] [pos $1-start-pos]))
 	 ((VAR EXT NUM)     (new Var% [name $1] [sub $3] [pos $1-start-pos])))
@@ -277,6 +280,8 @@
     (data-type
          ((INT) "int")
          ((INT EXT NUM) (cons "int" $3))
+         ((FIX) (fix_t $1))
+         ((FIX EXT NUM) (cons (fix_t $1) $3))
          ((VOID) "void")
          )
 

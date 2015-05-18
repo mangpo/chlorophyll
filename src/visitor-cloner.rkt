@@ -105,6 +105,7 @@
               (pretty-display (format "CLONER: Num ~a" (send ast to-string))))
         (set! keep #f)
         (new Num% [n (send (get-field n ast) accept this)] 
+             [type (get-field type ast)]
              [place-type (get-place-type)])
         ]
 

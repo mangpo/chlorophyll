@@ -253,14 +253,15 @@
         (define temp (car (get-field var-list ast)))
         (define place (find-place ast))
 
-	(if (string? type)
-            (declare env temp place)
+	(if (pair? type)
 	    (let* ([entry (cdr type)]
 		   [actual-type (car type)]
 		   [place-expand (get-field place-list (get-field place ast))])
 	      (for ([i (in-range entry)]
 		    [p place-expand])
-		   (declare env (ext-name temp i) p))))]
+		   (declare env (ext-name temp i) p)))
+            (declare env temp place))
+        ]
 
        [(is-a? ast VarDecl%) 
         (when debug (pretty-display (format "PLACETYPE: VarDecl")))
