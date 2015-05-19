@@ -306,6 +306,9 @@
 	    (when verbose (pretty-display "------------------------------------------------")))
 	  (send decl accept interpreter)))
 
+    (unless placeset
+	    (raise "Check if your program has function 'main'"))
+
     ;; Construct new-part2sym.
     (for ([p placeset])
          (unless (symbolic? p) (vector-set! new-part2sym p p)))

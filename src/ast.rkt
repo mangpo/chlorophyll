@@ -43,7 +43,10 @@
    ))
 
 (define (d2fp n k)
-  (bitwise-and #x3ffff (inexact->exact (floor (* n (arithmetic-shift 1 (- 18 k)))))))
+  (bitwise-and #x3ffff (inexact->exact (round (* n (arithmetic-shift 1 (- 18 k)))))))
+
+(define (d2fp-rec x k)
+  (for/list ([i x]) (if (number? i) (d2fp i k) (d2fp-rec i k))))
 
 ;; list -> string
 (define (list-to-string items [core #f])

@@ -12,6 +12,7 @@
 ;; 4) Mark array is cluster or not cluster.
 ;;    Use known-type to determine if array should be clustered or not.
 ;; 5) Expand place. int::2@?? -> int::2@(??,??)
+;; 6) Convert constant to fix_t
 (define linker%
   (class* object% (visitor<%>)
     (super-new)
@@ -194,10 +195,19 @@
            
          ;; declare type
          (declare env (get-field var ast) 
-		  (if (string? type)
-		      (val type 1 #t)
-		      (val (car type) (cdr type) #t)))
+		  (if (pair? type)
+		      (val (car type) (cdr type) #t)
+		      (val type 1 #t)))
          (declare array-map (get-field var ast) ast)
+
+	 ;; convert to fix_t when type is fix_t
+	 (define init (get-field init ast))
+	 (when init
+	       (cond
+		[(fix_t? type)
+		 (set-field! init ast (d2fp-rec init (fix_t-int type)))]
+		[(and (pair? type) (fix_t? (car type)))
+		 (set-field! init ast (d2fp-rec init (fix_t-int (car type))))]))
 
 	 (define expect (get-field expect ast))
          (when (rosette-number? (get-field place-list ast))
@@ -375,13 +385,13 @@
          (set-field! is-stmt ast stmt-level)
 
 	 ;; set type and expand
-	 (if (string? type)
-	     (begin
-	       (set-field! type ast type)
-	       (set-field! expand ast 1))
+	 (if (pair? type)
 	     (begin
 	       (set-field! type ast (car type))
-	       (set-field! expand ast (cdr type))))
+	       (set-field! expand ast (cdr type)))
+	     (begin
+	       (set-field! type ast type)
+	       (set-field! expand ast 1)))
 
 	 ;; set expect
 	 (if entry
@@ -403,11 +413,16 @@
          (for ([arg args]
 	       [param params])
 	      (let ([param-type (get-field type param)])
-		(if (string? param-type)
-		    (set! entry 1)
-		    (set! entry (cdr param-type)))
-		(let ([arg-known (send arg accept this)])
-		  (set-field! known-type param (and (get-field known-type param) arg-known)))))
+		(if (pair? param-type)
+		    (set! entry (cdr param-type))
+		    (begin
+		      (set! entry 1)
+		      (when (and (fix_t? param-type) (is-a? arg Num%))
+			    (send arg set-value (d2fp (send arg get-value) (fix_t-int param-type)))
+			    (set-field! type arg param-type))
+		      )))
+	      (let ([arg-known (send arg accept this)])
+		(set-field! known-type param (and (get-field known-type param) arg-known))))
 	        
 	 (set! entry old-entry)
          (if (get-field is-stmt ast)
@@ -423,9 +438,9 @@
 	 #f]
         
         [(is-a? ast Assign%)
-         ;(pretty-display (format "LINKER: Assign ~a ~a" lhs rhs))
          (define lhs (get-field lhs ast))
          (define rhs (get-field rhs ast))
+         ;(pretty-display (format "LINKER: Assign ~a ~a" lhs rhs))
          (define lhs-pack (lookup env lhs))
          (define lhs-expand (val-expand lhs-pack))
          ;(pretty-display `(lhs-expand ,lhs-expand))
@@ -445,7 +460,8 @@
                    (begin
                      (send rhs set-value (d2fp (send rhs get-value) (fix_t-int lhs-type)))
                      (set-field! type rhs lhs-type))
-                   (raise (format "visitor-linker: cannot convert ~a to ~a at Assigned%" rhs-type lhs-type))))
+                   (raise (format "visitor-linker: cannot convert ~a to ~a at assignment in src l:~a c:~a" 
+				  rhs-type lhs-type (send ast get-line) (send ast get-col)))))
 
 	 (when (and lhs-known (not rhs-known))
                (set-val-known! (lookup env lhs) #f))

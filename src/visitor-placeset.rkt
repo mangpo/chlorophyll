@@ -12,6 +12,7 @@
     (define functions (make-hash))
 
     (define (make-set x)
+      (pretty-display `(make-set ,x))
       (cond
        [(rosette-number? x) (set x)]
        [(equal? x #f) (set)]
@@ -22,6 +23,11 @@
 	     (set! ret (set-union ret (make-set p))))
 	ret]
        [(and (list? x) (is-a? (car x) ProxyReturn%)) (set)]
+       [(and (list? x) (is-a? (car x) RangePlace%))
+	(define ret (set))
+	(for ([p x]) (set! ret (set-add ret (get-field place p))))
+	ret
+	]
        [else (raise `(make-set ,x))]))
 
     (define/public (set-functions funcs)
@@ -64,7 +70,7 @@
         (make-set (get-field place ast))]
 
        [(is-a? ast ArrayDecl%)
-        (make-set (get-field place ast))]
+        (make-set (get-field place-list ast))]
 
        [(is-a? ast For%)
         (send (get-field body ast) accept this)]
