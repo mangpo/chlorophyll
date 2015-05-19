@@ -58,9 +58,9 @@
           (if ranges
               (for/list ([range ranges]
                          [id (in-range (length ranges))])
-                        (pretty-display "UNROLL: For (2)")
+                        (pretty-display (format "UNROLL: For (2) ~a" range))
                         (send cloner set-range (car range) (cdr range) iter-name id)
-                        (pretty-display "UNROLL: For (3)")
+                        (pretty-display (format "UNROLL: For (3) ~a" range))
                         (new For% 
                              [iter (send iter clone)] 
                              [body (send body accept cloner)]
@@ -70,6 +70,7 @@
                              [place-list #f]
                              [body-placeset (get-field body-placeset ast)]))
               ast))
+        (pretty-display "UNROLL: For (DONE)")
         
         ;; add newly created functions from reduce to program AST
 	(define new-funcs (get-field new-funcs cloner))

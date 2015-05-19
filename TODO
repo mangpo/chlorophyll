@@ -1,10 +1,11 @@
 TODO
+- place(y) in parallel map
+- in(fix2_t), out(x)
+- test fixpint for assign, binexp, uexp, if, while, function, array of pair
 - conversion
 - digital functions?
 - cprinter for fix_t
 - cprinter >> signed shift right
-- test fixpint for assign, binexp, uexp, if, while, function
-- in(fix2_t), out(x)
 
 - rethink key for cache (no mem-size, etc.)
 - other optimizations: dce, instr fetch, first order funcs

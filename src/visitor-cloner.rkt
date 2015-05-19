@@ -110,13 +110,15 @@
         ]
 
        [(is-a? ast Array%)
-        (when debug
-              (pretty-display (format "CLONER: Array ~a" (send ast to-string))))
         (set! keep #f)
         (define name (get-field name ast))
 	(define place (if (has-var? env name)
 			  (lookup-name env name)
 			  (get-place-type)))
+        
+        (when debug
+              (pretty-display (format "CLONER: Array ~a env-has-var=~a place=~a" 
+                                      (send ast to-string) (has-var? env name) place)))
         (new Array% [name name] 
              [type (get-field type ast)]
              [index (send (get-field index ast) accept this)]
@@ -193,7 +195,10 @@
         (set! keep #f)
 	
 	(define func-name (get-field name ast))
+        (define keep-env env)
+        (set! env (make-hash))
 	(define new-func (send (hash-ref functions func-name) accept this))
+        (set! env keep-env)
 	(define new-name (format "_~a~a" id func-name))
 	(set-field! name new-func new-name)
         (set! new-funcs (cons new-func new-funcs))
