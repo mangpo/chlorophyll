@@ -325,12 +325,14 @@
 (define Livable%
   (class Base%
     (super-new)
-    (init-field [place (get-sym)])
+    (init-field [place (get-sym)] [org-place #f])
 
     (define/public (get-place)
       (evaluate-with-sol place))
     (define/public (set-place new-place)
       (set! place new-place))
+    (define/public (save-org-place) 
+      (set! org-place place))
 
     (define/public (to-concrete)
       (set! place (concrete-place place)))
@@ -723,7 +725,7 @@
 (define VarDecl%
   (class Livable%
     (super-new)
-    (inherit-field place pos)
+    (inherit-field place pos org-place)
     (init-field var-list type [known #t] [address #f] [compact #f] 
 		[loop #f] ;; for mapreduce
 		)
@@ -815,7 +817,7 @@
 (define RangePlace%
   (class Livable%
     (super-new)
-    (inherit-field place send-path)
+    (inherit-field place send-path org-place)
     (init-field from to)
     (inherit get-place)
 

@@ -70,16 +70,25 @@
                         (get-place-type)))
 		  (get-place-type)))))
 
-      (define (fresh-place place)
+      (define (fresh-place place [my-ast ast])
 	(cond
+         [(and (is-a? my-ast Livable%) (get-field org-place my-ast) (symbolic? place))
+          (let* ([org-place (get-field org-place my-ast)]
+                 [var (get-field at org-place)]
+                 [name (if (get-field sub var) 
+                           (ext-name (get-field name var) (get-field sub var))
+                           (get-field name var))])
+            (hash-ref env name))]
+          
          [(symbolic? place)
           (get-sym)]
          [(is-a? place TypeExpansion%)
           (new TypeExpansion% 
                [place-list (map fresh-place (get-field place-list place))])]
          [(is-a? place RangePlace%)
+          ;; pass optinal my-ast for accessing org-place field
           (new RangePlace% [from (get-field from place)] [to (get-field to place)]
-               [place (fresh-place (get-field place place))])]
+               [place (fresh-place (get-field place place) place)])] 
          [(list? place)
           (map fresh-place place)]
          [else place]))
@@ -239,8 +248,10 @@
 	     [place-type place])]
 
        [(is-a? ast VarDecl%)
-        (pretty-display (format "CLONER: VarDecl% ~a @ ~a (before)" (get-field var-list ast)
-                                (get-field place ast)))
+        (when debug
+              (pretty-display (format "CLONER: VarDecl% ~a @ ~a (before)" 
+                                      (get-field var-list ast)
+                                      (get-field place ast))))
 	(define place (fresh-place (get-field place ast)))
         (define new-var-list
           (for/list ([var (get-field var-list ast)])
@@ -258,8 +269,10 @@
                [type (get-field type ast)]
                [known (get-field known ast)]
                [place place]))
-        (pretty-display (format "CLONER: VarDecl% ~a @ ~a (ret)" (get-field var-list ast)
-                                place))
+        (when debug
+              (pretty-display (format "CLONER: VarDecl% ~a @ ~a (ret)" 
+                                      (get-field var-list ast)
+                                      place)))
         (send ret pretty-print)
 
         (when (is-a? ast TempDecl%)

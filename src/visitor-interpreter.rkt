@@ -22,7 +22,7 @@
 		[used-io-nodes (set)]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)

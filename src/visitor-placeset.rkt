@@ -12,7 +12,7 @@
     (define functions (make-hash))
 
     (define (make-set x)
-      (pretty-display `(make-set ,x))
+      ;(pretty-display `(make-set ,x))
       (cond
        [(rosette-number? x) (set x)]
        [(equal? x #f) (set)]

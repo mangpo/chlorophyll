@@ -267,6 +267,8 @@
         (define var-list (get-field var-list ast))
         (define place (find-place ast))
         (when debug (pretty-display (format "PLACETYPE: VarDecl ~a, place=~a" var-list place)))
+        (when (is-a? (get-field place ast) Place%)
+              (send ast save-org-place))
 	(set-field! place ast place) ;; TODO: check
         
         ;; Param% only
@@ -303,6 +305,8 @@
         (define cluster (get-field cluster ast))
 
         (for ([p place-list])
+             (when (is-a? (get-field place p) Place%)
+                   (send p save-org-place))
              (set-field! place p (find-place p)))
           
         ;; We might not need this. This is a dead code right now.

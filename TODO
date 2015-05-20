@@ -1,11 +1,9 @@
 TODO
-- place(y) in parallel map still doesn't work
-  => run visitor-placetype after unroll?
+- documentation
+- fix2_t@place(x) coeff[4] doesn't work.
 - test fixpint for assign, binexp, uexp, if, while, function, array of pair
-
 - conversion
 - digital functions?
-- cprinter >> signed shift right
 
 - rethink key for cache (no mem-size, etc.)
 - other optimizations: dce, instr fetch, first order funcs
