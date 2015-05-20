@@ -41,7 +41,8 @@
       (cond 
        [(equal? type "int") "long"]
        [(equal? type "void") "void"]
-       [(fix_t? type) (format "fix~a_t" (fix_t-int type))]
+       [(fix_t? type) "long"]
+       ;;[(fix_t? type) (format "fix~a_t" (fix_t-int type))]
        [(pair? type) (format "~a~a" (print-type (car type)) (cdr type))]
        [else (raise (format "visitor-cprinter: print-type: unimplemented for ~a" type))]))
 
@@ -139,7 +140,8 @@
            (cond
             [(equal? op "/%") (display "divmod(")]
             [(equal? op "*:2") (display "mult2(")]
-            [(equal? op ">>>") (display "rightrot(")])
+            [(equal? op ">>>") (display "rightrot(")]
+	    )
            (send (get-field e1 ast) accept this)
            (display ", ")
            (send (get-field e2 ast) accept this)
@@ -147,7 +149,7 @@
            ]
           
           [(member op (list "*/17" "*/16"))
-           (display "((")
+           (display "finitize((")
            (send (get-field e1 ast) accept this)
            (display "*")
            (send (get-field e2 ast) accept this)
@@ -158,7 +160,7 @@
            ]
 
           [else
-           (display "(")
+           (display "finitize(")
            (send (get-field e1 ast) accept this)
            (display op)
            (send (get-field e2 ast) accept this)
@@ -168,21 +170,26 @@
 	[(is-a? ast FuncCall%)
 	 (define name (get-field name ast))
 	 (define args (get-field args ast))
-	 ;; (cond
-	 ;;  [(equal? name "out")
-	 ;;   (display "printf(\"%d\\n\", ")
-	 ;;   (send (car args) accept this)
-	 ;;   (display ")")]
 
-	 ;;  [else
+	 (define fp (or (and (equal? name "out") (fix_t? (get-field type (car args))))
+			(and (equal? name "in") (fix_t? (get-field type ast)))))
+	 (define fp-ext (if fp "_fp" ""))
+
          (if (or (equal? name "out") (equal? name "in"))
-             (display (format "~a(" name))
+             (display (format "~a~a(" name fp-ext))
              (display (format "~a_~a(" name core)))
+
          (unless (empty? args)
                  (send (car args) accept this)
                  (for ([arg (cdr args)])
                       (display ", ")
                       (send arg accept this)))
+
+	 (when fp
+	       (if (equal? name "out")
+		   (display (format ", ~a" (fix_t-int (get-field type (car args)))))
+		   (display (fix_t-int (get-field type ast))))
+	       )
          (display ")")]
         ;; )]
 

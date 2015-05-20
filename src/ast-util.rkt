@@ -14,7 +14,7 @@
 	 [body (new Block% [stmts (list)])]
 	 [body-placeset (set (new Place% [at "io"]))] 
 	 [return (new VarDecl% [var-list (list "#return")]
-		      [type "int"] ;; TODO: make it generic
+		      [type "T"] ;; generic type
 		      [place (new Place% [at "io"])]
 		      [known #f])]))
   stdin)
@@ -25,7 +25,7 @@
 	 [args (new Block% [stmts (list 
 				   (new Param% 
 					[var-list (list "data")]
-					[type "int"] ;; TODO: make it generic
+					[type "T"] ;; generic type
 					[known #f]
 					[place (new Place% [at "io"])]
 					[place-type (new Place% [at "io"])]))])]

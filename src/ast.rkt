@@ -42,8 +42,15 @@
    [else #f]
    ))
 
+(define (finitize num)
+  (let* ([mask (arithmetic-shift -1 18)]
+         [masked (bitwise-and #x3ffff num)])
+    (if (= (bitwise-and masked #x20000) 0)
+        masked
+        (bitwise-ior mask masked))))
+
 (define (d2fp n k)
-  (bitwise-and #x3ffff (inexact->exact (round (* n (arithmetic-shift 1 (- 18 k)))))))
+  (finitize (bitwise-and #x3ffff (inexact->exact (round (* n (arithmetic-shift 1 (- 18 k))))))))
 
 (define (d2fp-rec x k)
   (for/list ([i x]) (if (number? i) (d2fp i k) (d2fp-rec i k))))
@@ -623,7 +630,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(FuncCall: ~a @~a (expand=~a/~a) (type=~a)" 
-			      indent name (evaluate-with-sol place-type)
+			      indent name (place-to-string place-type)
                               expand expect type))
       (print-send-path indent)
       (for ([arg args])

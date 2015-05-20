@@ -91,6 +91,15 @@ typedef struct long4 {
 
 ////////////////////////////////////////////////////////////////////
 
+long neg_ext = -1 << 18;
+long finitize(long x) {
+  long ret = x & 0x3ffff;
+  if(ret & 0x20000)
+    return ret | neg_ext;
+  else
+    return ret;
+}
+
 long2 divmod(long x, long y) {
   long d, r;
   d = x/y;
@@ -102,20 +111,20 @@ long2 mult2(long x, long y) {
   long res, h, l;
   res = x*y;
   h = res >> 18;
-  l = res & 0x3ffff;
+  l = finitize(res); // res & 0x3ffff;
   return long2(h,l);
 }
 
 long2 rightrot(long x, long y) {
   long h, l;
   h = x >> y;
-  l = (x << (18 - y)) & 0x3ffff;
+  l = finitize(x << (18 - y)); // (x << (18 - y)) & 0x3ffff;
   return long2(h,l);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-int channel[N];
+long channel[N];
 bool empty[N];
 std::mutex wlock[N];
 
@@ -125,7 +134,7 @@ void setup() {
   }
 }
 
-void write(int port, int data) {
+void write(int port, long data) {
   if(!empty[port]) { printf("%d: deadlock\n", port); exit(1); }
 
   wlock[port].lock();
@@ -136,22 +145,32 @@ void write(int port, int data) {
   wlock[port].unlock();
 }
 
-int read(int port) {
+long read(int port) {
   while(empty[port]) {}
   
-  int data = channel[port];
+  long data = channel[port];
   //printf("R%d : receive %d\n", port, data);
   empty[port] = true;
 
   return data;
 }
 
-int in() {
-  int data;
-  scanf("%d", &data);
+long in() {
+  long data;
+  scanf("%li", &data);
   return data;
 }
 
-void out(int data) {
-  printf("%d\n", data);
+long in_fp(int k) {
+  double data;
+  scanf("%lf", &data);
+  return finitize(data * (1 << (18-k)));
+}
+
+void out(long data) {
+  printf("%li\n", data);
+}
+
+void out_fp(long data, int k) {
+  printf("%lf\n", double(data)/(1 << (18-k)));
 }

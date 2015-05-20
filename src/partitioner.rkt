@@ -336,8 +336,8 @@
 				(- (current-seconds) heu-start)))))])
 
   (let ([evaluator (new symbolic-evaluator% [num-cores num-core])])
+    (send my-ast pretty-print)
     (send my-ast accept evaluator)
-    ;(send my-ast pretty-print)
     )
 
   (with-output-to-file #:exists 'truncate (format "~a/~a.part" outdir name)
@@ -349,7 +349,9 @@
   
   (when verbose
     (pretty-display "\n=== After evaluate ===")
-    (send my-ast accept concise-printer))
+    (send my-ast accept concise-printer)
+    ;(send my-ast pretty-print)
+    )
   
   (cons new-part2sym part2capacity)
 )

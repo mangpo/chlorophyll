@@ -87,7 +87,7 @@
 ;                      290 #:w 4 #lang racket
 
 ;; Fixed point
-(compile-and-optimize "../examples/fixedpoint/cos.cll" "cos" 
-                      300 #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/fixedpoint/cosint.cll" "cosint" 
+;(compile-and-optimize "../examples/fixedpoint/cos.cll" "cos" 
 ;                      300 #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../examples/fixedpoint/inout.cll" "inout" 
+                      300 #:w 3 #:h 3 #:opt #f)

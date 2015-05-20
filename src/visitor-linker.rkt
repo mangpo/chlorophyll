@@ -13,6 +13,7 @@
 ;;    Use known-type to determine if array should be clustered or not.
 ;; 5) Expand place. int::2@?? -> int::2@(??,??)
 ;; 6) Convert constant to fix_t
+;; 7) Infer data type for in()
 (define linker%
   (class* object% (visitor<%>)
     (super-new)
@@ -41,6 +42,8 @@
       (declare env (format "delay_unext~a" node) (get-delay-unext node)))
 
     (struct val (type expand known) #:mutable)
+
+    (define data-type "void")
 
     (define (push-scope)
       ;(pretty-display `(push-scope))
@@ -313,15 +316,22 @@
 				  (send ast to-string) (send ast get-line)))))
 
 	 (set-field! expect ast entry)
+	 (define op (get-field op ast))
+         (define op-str (get-field op op))
 	 (define e1 (get-field e1 ast))
 	 (define e2 (get-field e2 ast))
+
+	 (unless (member op-str (list "+" "-" "*" "!=" "==" "<" ">" ">=" "<=" "<<" ">>"))
+		 (set! data-type "int"))
          (define e1-known (send e1 accept this))
+
+	 (unless (member op-str (list "+" "-" "*" "!=" "==" "<" ">" ">=" "<="))
+		 (set! data-type "int"))
          (define e2-known (send e2 accept this))
+
          (define e1-type (get-field type e1))
          (define e2-type (get-field type e2))
 	 
-	 (define op (get-field op ast))
-         (define op-str (get-field op op))
 	 (set-field! place-type ast (get-field place op))
 
          (send op accept this)
@@ -367,15 +377,20 @@
         
         [(is-a? ast FuncCall%)
          ;;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
-	 (when (io-func? (get-field name ast))
+	 (define name (get-field name ast))
+	 (when (io-func? name)
            (let ([node (send (car (get-field args ast)) get-value)])
-             (set-field! name ast (format "~a~a" (get-field name ast) node))
+             (set-field! name ast (format "~a~a" name node))
              (set-field! args ast (cdr (get-field args ast)))))
 
          (define func-ast (lookup env ast))
-         (define type (if (get-field return func-ast)
-                          (get-field type (get-field return func-ast))
-                          "void"))
+         (define type 
+	   (cond
+	    [(equal? name "in") data-type] ;; set to inferred data type
+	    [else
+	     (if (get-field return func-ast)
+		 (get-field type (get-field return func-ast))
+		 "void")]))
 
          (when (and entry (equal? type "void"))
                (send ast type-error))
@@ -420,22 +435,25 @@
 		      (when (and (fix_t? param-type) (is-a? arg Num%))
 			    (send arg set-value (d2fp (send arg get-value) (fix_t-int param-type)))
 			    (set-field! type arg param-type))
-		      )))
-	      (let ([arg-known (send arg accept this)])
-		(set-field! known-type param (and (get-field known-type param) arg-known))))
+		      ))
+		(set! data-type param-type)
+		(let ([arg-known (send arg accept this)])
+		  (set-field! known-type param (and (get-field known-type param) arg-known)))
+		))
 	        
 	 (set! entry old-entry)
          (if (get-field is-stmt ast)
              ast
              #f)]
 
-	[(is-a? ast Send%)
-	 (set! entry 1)
-	 (send (get-field data ast) accept this)
-         ast]
+	;; [(is-a? ast Send%)
+	;;  (set! entry 1)
+	;;  (set! data-type "T")
+	;;  (send (get-field data ast) accept this)
+        ;;  ast]
 
-	[(is-a? ast Recv%)
-	 #f]
+	;; [(is-a? ast Recv%)
+	;;  #f]
         
         [(is-a? ast Assign%)
          (define lhs (get-field lhs ast))
@@ -451,8 +469,10 @@
          
          (set! stmt-level #f)
 	 (define lhs-known (send lhs accept this))
-	 (define rhs-known (send rhs accept this))
 	 (define lhs-type (get-field type lhs))
+	 (set! data-type lhs-type)
+
+	 (define rhs-known (send rhs accept this))
 	 (define rhs-type (get-field type rhs))
 
          (when (not (same-type? lhs-type rhs-type))
@@ -469,8 +489,11 @@
 
 	[(is-a? ast Return%)
 	 (define pack (lookup-name env "#return"))
+	 (define type (val-type pack))
 	 (define expand (val-expand pack))
          (define known-type (val-known pack))
+
+	 (set! data-type type)
 	 
 	 (set! entry expand)
 	 (set-field! expect ast entry)
@@ -525,6 +548,7 @@
 
          (set! entry 1)
          (set! stmt-level #f)
+	 (set! data-type "int")
          (send (get-field condition new-if) accept this)
 
 	 (push-scope)
@@ -543,6 +567,7 @@
          ;(pretty-display "LINKER: While")
          (set! entry 1)
 	 (define exp (get-field condition ast))
+	 (set! data-type "int")
          (send exp accept this)
 	 (define t (get-field body ast))
 	 (define place (and (is-a? exp BinExp%) (get-field place (get-field op exp))))
@@ -578,6 +603,7 @@
 
          (set! entry 1)
          (set! stmt-level #f)
+	 (set! data-type "int")
          (send (get-field condition new-while) accept this)
 	 (push-scope)
          (send t accept this)
@@ -627,6 +653,7 @@
                      (map (lambda (stmt)
                             (set! entry #f)
                             (set! stmt-level #t)
+			    (set! data-type "void")
                             (send stmt accept this))
                           (get-field stmts ast)))
          ast
