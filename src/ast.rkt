@@ -950,7 +950,7 @@
            [compress compress]))
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(ARRAYDECL ~a ~a @{~a} (known=~a) (cluster=~a) (compress=~a) " 
+      (pretty-display (format "~a(ARRAYDECL ~a ~a @~a (known=~a) (cluster=~a) (compress=~a) " 
                               indent type var
 			      (place-to-string place-list)
                               known cluster compress))

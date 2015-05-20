@@ -264,9 +264,10 @@
         ]
 
        [(is-a? ast VarDecl%) 
-        (when debug (pretty-display (format "PLACETYPE: VarDecl")))
-        (define place (find-place ast))
         (define var-list (get-field var-list ast))
+        (define place (find-place ast))
+        (when debug (pretty-display (format "PLACETYPE: VarDecl ~a, place=~a" var-list place)))
+	(set-field! place ast place) ;; TODO: check
         
         ;; Param% only
         (when (is-a? ast Param%)

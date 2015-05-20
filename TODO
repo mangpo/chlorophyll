@@ -1,6 +1,6 @@
 TODO
-- test md5 with finitize
-- place(y) in parallel map
+- place(y) in parallel map still doesn't work
+  => run visitor-placetype after unroll?
 - test fixpint for assign, binexp, uexp, if, while, function, array of pair
 
 - conversion

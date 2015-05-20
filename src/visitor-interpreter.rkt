@@ -36,7 +36,6 @@
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
       ;(assert (or (number? place) (list? place)))
-      (pretty-display (format "place = ~a" place))
       (cond
         [(number? place)
          (cores-inc-space places place add-space)]
@@ -391,7 +390,6 @@
               (pretty-display (format ">> VarDecl ~a (after)" var-list)))
         
         (define ret (comminfo 0 (to-place-set place)))
-        (pretty-display `(placeset ,var-list ,(comminfo-placeset ret)))
         ret
         ]
 
