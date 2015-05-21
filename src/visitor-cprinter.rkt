@@ -136,6 +136,16 @@
         [(is-a? ast BinExp%)
 	 (define op (get-field op (get-field op ast)))
          (cond
+          [(and (equal? op "*") (fix_t? (get-field type (get-field e1 ast))))
+           (display "finitize((")
+           (send (get-field e1 ast) accept this)
+           (display op)
+           (send (get-field e2 ast) accept this)
+           (display 
+            (format ") >> ~a)" (- 18 (fix_t-int (get-field type (get-field e1 ast))))))
+           ]
+           
+
           [(member op (list "/%" "*:2" ">>>"))
            (cond
             [(equal? op "/%") (display "divmod(")]

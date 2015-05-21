@@ -1,0 +1,32 @@
+// x ranges from [0,pi/2] in radius unit
+fix3_t cos(fix3_t x) {
+  fix3_t y;
+  fix3_t@{[0:5]=place(y)} coeff[5] = {-0.000023154 , -0.0013854 , 0.041664 , -0.5, 1};
+
+  fix3_t@place(y) sum;
+
+  y = x * x;
+  sum = 0;
+  for(i from 0 to 5) {
+    sum = sum *@place(y) y +@place(y) coeff[i];
+  }
+
+  return (sum);
+}
+
+void main() {
+  // pi is out of range, so use 0 for the second test case.
+  // {0, pi, pi/2, pi/4, pi/6, pi/3}
+  fix3_t x[6] = {0, 0, 1.570796, 0.785398, 0.523599, 1.047198};
+  fix3_t y[6];
+  
+  /*
+  for(i from 0 to 6) {
+    x[i] = in();
+  }*/
+
+  y = map(cos, x);
+  for(i from 0 to 6) {
+    out(y[i]);
+  }
+}
