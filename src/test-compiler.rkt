@@ -89,5 +89,3 @@
 ;; Fixed point
 (compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
                       300 #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/fixedpoint/inout.cll" "inout" 
-;                      300 #:w 3 #:h 3 #:opt #f)

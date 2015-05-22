@@ -243,8 +243,15 @@
     (exp ((lit) $1)
 	 ((ele) $1)
 
-         ((NOT exp)         (UnaExp "!" $2 $1-start-pos))
-         ((ARITHOP2 exp)     (prec NOT) (UnaExp $1 $2 $1-start-pos))
+         ((NOT exp)          (UnaExp "!" $2 $1-start-pos))
+         ((ARITHOP2 exp)     (prec NOT) 
+	                     (if (and (equal? $1 "-") (is-a? $2 Num%))
+				 (new Num% 
+				      [n (new Const% 
+					      [n (- (send $2 get-value))] 
+					      [pos $1-start-pos])]
+				      [type "int"] [pos $1-start-pos])
+				 (UnaExp $1 $2 $1-start-pos)))
          ((exp ARITHOP1 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP2 exp) (BinExp $1 $2 $3 $2-start-pos))
          ((exp ARITHOP3 exp) (BinExp $1 $2 $3 $2-start-pos))
