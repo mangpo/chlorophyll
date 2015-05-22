@@ -143,7 +143,9 @@ Note that the partitioner can be very slow if it partitions a large program with
 
 ### Data Type
 
-Chlorophyll currently supports only one primitive data type, `int`, 18-bit integer, as GreenArrays is a 18-bit architecture. Chlorophyll supports tuples and arrays of `int`.
+Chlorophyll currently supports two primitive data types: integer and fixed point. Both data types are 18 bits, as GreenArrays is a 18-bit architecture. Use `int` for integer. Use `fixK_t` for fixed-point number with K bits for integer and 18-K bits for fractional part; for example, `fix2_t` uses 2 bits for integer and 16 bits for fractional part. The available fixed point types are `fix0_t`, `fix1_t`, ..., and `fix17_t`.
+
+Chlorophyll also supports tuples and arrays of the primitive types.
 
 ##### Tuples
 Define *x* as a tuple of 3 elements whose elements live at logical core 0, 1, and 2:
