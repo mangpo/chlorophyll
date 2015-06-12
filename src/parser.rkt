@@ -7,13 +7,14 @@
 (provide ast-from-string ast-from-file)
  
 (define-tokens a (FIX NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
-(define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF 
+(define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
                                INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
                                ASSUME
 			       READ WRITE
-                               PLACE HERE ANY GHOST))
+                               PLACE HERE ANY GHOST  
+			       HASH MAP NOROUTE))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -50,8 +51,8 @@
    ("return" (token-RETURN))
    ;; ("known" (token-KNOWN))
    ("cluster" (token-CLUSTER))
-   ("#read"  (token-READ))
-   ("#write" (token-WRITE))
+   ;; ("#read"  (token-READ))
+   ;; ("#write" (token-WRITE))
    ("for"   (token-FOR))
    ("while" (token-WHILE))
    ("if"    (token-IF))
@@ -64,6 +65,9 @@
    ("here"  (token-HERE))
    ("any"   (token-ANY))
    ("@" (token-@))
+   ("#" (token-HASH))
+   ("noroute" (token-NOROUTE))
+   ("-->" (token-MAP))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -229,9 +233,10 @@
 
     (funccall
          ((VAR LPAREN args RPAREN)    (new FuncCall% [name $1] [args $3] [pos $1-start-pos]))
-	 ((READ LPAREN VAR RPAREN)   (new Recv% [port (string->symbol $3)]))
-	 ((WRITE LPAREN VAR COMMA exp RPAREN)  
-	  (new Send% [port (string->symbol $3)] [data $5])))
+	 ;; ((READ LPAREN VAR RPAREN)   (new Recv% [port (string->symbol $3)]))
+	 ;; ((WRITE LPAREN VAR COMMA exp RPAREN)  
+	 ;;  (new Send% [port (string->symbol $3)] [data $5]))
+	 )
 
     (assume
          ((ASSUME LPAREN exp RPAREN SEMICOL) (new Assume% [e1 $3])))
@@ -453,12 +458,20 @@
                                  [type (car $1)] [place (cdr $1)]))]
                [pos $2-start-pos])))
 
+    (part2core
+	 (() (list))
+	 ((HASH NUM MAP NUM part2core) (cons (cons $2 $4) $5)))
+
+    (noroute
+         (() (list))
+	 ((NOROUTE @ LBRACK num-list RBRACK) $4))
+
     (decls
          ((func-decl) (list $1))
          ((func-decl decls) (cons $1 $2)))
          
     (program
-         ((decls) (new Program% [stmts $1])))
+         ((part2core noroute decls) (new Program% [stmts $3] [fixed-parts $1] [noroute $2])))
 
 )))
 

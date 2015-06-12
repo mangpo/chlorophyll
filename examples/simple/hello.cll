@@ -1,6 +1,6 @@
 void main() {
-  fix2_t@0 a;
-  fix2_t@1 b;
-  fix2_t@2 c;
-  c = 0.125 *@2 a *@2 b;
+  int@0 a;
+  int@1 b;
+  int@2 c;
+  c = 3 *@2 a *@2 b;
 }

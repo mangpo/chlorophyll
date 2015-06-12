@@ -5,6 +5,8 @@
 ;; Simple
 ;(compile-and-optimize "../examples/simple/hello.cll" "hello" 
 ;                      256 #:w 2 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/simple/part2core.cll" "part2core" 
+;                      256 #:w 3 #:h 3 #:opt #f)
 
 ;(compile-and-optimize "../examples/simple/array.cll" "array" 
 ;                      256 #:w 2 #:h 3 #:opt #f)
@@ -87,5 +89,7 @@
 ;                      290 #:w 4 #lang racket
 
 ;; Fixed point
-(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
-                      300 #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
+;                      300 #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../examples/fixedpoint/fft_inplace.cll" "fft_inplace" 
+                      300 #:w 10 #:h 6 #:opt #f #:partition #f)
