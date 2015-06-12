@@ -11,6 +11,13 @@
   (for ([e edges])
        (pretty-display (format "~a ~a ~a" (edge-x e) (edge-y e) (edge-w e)))))
 
+(define (get-partitions edges)
+  (define ans (set))
+  (for ([e edges])
+       (set! ans (set-add ans (edge-x e)))
+       (set! ans (set-add ans (edge-y e))))
+  ans)
+
 (define (index x y w)
   (+ (* x w) y))
 
@@ -51,6 +58,10 @@
   ;; Mapping partitions to cores in form of x*w + y
   (define n-1 (* w h))
   (define n (add1 n-1))
+  (define cores
+    (list->set
+     (for/list ([part (get-partitions flow-graph)])
+               (vector-ref part2core part))))
   (define obstacles
     (list->set (for/list ([part noroute]) (vector-ref part2core part))))
   
@@ -59,10 +70,10 @@
   (for ([i (in-range n-1)])
     (vector-set! core2route i (make-vector n #f))
     (for ([j (in-range n-1)])
-      (unless (= i j)
-        (vector-2d-set! core2route n i j (route i j w h (set-remove* obstacles i j))
-			;;(route i j w)
-			))))
+      (when (and (not (= i j)) (set-member? cores i) (set-member? cores j))
+            (vector-2d-set! core2route n i j
+                            (route i j w h (set-remove* obstacles i j))
+                            ))))
   #|
   (for ([comm flow-graph])
     (let* ([a-core (vector-ref part2core (edge-x comm))]
@@ -149,7 +160,8 @@
        (vector-set! part2core partition index))
   
   ;; Create map from pair of core (x1,y1) (x2,y2) to routing
-  (define routing-table (gen-route flow-graph part2core (get-field noroute ast) w h))
+  (define routing-table
+    (gen-route flow-graph part2core (get-field noroute ast) w h))
 
   (layoutinfo routing-table part2core (list->vector core2part))
   )
