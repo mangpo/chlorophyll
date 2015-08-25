@@ -54,11 +54,11 @@
 (define sliding #t)
 (define dir #f)
 
-(define (superoptimize ast my-name my-w my-h sliding-windows my-dir #:id [id 0])
+(define (superoptimize ast my-name my-w my-h sliding-windows my-dir #:id [my-id 0])
   (set! name my-name)
   (set! w my-w)
   (set! h my-h)
-  (set! id id)
+  (set! id my-id)
   (set! before 0)
   (set! after 0)
   (set! sliding sliding-windows)
@@ -108,7 +108,8 @@
                                                (default-state)
                                                (in-constraint (block-incnstr ast) 
                                                               (car body-list)))
-                             #:mem mem-size #:start mem-size #:bin-search `length))
+                             #:mem mem-size #:start mem-size
+                             #:bin-search `length #:id id))
 
     (pretty-display `(result ,result))
     (define opt (if (equal? result 'timeout)
@@ -145,7 +146,7 @@
         
         (define out (block-out block-noopt))
         (define body (block-body block-noopt))
-        (pretty-display `(optimize-loop ,len ,body ,sliding))
+        (pretty-display `(optimize-loop ,len ,body ,sliding ,id))
         (define cnstr (block-cnstr block-noopt))
         (define start-state (if (empty? body)
                                 (default-state)
@@ -159,7 +160,9 @@
 				 ;; we optimize the entire function.
 				 #:constraint (out-space out cnstr #:mem (<= len block-limit))
                                  #:start-state (constrain-stack start-state simple)
-				 #:mem mem-size #:start mem-size #:bin-search `length))
+				 #:mem mem-size #:start mem-size
+                                 #:bin-search `length
+                                 #:id id))
 
         (cond
          [(and sliding (equal? result 'timeout))
