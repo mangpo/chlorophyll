@@ -1,0 +1,321 @@
+# 0 --> 001
+# 1 --> 002
+# 2 --> 003
+# 3 --> 004
+
+# 4 --> 100
+# 5 --> 105
+
+# 6 --> 200
+# 7 --> 205
+
+# 8 --> 300
+# 9 --> 305
+
+# 10 --> 400 
+# 11 --> 405
+
+# 12 --> 501
+# 13 --> 502
+# 14 --> 503
+# 15 --> 504
+
+# 16 --> 103
+# 17 --> 104
+# 18 --> 203
+# 19 --> 204
+
+# 20 --> 101
+# 21 --> 102
+# 22 --> 201
+# 23 --> 202
+
+# 24 --> 301
+# 25 --> 302
+# 26 --> 401
+# 27 --> 402
+
+# 28 --> 303
+# 29 --> 304
+# 30 --> 403
+# 31 --> 404
+
+# 32 --> 005
+# 33 --> 000
+# 34 --> 500
+# 35 --> 505
+
+
+noroute@{0,1,2,3,6,7,8,9,10,12,13,14,15}
+
+
+
+fix3_t@0 bcic(fix3_t@0 current_imag, fix3_t@0 lower_real, fix3_t@0 lower_imag, fix3_t@0 twiddle_real, fix3_t@0 twiddle_imag) {
+  fix3_t@0 tmp_imag;
+  fix3_t@0 ret_val;
+  tmp_imag = lower_imag * twiddle_real - lower_real * twiddle_imag;
+  ret_val = current_imag + tmp_imag;
+  return ret_val;
+}
+
+fix3_t@1 bcrc(fix3_t@1 current_real, fix3_t@1 lower_real, fix3_t@1 lower_imag, fix3_t@1 twiddle_real, fix3_t@1 twiddle_imag) {
+  fix3_t@1 tmp_real;
+  fix3_t@1 ret_val;
+  tmp_real = lower_real * twiddle_real + lower_imag * twiddle_imag;
+  ret_val = current_real + tmp_real;
+  return ret_val;
+}
+
+fix3_t@2 bcid(fix3_t@2 current_imag, fix3_t@2 lower_real, fix3_t@2 lower_imag, fix3_t@2 twiddle_real, fix3_t@2 twiddle_imag) {
+  fix3_t@2 tmp_imag;
+  fix3_t@2 ret_val;
+  tmp_imag = lower_imag * twiddle_real - lower_real * twiddle_imag;
+  ret_val = current_imag + tmp_imag;
+  return ret_val;
+}
+
+fix3_t@3 bcrd(fix3_t@3 current_real, fix3_t@3 lower_real, fix3_t@3 lower_imag, fix3_t@3 twiddle_real, fix3_t@3 twiddle_imag) {
+  fix3_t@3 tmp_real;
+  fix3_t@3 ret_val;
+  tmp_real = lower_real * twiddle_real + lower_imag * twiddle_imag;
+  ret_val = current_real + tmp_real;
+  return ret_val;
+}
+
+fix3_t@4 blic(fix3_t@4 current_imag, fix3_t@4 lower_real, fix3_t@4 lower_imag, fix3_t@4 twiddle_real, fix3_t@4 twiddle_imag) {
+  fix3_t@4 tmp_imag;
+  fix3_t@4 ret_val;
+  tmp_imag = lower_imag * twiddle_real - lower_real * twiddle_imag;
+  ret_val = current_imag - tmp_imag;
+  return ret_val;
+}
+
+fix3_t@5 blrd(fix3_t@5 current_real, fix3_t@5 lower_real, fix3_t@5 lower_imag, fix3_t@5 twiddle_real, fix3_t@5 twiddle_imag) {
+  fix3_t@5 tmp_real;
+  fix3_t@5 ret_val;
+  tmp_real = lower_real * twiddle_real + lower_imag * twiddle_imag;
+  ret_val = current_real - tmp_real;
+  return ret_val;
+}
+
+fix3_t@6 blrc(fix3_t@6 current_real, fix3_t@6 lower_real, fix3_t@6 lower_imag, fix3_t@6 twiddle_real, fix3_t@6 twiddle_imag) {
+  fix3_t@6 tmp_real;
+  fix3_t@6 ret_val;
+  tmp_real = lower_real * twiddle_real + lower_imag * twiddle_imag;
+  ret_val = current_real - tmp_real;
+  return ret_val;
+}
+
+fix3_t@7 blid(fix3_t@7 current_imag, fix3_t@7 lower_real, fix3_t@7 lower_imag, fix3_t@7 twiddle_real, fix3_t@7 twiddle_imag) {
+  fix3_t@7 tmp_imag;
+  fix3_t@7 ret_val;
+  tmp_imag = lower_imag * twiddle_real - lower_real * twiddle_imag;
+  ret_val = current_imag - tmp_imag;
+  return ret_val;
+}
+
+fix3_t@8 blra(fix3_t@8 current_real, fix3_t@8 lower_real, fix3_t@8 lower_imag) {
+  fix3_t@8 tmp_real;
+  fix3_t@8 ret_val;
+  tmp_real = lower_real * 1.0 + lower_imag * 0.0;
+  ret_val = current_real - tmp_real;
+  return ret_val;
+}
+
+fix3_t@9 blib(fix3_t@9 current_imag, fix3_t@9 lower_real, fix3_t@9 lower_imag, fix3_t@9 twiddle_real, fix3_t@9 twiddle_imag) {
+  fix3_t@9 tmp_imag;
+  fix3_t@9 ret_val;
+  tmp_imag = lower_imag * twiddle_real - lower_real * twiddle_imag;
+  ret_val = current_imag - tmp_imag;
+  return ret_val;
+}
+
+fix3_t@10 blia(fix3_t@10 current_imag, fix3_t@10 lower_real, fix3_t@10 lower_imag) {
+  fix3_t@10 tmp_imag;
+  fix3_t@10 ret_val;
+  tmp_imag = lower_imag * 1.0 - lower_real * 0.0;
+  ret_val = current_imag - tmp_imag;
+  return ret_val;
+}
+
+fix3_t@11 blrb(fix3_t@11 current_real, fix3_t@11 lower_real, fix3_t@11 lower_imag, fix3_t@11 twiddle_real, fix3_t@11 twiddle_imag) {
+  fix3_t@11 tmp_real;
+  fix3_t@11 ret_val;
+  tmp_real = lower_real * twiddle_real + lower_imag * twiddle_imag;
+  ret_val = current_real - tmp_real;
+  return ret_val;
+}
+
+fix3_t@12 bcia(fix3_t@12 current_imag, fix3_t@12 lower_real, fix3_t@12 lower_imag) {
+  fix3_t@12 tmp_imag;
+  fix3_t@12 ret_val;
+  tmp_imag = lower_imag * 1.0 - lower_real * 0.0;
+  ret_val = current_imag + tmp_imag;
+  return ret_val;
+}
+
+fix3_t@13 bcra(fix3_t@13 current_real, fix3_t@13 lower_real, fix3_t@13 lower_imag) {
+  fix3_t@13 tmp_real;
+  fix3_t@13 ret_val;
+  tmp_real = lower_real * 1.0 + lower_imag * 0.0;
+  ret_val = current_real + tmp_real;
+  return ret_val;
+}
+
+fix3_t@14 bcib(fix3_t@14 current_imag, fix3_t@14 lower_real, fix3_t@14 lower_imag, fix3_t@14 twiddle_real, fix3_t@14 twiddle_imag) {
+  fix3_t@14 tmp_imag;
+  fix3_t@14 ret_val;
+  tmp_imag = lower_imag * twiddle_real - lower_real * twiddle_imag;
+  ret_val = current_imag + tmp_imag;
+  return ret_val;
+}
+
+fix3_t@15 bcrb(fix3_t@15 current_real, fix3_t@15 lower_real, fix3_t@15 lower_imag, fix3_t@15 twiddle_real, fix3_t@15 twiddle_imag) {
+  fix3_t@15 tmp_real;
+  fix3_t@15 ret_val;
+  tmp_real = lower_real * twiddle_real + lower_imag * twiddle_imag;
+  ret_val = current_real + tmp_real;
+  return ret_val;
+}
+
+
+
+
+
+
+void main() {
+
+  fix3_t@24 xireal0;
+  fix3_t@25 xireal1;
+  fix3_t@28 xireal2;
+  fix3_t@30 xireal3;
+  fix3_t@20 xireal4;
+  fix3_t@21 xireal5;
+  fix3_t@16 xireal6;
+  fix3_t@17 xireal7;
+  fix3_t@26 xiimag0;
+  fix3_t@27 xiimag1;
+  fix3_t@29 xiimag2;
+  fix3_t@31 xiimag3;
+  fix3_t@22 xiimag4;
+  fix3_t@23 xiimag5;
+  fix3_t@18 xiimag6;
+  fix3_t@19 xiimag7;
+
+
+  fix3_t@13 xoreal0; //bcra
+  fix3_t@8 xoreal1; //blra
+  fix3_t@15 xoreal2; //bcrb
+  fix3_t@11 xoreal3; //blrb
+  fix3_t@1 xoreal4; //bcrc
+  fix3_t@6 xoreal5; //blrc
+  fix3_t@3 xoreal6; //bcrd
+  fix3_t@5 xoreal7; //blrd
+
+  fix3_t@12 xoimag0; //bcia
+  fix3_t@10 xoimag1; //blia
+  fix3_t@14 xoimag2; //bcib
+  fix3_t@9 xoimag3; //blib
+  fix3_t@0 xoimag4; //bcic
+  fix3_t@4 xoimag5; //blic
+  fix3_t@2 xoimag6; //bcid
+  fix3_t@7 xoimag7; //blid
+
+  // inputs are in normal order, real followed by imaginary
+  // read in to put inputs in bit reversed order
+  xireal0 = 0.3535;
+  xiimag0 = 0;
+  xireal4 = 0.3535;
+  xiimag4 = 0;
+  xireal2 = 0.6464;
+  xiimag2 = 0;
+  xireal6 = 1.0607;
+  xiimag6 = 0;
+  xireal1 = 0.3535;
+  xiimag1 = 0;
+  xireal5 = -1.0607;
+  xiimag5 = 0;
+  xireal3 = -1.3535;
+  xiimag3 = 0;
+  xireal7 = -0.3535;
+  xiimag7 = 0;
+
+  // top middle
+  fix3_t@21 bcrcosc[3] = {1.0, 0.0, 0.0};
+  fix3_t@21 bcrsinc[3] = {0.0, 1.0, 1.0};
+  fix3_t@23 bcicosd[3] = {1.0, 0.0, -0.7071};
+  fix3_t@23 bcisind[3] = {0.0, 1.0, 0.7071};
+
+  // right middle
+  fix3_t@19 blicosb[3] = {1.0, 1.0, 0.7071};
+  fix3_t@19 blisinb[3] = {0.0, 0.0, 0.7071};
+  fix3_t@29 blicosd[3] = {1.0, 0.0, -0.7071};
+  fix3_t@29 blisind[3] = {0.0, 1.0, 0.7071};
+
+  // bottom middle (bcra factored out)
+  fix3_t@30 bcicosb[3] = {1.0, 1.0, 0.7071};
+  fix3_t@30 bcisinb[3] = {0.0, 0.0, 0.7071};
+
+  // left middle (blra factored out)
+  fix3_t@22 blrcosc[3] = {1.0, 0.0, 0.0};
+  fix3_t@22 blrsinc[3] = {0.0, 1.0, 1.0};
+
+  // bcic, blic
+  fix3_t@33 ulcos[3] = {1.0, 0.0, 0.0};
+  fix3_t@33 ulsin[3] = {0.0, 1.0, 1.0};
+
+  // bcrd, blrd
+  fix3_t@32 urcos[3] = {1.0, 0.0, -0.7071};
+  fix3_t@32 ursin[3] = {0.0, 1.0, 0.7071};
+
+  // blia, bcia: ll corner is factored out
+
+
+  // blrb, bcrb
+  fix3_t@35 lrcos[3] = {1.0, 1.0, 0.7071};
+  fix3_t@35 lrsin[3] = {0.0, 0.0, 0.7071};
+
+
+  for(i from 0 to 3) {
+
+  xoimag4 = bcic(xiimag4,xireal5,xiimag5,ulcos[i],ulsin[i]);
+  xoimag5 = blic(xiimag4,xireal5,xiimag5,ulcos[i],ulsin[i]);
+
+  xoreal6 = bcrd(xireal6,xireal7,xiimag7,urcos[i],ursin[i]);
+  xoreal7 = blrd(xireal6,xireal7,xiimag7,urcos[i],ursin[i]);
+
+  xoreal3 = blrb(xireal2,xireal3,xiimag3,lrcos[i],lrsin[i]);
+  xoreal2 = bcrb(xireal2,xireal3,xiimag3,lrcos[i],lrsin[i]);
+
+  xoimag0 = bcia(xiimag0,xireal1,xiimag1);
+  xoimag1 = blia(xiimag0,xireal1,xiimag1);
+
+  xoreal0 = bcra(xireal0,xireal1,xiimag1);
+  xoreal1 = blra(xireal0,xireal1,xiimag1);
+
+  xoimag2 = bcib(xiimag2,xireal3,xiimag3,bcicosb[i],bcisinb[i]);
+  xoimag3 = blib(xiimag2,xireal3,xiimag3,blicosb[i],blisinb[i]);
+  xoreal4 = bcrc(xireal4,xireal5,xiimag5,bcrcosc[i],bcrsinc[i]);
+  xoreal5 = blrc(xireal4,xireal5,xiimag5,blrcosc[i],blrsinc[i]);
+  xoimag6 = bcid(xiimag6,xireal7,xiimag7,bcicosd[i],bcisind[i]);
+  xoimag7 = blid(xiimag6,xireal7,xiimag7,blicosd[i],blisind[i]);
+  
+  xireal0 = xoreal0;
+  xireal1 = xoreal2;
+  xireal2 = xoreal4;
+  xireal3 = xoreal6;
+  xireal4 = xoreal1;
+  xireal5 = xoreal3;
+  xireal6 = xoreal5;
+  xireal7 = xoreal7;
+  xiimag0 = xoimag0;
+  xiimag1 = xoimag2;
+  xiimag2 = xoimag4;
+  xiimag3 = xoimag6;
+  xiimag4 = xoimag1;
+  xiimag5 = xoimag3;
+  xiimag6 = xoimag5;
+  xiimag7 = xoimag7;
+
+  }
+}
