@@ -318,7 +318,8 @@
           ]
 
        [(is-a? ast FuncCall%)
-        (when (io-func? (get-field name ast))
+        (define name (get-field name ast))
+        (when (io-func? name)
           ;;add the node of this function to the set of used io nodes
           (set! used-io-nodes
             (set-add used-io-nodes (get-field fixed-node ast))))
@@ -335,7 +336,9 @@
 	  (define placeset (comminfo-placeset func-ret))
 
           ;; increase space
-          (inc-space-placeset placeset est-funccall)
+          (inc-space-placeset placeset (if (io-func? name)
+                                           (get-built-in-space name)
+                                           est-funccall))
 
           ;; infer place-type
           (for ([param (get-field stmts (get-field args func-ast))]

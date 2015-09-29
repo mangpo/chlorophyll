@@ -300,9 +300,14 @@
               (pretty-display (format "HEU: FuncCall(1) ~a, sig=~a" 
 				      (send ast to-string)
 				      (get-field signature ast))))
-	(define funccall-ret (hash-ref function-network (get-field name ast)))
-	(define networks (graphset-graph funccall-ret))
+        (define name (get-field name ast))
+        (define funccall-ret (hash-ref function-network name))
+        (define networks (graphset-graph funccall-ret))
         (define places (graphset-set funccall-ret))
+
+        (when (io-func? name)
+          (inc-space (hash-ref node-to-symbolic-core (get-field fixed-node ast))
+                     (get-built-in-space name)))
 
         ;; infer place-type
 	(for ([param (get-field stmts (get-field args (get-field signature ast)))]

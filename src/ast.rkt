@@ -1351,8 +1351,23 @@
                          ;;"delay_us" "delay_ms" "delay_s"
                          "delay_ns"))
 
+(define built-in-func-space #hash(("set_io" . 8)
+                                  ("digital_read" . 13)
+                                  ("digital_wakeup" . 8)
+                                  ("delay_unext" . 4)
+                                  ("delay_ns" . 9)))
+(define (get-built-in-space name)
+  (define m (regexp-match "([a-z_]+)([0-9]+)" name))
+  (if m
+      (hash-ref built-in-func-space (cadr m))
+      (raise (format "invalid io func: ~a" name)))
+  4)
+
 (define built-in-re (string-join (map (lambda (x) (format "(^~a[0-9]*$)" x))
                                       built-in-names) "|"))
 
 (define (io-func? name)
   (regexp-match built-in-re name))
+
+(define (analog-node? node)
+  (member node analog-nodes))
