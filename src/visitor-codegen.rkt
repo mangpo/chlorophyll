@@ -452,19 +452,25 @@
                [io (if (= (modulo wake-state 2) 1) 0 #x800)]
                [args  (cdr args)]
                [n-pins (length args)])
-
-          (when (= n-pins 4) ;;pin 4, bit 5
-            (set! io (bitwise-ior io (arithmetic-shift (car args) 4)))
-            (set! args (cdr args)))
-          (when (>= n-pins 3) ;;pin 3, bit 3
-            (set! io (bitwise-ior io (arithmetic-shift (car args) 2)))
-            (set! args (cdr args)))
-          (when (>= n-pins 2) ;;pin 2, bit 1
-            (set! io (bitwise-ior io (car args)))
-            (set! args (cdr args)))
-          (when (>= n-pins 1);; pin 1, bit 17
-            (set! io (bitwise-ior io (arithmetic-shift (car args) 16))))
-          (list (gen-block "io" "b!" (number->string io) "!b" 0 0)))]
+          (if (analog-node? (get-field fixed-node ast))
+              (begin
+                ;; set dac output level. TODO: non-constant values
+                (set! io (bitwise-ior io (bitwise-xor (bitwise-and (car args)
+                                                                   #x1ff)
+                                                      #x155))))
+              (begin ;;else: digital node
+                (when (= n-pins 4) ;;pin 4, bit 5
+                  (set! io (bitwise-ior io (arithmetic-shift (car args) 4)))
+                  (set! args (cdr args)))
+                (when (>= n-pins 3) ;;pin 3, bit 3
+                  (set! io (bitwise-ior io (arithmetic-shift (car args) 2)))
+                  (set! args (cdr args)))
+                (when (>= n-pins 2) ;;pin 2, bit 1
+                  (set! io (bitwise-ior io (car args)))
+                  (set! args (cdr args)))
+                (when (>= n-pins 1);; pin 1, bit 17
+                  (set! io (bitwise-ior io (arithmetic-shift (car args) 16))))))
+          (list (gen-block-in (number->string io) "io" "b!" "!b" 0 0 "io")))]
 
        [(and (is-a? ast FuncCall%)
        	     (regexp-match #rx"digital_read" (get-field name ast)))
