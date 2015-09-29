@@ -13,11 +13,10 @@
 
     (hash-set! funcdecls "in" (get-stdin))
     (hash-set! funcdecls "out" (get-stdout))
-    (for ([node digital-nodes])
-      (hash-set! funcdecls
-		 (format "digital_read~a" node) (get-digital-read node)))
 
     (for ([node (append analog-nodes digital-nodes)])
+      (hash-set! funcdecls
+		 (format "digital_read~a" node) (get-digital-read node))
       (hash-set! funcdecls
 		 (format "set_io~a" node) (get-set-io node))
       (hash-set! funcdecls
