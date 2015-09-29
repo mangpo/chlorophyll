@@ -31,7 +31,8 @@
 
     (for ([node io-nodes])
       (for ([name built-in-names])
-        (declare env (format "~a~a" name node) (comminfo 0 (set)))))
+        (declare env (format "~a~a" name node)
+                 (comminfo 0 (set (hash-ref node-to-symbolic-core node))))))
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)

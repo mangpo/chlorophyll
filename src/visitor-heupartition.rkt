@@ -148,6 +148,15 @@
     (hash-set! function-network "in" (graphset (list) (set)))
     (hash-set! function-network "out" (graphset (list) (set)))
 
+    (for ([node (append analog-nodes digital-nodes)])
+      (for ([name '("digital_read~a"
+                    "set_io~a"
+                    "digital_wakeup~a"
+                    "delay_ns~a"
+                    "delay_unext~a")])
+        (hash-set! function-network (format name node)
+                   (graphset (list) (set)))))
+
     (define (inc-space place sp)
       ;(pretty-display `(inc-space ,place))
       (if (is-a? place TypeExpansion%)
@@ -211,8 +220,11 @@
        [(is-a? ast Num%)
         (when debug 
               (pretty-display (format "HUE: Num ~a" (send ast to-string))))
-        (inc-space (get-field place-type ast) est-num)
-        (graphset (list) (set (get-field place-type ast)))
+        (when (get-field place-type ast)
+          (inc-space (get-field place-type ast) est-num))
+        (if (get-field place-type ast)
+            (graphset (list) (set (get-field place-type ast)))
+            (graphset (list) (set)))
         ]
 
        [(is-a? ast Array%)
