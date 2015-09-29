@@ -10,9 +10,11 @@
 
 (define (merge-sym-partition n space flow-graph capacity 
 			     refine-capacity part2capacity
-			     conflict-list)
+			     conflict-list my-ast)
   (define sol-map (make-hash))
   (define conflict-map (make-hash))
+  ;; Mapping from logical core (either concrete or symbolic) to physical core.
+  (define node-to-core (make-hash))
   
   (when debug (pretty-display `(conflict-list ,conflict-list)))
   ;; Construct conflict-map
@@ -44,43 +46,50 @@
     (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
+    (define c1 (and (hash-has-key? node-to-core r1) (hash-ref node-to-core r1)))
+    (define c2 (and (hash-has-key? node-to-core r2) (hash-ref node-to-core r2)))
+
     (define limit capacity)
     (define parent #f)
     (define child #f)
     (when (hash-has-key? part2capacity r1)
-	  (set! limit (hash-ref part2capacity r1))
-	  (set! parent r1)
-	  (set! child r2)
-	  )
+          (set! limit (hash-ref part2capacity r1))
+          (set! parent r1)
+          (set! child r2)
+          )
     (when (and (hash-has-key? part2capacity r2) (< (hash-ref part2capacity r2) limit))
-	  (set! limit (hash-ref part2capacity r2))
-	  (set! parent r2)
-	  (set! child r1)
-	  )
+          (set! limit (hash-ref part2capacity r2))
+          (set! parent r2)
+          (set! child r1)
+          )
 
     (when (and (symbolic? r1) (not (symbolic? r2)))
-	  (set! parent r2)
-	  (set! child r1))
+          (set! parent r2)
+          (set! child r1))
 
     (when (and (symbolic? r2) (not (symbolic? r1)))
-	  (set! parent r1)
-	  (set! child r2))
+          (set! parent r1)
+          (set! child r2))
 
     (unless parent
-	    (set! parent r1)
-	    (set! child r2))
-
-    (when debug (pretty-display `(root ,r1 ,r2 ,limit)))
+            (set! parent r1)
+            (set! child r2))
 
     (when (and (not (equal? r1 r2))
                (or (symbolic? r1) (symbolic? r2))
+               (or (not c1) (not c2) (equal? c1 c2))
                (not (hash-has-key? conflict-map (cons r1 r2)))
                (not (hash-has-key? conflict-map (cons r2 r1)))
                (< (+ (hash-ref space r1) (hash-ref space r2)) 
                   (inexact->exact (floor (* limit scale)))))
-	  (when debug (pretty-display `(merge ,p1 ,p2)))
-	  (point child parent)
-	  ))
+          (cond
+           [(and c1 (not c2)) (hash-set! node-to-core r2 c1)]
+           [(and c2 (not c1)) (hash-set! node-to-core r1 c2)])
+
+          (when debug (pretty-display `(root ,r1 ,r2 ,limit)))
+          (when debug (pretty-display `(merge ,p1 ,p2)))
+          (point child parent)
+          ))
 
 
   (when debug
@@ -92,6 +101,20 @@
   (for ([key (hash-keys space)])
        (hash-set! sol-map key key))
 
+  ;; initialize node-to-core
+  (for ([pair (hash->list node-to-symbolic-core)])
+       (let ([core (car pair)]
+             [node (cdr pair)])
+         (hash-set! node-to-core node core)))
+
+  ;; unify concrete fixed node to its symbolic node
+  (for ([mapping (get-field fixed-parts my-ast)])
+       (let ([node (car mapping)]
+             [core (cdr mapping)])
+         (when (hash-has-key? node-to-symbolic-core core)
+               (pretty-display `(fixed-unify ,node ,(hash-ref node-to-symbolic-core core)))
+               (unify node (hash-ref node-to-symbolic-core core)))))
+  
   (for ([e flow-graph])
        (unify (car e) (cdr e)))
 

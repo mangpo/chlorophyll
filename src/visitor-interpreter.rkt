@@ -212,7 +212,23 @@
 		 (unless (equal? set-x set-y)
 			 (for* ([x set-x]
 				[y set-y])
-			       (assert (not (= x y))))))))
+			       (assert (not (= x y)))))))
+
+        ;; unify concrete fixed node to its symbolic node
+        (for ([mapping (get-field fixed-parts ast)])
+             (let ([node (car mapping)]
+                   [core (cdr mapping)])
+               (when (hash-has-key? node-to-symbolic-core core)
+                     (assert (= node (hash-ref node-to-symbolic-core core))))))
+
+        ;; logical cores of different physical cores can't be the same.
+        (define sym-nodes (list->vector (hash-values node-to-symbolic-core)))
+        (for* ([i (vector-length sym-nodes)]
+               [j (vector-length sym-nodes)])
+              (unless (= i j)
+                      (assert (not (= (vector-ref sym-nodes i)
+                                      (vector-ref sym-nodes j))))))
+      )
       
     (define/public (visit ast)
       (cond
@@ -560,8 +576,7 @@
 	(comminfo 0 (set))]
 
        [(is-a? ast Program%)
-        (when debug
-            (pretty-display ">> Program"))
+        (when debug (pretty-display ">> Program"))
 
 	(define ret #f)
 	(for ([decl (get-field stmts ast)])

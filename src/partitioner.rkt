@@ -315,8 +315,10 @@
 
     (pretty-display global-sol)
     (for ([sol-pair (solution->list global-sol)])
-         (when (equal? (vector-ref new-part2sym (cdr sol-pair)) #f)
-               (vector-set! new-part2sym (cdr sol-pair) (car sol-pair))))
+         (let ([node (cdr sol-pair)])
+           (when (and (>= node 0) (< node num-core))
+                 (equal? (vector-ref new-part2sym (cdr sol-pair)) #f)
+                 (vector-set! new-part2sym (cdr sol-pair) (car sol-pair)))))
     ]
 
    [else
@@ -326,7 +328,7 @@
       (send my-ast accept (new heuristic-partitioner%)))
     (define result (merge-sym-partition num-core space network capacity 
 					refine-capacity part2capacity
-					conflict-list))
+					conflict-list my-ast))
     (set-global-sol (sat (make-immutable-hash (hash->list (car result)))))
     (set! new-part2sym (cdr result))
     

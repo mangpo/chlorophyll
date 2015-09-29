@@ -1051,7 +1051,7 @@
   (class Scope%
     (super-new)
     (init-field condition true-block [false-block #f] [pre #f])
-    (inherit print-send-path)
+    (inherit print-send-path print-body-placeset)
 
     (define/override (clone)
       (new If% [condition (send condition clone)] 
@@ -1068,6 +1068,7 @@
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(IF" indent))
+      (print-body-placeset indent)
       (pretty-print-content indent))
 ))
 
@@ -1076,7 +1077,7 @@
   (class If%
     (super-new)
     (inherit-field condition true-block false-block pre)
-    (inherit pretty-print-content)
+    (inherit pretty-print-content print-body-placeset)
     
     (define/override (clone)
       (new If!=0% [condition (send condition clone)] 
@@ -1086,6 +1087,7 @@
       
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(IF!=0" indent))
+      (print-body-placeset indent)
       (pretty-print-content indent))
     ))
 
@@ -1094,7 +1096,7 @@
   (class If%
     (super-new)
     (inherit-field condition true-block false-block pre)
-    (inherit pretty-print-content)
+    (inherit pretty-print-content print-body-placeset)
     
     (define/override (clone)
       (new If<0% [condition (send condition clone)] 
@@ -1104,6 +1106,7 @@
       
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(IF<0" indent))
+      (print-body-placeset indent)
       (pretty-print-content indent))
     ))
 
@@ -1111,7 +1114,7 @@
   (class Scope%
     (super-new)
     (init-field condition body [bound 100] [pre (new Block% [stmts (list)])])
-    (inherit print-send-path)
+    (inherit print-send-path print-body-placeset)
 
     (define/override (clone)
       (new While% [condition (send condition clone)] [body (send body clone)]
@@ -1128,6 +1131,7 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(WHILE" indent))
+      (print-body-placeset indent)
       (pretty-print-content indent))
 
 ))

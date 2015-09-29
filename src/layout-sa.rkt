@@ -1,6 +1,8 @@
 #lang s-exp rosette
 
-(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt" "ast.rkt" "routing.rkt")
+(require "path.rkt" "header.rkt" "ast-util.rkt" "visitor-flow.rkt" "ast.rkt"
+         ;;"routing.rkt"
+         )
 
 (provide (all-defined-out) (struct-out layoutinfo))
 
@@ -21,31 +23,31 @@
 (define (index x y w)
   (+ (* x w) y))
 
-;; (define (route core-a core-b w)
-;;   (let ([a-x (floor (/ core-a w))]
-;;         [a-y (modulo core-a w)]
-;;         [b-x (floor (/ core-b w))]
-;;         [b-y (modulo core-b w)])
+(define (route core-a core-b w)
+  (let ([a-x (floor (/ core-a w))]
+        [a-y (modulo core-a w)]
+        [b-x (floor (/ core-b w))]
+        [b-y (modulo core-b w)])
     
-;;     (define (move-y x y)
-;;       (cond 
-;;         [(< y b-y)
-;;          (cons (index x y w) (move-y x (add1 y)))]
-;;         [(> y b-y)
-;;          (cons (index x y w) (move-y x (sub1 y)))]
-;;         [else
-;;          (list (index x y w))]))
+    (define (move-y x y)
+      (cond 
+        [(< y b-y)
+         (cons (index x y w) (move-y x (add1 y)))]
+        [(> y b-y)
+         (cons (index x y w) (move-y x (sub1 y)))]
+        [else
+         (list (index x y w))]))
     
-;;     (define (move-x x y)
-;;       (cond 
-;;         [(< x b-x)
-;;          (cons (index x y w) (move-x (add1 x) y))]
-;;         [(> x b-x)
-;;          (cons (index x y w) (move-x (sub1 x) y))]
-;;         [else
-;;          (move-y x y)]))
+    (define (move-x x y)
+      (cond 
+        [(< x b-x)
+         (cons (index x y w) (move-x (add1 x) y))]
+        [(> x b-x)
+         (cons (index x y w) (move-x (sub1 x) y))]
+        [else
+         (move-y x y)]))
     
-;;     (move-x a-x a-y)))
+    (move-x a-x a-y)))
 
 (define (set-remove* x a b)
   (when (set-member? x a) (set! x (set-remove x a)))
@@ -55,6 +57,7 @@
 ;; Gnerate (w x h + 1) x (w x h + 1) table
 ;; w x h corresponds to io
 (define (gen-route flow-graph part2core noroute w h)
+  (pretty-display "Generating routes...")
   ;; Mapping partitions to cores in form of x*w + y
   (define n-1 (* w h))
   (define n (add1 n-1))
@@ -70,9 +73,12 @@
   (for ([i (in-range n-1)])
     (vector-set! core2route i (make-vector n #f))
     (for ([j (in-range n-1)])
-      (when (and (not (= i j)) (set-member? cores i) (set-member? cores j))
+         (when (and (not (= i j))
+                    ;;(set-member? cores i) (set-member? cores j)
+                    )
             (vector-2d-set! core2route n i j
-                            (route i j w h (set-remove* obstacles i j))
+                            (route i j w)
+                            ;;(route i j w h (set-remove* obstacles i j))
                             ))))
   #|
   (for ([comm flow-graph])
@@ -115,7 +121,7 @@
       (define fix (make-vector (* w h)))
       (for ([core (hash-keys node-to-symbolic-core)])
 	(let ([n (evaluate-with-sol (hash-ref node-to-symbolic-core core))])
-	  (unless (term? n)
+	  (when (and (not (term? n)) (>= n 0) (< n (* w h)))
 	    (vector-set! fix (+ (* (quotient core 100) 18) (modulo core 100))
 			 (add1 n)))))
 
@@ -141,9 +147,13 @@
          (string-split
           (last (string-split
                  (with-output-to-string
-                  (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
-                                             srcpath outdir name))))
-                  ;(lambda () (system (format "./qap/sa_qap ~a/~a.dat 20000000 6" outdir name))))
+                   ;; Use this line for fast but low quality layout.
+                   (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 1000000 3" 
+                                              srcpath outdir name)))
+                   ;; Use this line if we need better layout.
+                   ;; (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
+                   ;;                            srcpath outdir name)))
+                  )
                  "\n")))))
   (define stop (current-seconds))
   (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
