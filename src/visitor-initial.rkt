@@ -42,15 +42,17 @@
         (when (equal? (get-field name ast) "set_io")
           (let* ([args (get-field args ast)]
                  [node (send (car args) get-value)]
-                 [min-args (add1 (hash-ref node-to-num-pins node))])
+                 [min-args (if (analog-node? node)
+                               2
+                               (add1 (hash-ref node-to-num-pins node)))])
             (when (= (length args) min-args)
-               (let ([arg (new Num%
-                                [n (new Const%
-                                        [n 1];;default value
-                                        [pos (get-field pos ast)])];;?
-                                [type "int"]
-                                [pos (get-field pos ast)])])
-                  (set-field! args ast (append args (list arg)))))))
+              (let ([arg (new Num%
+                              [n (new Const%
+                                      [n 1];;default value
+                                      [pos (get-field pos ast)])];;?
+                              [type "int"]
+                              [pos (get-field pos ast)])])
+                (set-field! args ast (append args (list arg)))))))
 
         (when (io-func? (get-field name ast))
           (set-field! fixed-node ast (send (car (get-field args ast)) get-value)))

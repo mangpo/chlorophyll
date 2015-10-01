@@ -39,10 +39,12 @@
 
 ;; returns the ast for a call to set_io for NODE
 (define (get-set-io node)
-  (let ([sym (hash-ref node-to-symbolic-core node)])
+  (let ([sym (hash-ref node-to-symbolic-core node)]
+        [n-params (if (analog-node? node)
+                      2
+                      (add1 (hash-ref node-to-num-pins node)))])
     (new FuncDecl% [name (format "set_io~a" node)]
-	 [args (new Block% [stmts (for/list ([i (add1 (hash-ref node-to-num-pins
-                                                                node))])
+	 [args (new Block% [stmts (for/list ([i n-params])
 				    (new Param%
 					 [var-list (list (format "state~a" i))]
 					 [type "int"]
