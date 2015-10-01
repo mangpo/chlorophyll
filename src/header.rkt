@@ -38,7 +38,7 @@
   (set! outdir (string-append
                 (substring filepath 0 (cdr (last (regexp-match-positions* #rx"/" filepath))))
                 "output-" name))
-  (system (format "mkdir ~a" outdir))
+  (system (format "mkdir -p ~a" outdir))
 
   ;; (define outdir-split (string-split outdir "/"))
   ;; (define outdir-up-count (count (lambda (x) (equal? x "..")) outdir-split))
