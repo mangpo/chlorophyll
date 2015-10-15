@@ -8,8 +8,10 @@
 (define placeset-collector%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field for-conflict)
+    ;; save - save placeset into body-placeset field or not.      
+    (init-field save)
     (define functions (make-hash))
+    (define env (make-hash))
 
     (define (make-set x)
       ;(pretty-display `(make-set ,x))
@@ -28,6 +30,11 @@
 	(for ([p x]) (set! ret (set-add ret (get-field place p))))
 	ret
 	]
+       [(is-a? x Place%)
+        (let ([at (get-field at x)])
+          (if (or (equal? at "any") (equal? at "io"))
+              (set)
+              (raise "make-set doesn't support Place% that is not @any or @io")))]
        [else (raise `(make-set ,x))]))
 
     (define/public (set-functions funcs)
@@ -36,6 +43,10 @@
 	   (hash-set! functions (get-field name f) f)))
 
     (define/public (visit ast)
+      (define (save? s)
+        (when save (set-field! body-placeset ast s))
+        s)
+      
       (cond
        [(is-a? ast Num%)
         (make-set (get-field place-type ast))]
@@ -58,9 +69,17 @@
 
        [(is-a? ast FuncCall%)
         (define ret (make-set (get-field place-type ast)))
-	(when (hash-has-key? functions (get-field name ast))
-	      (set! ret (set-union ret 
-				   (send (hash-ref functions (get-field name ast)) accept this))))
+        (define name (get-field name ast))
+	(cond
+         ;; for visitor-unroll (save = #f)
+         [(hash-has-key? functions (get-field name ast))
+          (set! ret
+                (set-union
+                 ret 
+                 (send (hash-ref functions (get-field name ast)) accept this)))]
+         ;; for standlone (save = #t)
+         [(hash-has-key? env name)
+          (set! ret (set-union ret (hash-ref env name)))])
 
         (for ([arg (get-field args ast)])
              (set! ret (set-union ret (make-set (get-field place-type arg)))))
@@ -73,19 +92,19 @@
         (make-set (get-field place-list ast))]
 
        [(is-a? ast For%)
-        (send (get-field body ast) accept this)]
+        (save? (send (get-field body ast) accept this))]
 
        [(is-a? ast If%)
-        (set-union (send (get-field condition ast) accept this)
-                   (send (get-field true-block ast) accept this)
-                   (if (get-field false-block ast)
-                       (send (get-field false-block ast) accept this)
-                       (set)))]
+        (save? (set-union (send (get-field condition ast) accept this)
+                          (send (get-field true-block ast) accept this)
+                          (if (get-field false-block ast)
+                              (send (get-field false-block ast) accept this)
+                              (set))))]
 
        [(is-a? ast While%)
-        (set-union (send (get-field pre ast) accept this)
-                   (send (get-field condition ast) accept this)
-                   (send (get-field body ast) accept this))]
+        (save? (set-union (send (get-field pre ast) accept this)
+                          (send (get-field condition ast) accept this)
+                          (send (get-field body ast) accept this)))]
 
        [(is-a? ast Assign%) 
         (set-union (send (get-field lhs ast) accept this)
@@ -95,12 +114,15 @@
         (set)]
 
        [(is-a? ast Block%)
-        (foldl (lambda (stmt all) (set-union all (send stmt accept this)))
-               (set) (get-field stmts ast))]
+        (save? (foldl (lambda (stmt all) (set-union all (send stmt accept this)))
+                      (set) (get-field stmts ast)))]
 
        [(is-a? ast FuncDecl%)
-        (set-union (send (get-field args ast) accept this)
-                   (send (get-field body ast) accept this))]
+        (define ret (save? (set-union (send (get-field args ast) accept this)
+                                      (send (get-field body ast) accept this))))
+        (when save (hash-set! env (get-field name ast) ret))
+        ret
+        ]
 
        [else (raise (format "visitor-placeset: unimplemented for ~a" ast))]
        ))))

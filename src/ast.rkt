@@ -1201,9 +1201,10 @@
 ))
 
 (define Block%
-  (class Base%
+  (class Scope%
      (super-new)
-     (init-field stmts [parent #f])
+     (init-field stmts)
+     (inherit-field parent)
 
      (define/override (clone)
        (new Block% [stmts (map (lambda (x) (send x clone)) stmts)]))
@@ -1229,11 +1230,11 @@
   (class Block%
     (super-new)
     (inherit-field stmts)
-    (init-field [fixed-parts #f] [noroute #f] [conflict-list (list)])
+    (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
-	   [fixed-parts fixed-parts] [noroute noroute]))
+	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]))
     ))
 
 (define FuncDecl%

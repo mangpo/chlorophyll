@@ -148,10 +148,10 @@
           (last (string-split
                  (with-output-to-string
                    ;; Use this line for fast but low quality layout.
-                   (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 1000000 3" 
+                   (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
                                               srcpath outdir name)))
                    ;; Use this line if we need better layout.
-                   ;; (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
+                   ;; (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 100000000 3" 
                    ;;                            srcpath outdir name)))
                   )
                  "\n")))))

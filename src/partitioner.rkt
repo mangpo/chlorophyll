@@ -9,6 +9,7 @@
          "visitor-heupartition.rkt"
          "visitor-interpreter.rkt" 
          "visitor-loopbound.rkt"
+         "visitor-placeset.rkt"
          "visitor-placetype.rkt"
 	 "visitor-postunroll.rkt"
          "visitor-printer.rkt"
@@ -92,6 +93,7 @@
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))
   (define interpreter (new count-msg-interpreter% [places cores]))
+  (define placeset-collector (new placeset-collector% [save #t]))
   
   ;; Place holder for solution
   (define num-msg #f)
@@ -100,7 +102,7 @@
   
   (define (solve-function func-ast refine-capacity refine-part2capacity)
     (define start (current-seconds))
-    (define comm-result (send func-ast accept interpreter))
+    (define num-msg (send func-ast accept interpreter))
 
     (let* ([nodes (list->vector (set->list (get-field used-io-nodes interpreter)))]
 	   [len (vector-length nodes)])
@@ -112,8 +114,6 @@
 					 (vector-ref nodes j))))))))
 
     (cores-refine cores part2capacity)
-
-    (set! num-msg (comminfo-msgs comm-result))
     
     (when verbose
       (pretty-display "\n=== After interpreter ===")
@@ -265,7 +265,6 @@
                            (update-global-sol)
                            (clear-asserts)
 			   (current-solution (empty-solution))
-                           (comminfo-placeset comm-result)
                            )
                          (begin
                            (pretty-display e)
@@ -289,27 +288,30 @@
 	 (when (and (not (equal? sym #f))
 		    (or (not (hash-has-key? part2capacity sym))
 			(> (hash-ref part2capacity sym) cap)))
-		 (hash-set! part2capacity sym cap))))
+               (hash-set! part2capacity sym cap))))
+
+  (send my-ast accept placeset-collector)
     
   (cond
    [synthesis
     (pretty-display "Running partitioning synthesizer ...")
     (send interpreter assert-conflict my-ast)
 
-    (define placeset #f)
     (for ([decl (get-field stmts my-ast)])
 	 (if 
 	  ;;(is-a? decl FuncDecl%) ;; Use this for solving function by function
 	  (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
 	  (begin
-	    (set! placeset (solve-function decl refine-capacity part2capacity))
+	    (solve-function decl refine-capacity part2capacity)
 	    (when verbose (pretty-display "------------------------------------------------")))
 	  (send decl accept interpreter)))
 
-    (unless placeset
-	    (raise "Check if your program has function 'main'"))
-
     ;; Construct new-part2sym.
+    (define placeset (set))
+    (for ([decl (get-field stmts my-ast)])
+         (when (is-a? decl FuncDecl%)
+               (set! placeset (set-union placeset (get-field body-placeset decl)))))
+         
     (for ([p placeset])
          (unless (symbolic? p) (vector-set! new-part2sym p p)))
 

@@ -10,11 +10,12 @@
 (define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT
-                               INT VOID CLUSTER FOR WHILE IF ELSE FROM TO RETURN
+                               INT VOID CLUSTER ACTOR
+                               FOR WHILE IF ELSE FROM TO RETURN
                                ASSUME
 			       READ WRITE
                                PLACE HERE ANY GHOST  
-			       HASH MAP NOROUTE))
+			       HASH MAP NOROUTE INVOKE))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -51,6 +52,7 @@
    ("return" (token-RETURN))
    ;; ("known" (token-KNOWN))
    ("cluster" (token-CLUSTER))
+   ("actor" (token-ACTOR))
    ;; ("#read"  (token-READ))
    ;; ("#write" (token-WRITE))
    ("for"   (token-FOR))
@@ -68,6 +70,7 @@
    ("#" (token-HASH))
    ("noroute" (token-NOROUTE))
    ("-->" (token-MAP))
+   ("~>" (token-INVOKE))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -466,12 +469,18 @@
          (() (list))
 	 ((NOROUTE @ LBRACK num-list RBRACK) $4))
 
+    (actors
+         (() (list))
+         ((ACTOR VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL actors)
+          (cons (list $2 $5 $7) $10)))
+
     (decls
          ((func-decl) (list $1))
          ((func-decl decls) (cons $1 $2)))
          
     (program
-         ((part2core noroute decls) (new Program% [stmts $3] [fixed-parts $1] [noroute $2])))
+     ((part2core noroute actors decls)
+      (new Program% [stmts $4] [fixed-parts $1] [noroute $2] [actors $3])))
 
 )))
 
