@@ -30,7 +30,7 @@
 
   (define (root place)
     (define parent (hash-ref sol-map place))
-    ;(pretty-display `(root ,place ,parent))
+    ;;(pretty-display `(root ,place ,parent))
     (if (equal? place parent)
         place
         (let ([r (root parent)])
@@ -42,8 +42,8 @@
     (hash-set! space r2 (+ (hash-ref space r1) (hash-ref space r2)))
     (hash-remove! space r1))
   
-  (define (unify p1 p2 [scale 1])
-    (when debug (pretty-display `(unify ,p1 ,p2)))
+  (define (unify p1 p2 [scale 1] #:must [must #f])
+    ;; (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
     (define c1 (and (hash-has-key? node-to-core r1) (hash-ref node-to-core r1)))
@@ -63,11 +63,11 @@
           (set! child r1)
           )
 
-    (when (and (symbolic? r1) (not (symbolic? r2)))
+    (when (symbolic? r1)
           (set! parent r2)
           (set! child r1))
 
-    (when (and (symbolic? r2) (not (symbolic? r1)))
+    (when (symbolic? r2)
           (set! parent r1)
           (set! child r2))
 
@@ -76,18 +76,22 @@
             (set! child r2))
 
     (when (and (not (equal? r1 r2))
-               (or (symbolic? r1) (symbolic? r2))
-               (or (not c1) (not c2) (equal? c1 c2))
-               (not (hash-has-key? conflict-map (cons r1 r2)))
-               (not (hash-has-key? conflict-map (cons r2 r1)))
-               (< (+ (hash-ref space r1) (hash-ref space r2)) 
-                  (inexact->exact (floor (* limit scale)))))
+               (or must
+                   (and
+                    (or (symbolic? r1) (symbolic? r2))
+                    (or (not c1) (not c2) (equal? c1 c2))
+                    (not (hash-has-key? conflict-map (cons r1 r2)))
+                    (not (hash-has-key? conflict-map (cons r2 r1)))
+                    (< (+ (hash-ref space r1) (hash-ref space r2)) 
+                       (inexact->exact (floor (* limit scale)))))))
           (cond
            [(and c1 (not c2)) (hash-set! node-to-core r2 c1)]
            [(and c2 (not c1)) (hash-set! node-to-core r1 c2)])
 
-          (when debug (pretty-display `(root ,r1 ,r2 ,limit)))
-          (when debug (pretty-display `(merge ,p1 ,p2)))
+          ;;(when debug (pretty-display `(root ,r1 ,r2 ,limit)))
+          (when debug (pretty-display `(merge ,r1 ,r2 ,must
+                                              ,(hash-ref space r1)
+                                              ,(hash-ref space r2))))
           (point child parent)
           ))
 
@@ -112,18 +116,21 @@
        (let ([node (car mapping)]
              [core (cdr mapping)])
          (when (hash-has-key? node-to-symbolic-core core)
-               (pretty-display `(fixed-unify ,node ,(hash-ref node-to-symbolic-core core)))
-               (unify node (hash-ref node-to-symbolic-core core)))))
+               (let ([sym-core (hash-ref node-to-symbolic-core core)])
+                 (when (hash-has-key? sol-map sym-core)
+                       (pretty-display `(fixed-unify ,node ,core ,sym-core))
+                       (unify node (hash-ref node-to-symbolic-core core)
+                              #:must #t))))))
   
   (for ([e flow-graph])
        (unify (car e) (cdr e)))
 
   ;; post merge to reduce number of cores
-  (define partitions (hash-keys space))
-  (for* ([p1 partitions]
-  	 [p2 partitions])
-  	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
-  	      (unify p1 p2 0.7)))
+  ;; (define partitions (hash-keys space))
+  ;; (for* ([p1 partitions]
+  ;; 	 [p2 partitions])
+  ;; 	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
+  ;; 	      (unify p1 p2 0.7)))
 
   (define vals (hash-values sol-map))
   (define concrete-vals (list->set (filter (lambda (x) (not (symbolic? x))) vals)))
@@ -144,9 +151,9 @@
          (if (symbolic? val)
 	     (begin
                (hash-set! sol-map val (next-counter))
-	       (pretty-display `(set-concrete2sym ,counter val))
+	       ;; (pretty-display `(set-concrete2sym ,counter val))
 	       (vector-set! concrete2sym counter val) ;; set concrete2sym
-	       (when debug (pretty-display `(hash-set ,val ,counter)))
+	       ;; (when debug (pretty-display `(hash-set ,val ,counter)))
 	       (hash-set! sol-map counter counter)
 	       (set! counter (add1 counter))
 	       (root key))
@@ -155,7 +162,7 @@
   
   (when debug
         (pretty-display "------------------ after merge sym partition ---------------------")
-        (pretty-display sol-map))
+        (pretty-display `(sol-map ,sol-map)))
   (cons sol-map concrete2sym))
   
 
@@ -324,7 +331,9 @@
         (if (io-func? name)
             (inc-space (hash-ref node-to-symbolic-core (get-field fixed-node ast))
                        (get-built-in-space name))
-            (inc-space-placeset body-places est-funccall))
+            ;; (inc-space-placeset body-places est-funccall)
+            (void)
+            )
 
         ;; infer place-type
 	(for ([param (get-field stmts (get-field args (get-field signature ast)))]
@@ -402,7 +411,7 @@
                            (send ast bound-error))
                      (set! last to))))
 
-        (inc-space-placeset (get-field body-placeset ast) est-for)
+        ;; (inc-space-placeset (get-field body-placeset ast) est-for)
 
         (define body-ret (send (get-field body ast) accept this))
         (multiply-weight body-ret (- (get-field to ast) (get-field from ast)))
@@ -430,7 +439,7 @@
              (set! networks (append networks (network cond-place b))))
 
         ;; increase space
-        (inc-space-placeset (get-field body-placeset ast) est-if)
+        ;; (inc-space-placeset (get-field body-placeset ast) est-if)
 
 	networks
         ]
@@ -449,7 +458,7 @@
              (set! networks (append networks (network cond-place b))))
           
         ;; increase space
-        (inc-space-placeset (get-field body-placeset ast) est-while)
+        ;; (inc-space-placeset (get-field body-placeset ast) est-while)
 
         (multiply-weight networks (get-field bound ast))
         ]

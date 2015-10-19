@@ -480,9 +480,21 @@
          
     (program
      ((part2core noroute actors decls)
-      (new Program% [stmts $4] [fixed-parts $1] [noroute $2] [actors $3])))
+      (new Program% [stmts $4] [fixed-parts $1] [noroute $2]
+           [actors (actor-map $3)])))
 
-)))
+    )))
+
+(define (actor-map l)
+  (define map (make-hash))
+  (for ([x l])
+       (let ([func (first x)]
+             [caller (second x)]
+             [actor (third x)])
+         (if (hash-has-key? map func)
+             (hash-set! map func (cons (cons actor caller) (hash-ref map func)))
+             (hash-set! map func (list (cons actor caller))))))
+  map)
 
 (define (lex-this lexer input) 
   (lambda () 

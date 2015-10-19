@@ -1213,7 +1213,10 @@
        (for ([stmt stmts])
             (send stmt pretty-print indent)))
 
-))
+     ))
+
+(define BlockActor%
+  (class Block% (super-new)))
 
 (define BlockDup%
   (class Block%
@@ -1235,6 +1238,15 @@
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
 	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]))
+
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "PROGRAM"))
+      (pretty-display (format ">> noroute = ~a" noroute))
+      (pretty-display (format ">> actors = ~a" actors))
+      
+      (for ([stmt stmts])
+           (send stmt pretty-print indent)))
     ))
 
 (define FuncDecl%
@@ -1300,6 +1312,31 @@
 
     (define/override (to-string)
       (format "read(~a)" port))))
+
+(define PortListen%
+  (class Base%
+    (super-new)
+    (init-field port)
+
+    (define/override (clone)
+      (new PortListen% [port port]))
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(PortListen port: ~a)" indent port)))))
+  
+
+(define PortExec%
+  (class Base%
+    (super-new)
+    (init-field name port node)
+
+    (define/override (clone)
+      (new PortExec% [name name] [port port] [node node]))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(PortExec node:~a, port: ~a, name: ~a)"
+                              indent node port name)))
+  ))
 
 (define Range%
   (class Base%

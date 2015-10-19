@@ -90,6 +90,19 @@
     (display indent)
     (display "a! dup dup or 17 for +* unext drop drop a ")]
    
+   [(port-exec? x)
+    (display (format "~a b! @p [ .. ~a .. ] !b "
+                     (port-exec-port x) (port-exec-name x)))]
+   
+   [(port-listen? x)
+    (define port (port-listen-port x))
+    (cond
+     [(equal? port "up") (display "---u ")]
+     [(equal? port "down") (display "-d-- ")]
+     [(equal? port "left") (display "--l- ")]
+     [(equal? port "right") (display "r--- ")]
+     [else (raise (format "arrayforth-print: port-listen unimplemented for ~a" port))])]
+   
    [(funccall? x)
     (define name (funccall-name x))
     (when (or original (not (member name (list "in" "out"))))
@@ -265,5 +278,14 @@
 
        [(funccall? ast)
 	(funccall-name ast)]
+
+       [(port-exec? ast)
+        (format "port-exec ~a ~a ~a"
+                (port-exec-name ast)
+                (port-exec-port ast)
+                (port-exec-at ast))]
+
+       [(port-listen? ast)
+        (format "port-listen ~a" (port-listen-port ast))]
 
        [else #f]))))

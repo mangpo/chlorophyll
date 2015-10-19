@@ -41,9 +41,12 @@
        [(or (is-a? ast VarDecl%)
             (is-a? ast ArrayDecl%)
             (is-a? ast Num%)
-            (is-a? ast Recv%))
+            (is-a? ast Recv%)
+            (is-a? ast PortListen%)
+            (is-a? ast PortExec%)
+            )
         (when debug
-              (pretty-display (format "\nACCESS: Decl, Num, Recv")))
+              (pretty-display (format "\nACCESS: Decl, Num, Recv, PortListen, PortExec")))
         0]
        
        [(is-a? ast UnaExp%)

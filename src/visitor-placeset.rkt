@@ -9,7 +9,7 @@
   (class* object% (visitor<%>)
     (super-new)
     ;; save - save placeset into body-placeset field or not.      
-    (init-field save)
+    (init-field save actors)
     (define functions (make-hash))
     (define env (make-hash))
 
@@ -83,6 +83,11 @@
 
         (for ([arg (get-field args ast)])
              (set! ret (set-union ret (make-set (get-field place-type arg)))))
+
+        (when (hash-has-key? actors name)
+              (define l (hash-ref actors name))
+              (for ([pair l])
+                   (set! ret (set-remove ret (car pair)))))
         ret]
 
        [(is-a? ast VarDecl%)

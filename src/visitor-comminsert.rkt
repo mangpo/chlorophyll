@@ -2,7 +2,9 @@
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt"
-         "visitor-interface.rkt")
+         "visitor-interface.rkt"
+         "layout-sa.rkt" "routing.rkt"
+         )
 
 (provide commcode-inserter%)
 
@@ -12,10 +14,28 @@
 (define commcode-inserter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field routing-table part2core n)
+    (init-field routing-table part2core w h obstacles actors)
+    ;; TODO: check if obstacles have everything.
 
     (define debug #f)
+    (define n (* w h))
     (define visited (make-hash))
+    (define obs? (> (set-count obstacles) 0))
+
+    (define (get-route i j)
+      (define ret (vector-2d-ref routing-table i j))
+      (cond
+       [ret ret]
+       [obs?
+        (define path (route-obs i j w h (set-remove* obstacles i j)))
+        (vector-2d-set! routing-table n i j path)
+        (vector-2d-set! routing-table n j i (reverse path))
+        path]
+       [else
+        (define path (route i j w))
+        (vector-2d-set! routing-table n i j path)
+        (vector-2d-set! routing-table n j i (reverse path))
+        path]))
 
     (define (construct-placelist x-placelist y-placelist index)
       (if (and (empty? x-placelist) (empty? y-placelist))
@@ -31,19 +51,19 @@
              [(equal? x-to y-to)
               (cons (new RangePlace% [from index] [to x-to] 
                          [place x-place]
-                         [send-path (vector-2d-ref routing-table x-place y-place)])
+                         [send-path (get-route x-place y-place)])
                     (construct-placelist (cdr x-placelist) (cdr y-placelist) x-to))]
              
              [(< x-to y-to)
               (cons (new RangePlace% [from index] [to x-to]
                          [place x-place]
-                         [send-path (vector-2d-ref routing-table x-place y-place)])
+                         [send-path (get-route x-place y-place)])
                     (construct-placelist (cdr x-placelist) y-placelist x-to))]
              
              [(> x-to y-to)
               (cons (new RangePlace% [from index] [to y-to]
                          [place x-place]
-                         [send-path (vector-2d-ref routing-table x-place y-place)])
+                         [send-path (get-route x-place y-place)])
                     (construct-placelist x-placelist (cdr y-placelist) y-to))]
              
              [else (raise "contruct-placelist: unimplemented")]))))
@@ -60,13 +80,13 @@
          [(and (is-a? x TypeExpansion%) (is-a? y TypeExpansion%)) #f]
          
          [(and (number? x) (number? y))
-          (vector-2d-ref routing-table x y)]
+          (get-route x y)]
          
          [(and (number? x) (place-type-dist? y))
           (cons
            (for/list ([p (car y)])
                      (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                          [place x] [send-path (vector-2d-ref routing-table x (get-field place p))]))
+                          [place x] [send-path (get-route x (get-field place p))]))
            (cdr y))]
          
          [(and (number? y) (place-type-dist? x))
@@ -74,7 +94,7 @@
            (for/list ([p (car x)])
                      (let ([place (get-field place p)])
                        (new RangePlace% [from (get-field from p)] [to (get-field to p)]
-                            [place place] [send-path (vector-2d-ref routing-table place y)])))
+                            [place place] [send-path (get-route place y)])))
            (cdr x))]
          
          [(and (place-type-dist? x) 
@@ -94,7 +114,7 @@
         (pretty-display `(get-path-one-to-many ,from ,placelist)))
       (let* ([filtered-list (filter (lambda (x) (not (equal? x from))) (set->list placelist))]
              [ret (for/list ([p filtered-list])
-                            (vector-2d-ref routing-table from p))])
+                            (get-route from p))])
              (if (empty? ret)
                  #f
                  ret)))
@@ -381,8 +401,17 @@
 	     (gen-path arg param)
 	     (set! path-ret (set-union path-ret (all-path arg))))
 
-        (set-union path-ret args-ret 
-		   (get-field body-placeset (get-field signature ast)) (all-place-type))
+        (define ret
+          (set-union path-ret args-ret 
+                     (get-field body-placeset (get-field signature ast)) (all-place-type)))
+        (when (hash-has-key? actors name)
+              (define l (hash-ref actors name))
+              (for ([pair l])
+                   (let* ([caller (cdr pair)]
+                          [actor (car pair)]
+                          [path (vector-2d-ref routing-table caller actor)])
+                     (set! ret (set-subtract ret (list->set (drop path 1)))))))
+        ret
         ]
 
        [(is-a? ast AssignTemp%)

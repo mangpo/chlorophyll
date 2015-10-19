@@ -210,7 +210,16 @@
 	 (display (format "write(~a," (channel core (get-field port ast))))
 	 (send (get-field data ast) accept this)
 	 (display ");")]
-        
+
+        [(is-a? ast PortListen%)
+	 (pretty-display
+          (format "while(1) { if(read(~a)==999) { act~a_~a(); } else { printf(\"Expect port execution. Receive something else.\"); exit(1); } }"
+                  (channel core (get-field port ast))
+                  core core))]
+
+        [(is-a? ast PortExec%)
+	 (display (format "write(~a,999);" (channel core (get-field port ast))))]
+         
         [(is-a? ast Assign%)
 	 (let ([lhs (get-field lhs ast)]
 	       [rhs (get-field rhs ast)])
@@ -299,13 +308,36 @@
          (define new-ast (send ast clone))
          (send new-ast accept (new temp-inserter2% [replace-all #t]))
 
-         (for ([stmt (get-field stmts new-ast)])
-	   (unless (is-a? stmt Block%)
-                   (newline)
-                   (display indent))
-           (send stmt accept this)
-	   (when (is-a? stmt Exp%)
-		 (display ";")))
+         (define stmts (get-field stmts new-ast))
+         (for ([stmt stmts])
+           (unless (is-a? stmt PortListen%)
+                   (unless (is-a? stmt Block%)
+                           (newline)
+                           (display indent))
+                   (send stmt accept this)
+                   (when (is-a? stmt Exp%)
+                         (display ";"))))
+         
+         (for ([stmt stmts])
+              (when
+               (is-a? stmt PortListen%)
+               (inc-indent)
+               (newline)
+               (if thread
+                   (begin
+                     (pretty-display (format "void *main_~a(void *dummy) {" core))
+                     (display indent)
+                     (send stmt accept this)
+                     (display indent)
+                     (pretty-display "return NULL; }")
+                     )
+                   (begin
+                     (pretty-display "int main() {")
+                     (display indent)
+                     (send stmt accept this)
+                     (display indent)
+                     (pretty-display "return 0; }")))))
+               
          (newline)]
         
         [(is-a? ast Block%)
@@ -348,7 +380,7 @@
                        (for ([arg (cdr arg-list)])
                             (print-arg arg ","))))
 
-               (pretty-display ") {")
+              (pretty-display ") {")
 	       (inc-indent)
 	       
 	       ;; Declare return variable

@@ -187,7 +187,9 @@
 	(for ([arg (get-field args ast)])
 	     (send arg accept this))]
 
-       [(is-a? ast Recv%)
+       [(or (is-a? ast Recv%)
+            (is-a? ast PortListen%)
+            (is-a? ast PortExec%))
 	void]
 
        [(is-a? ast Send%)

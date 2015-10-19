@@ -22,7 +22,7 @@
 		[used-io-nodes (set)]
 		)
 
-    (define debug #f)
+    (define debug #t)
     (define debug-sym #f)
     
     ;; Declare IO function: in(), out(data)
@@ -172,8 +172,8 @@
 			    x-ast y-ast))
 
     (define (count-msg-placeset p-ast placeset)
-      ;(when debug (pretty-display `(count-msg-placeset)))
       (define p (get-field place-type p-ast))
+      (when debug (pretty-display `(count-msg-placeset ,p ,placeset)))
       (define (loop placelist)
         (if (empty? placelist)
             0

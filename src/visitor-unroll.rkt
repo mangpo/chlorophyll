@@ -15,7 +15,8 @@
     (init-field program)
     (define index-map (make-hash))
     (define cloner (new range-cloner%))
-    (define placeset-collector (new placeset-collector% [save #f]))
+    (define placeset-collector
+      (new placeset-collector% [save #f] [actors (get-field actors program)]))
 
     (define debug #f)
 

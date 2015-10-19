@@ -2,7 +2,7 @@
 (require "header.rkt" "a-star.rkt"
          math/matrix)
 
-(provide route coords->index index->coords)
+(provide route-obs coords->index index->coords)
 
 (define debug #f)
 
@@ -59,7 +59,7 @@
           empty])))))
 
 (define (route-edges core-a core-b w h obstacles)
-  (pretty-display `(route ,core-a ,core-b ,w ,h ,obstacles))
+  ;; (pretty-display `(route ,core-a ,core-b ,w ,h ,obstacles))
   (define a-x (index-x core-a w))
   (define a-y (index-y core-a w))
   (define b-x (index-x core-b w))
@@ -90,7 +90,7 @@
       (for/list ([node nodes])
         (coords->index (map-node-x node) (map-node-y node) w)))))
 
-(define (route core-a core-b w h obstacles)
+(define (route-obs core-a core-b w h obstacles)
   (define indices (route-indices core-a core-b w h obstacles))
   (if (empty? indices) #f indices))
 

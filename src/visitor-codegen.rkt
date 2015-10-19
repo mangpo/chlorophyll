@@ -418,6 +418,16 @@
 	(prog-append e1-ret e2-ret (gen-op op (get-field e1 ast) (get-field e2 ast)))
         ]
 
+       [(is-a? ast PortExec%)
+        (list (port-exec (get-field name ast)
+                         (gen-port (get-field port ast))
+                         (get-field node ast)))
+        ]
+
+       [(is-a? ast PortListen%)
+        (list (port-listen (gen-port (get-field port ast))))
+        ]
+
        [(is-a? ast Recv%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Recv ~a" (get-field port ast))))

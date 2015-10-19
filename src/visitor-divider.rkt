@@ -19,7 +19,9 @@
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
-    (init-field w h [n (add1 (* w h))] [cores (make-vector n)] [expand-map (make-hash)])
+    (init-field routing-table actors
+                w h [n (add1 (* w h))]
+                [cores (make-vector n)] [expand-map (make-hash)])
 
     (define debug #f)
 
@@ -55,9 +57,81 @@
 	    (set-field! stmts block (cons x (get-field stmts block))))
 	))
 
-    (define (reverse-workspace i)
-      (let ([block (core-workspace (vector-ref cores i))])
-        (set-field! stmts block (reverse (get-field stmts block)))))
+    (define (clear-workspace i)
+      (define (clear x)
+        (define parent (get-field parent x))
+        (if parent
+            (begin
+              (when (is-a? x Block%) (reverse-stmts x))
+              (clear parent))
+            x))
+
+      (define top (clear (get-workspace i)))
+      ;; (pretty-display `(clear-workspace ,i ,top))
+      (set-workspace i top))
+    
+    (define (set-workspace-actor i from)
+      (define ws (get-workspace i))
+      (pretty-display `(set-workspace-actor ,i ,ws))
+      (push-workspace i (new PortListen% [port (direction i from w h)]))
+      
+      (define (top-level x)
+        (define parent (get-field parent x))
+        (if parent
+            (begin
+              (when (is-a? x Block%) (reverse-stmts x))
+              (top-level parent)
+              )
+            x))
+
+      ;; create handler function.
+      (define top (top-level ws))
+      (define body (new BlockActor% [stmts (list)]))
+      (define new-func
+        (new FuncDecl% [name (format "act~a" i)]
+             [args (new Block% [stmts (list)])]
+             [return #f]
+             [body body]
+             [parent top]))
+      (set-field! parent body new-func)
+      (set-field! stmts top (cons new-func (get-field stmts top)))
+      (set-workspace i body)
+      )
+
+    (define (add-while i)
+      (define ws (get-workspace i))
+      (unless
+       (is-a? ws BlockActor%)
+
+       (when (is-a? ws Program%)
+             (define body (new Block% [stmts (list)]))
+             (define new-func
+               (new FuncDecl% [name "main"]
+                    [args (new Block% [stmts (list)])]
+                    [return #f]
+                    [body body]
+                    [parent ws]))
+             (set-field! parent body new-func)
+             (push-workspace i new-func)
+             (set-workspace i body))
+       
+       ;; create while(1)
+       (define body (new BlockActor% [stmts (list)]))
+       (define new-while
+         (new While%
+              [condition (new Num% [n (new Const% [n 1])] [type "int"])]
+              [body body]
+              [bound 100] [parent (get-workspace i)]))
+       (set-field! parent body new-while)
+       (push-workspace i new-while)
+       (set-workspace i body))
+      )
+
+    (define (add-remote-exec i to node)
+      (define new-exec (new PortExec% [name (format "act~a" node)]
+                            [port (direction i to w h)] [node node]))
+      (push-workspace i new-exec)
+      )
 
     (define (get-stack i)
       (begin
@@ -153,6 +227,29 @@
 
     (define (reverse-stmts block)
       (set-field! stmts block (reverse (get-field stmts block))))
+
+    (define (reverse-workspace i)
+      (let ([block (core-workspace (vector-ref cores i))])
+        (set-field! stmts block (reverse (get-field stmts block)))))
+
+
+    (define (topo-sort pairs)
+      (define mapping (make-hash pairs))
+      (define actors (map car pairs))
+      (define order (list))
+      
+      (define (dfs actor)
+        ;; drop actor
+        (define caller (hash-ref mapping actor))
+        (define path (drop (vector-2d-ref routing-table actor caller) 1))
+        (for ([i path])
+             (when (member i actors) (dfs i)))
+        (set! order (cons (cons actor caller) order))
+        (set! actors (remove actor actors)))
+
+      (define (loop) (unless (empty? actors) (dfs (car actors))))
+      (loop)
+      (reverse order))
 
     (define/public (visit ast)
       (define (gen-comm-path path type)    
@@ -281,18 +378,21 @@
 
         ;; set the scope back to the original
         (for ([c (get-field body-placeset ast)])
-             (let* ([body (get-workspace c)]
-                    [new-ast (get-field parent body)]
-		    [old-workspace (get-field parent new-ast)])
-               (clear-stack c)
-               (reverse-stmts body)
-               (set-workspace c old-workspace)
+             (let ([body (get-workspace c)])
+               (unless
+                (is-a? body Program%)
+                ;; c can be Program% if it's an actor.
+                (let* ([new-ast (get-field parent body)]
+                       [old-workspace (get-field parent new-ast)])
+                  (clear-stack c)
+                  (reverse-stmts body)
+                  (set-workspace c old-workspace)
 
-	       ;; remove new-ast if its body is empty
-	       (when (and (not (is-a? ast FuncDecl%))
-			  (empty? (get-field stmts body)))
-		     (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))
-	       )))
+                  ;; remove new-ast if its body is empty
+                  (when (and (not (is-a? ast FuncDecl%))
+                             (empty? (get-field stmts body)))
+                        (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))
+                  )))))
 
       (define (gen-index-vec place-list)
 	(define index-vec (make-vector n #f))
@@ -431,12 +531,14 @@
 
        [(is-a? ast FuncCall%)
 	(set! is-index #f)
+        (define name (get-field name ast))
         (define return-place (get-field place-type ast))
         (define type (get-field type ast))
 	(when debug 
               (pretty-display (format "\nDIVIDE: FuncCall ~a, return-place ~a, type ~a\n" 
                                       (send ast to-string) return-place type)))
 
+        
         (define (func-args-at ast core)
           (filter 
 	   (lambda (x) (= (get-field place-type x) core))
@@ -465,13 +567,47 @@
                                                    count ,return-count)))
                   (cons top (get-args (- n return-count))))))
 
-          (new FuncCall% [name (get-field name ast)]
+          (new FuncCall% [name name]
                ;; reverse order because we pop from stack
                [args (reverse (get-args (length params)))]
                [place-type new-return-place]
                [fixed-node (get-field fixed-node ast)]
                [type (if new-return-place type "void")]
                ))
+
+        ;; prepare for actor mode
+        (define actors-info (hash-has-key? actors name))
+        (when
+         actors-info
+         (set! actors-info (hash-ref actors name))
+         ;; 1. set up actor: starting function.
+         (for ([pair actors-info])
+              (let* ([actor (car pair)]
+                     [caller (cdr pair)]
+                     [path (vector-2d-ref routing-table caller actor)]
+                     [wire (take path (sub1 (length path)))])
+                (set-workspace-actor actor (last wire))))
+         ;; 2. set up wiring node & caller
+         (define (gen-comm-actor path)
+           (when (>= (length path) 3)
+                 (let ([a (car path)]
+                       [b (cadr path)]
+                       [c (caddr path)])
+                   (push-workspace b (transfer a b c))
+                   (gen-comm-actor (cdr path)))))
+         ;; wiring nodes can be actors themselves, but that's okay
+         (for ([pair (topo-sort actors-info)])
+              (let* ([actor (car pair)]
+                     [caller (cdr pair)]
+                     [path (vector-2d-ref routing-table caller actor)]
+                     [wire (drop (take path (sub1 (length path))) 1)])
+                ;; caller initiates
+                (add-remote-exec caller (second path) actor)
+                ;; set up while loop in the wiring nodes
+                (for ([i wire]) (add-while i))
+                ;; wiring nodes pass exec command to actor
+                (gen-comm-actor path)
+                )))
 
 	;; add expressions for arguments
         (for ([arg (get-field args ast)])
@@ -483,19 +619,35 @@
                          (get-field type (get-field return sig))
                          "void")])
 
-	(when debug 
-              (pretty-display (format "\nDIVIDE: FuncCall ~a, sig=~a\n" 
-				      (send ast to-string) (get-field body-placeset sig))))
+          (when debug 
+                (pretty-display (format "\nDIVIDE: FuncCall ~a, sig=~a\n" 
+                                        (send ast to-string) (get-field body-placeset sig))))
           (for ([c (get-field body-placeset sig)])
 	       ;; body-placeset of IO function is empty
                (let ([func (new-funccall c)])
                  (if (equal? (get-field type func) "void") ;(not (get-field place-type func))
-		   ;; if place-type is empty, funcall is statement
-                   (push-workspace c func)
-		   ;; if place-type is not empty, funccall is exp
-                   (push-stack-temp c func)
-                   ))))
-        (gen-comm)]
+                     ;; if place-type is empty, funcall is statement
+                     (push-workspace c func)
+                     ;; if place-type is not empty, funccall is exp
+                     (push-stack-temp c func)
+                     ))))
+        (gen-comm)
+
+        ;; clean up actor mode
+        (when
+         actors-info
+         (define actor-nodes (set))
+         (for ([pair actors-info])
+              (let* ([actor (car pair)]
+                     [caller (cdr pair)]
+                     [path (vector-2d-ref routing-table caller actor)]
+                     [wire (drop path 1)])
+                (set! actor-nodes (set-union actor-nodes (list->set wire)))))
+         ;; (pretty-display `(actor-nodes ,actor-nodes))
+         ;; prevent from using these nodes to do more computation.
+         (for ([i actor-nodes])
+              (clear-workspace i)))
+        ]
 
        [(is-a? ast ArrayDecl%)
 	(when debug 
@@ -783,9 +935,13 @@
              (send stmt accept this))
         (when (is-a? ast Program%)
               (for ([i (in-range n)])
-                   (unless (is-a? (get-workspace i) Program%) 
-                           (raise (format "Top level scope @core ~a is not Program!" i)))
-                   (reverse-workspace i))
+                   (unless
+                    (is-a? (get-workspace i) Program%)
+                    (raise (format "Top level scope @core ~a is not Program!" i)))
+                   (reverse-workspace i)
+                   (pretty-display `(program ,i ,(get-field stmts (get-workspace i))))
+                   )
+              
 	      (define programs (make-vector n))
 	      (for ([i (in-range n)])
 		   (vector-set! programs i (get-workspace i)))
@@ -793,9 +949,12 @@
 	      (for ([i (in-range n)])
 		   (let* ([program (vector-ref programs i)]
 			  [stmts (get-field stmts program)])
-		     (unless (or (empty? stmts)
-				 (equal? (get-field name (last stmts)) "main"))
-			   (set-field! stmts program (list)))))
+                     (when
+                      (and (not (empty? stmts))
+                           (not (equal? (get-field name (last stmts)) "main"))
+                           (not (regexp-match #rx"act" (get-field name (last stmts)))))
+                           
+                      (set-field! stmts program (list)))))
 		
               ;; Adjust offset
               (for ([i (in-range n)])
