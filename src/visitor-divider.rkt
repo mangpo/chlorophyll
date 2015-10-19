@@ -72,7 +72,7 @@
     
     (define (set-workspace-actor i from)
       (define ws (get-workspace i))
-      (pretty-display `(set-workspace-actor ,i ,ws))
+      (when debug (pretty-display `(set-workspace-actor ,i ,ws)))
       (push-workspace i (new PortListen% [port (direction i from w h)]))
       
       (define (top-level x)
@@ -247,7 +247,7 @@
         (set! order (cons (cons actor caller) order))
         (set! actors (remove actor actors)))
 
-      (define (loop) (unless (empty? actors) (dfs (car actors))))
+      (define (loop) (unless (empty? actors) (dfs (car actors)) (loop)))
       (loop)
       (reverse order))
 
@@ -534,7 +534,7 @@
         (define name (get-field name ast))
         (define return-place (get-field place-type ast))
         (define type (get-field type ast))
-	(when debug 
+	(when debug
               (pretty-display (format "\nDIVIDE: FuncCall ~a, return-place ~a, type ~a\n" 
                                       (send ast to-string) return-place type)))
 
@@ -597,6 +597,7 @@
                    (gen-comm-actor (cdr path)))))
          ;; wiring nodes can be actors themselves, but that's okay
          (for ([pair (topo-sort actors-info)])
+              (pretty-display `(pair ,pair))
               (let* ([actor (car pair)]
                      [caller (cdr pair)]
                      [path (vector-2d-ref routing-table caller actor)]
@@ -939,7 +940,7 @@
                     (is-a? (get-workspace i) Program%)
                     (raise (format "Top level scope @core ~a is not Program!" i)))
                    (reverse-workspace i)
-                   (pretty-display `(program ,i ,(get-field stmts (get-workspace i))))
+                   ;(pretty-display `(program ,i ,(get-field stmts (get-workspace i))))
                    )
               
 	      (define programs (make-vector n))

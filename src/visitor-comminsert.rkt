@@ -30,6 +30,10 @@
         (define path (route-obs i j w h (set-remove* obstacles i j)))
         (vector-2d-set! routing-table n i j path)
         (vector-2d-set! routing-table n j i (reverse path))
+        (unless
+         path
+         (raise (format "routing: no available route between cores ~a and ~a"
+                        i j)))
         path]
        [else
         (define path (route i j w))

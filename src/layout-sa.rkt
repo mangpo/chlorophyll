@@ -103,6 +103,10 @@
                 (let ([path
                        (route-obs
                         i j w h (set-remove* my-obstacles i j))])
+                  (unless
+                   path
+                   (raise (format "routing: no available route between cores ~a and ~a"
+                                  i j)))
                   (pretty-display `(path ,i ,j ,path))
                   (vector-2d-set! core2route n i j path)
                   (vector-2d-set! core2route n j i (reverse path))
@@ -120,10 +124,11 @@
                       (if obs?
                           (route-obs i j w h (set-remove* obstacles i j))
                           (route i j w))])
-                 (pretty-display `(path ,i ,j ,path))
-                 (vector-2d-set! core2route n i j path)
-                 (vector-2d-set! core2route n j i (reverse path)))))
-  ;;(raise "done")
+                 (when
+                  path
+                  (pretty-display `(path ,i ,j ,path))
+                  (vector-2d-set! core2route n i j path)
+                  (vector-2d-set! core2route n j i (reverse path))))))
 
   (vector-set! core2route n-1 (make-vector n #f))
   (for ([i (in-range n)])
