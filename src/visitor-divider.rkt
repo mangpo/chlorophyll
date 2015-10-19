@@ -96,6 +96,7 @@
       (set-field! parent body new-func)
       (set-field! stmts top (cons new-func (get-field stmts top)))
       (set-workspace i body)
+      (set-func i new-func)
       )
 
     (define (add-while i)
@@ -113,7 +114,9 @@
                     [parent ws]))
              (set-field! parent body new-func)
              (push-workspace i new-func)
-             (set-workspace i body))
+             (set-workspace i body)
+             (set-func i new-func)
+             )
        
        ;; create while(1)
        (define body (new BlockActor% [stmts (list)]))
