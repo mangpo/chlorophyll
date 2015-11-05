@@ -10,11 +10,17 @@
 (define arrayaccess%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field [stack (list)] [index-stack 0])
+    (init-field [stack (list)] [index-stack 0] [uses-a #f] [port-usage #f])
 
     (define debug #f)
 
     (struct pack (iter arrays) #:mutable)
+
+    (set! port-usage (make-hash)) ;;maps port addresses to usage count
+    (define (add-port port)
+      (hash-set! port-usage port (add1 (if (hash-has-key? port-usage port)
+                                           (hash-ref port-usage port)
+                                           0))))
 
     (define/public (visit ast)
       (cond
@@ -44,6 +50,10 @@
             (is-a? ast Recv%))
         (when debug
               (pretty-display (format "\nACCESS: Decl, Num, Recv")))
+
+        (when (is-a? ast Recv%)
+          (add-port (get-field port ast)))
+
         0]
        
        [(is-a? ast UnaExp%)
@@ -62,6 +72,7 @@
               (pretty-display (format "\nACCESS: Send ~a" 
                                       (send (get-field data ast) to-string))))
         (send (get-field data ast) accept this)
+        (add-port (get-field port ast))
         0]
 
        [(is-a? ast FuncCall%)
@@ -69,6 +80,13 @@
               (pretty-display (format "\nACCESS: FuncCall ~a" (send ast to-string))))
         (for ([x (get-field args ast)])
              (send x accept this))
+        (define name (get-field name ast))
+        (when (or (regexp-match #rx"set_io" name)
+                  (regexp-match #rx"digital_read" name)
+                  (regexp-match #rx"digital_wakeup" name)
+                  (regexp-match #rx"delay_unext" name))
+          (add-port 'IO))
+
         0]
 
        [(is-a? ast Assign%)
@@ -131,6 +149,7 @@
 	  (define array (car arrays))
 	  (set-field! opt array #t)
 	  (set-field! iter-type ast array)
+          (set! uses-a #t)
 	  1
 	  ]
 

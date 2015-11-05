@@ -93,7 +93,7 @@
 
    [(aforth? ast)
     (aforth (aforth-linklist (aforth-code ast))
-	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast))]
+	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))]
 
    [else ast]))
 

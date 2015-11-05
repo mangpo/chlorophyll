@@ -1229,11 +1229,13 @@
   (class Block%
     (super-new)
     (inherit-field stmts)
-    (init-field [fixed-parts #f] [noroute #f] [conflict-list (list)])
+    (init-field [fixed-parts #f] [noroute #f] [conflict-list (list)]
+                [uses-a #f] [a-port #f])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
-	   [fixed-parts fixed-parts] [noroute noroute]))
+	   [fixed-parts fixed-parts] [noroute noroute]
+           [uses-a uses-a] [a-port a-port]))
     ))
 
 (define FuncDecl%

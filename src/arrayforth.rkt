@@ -14,7 +14,7 @@
 (struct iftf (t f))
 (struct -ift (t))
 (struct -iftf (t f))
-(struct aforth (code memsize bit indexmap))
+(struct aforth (code memsize bit indexmap a))
 (struct restrict (mem a b r) #:mutable)
 
 (struct linklist (prev entry next) #:mutable)
@@ -333,6 +333,7 @@
     (pretty-display (format "~a(vardecl: ~a)" indent (vardecl-val x)))]
 
    [(aforth? x)
+    (when (aforth-a x) (printf "a := ~a\n" (aforth-a x))) ;;???
     (codegen-print (aforth-code x))]
    
    [else (raise (format "codegen-print: unimplemented for ~a" x))]))
@@ -451,8 +452,8 @@
    [(aforth? x)
     (pretty-display (format "~a(aforth " indent))
     (aforth-struct-print (aforth-code x) (inc indent))
-    (pretty-display (format "~a~a ~a ~a)" 
-			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x)))]
+    (pretty-display (format "~a~a ~a ~a ~a)"
+			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x) (aforth-a x)))]
 
    [(vector? x)
     (pretty-display "(define programs")

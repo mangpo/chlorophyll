@@ -53,6 +53,13 @@
   (send my-ast pretty-print)
   my-ast)
 
+(define (get-a-port port-usage)
+  (if (> (hash-count port-usage) 0)
+      ;; return port with max usage
+      (car (foldr (lambda (a b) (if (> (cdr a) (cdr b)) a b))
+                  '(_ . -1) (hash->list port-usage)))
+      #f))
+
 ;; Compile IR to machine code.
 (define (generate-code program i w h virtual)
   (pretty-display `(-------------------- ,i -----------------------))
@@ -60,9 +67,13 @@
 
   ;; mark forloop and array for optimization
   (pretty-display ">>> arrayaccess >>>")
-  (send program accept (new arrayaccess%))
+  (define arrayaccess (new arrayaccess%))
+  (send program accept arrayaccess)
 
-  ;; registor allocatoin (optional)
+  (set-field! a-port program (and (not (get-field uses-a arrayaccess))
+                                  (get-a-port (get-field port-usage arrayaccess))))
+
+  ;; register allocation (optional)
   (pretty-display ">>> registor allocation >>>")
   (send program accept (new registor-allocator%))
   (send program pretty-print)

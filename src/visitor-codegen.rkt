@@ -26,6 +26,7 @@
     (define cond-onstack #f)
     (define in-pre #f)
     (define rotate #f)
+    (define a-port #f)
 
     (define-syntax gen-block
       (syntax-rules ()
@@ -420,9 +421,11 @@
 
        [(is-a? ast Recv%)
         (when debug 
-              (pretty-display (format "\nCODEGEN: Recv ~a" (get-field port ast))))
+          (pretty-display (format "\nCODEGEN: Recv ~a" (get-field port ast))))
         (define port (gen-port (get-field port ast)))
-        (list (gen-block-in port "b!" "@b" 0 1 port))]
+        (list (if (equal? port a-port)
+                  (gen-block "@" 0 1)
+                  (gen-block-in port "b!" "@b" 0 1 port)))]
 
        [(is-a? ast Send%)
         (define my-cond cond-onstack)
@@ -439,7 +442,9 @@
               (list (gen-block "dup" 1 2))
               (list (gen-block))))
         (define port (gen-port (get-field port ast)))
-	(define send-ret (list (gen-block-in port "b!" "!b" 1 0 port)))
+	(define send-ret (list (if (equal? port a-port)
+                                   (gen-block "!" 1 0)
+                                   (gen-block-in port "b!" "!b" 1 0 port))))
 
         (drop-cond (and (not send-cond) my-cond) (prog-append data-ret temp-ret send-ret))]
 
@@ -470,21 +475,29 @@
                   (set! args (cdr args)))
                 (when (>= n-pins 1);; pin 1, bit 17
                   (set! io (bitwise-ior io (arithmetic-shift (car args) 16))))))
-          (list (gen-block-in (number->string io) "io" "b!" "!b" 0 0 "io")))]
+          (list (if (equal? a-port "io")
+                    (gen-block (number->string io) "!" 0 0)
+                    (gen-block-in (number->string io) "io" "b!" "!b" 0 0 "io"))))]
 
        [(and (is-a? ast FuncCall%)
        	     (regexp-match #rx"digital_read" (get-field name ast)))
         (let* ([pin (send (car (get-field args ast)) get-value)]
        	       [mask (vector-ref (vector #x20000 #x2 #x4 #x20) pin)])
-       	  (list (gen-block "io" "b!" "@b" (number->string mask) "and" 0 1)))]
+       	  (list (if (equal? a-port "io")
+                    (gen-block "@" (number->string mask) "and" 0 1)
+                    (gen-block "io" "b!" "@b" (number->string mask) "and" 0 1))))]
 
        [(and (is-a? ast FuncCall%)
              (regexp-match #rx"digital_wakeup" (get-field name ast)))
         (let* ([node (get-field fixed-node ast)]
                [port (if (or (> node 700) (< node 17)) "up" "left")])
-          (if (member node digital-nodes)
-              (list (gen-block port "b!" "@b" "drop" 0 0))
-              (list (gen-block port "b!" "dup" "!b"  0 0))))]
+          (list (if (member node digital-nodes)
+                    (if (equal? port a-port)
+                        (gen-block "@" "drop" 0 0)
+                        (gen-block port "b!" "@b" "drop" 0 0))
+                    (if (equal? port a-port)
+                        (gen-block "dup" "!"  0 0)
+                        (gen-block port "b!" "dup" "!b"  0 0)))))]
 
        [(and (is-a? ast FuncCall%)
 	     (regexp-match #rx"delay_ns" (get-field name ast)))
@@ -881,6 +894,7 @@
        [(is-a? ast Program%)
         (when debug 
               (pretty-display (format "\nCODEGEN: Program")))
+        (set! a-port (gen-port (get-field a-port ast)))
 
         (if (empty? (get-field stmts ast))
             #f
@@ -900,7 +914,8 @@
                       (+ (get-var data-size) iter-size) 
 		      18
                       ;(max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
-                      (if virtual index-map #f))))
+                      (if virtual index-map #f)
+                      a-port)))
         ]
 
        [(is-a? ast Block%)
