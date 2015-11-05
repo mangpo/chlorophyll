@@ -320,11 +320,11 @@
 	 (define e1 (get-field e1 ast))
 	 (define e2 (get-field e2 ast))
 
-	 (unless (member op-str (list "+" "-" "*" "!=" "==" "<" ">" ">=" "<=" "<<" ">>"))
+	 (unless (member op-str (list "+" "-" "*" "/" "!=" "==" "<" ">" ">=" "<=" "<<" ">>"))
 		 (set! data-type "int"))
          (define e1-known (send e1 accept this))
 
-	 (unless (member op-str (list "+" "-" "*" "!=" "==" "<" ">" ">=" "<="))
+	 (unless (member op-str (list "+" "-" "*" "/" "!=" "==" "<" ">" ">=" "<="))
 		 (set! data-type "int"))
          (define e2-known (send e2 accept this))
 
@@ -336,9 +336,9 @@
          (send op accept this)
 
          (cond
-          [(and (is-a? e1 Num%) (is-a? e2 Num%)) (set-field! type ast "int")]
+          ;;[(and (is-a? e1 Num%) (is-a? e2 Num%)) (set-field! type ast "int")]
 
-          [(member op-str (list "+" "-" "*" "!=" "==" "<" ">" ">=" "<="))
+          [(member op-str (list "+" "-" "*" "/" "!=" "==" "<" ">" ">=" "<=" "|" "&" "^"))
            (cond
             [(is-a? e1 Num%)
              (when (fix_t? e2-type)
