@@ -113,8 +113,8 @@
          (set-field! args ast new-args)
          (cons new-stmts ast)]
                
-	[(is-a? ast Recv%)
-         (when debug (pretty-display (format "TEMPINSERT: Recv")))
+	[(or (is-a? ast Recv%) (is-a? ast PortExec%) (is-a? ast PortListen%))
+         (when debug (pretty-display (format "TEMPINSERT: Recv, PortExec, PortListen")))
          (cons (list) ast)
 	 ]
 

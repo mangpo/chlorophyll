@@ -1201,9 +1201,10 @@
 ))
 
 (define Block%
-  (class Base%
+  (class Scope%
      (super-new)
-     (init-field stmts [parent #f])
+     (init-field stmts)
+     (inherit-field parent)
 
      (define/override (clone)
        (new Block% [stmts (map (lambda (x) (send x clone)) stmts)]))
@@ -1212,7 +1213,10 @@
        (for ([stmt stmts])
             (send stmt pretty-print indent)))
 
-))
+     ))
+
+(define BlockActor%
+  (class Block% (super-new)))
 
 (define BlockDup%
   (class Block%
@@ -1229,13 +1233,22 @@
   (class Block%
     (super-new)
     (inherit-field stmts)
-    (init-field [fixed-parts #f] [noroute #f] [conflict-list (list)]
+
+    (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
                 [uses-a #f] [a-port #f])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
-	   [fixed-parts fixed-parts] [noroute noroute]
+	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]
            [uses-a uses-a] [a-port a-port]))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "PROGRAM"))
+      (pretty-display (format ">> noroute = ~a" noroute))
+      (pretty-display (format ">> actors = ~a" actors))
+      
+      (for ([stmt stmts])
+        (send stmt pretty-print indent)))
     ))
 
 (define FuncDecl%
@@ -1301,6 +1314,31 @@
 
     (define/override (to-string)
       (format "read(~a)" port))))
+
+(define PortListen%
+  (class Base%
+    (super-new)
+    (init-field port)
+
+    (define/override (clone)
+      (new PortListen% [port port]))
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(PortListen port: ~a)" indent port)))))
+  
+
+(define PortExec%
+  (class Base%
+    (super-new)
+    (init-field name port node)
+
+    (define/override (clone)
+      (new PortExec% [name name] [port port] [node node]))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(PortExec node:~a, port: ~a, name: ~a)"
+                              indent node port name)))
+  ))
 
 (define Range%
   (class Base%

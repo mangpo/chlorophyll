@@ -20,8 +20,8 @@
 ;(test "../examples/simple/pair1.cll"     "pair1" "null" 512)
 ;(test "../examples/simple/pair2.cll"     "pair2" "null" 512)
 ;(test "../examples/simple/while.cll"     "while" "10" 256)
-;(test "../examples/simple/unroll.cll"    "unroll" "null" 1024 #:w 2 #:h 3)
-;(test "../examples/simple/extendshift.cll"     "extendshift" "null" 256)
+(test "../examples/simple/unroll.cll"    "unroll" "null" 1024 #:w 2 #:h 3)
+(test "../examples/simple/extendshift.cll"     "extendshift" "null" 256)
 
 ;(test "../examples/matrixmultiply/matrixmult6.cll"     "matrixmult6" "72" 500) ;capacity issue
 ;(test "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" "null" 500)
@@ -48,7 +48,7 @@
 ;(test "../examples/parallel/convolution-pair.cll" "convolution-pair" "null" 400 #:w 8 #:h 8 #:partition #f)
 
 ;(test "../examples/fixedpoint/cos_round.cll"      "cos_round" "null" 256 #:w 3 #:h 3)
-(test "../examples/fixedpoint/cos_radius.cll"     "cos_radius" "null" 256 #:w 3 #:h 3)
+;(test "../examples/fixedpoint/cos_radius.cll"     "cos_radius" "null" 256 #:w 3 #:h 3)
 
 
 (for ([res (reverse result)])

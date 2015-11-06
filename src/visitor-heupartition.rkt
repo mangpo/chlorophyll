@@ -30,7 +30,7 @@
 
   (define (root place)
     (define parent (hash-ref sol-map place))
-    ;(pretty-display `(root ,place ,parent))
+    ;;(pretty-display `(root ,place ,parent))
     (if (equal? place parent)
         place
         (let ([r (root parent)])
@@ -42,8 +42,8 @@
     (hash-set! space r2 (+ (hash-ref space r1) (hash-ref space r2)))
     (hash-remove! space r1))
   
-  (define (unify p1 p2 [scale 1])
-    (when debug (pretty-display `(unify ,p1 ,p2)))
+  (define (unify p1 p2 [scale 1] #:must [must #f])
+    ;; (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
     (define c1 (and (hash-has-key? node-to-core r1) (hash-ref node-to-core r1)))
@@ -63,11 +63,11 @@
           (set! child r1)
           )
 
-    (when (and (symbolic? r1) (not (symbolic? r2)))
+    (when (symbolic? r1)
           (set! parent r2)
           (set! child r1))
 
-    (when (and (symbolic? r2) (not (symbolic? r1)))
+    (when (symbolic? r2)
           (set! parent r1)
           (set! child r2))
 
@@ -76,18 +76,22 @@
             (set! child r2))
 
     (when (and (not (equal? r1 r2))
-               (or (symbolic? r1) (symbolic? r2))
-               (or (not c1) (not c2) (equal? c1 c2))
-               (not (hash-has-key? conflict-map (cons r1 r2)))
-               (not (hash-has-key? conflict-map (cons r2 r1)))
-               (< (+ (hash-ref space r1) (hash-ref space r2)) 
-                  (inexact->exact (floor (* limit scale)))))
+               (or must
+                   (and
+                    (or (symbolic? r1) (symbolic? r2))
+                    (or (not c1) (not c2) (equal? c1 c2))
+                    (not (hash-has-key? conflict-map (cons r1 r2)))
+                    (not (hash-has-key? conflict-map (cons r2 r1)))
+                    (< (+ (hash-ref space r1) (hash-ref space r2)) 
+                       (inexact->exact (floor (* limit scale)))))))
           (cond
            [(and c1 (not c2)) (hash-set! node-to-core r2 c1)]
            [(and c2 (not c1)) (hash-set! node-to-core r1 c2)])
 
-          (when debug (pretty-display `(root ,r1 ,r2 ,limit)))
-          (when debug (pretty-display `(merge ,p1 ,p2)))
+          ;;(when debug (pretty-display `(root ,r1 ,r2 ,limit)))
+          (when debug (pretty-display `(merge ,r1 ,r2 ,must
+                                              ,(hash-ref space r1)
+                                              ,(hash-ref space r2))))
           (point child parent)
           ))
 
@@ -112,18 +116,21 @@
        (let ([node (car mapping)]
              [core (cdr mapping)])
          (when (hash-has-key? node-to-symbolic-core core)
-               (pretty-display `(fixed-unify ,node ,(hash-ref node-to-symbolic-core core)))
-               (unify node (hash-ref node-to-symbolic-core core)))))
+               (let ([sym-core (hash-ref node-to-symbolic-core core)])
+                 (when (hash-has-key? sol-map sym-core)
+                       (pretty-display `(fixed-unify ,node ,core ,sym-core))
+                       (unify node (hash-ref node-to-symbolic-core core)
+                              #:must #t))))))
   
   (for ([e flow-graph])
        (unify (car e) (cdr e)))
 
   ;; post merge to reduce number of cores
-  (define partitions (hash-keys space))
-  (for* ([p1 partitions]
-  	 [p2 partitions])
-  	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
-  	      (unify p1 p2 0.7)))
+  ;; (define partitions (hash-keys space))
+  ;; (for* ([p1 partitions]
+  ;; 	 [p2 partitions])
+  ;; 	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
+  ;; 	      (unify p1 p2 0.7)))
 
   (define vals (hash-values sol-map))
   (define concrete-vals (list->set (filter (lambda (x) (not (symbolic? x))) vals)))
@@ -144,9 +151,9 @@
          (if (symbolic? val)
 	     (begin
                (hash-set! sol-map val (next-counter))
-	       (pretty-display `(set-concrete2sym ,counter val))
+	       ;; (pretty-display `(set-concrete2sym ,counter val))
 	       (vector-set! concrete2sym counter val) ;; set concrete2sym
-	       (when debug (pretty-display `(hash-set ,val ,counter)))
+	       ;; (when debug (pretty-display `(hash-set ,val ,counter)))
 	       (hash-set! sol-map counter counter)
 	       (set! counter (add1 counter))
 	       (root key))
@@ -155,7 +162,7 @@
   
   (when debug
         (pretty-display "------------------ after merge sym partition ---------------------")
-        (pretty-display sol-map))
+        (pretty-display `(sol-map ,sol-map)))
   (cons sol-map concrete2sym))
   
 
@@ -164,12 +171,11 @@
     (super-new)
     (init-field [space (make-hash)])
 
-    (struct graphset (graph set))
     (define function-network (make-hash))
     
     ;; Declare IO function: in(), out(data)
-    (hash-set! function-network "in" (graphset (list) (set)))
-    (hash-set! function-network "out" (graphset (list) (set)))
+    (hash-set! function-network "in" (cons (list) (set)))
+    (hash-set! function-network "out" (cons (list) (set)))
 
     (for ([node (append analog-nodes digital-nodes)])
       (for ([name '("digital_read~a"
@@ -178,7 +184,7 @@
                     "delay_ns~a"
                     "delay_unext~a")])
         (hash-set! function-network (format name node)
-                   (graphset (list) (set)))))
+                   (cons (list) (set)))))
 
     (define (inc-space place sp)
       ;(pretty-display `(inc-space ,place))
@@ -188,6 +194,9 @@
           (if (hash-has-key? space place)
               (hash-set! space place (+ (hash-ref space place) sp))
               (hash-set! space place sp))))
+
+    (define (inc-space-placeset places sp)
+      (for ([p places]) (inc-space p sp)))
 
     (define (network p1 p2)
       (when debug (pretty-display `(network ,p1 ,p2)))
@@ -245,9 +254,7 @@
               (pretty-display (format "HUE: Num ~a" (send ast to-string))))
         (when (get-field place-type ast)
           (inc-space (get-field place-type ast) est-num))
-        (if (get-field place-type ast)
-            (graphset (list) (set (get-field place-type ast)))
-            (graphset (list) (set)))
+        (list)
         ]
 
        [(is-a? ast Array%)
@@ -261,16 +268,15 @@
         (send index infer-place place-type)
         (define index-ret (send index accept this))
         
-        (graphset (append (graphset-graph index-ret)
-			  (network place-type (get-field place-type index)))
-		  (set-add (graphset-set index-ret) place-type))
+        (append index-ret
+                (network place-type (get-field place-type index)))
         ]
 
        [(is-a? ast Var%)
         (when debug 
               (pretty-display (format "HUE: Var ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-var)
-        (graphset (list) (set (get-field place-type ast)))
+        (list)
         ]
 
        [(is-a? ast UnaExp%)
@@ -287,10 +293,8 @@
         (define e1-ret (send e1 accept this))
         
         (inc-space place-type (hash-ref space-map (get-field op op)))
-	(graphset
-	 (append (graphset-graph e1-ret)
-		 (network place-type (get-field place-type e1)))
-	 (set-add (graphset-set e1-ret) place-type))
+        (append e1-ret
+                (network place-type (get-field place-type e1)))
         ]
 
        [(is-a? ast BinExp%)
@@ -309,13 +313,9 @@
         (define e2-ret (send e2 accept this))
         
         (inc-space place-type (hash-ref space-map (get-field op op)))
-	(graphset
-	 (append
-	  (graphset-graph e1-ret)
-	  (graphset-graph e2-ret)
-	  (network place-type (get-field place-type e1))
-	  (network place-type (get-field place-type e2)))
-	 (set-union (graphset-set e1-ret) (graphset-set e2-ret) (set place-type)))
+        (append e1-ret e2-ret
+                (network place-type (get-field place-type e1))
+                (network place-type (get-field place-type e2)))
         ]
 
        [(is-a? ast FuncCall%)
@@ -324,13 +324,16 @@
 				      (send ast to-string)
 				      (get-field signature ast))))
         (define name (get-field name ast))
-        (define funccall-ret (hash-ref function-network name))
-        (define networks (graphset-graph funccall-ret))
-        (define places (graphset-set funccall-ret))
+        (define networks-places (hash-ref function-network name))
+        (define networks (car networks-places))
+        (define body-places (cdr networks-places))
 
-        (when (io-func? name)
-          (inc-space (hash-ref node-to-symbolic-core (get-field fixed-node ast))
-                     (get-built-in-space name)))
+        (if (io-func? name)
+            (inc-space (hash-ref node-to-symbolic-core (get-field fixed-node ast))
+                       (get-built-in-space name))
+            ;; (inc-space-placeset body-places est-funccall)
+            (void)
+            )
 
         ;; infer place-type
 	(for ([param (get-field stmts (get-field args (get-field signature ast)))]
@@ -344,11 +347,10 @@
         ;; visit children
         (for ([arg (get-field args ast)])
 	     (let ([arg-ret (send arg accept this)])
-	       (set! networks (append networks (graphset-graph arg-ret)))
-	       (set! places (set-union places (graphset-set arg-ret)))))
+	       (set! networks (append networks arg-ret))))
         (when debug 
               (pretty-display (format "HUE: FuncCall(3) ~a" (send ast to-string))))
-        (graphset networks places)
+        networks
         ]
 
        [(is-a? ast Assign%)
@@ -366,11 +368,8 @@
         (define rhs-ret (send rhs accept this))
         (define lhs-ret (send lhs accept this))
 
-	(graphset
-	 (append (graphset-graph lhs-ret)
-		 (graphset-graph rhs-ret)
-		 (network (get-field place-type lhs) (get-field place-type rhs)))
-	 (set-union (graphset-set rhs-ret) (graphset-set lhs-ret)))
+        (append lhs-ret rhs-ret
+                (network (get-field place-type lhs) (get-field place-type rhs)))
         ]
 
        [(is-a? ast VarDecl%)
@@ -379,26 +378,24 @@
                             (if (is-a? ast Param%)
                                 (add1 est-data)
                                 est-data)))
-        (graphset (list) (set place))
+        (list)
         ]
 
        [(is-a? ast ArrayDecl%)
         (define place-list (get-field place-list ast))
         (define last 0)
-        (define place-set
-          (for/set ([p place-list])
-            (let* ([from (get-field from p)]
+        (for ([p place-list])
+             (let ([from (get-field from p)]
                    [to   (get-field to p)])
-              (when (not (= from last))
-                    (send ast bound-error))
-              (set! last to)
-              (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
-              (get-field place p)
-              )))
+               (when (not (= from last))
+                     (send ast bound-error))
+               (set! last to)
+               (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
+               ))
 
         (when (not (= (get-field bound ast) last))
               (send ast bound-error))
-	(graphset (list) place-set)
+	(list)
         ]
 
        [(is-a? ast For%)
@@ -414,49 +411,59 @@
                            (send ast bound-error))
                      (set! last to))))
 
+        ;; (inc-space-placeset (get-field body-placeset ast) est-for)
+
         (define body-ret (send (get-field body ast) accept this))
-	(graphset
-	 (multiply-weight (graphset-graph body-ret) (- (get-field to ast) (get-field from ast)))
-	 (graphset-set body-ret))
+        (multiply-weight body-ret (- (get-field to ast) (get-field from ast)))
         ]
 
        [(is-a? ast If%)
-        (define cond-ret (send (get-field condition ast) accept this))
+        (define condition (get-field condition ast))
+        (define true-block (get-field true-block ast))
+        (define false-block (get-field false-block ast))
+        
+        (define cond-place (get-field place-type condition))
+        (define body-place (get-field body-placeset true-block))
+        
+        (define cond-ret (send condition accept this))
+        (define body-ret (send true-block accept this))
+        (when false-block
+	      (define false-ret (send false-block accept this))
+	      (set! body-ret (append body-ret false-ret))
+              (set! body-place
+                    (set-union body-place
+                               (get-field body-placeset false-block))))
 
-        (define body-ret (send (get-field true-block ast) accept this))
-        (when (get-field false-block ast)
-	      (define false-ret (send (get-field false-block ast) accept this))
-	      (set! body-ret 
-		    (graphset 
-		     (append (graphset-graph body-ret) (graphset-graph false-ret))
-		     (set-union (graphset-set body-ret) (graphset-set false-ret)))))
+	(define networks (append cond-ret body-ret))
+        (for ([b body-place])
+             (set! networks (append networks (network cond-place b))))
 
-	(define networks (append (graphset-graph cond-ret) (graphset-graph body-ret)))
-        (for* ([a (graphset-set cond-ret)]
-	       [b (graphset-set body-ret)])
-	      (set! networks (append networks (network a b))))
+        ;; increase space
+        ;; (inc-space-placeset (get-field body-placeset ast) est-if)
 
-	(graphset networks
-		  (set-union (graphset-set cond-ret) (graphset-set body-ret)))
+	networks
         ]
 
        [(is-a? ast While%)
+        (define cond-place (get-field place-type (get-field condition ast)))
+        (define body-place (get-field body-placeset (get-field body ast)))
+        (define pre-place (get-field body-placeset (get-field pre ast)))
+        
         (define pre-ret (send (get-field pre ast) accept this))
         (define cond-ret (send (get-field condition ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
 
-	(define networks (append (graphset-graph cond-ret) 
-				 (graphset-graph body-ret)
-				 (graphset-graph pre-ret)))
-        (for* ([a (graphset-set cond-ret)]
-               [b (set-union (graphset-set body-ret) (graphset-set pre-ret))])
-              (set! networks (append networks (network a b))))
+	(define networks (append cond-ret body-ret pre-ret))
+        (for ([b (set-union body-place pre-place)])
+             (set! networks (append networks (network cond-place b))))
+          
+        ;; increase space
+        ;; (inc-space-placeset (get-field body-placeset ast) est-while)
 
-	(graphset (multiply-weight networks (get-field bound ast))
-		  (set-union (graphset-set pre-ret) (graphset-set cond-ret) (graphset-set body-ret)))
+        (multiply-weight networks (get-field bound ast))
         ]
 
-       [(is-a? ast Return%) (graphset (list) (set))]
+       [(is-a? ast Return%) (list)]
        
        [(is-a? ast FuncDecl%)
         (when (get-field return ast)
@@ -464,27 +471,26 @@
 	(define args-ret (send (get-field args ast) accept this))
         (define body-ret (send (get-field body ast) accept this))
 	(hash-set! function-network (get-field name ast)
-		   (graphset (append (graphset-graph args-ret) (graphset-graph body-ret))
-			     (set-union (graphset-set args-ret) (graphset-set body-ret))))
-	(graphset (list) (set))
+		   (cons (append args-ret body-ret)
+                         (get-field body-placeset ast)))
+
+	(list)
 	]
 
        [(is-a? ast Program%)
 	(for/list ([stmt (get-field stmts ast)])
 		  (send stmt accept this))
 
-        (define sorted-edges (sort (graph->list (graphset-graph (hash-ref function-network "main")))
+        (define sorted-edges (sort (graph->list
+                                    (car (hash-ref function-network "main")))
 				   (lambda (x y) (> (cdr x) (cdr y)))))
         (pretty-display `(sorted-edges ,sorted-edges))
         (values space (map car sorted-edges) (get-field conflict-list ast))]
 
        [(is-a? ast Block%)
         (foldl (lambda (stmt all) 
-		 (define stmt-ret (send stmt accept this))
-		 (graphset
-		  (append (graphset-graph all) (graphset-graph stmt-ret))
-		  (set-union (graphset-set all) (graphset-set stmt-ret))))
-               (graphset (list) (set)) (get-field stmts ast))]
+                 (append all (send stmt accept this)))
+               (list) (get-field stmts ast))]
 
        [else
         (raise (format "visitor-heupartition: unimplemented for ~a" ast))]

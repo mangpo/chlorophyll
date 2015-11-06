@@ -15,6 +15,8 @@
 (struct -ift (t))
 (struct -iftf (t f))
 (struct aforth (code memsize bit indexmap a))
+(struct port-exec (name port at))
+(struct port-listen (port))
 (struct restrict (mem a b r) #:mutable)
 
 (struct linklist (prev entry next) #:mutable)
@@ -244,6 +246,12 @@
    (and (-ift? a) (-ift? b) (aforth-eq? (-ift-t a) (-ift-t b)))
    (and (-iftf? a) (-iftf? b) 
         (aforth-eq? (-iftf-t a) (-iftf-t b)) (aforth-eq? (-iftf-f a) (-iftf-f b)))
+   (and (port-exec? a) (port-exec? b)
+        (equal? (port-exec-name a) (port-exec-name b))
+        (equal? (port-exec-port a) (port-exec-port b))
+        (equal? (port-exec-at a) (port-exec-at b)))
+   (and (port-listen? a) (port-listen? b)
+        (equal? (port-listen-port a) (port-listen-port b)))
    (equal? a b)))
 
 ;; casual printting
@@ -292,6 +300,14 @@
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
+   
+   [(port-exec? x)
+    (pretty-display (format "~a(port-exec: ~a, port=~a, node=~a)"
+                            indent (port-exec-name x) (port-exec-port x) (port-exec-at x) ))]
+   
+   [(port-listen? x)
+    (pretty-display (format "~a(port-listen: ~a)"
+                            indent (port-listen-port x)))]
    
    [(funccall? x)
     (pretty-display (format "~a(funccall: ~a)"  indent (funccall-name x)))]
@@ -402,6 +418,18 @@
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
+   
+   [(port-exec? x)
+    (pretty-display (format "~a(port-exec ~a ~a ~a)"
+                            indent 
+                            (port-exec-name x)
+                            (port-exec-port x)
+                            (port-exec-at x)))]
+   
+   [(port-listen? x)
+    (pretty-display (format "~a(port-listen ~a)"
+                            indent 
+                            (port-listen-port x)))]
    
    [(funccall? x)
     (pretty-display (format "~a(funccall \"~a\")"  indent (funccall-name x)))]

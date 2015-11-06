@@ -123,7 +123,9 @@
               (pretty-display (format "REGALLOC: Recv => ~a" items)))
         ]
 
-       [(is-a? ast Return%)
+       [(or (is-a? ast Return%)
+            (is-a? ast PortListen%)
+            (is-a? ast PortExec%))
         (set! items 0)]
 
        [(is-a? ast Send%)

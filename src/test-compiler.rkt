@@ -91,5 +91,8 @@
 ;; Fixed point
 ;(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
 ;                      300 #:w 3 #:h 3 #:opt #f)
-(compile-and-optimize "../examples/fixedpoint/fft_inplace.cll" "fft_inplace" 
-                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/fixedpoint/fft_inplace.cll" "fft_inplace" 
+;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
+
+;(compile-and-optimize "../examples/sensors/i2c3.cll" "i2c3" 
+;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)

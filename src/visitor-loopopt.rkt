@@ -71,7 +71,9 @@
                               (send arg accept this)))
         ast]
 
-       [(is-a? ast Recv%)
+       [(or (is-a? ast Recv%)
+            (is-a? ast PortListen%)
+            (is-a? ast PortExec%))
         ast]
 
        [(is-a? ast Send%)

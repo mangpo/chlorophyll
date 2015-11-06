@@ -257,6 +257,12 @@
    [(mult? ast)
     (mult)]
 
+   [(port-exec? ast)
+    (port-exec (port-exec-name ast) (port-exec-port ast) (port-exec-at ast))]
+
+   [(port-listen? ast)
+    (port-listen (port-listen-port ast))]
+
    [(funccall? ast)
     (funccall (funccall-name ast))]
 

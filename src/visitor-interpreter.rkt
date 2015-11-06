@@ -172,8 +172,8 @@
 			    x-ast y-ast))
 
     (define (count-msg-placeset p-ast placeset)
-      ;(when debug (pretty-display `(count-msg-placeset)))
       (define p (get-field place-type p-ast))
+      (when debug (pretty-display `(count-msg-placeset ,p ,placeset)))
       (define (loop placelist)
         (if (empty? placelist)
             0
@@ -235,7 +235,7 @@
        [(is-a? ast Num%)
         (when debug (pretty-display (format ">> Num ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-num) ; increase space
-        (comminfo 0 (to-place-set (get-field place-type ast)))]
+        0]
        
        [(is-a? ast Array%)
         (when debug (pretty-display (format ">> Array ~a" (send ast to-string))))
@@ -246,20 +246,18 @@
         (define index-ret (send index accept this))
         (inc-space place-type est-acc-arr) ; not accurate
         
-        (when (and debug-sym (symbolic? (+ (comminfo-msgs index-ret) (count-msg index ast))))
+        (when (and debug-sym (symbolic? (+ index-ret) (count-msg index ast)))
               (pretty-display (format ">> SYM Array ~a\n~a" 
                                       (send ast to-string)
-                                      (+ (comminfo-msgs index-ret) (count-msg index ast)))))
+                                      (+ index-ret (count-msg index ast)))))
         
-        (comminfo 
-         (+ (comminfo-msgs index-ret) (count-msg index ast))
-         (set-union (comminfo-placeset index-ret) (to-place-set place-type)))
+        (+ index-ret (count-msg index ast))
         ]
 
        [(is-a? ast Var%)
         (when debug (pretty-display (format ">> Var ~a" (send ast to-string))))
         (inc-space (get-field place-type ast) est-var)
-        (comminfo 0 (to-place-set (get-field place-type ast)))
+        0
         ]
 
        [(is-a? ast UnaExp%)
@@ -278,13 +276,11 @@
         
         (when debug
               (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
-        (when (and debug-sym (symbolic? (+ (comminfo-msgs e1-ret) (count-msg ast e1))))
+        (when (and debug-sym (symbolic? (+ e1-ret (count-msg ast e1))))
               (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string)
-                                      (+ (comminfo-msgs e1-ret) (count-msg ast e1)))))
+                                      (+ e1-ret (count-msg ast e1)))))
         
-        (comminfo
-         (+ (comminfo-msgs e1-ret) (count-msg ast e1))
-         (set-union (comminfo-placeset e1-ret) (to-place-set place-type)))
+        (+ e1-ret (count-msg ast e1))
         ]
 
        [(is-a? ast BinExp%)
@@ -313,24 +309,19 @@
                 (send ast pretty-print))
 
           (when (and debug-sym
-                 (symbolic? (+ (comminfo-msgs e1-ret) 
-                               (comminfo-msgs e2-ret)
+                 (symbolic? (+ e1-ret e2-ret
                                (count-msg ast e1)
                                (count-msg ast e2))))
                 (pretty-display (format ">> SYM BinOp ~a\n~a" 
                                         (send ast to-string)
-                                        (+ (comminfo-msgs e1-ret) 
-                                           (comminfo-msgs e2-ret)
+                                        (+ e1-ret e2-ret
                                            (count-msg ast e1)
                                            (count-msg ast e2)))))
 
 
-          (comminfo
-           (+ (comminfo-msgs e1-ret) 
-              (comminfo-msgs e2-ret)
-              (count-msg ast e1)
-              (count-msg ast e2))
-           (set-union (set-union (comminfo-placeset e1-ret) (comminfo-placeset e2-ret)) (to-place-set place-type)))
+          (+ e1-ret e2-ret
+             (count-msg ast e1)
+             (count-msg ast e2))
           ]
 
        [(is-a? ast FuncCall%)
@@ -365,8 +356,7 @@
           ;; visit children
 	  (for ([arg (get-field args ast)])
                (let ([arg-ret (send arg accept this)])
-                 (set! msgs (+ msgs (comminfo-msgs arg-ret)))
-                 (set! placeset (set-union placeset (comminfo-placeset arg-ret)))))
+                 (set! msgs (+ msgs arg-ret))))
 
           ;; count msg
 	  (for ([param (get-field stmts (get-field args func-ast))]
@@ -383,16 +373,16 @@
                         (inc-space-return (map (lambda (x) (get-field place-type x))
                                                expanded-return)))))
 		 
-	  (comminfo msgs placeset)]
+	  msgs]
 
        [(is-a? ast ReturnDecl%)
 	;; no inc-space & return empty
-	(comminfo 0 (set))
+	0
 	]
 
        [(is-a? ast TempDecl%)
         (inc-space (get-field place ast) est-data)
-        (comminfo 0 (set))]
+        0]
                 
        [(is-a? ast VarDecl%) 
         (define place (get-field place ast))
@@ -409,8 +399,7 @@
         (when debug
               (pretty-display (format ">> VarDecl ~a (after)" var-list)))
         
-        (define ret (comminfo 0 (to-place-set place)))
-        ret
+        0
         ]
 
        [(is-a? ast ArrayDecl%)
@@ -432,7 +421,7 @@
         (when (not (= (get-field bound ast) last))
               (send ast bound-error))
         
-        (comminfo 0 (to-place-set place-list))
+        0
         ]
 
        [(is-a? ast For%)
@@ -457,64 +446,43 @@
           (push-scope)
 
           (define body-ret (send (get-field body ast) accept this))
-          (define body-place-set (comminfo-placeset body-ret))
-          (set-field! body-placeset ast body-place-set)
+          (define body-place-set (get-field body-placeset ast))
           
           (inc-space-placeset body-place-set est-for)
 
           ;; Remove scope.
           (pop-scope)
 
-          (comminfo
-           (* (comminfo-msgs body-ret) (- (get-field to ast) (get-field from ast)))
-           body-place-set)
+          (* body-ret (- (get-field to ast) (get-field from ast)))
           ]
 
        [(is-a? ast If%)
         (define condition (get-field condition ast))
+        (define true-block (get-field true-block ast))
         (define condition-ret (send condition accept this))
 
         (push-scope)
-        (define true-ret (send (get-field true-block ast) accept this))
+        (define true-ret (send true-block accept this))
         (pop-scope)
         
         ;; between condition and true-block
-        (define ret
-          (comminfo
-           (+ (comminfo-msgs condition-ret)
-              (comminfo-msgs true-ret))
-           (set-union (comminfo-placeset condition-ret) (comminfo-placeset true-ret))))
-
-        ;; add to body-placeset
-        (define body-placeset (comminfo-placeset true-ret))
+        (define msgs (+ condition-ret true-ret))
+        (define places (get-field body-placeset true-block))
         
         (define false-block (get-field false-block ast))
         (push-scope)
-        (set! ret 
-              (let ([false-block (get-field false-block ast)])
-                (if false-block
-                    ;; between condition and false-block
-                    (let ([false-ret (send false-block accept this)])
-                      ;; add to body-placeset
-                      (set! body-placeset (set-union body-placeset 
-                                                     (comminfo-placeset false-ret)))
-                      (comminfo
-                       (+ (comminfo-msgs ret)
-                          (comminfo-msgs false-ret))
-                       (set-union (comminfo-placeset ret) (comminfo-placeset false-ret))))
-		    ret)))
+
+        (when false-block
+              (define false-ret (send false-block accept this))
+              (set! msgs (+ msgs false-ret))
+              (set! places (set-union places (get-field body-placeset false-block))))
         (pop-scope)
 
         ;; increase space
-        (inc-space-placeset (comminfo-placeset ret) est-if)
-        
-        ;; save for use in flow and comminsert
-        (set-field! body-placeset ast body-placeset)
+        (inc-space-placeset places est-if)
 
 	(when debug (pretty-display ">> FOR (count-msg-placeset)"))
-        (comminfo (+ (comminfo-msgs ret) 
-                     (count-msg-placeset condition body-placeset))
-                  (comminfo-placeset ret))
+        (+ msgs (count-msg-placeset condition places))
         ]
 
        [(is-a? ast While%)
@@ -524,7 +492,7 @@
             (if (is-a? condition Num%)
                 (begin
                   (set-field! place-type condition (new Place% [at "any"]))
-                  (comminfo 0 (set)))
+                  0)
                 (send condition accept this)))
           
           (push-scope)
@@ -532,19 +500,12 @@
           (pop-scope)
           
           ;; increase space
-          (inc-space-placeset (comminfo-placeset body-ret) est-while)
+          (define body-placeset (get-field body-placeset (get-field body ast)))
+          (inc-space-placeset body-placeset est-while)
 
-          (set-field! body-placeset ast (comminfo-placeset body-ret))
-
-          (comminfo
-           (* (get-field bound ast)
-	      (+ (comminfo-msgs condition-ret)
-		 (comminfo-msgs pre-ret)
-		 (comminfo-msgs body-ret)
-		 (count-msg-placeset condition (comminfo-placeset body-ret))))
-           (set-union (comminfo-placeset pre-ret)
-		      (comminfo-placeset condition-ret) 
-		      (comminfo-placeset body-ret)))
+          (* (get-field bound ast)
+             (+ condition-ret pre-ret body-ret)
+             (count-msg-placeset condition body-placeset))
 	  ]
 
        [(is-a? ast AssignTemp%)
@@ -567,13 +528,11 @@
         (define lhs-ret (send lhs accept this))
         (define rhs-ret (send rhs accept this))
         
-        (comminfo
-         (+ (comminfo-msgs rhs-ret) (comminfo-msgs lhs-ret) (count-msg lhs rhs))
-         (set-union (comminfo-placeset rhs-ret) (comminfo-placeset lhs-ret)))
+        (+ rhs-ret lhs-ret (count-msg lhs rhs))
         ]
 
        [(is-a? ast Return%)
-	(comminfo 0 (set))]
+	0]
 
        [(is-a? ast Program%)
         (when debug (pretty-display ">> Program"))
@@ -581,7 +540,8 @@
 	(define ret #f)
 	(for ([decl (get-field stmts ast)])
 	     (let ([decl-ret (send decl accept this)])
-	       (when (and (is-a? decl FuncDecl%) (equal? (get-field name decl) "main"))
+	       (when (and (is-a? decl FuncDecl%)
+                          (equal? (get-field name decl) "main"))
 		     (set! ret decl-ret))))
 	;; Return main declaration
 	ret]
@@ -590,48 +550,37 @@
         (when debug (pretty-display ">> Block"))
         (let ([ret
                (foldl (lambda (stmt all) 
-                        (let ([stmt-ret (send stmt accept this)])
-                          (comminfo (+ (comminfo-msgs all) (comminfo-msgs stmt-ret))
-                                    (set-union (comminfo-placeset all) 
-                                               (comminfo-placeset stmt-ret)))))
-                      (comminfo 0 (set)) (get-field stmts ast))])
+                        (+ all (send stmt accept this)))
+                      0 (get-field stmts ast))])
           
-          (when (and debug-sym (symbolic? (comminfo-msgs ret)))
-                (pretty-display `(BLOCK SYM num-msgs = ,(comminfo-msgs ret))))
+          (when (and debug-sym (symbolic? ret))
+                (pretty-display `(BLOCK SYM num-msgs = ,ret)))
           ret)]
 
        [(is-a? ast FuncDecl%)
-          (when debug
-                (pretty-display (format ">> FuncDecl(1) ~a" (get-field name ast))))
-          (push-scope)
-	  (define return (get-field return ast))
-          (define return-ret 
-            (if return
-                (send return accept this)
-                (comminfo 0 (set))))
-          (define args-ret (send (get-field args ast) accept this))
+        (when debug
+              (pretty-display (format ">> FuncDecl(1) ~a" (get-field name ast))))
+        (push-scope)
+        (define return (get-field return ast))
+        (define return-ret 
+          (if return
+              (send return accept this)
+              0))
+        (define args-ret (send (get-field args ast) accept this))
 
-	  (for ([p (comminfo-placeset args-ret)])
-	       (inc-space p est-initparam)
-)
-          (define body-ret (send (get-field body ast) accept this))
-          (pop-scope)
-          
-          (when debug
-                (pretty-display (format ">> FuncDecl(2) ~a" 
-                                        (get-field name ast))))
-          (pretty-display `(body-placeset ,(comminfo-placeset args-ret)
-                                          ,(comminfo-placeset body-ret)
-                                          ,(comminfo-placeset return-ret)))
+        (define body-ret (send (get-field body ast) accept this))
+        (pop-scope)
+        
+        (when debug
+              (pretty-display (format ">> FuncDecl(2) ~a" 
+                                      (get-field name ast))))
 
-          (define body-placeset (set-union (comminfo-placeset args-ret) (comminfo-placeset body-ret) (comminfo-placeset return-ret)))
-          (set-field! body-placeset ast body-placeset)
+        (define body-placeset (get-field body-placeset ast))
 
-	  (let ([ret (comminfo (+ (+ (comminfo-msgs args-ret) (comminfo-msgs body-ret)) (comminfo-msgs return-ret))
-			       body-placeset)])
-	    ;; declare function
-	    (declare env (get-field name ast) ret)
-	    ret)]
+        (let ([ret (+ args-ret body-ret return-ret)])
+          ;; declare function
+          (declare env (get-field name ast) (comminfo ret body-placeset))
+          ret)]
 		
        [else (raise (format "visitor-interpreter: unimplemented for ~a" ast))]))
 ))

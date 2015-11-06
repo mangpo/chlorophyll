@@ -77,7 +77,9 @@
   (define commcode-inserter (new commcode-inserter% 
                                  [routing-table routing-table]
                                  [part2core part2core]
-                                 [n (* w h)]))
+                                 [w w] [h h]
+                                 [obstacles (get-field noroute ast)]
+                                 [actors (get-field actors ast)]))
   (send ast accept commcode-inserter)
   (when verbose
         (pretty-display "--- after insert communication ---")
@@ -85,7 +87,10 @@
 	(pretty-display "--- before dividing ---")
 	)
 
-  (define divider (new ast-divider% [w w] [h h]))
+  (define divider (new ast-divider%
+                       [routing-table routing-table]
+                       [actors (get-field actors ast)]
+                       [w w] [h h]))
   (define programs (send ast accept divider))
   (when verbose (pretty-display "--- after dividing ---"))
 

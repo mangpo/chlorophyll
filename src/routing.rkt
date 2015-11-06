@@ -2,7 +2,7 @@
 (require "header.rkt" "a-star.rkt"
          math/matrix)
 
-(provide route coords->index index->coords)
+(provide route-obs coords->index index->coords)
 
 (define debug #f)
 
@@ -59,7 +59,7 @@
           empty])))))
 
 (define (route-edges core-a core-b w h obstacles)
-  (pretty-display `(route ,core-a ,core-b ,w ,h ,obstacles))
+  ;; (pretty-display `(route ,core-a ,core-b ,w ,h ,obstacles))
   (define a-x (index-x core-a w))
   (define a-y (index-y core-a w))
   (define b-x (index-x core-b w))
@@ -73,24 +73,25 @@
   (define ret (A* map@
                   (map-node map a-x a-y)
                   (make-node-cost b-x b-y)))
-  (unless ret
-    (raise (format "routing: no available route between cores ~a and ~a"
-                   core-a core-b)))
+  ;; (unless ret
+  ;;   (raise (format "routing: no available route between cores ~a and ~a"
+  ;;                  core-a core-b)))
   ret)
 
 (define (route-indices core-a core-b w h obstacles)
   (if (or (equal? core-a (* w h)) (equal? core-a (add1 (* w h)))
           (equal? core-b (* w h)) (equal? core-b (add1 (* w h))))
     (list core-a core-b)
-    (let* ([edges (route-edges core-a core-b w h obstacles)]
-           [nodes (if (empty? edges) empty
-                      (cons (map-edge-src (first edges))
-                            (for/list ([edge edges])
-                              (map-edge-dest edge))))])
-      (for/list ([node nodes])
-        (coords->index (map-node-x node) (map-node-y node) w)))))
+    (let ([edges (route-edges core-a core-b w h obstacles)])
+      (and edges
+           (let ([nodes (if (empty? edges) empty
+                            (cons (map-edge-src (first edges))
+                                  (for/list ([edge edges])
+                                            (map-edge-dest edge))))])
+             (for/list ([node nodes])
+                       (coords->index (map-node-x node) (map-node-y node) w)))))))
 
-(define (route core-a core-b w h obstacles)
+(define (route-obs core-a core-b w h obstacles)
   (define indices (route-indices core-a core-b w h obstacles))
-  (if (empty? indices) #f indices))
+  (and indices (not (empty? indices)) indices))
 

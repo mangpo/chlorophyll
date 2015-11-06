@@ -6,7 +6,6 @@
 
 (define to-string (new string-converter%))
 
-
 (define (collect-from-block x [func #f] [insts (list)])
   (define entry (linklist-entry x))
   (cond
@@ -67,7 +66,7 @@
 	(send this visit (-iftf-t ast))
 	(send this visit (-iftf-f ast))]
 
-       [(mult? ast)
+       [(or (mult? ast) (port-exec? ast) (port-listen? ast))
         (hash-structure)]
 
        [(funcdecl? ast)
