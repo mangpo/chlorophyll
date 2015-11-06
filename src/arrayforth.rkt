@@ -333,7 +333,7 @@
     (pretty-display (format "~a(vardecl: ~a)" indent (vardecl-val x)))]
 
    [(aforth? x)
-    (when (aforth-a x) (printf "a := ~a\n" (aforth-a x))) ;;???
+    (when (aforth-a x) (printf "(a: ~a)\n" (aforth-a x))) ;;???
     (codegen-print (aforth-code x))]
    
    [else (raise (format "codegen-print: unimplemented for ~a" x))]))

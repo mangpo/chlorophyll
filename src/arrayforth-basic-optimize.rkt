@@ -1,0 +1,295 @@
+#lang racket
+
+(require "header.rkt"
+         "arrayforth.rkt"
+         "arrayforth-print.rkt")
+
+(provide arrayforth-basic-optimize)
+
+(define id 0)
+(define w #f)
+(define h #f)
+
+(define inlined-functions #f) ;; name -> body
+(define function-defs #f) ;; body string -> name
+(define function-renames #f) ;; old name -> new name
+(define new-main #f) ;;TODO: use 'function-renames' instead of 'new-main'
+(define node #f)
+(define used-ports #f)
+
+(define function-register-usage #f) ;; maps function names to register structs
+
+(define (arrayforth-basic-optimize code w_ h_) ;;TODO: rename arrayforth-basic-optimize
+  (define optimized #f)
+  (define (reset)
+    (set! inlined-functions (make-hash))
+    (set! new-main #f)
+    (set! function-defs (make-custom-hash aforth-eq?))
+    (set! function-renames (make-hash))
+    (set! function-register-usage (make-hash))
+    (set! used-ports (make-hash)))
+  (if code
+      (begin
+        (set! w w_)
+        (set! h h_)
+        (list->vector
+         (for/list ((a code)
+                    (id (range (* w h))))
+           (set! node (core-id id w))
+           (reset)
+           (scan a)
+           (aforth-syntax-print a w h)
+           (set! optimized (opt a))
+           (aforth-syntax-print optimized w h)
+           (pretty-display optimized)
+           optimized)))
+      code))
+
+(define (linklist-count rest [n 0])
+  ;; count non-false items
+  (if rest
+      (linklist-count (linklist-next rest) (+ n (if (linklist-entry rest) 1 0)))
+      n))
+
+(define (linklist-print ll)
+  (define (print x)
+    (when x
+      (print (linklist-next x))))
+  (print ll))
+
+(define (linklist-first-nonfalse ll)
+  ;; return the first item in LL that is not false
+  (when linklist-first-nonfalse
+    (if (linklist-entry ll)
+        (linklist-entry ll)
+        (linklist-first-nonfalse (linklist-next ll)))))
+
+
+(define (linklist->list ll [tail '()])
+  (if ll
+      (linklist->list (linklist-next ll) (cons (linklist-entry ll) tail))
+      (reverse tail)))
+
+(define (list->linklist list)
+  ;;TODO: prev pointers
+  (define (to-linklist list ll)
+    (if (null? list)
+        ll
+        (to-linklist (cdr list) (linklist #f (car list) ll))))
+  (to-linklist (reverse list) #f))
+
+(define (add-port p)
+  (if (hash-has-key? used-ports p)
+      (hash-set! used-ports p (add1 (hash-ref used-ports p)))
+      (hash-set! used-ports p 1)))
+
+(define (scan ast)
+  (cond
+   [(linklist? ast)
+    (scan (linklist-entry ast))
+    (scan (linklist-next ast))
+    ]
+
+   [(forloop? ast)
+    (scan (forloop-init ast))
+    (scan (forloop-body ast))
+    ]
+
+   [(ift? ast)
+    (scan (ift-t ast))
+    ]
+
+   [(iftf? ast)
+    (scan (iftf-t ast))
+    (scan (iftf-f ast))
+    ]
+
+   [(-ift? ast)
+    (scan (-ift-t ast))
+    ]
+
+   [(-iftf? ast)
+    (scan (-iftf-t ast))
+    (scan (-iftf-f ast))
+    ]
+
+   [(funcdecl? ast)
+    (define body (funcdecl-body ast))
+    (define name (funcdecl-name ast))
+    (define body-str (with-output-to-string (lambda ()
+                                              (aforth-syntax-print body w h))))
+    (if (dict-has-key? function-defs body-str)
+        (begin
+          (printf "renaming: ~a ==> ~a\n" name (dict-ref function-defs body-str))
+          (hash-set! function-renames name (dict-ref function-defs body-str)))
+        (dict-set! function-defs body-str name))
+    (define x (linklist-first-nonfalse body))
+    ;;`find-new-main' is used to find the name of the function
+    ;; that will be the new main. for example:
+    ;;
+    ;;   : 1while down b! @b dup right b! !b 1if 1while ;
+    ;;   : edge 1while ;
+    ;;   : main edge ;
+    ;;   ==>
+    ;;   : main down b! @b dup right b! !b 1if 1while ;
+    (define (find-new-main name)
+      (if (hash-has-key? inlined-functions name)
+          (let* ((x (hash-ref inlined-functions name))
+                 (first (and x (linklist-first-nonfalse x))))
+            (if (and (= (linklist-count x) 1)
+                     (funccall? first))
+                (find-new-main (funccall-name first))
+                name))
+          name))
+    (when (and (= (linklist-count body) 1)
+               (funccall? x))
+      (if (equal? name "main")
+          (begin
+            ;; save the name of the new main function.
+            (set! new-main (find-new-main (funccall-name x)))
+            ;; set main to be inlined so that the definition will be removed
+            (hash-set! inlined-functions "main" #t))
+          (hash-set! inlined-functions (funcdecl-name ast) (funcdecl-body ast))))
+    (scan (funcdecl-body ast))
+    ]
+
+   [(vardecl? ast)
+    ]
+
+   [(aforth? ast)
+    (scan (aforth-code ast))
+    ]
+
+   [(vector? ast)
+    (for ([i (* w h)])
+      (set! id i)
+      (scan (vector-ref ast i)))
+    ]
+
+   [(list? ast)
+    (for ((x ast))
+      (scan x))
+    ]
+   ))
+
+(define (get-inline-body name)
+  ;; recursively look for inlined function body
+  (define body (and (hash-has-key? inlined-functions name)
+                    (hash-ref inlined-functions name)))
+  (define first (and (linklist? body) (linklist-first-nonfalse body)))
+  (or (and body first
+           (= (linklist-count body) 1)
+           (funccall? first)
+           (get-inline-body (funccall-name first)))
+      body))
+
+(define (replace-zeros code)
+  ;; 0 -> dup dup or
+  (define ret '())
+  (define was-string? #f)
+  (when (string? code);;TODO: why are some of them strings???
+    (set! code (string-split code))
+    (set! was-string? #t))
+  (for ((x code))
+    (set! ret (if (equal? x "0")
+                  (cons "or" (cons "dup" (cons "dup" ret)))
+                  (cons x ret))))
+  (if was-string?
+      (string-join (reverse ret))
+      (reverse ret)))
+
+
+(define (opt ast)
+  (cond
+   [(linklist? ast)
+    (linklist (linklist-prev ast)
+              (opt (linklist-entry ast))
+              (opt (linklist-next ast)))
+    ]
+
+   [(block? ast)
+    ;; 0 ==> dup dup or
+    (block (replace-zeros (block-body ast))
+           (block-in ast)
+           (block-out ast)
+           (block-cnstr ast)
+           (block-incnstr ast)
+           (block-org ast))
+    ]
+
+   [(forloop? ast)
+    (forloop (opt (forloop-init ast))
+             (opt (forloop-body ast))
+             (opt (forloop-iter ast))
+             (opt (forloop-from ast))
+             (opt (forloop-to ast)))
+    ]
+
+   [(ift? ast)
+    (ift (opt (ift-t ast)))
+    ]
+
+   [(iftf? ast)
+    (iftf (opt (iftf-t ast))
+          (opt (iftf-f ast)))
+    ]
+
+   [(-ift? ast)
+    (-ift (opt (-ift-t ast)))
+    ]
+
+   [(-iftf? ast)
+    (-iftf (opt (-iftf-t ast))
+           (opt (-iftf-f ast)))
+    ]
+
+   [(mult? ast)
+    ast
+    ]
+
+   [(funccall? ast)
+    (define name (funccall-name ast))
+    (define body (get-inline-body name))
+    (cond ((equal? name new-main)
+           (set! name "main"))
+          ((hash-has-key? function-renames name)
+           (set! name (hash-ref function-renames name))))
+    (or body (funccall name))
+    ]
+
+   [(funcdecl? ast)
+    (define name (funcdecl-name ast))
+    (funcdecl (if (equal? name new-main) "main" name)
+              (opt (funcdecl-body ast))
+              (funcdecl-simple ast))
+    ]
+
+   [(vardecl? ast)
+    (vardecl (vardecl-val ast))
+    ]
+
+   [(aforth? ast)
+    (define code '())
+    (for ((a (linklist->list (aforth-code ast))))
+      ;; discard function definitions that are inlined
+      (if (and (funcdecl? a)
+               (or (get-inline-body (funcdecl-name a))
+                   (hash-has-key? function-renames (funcdecl-name a))))
+          (printf "discarding inlined funcdecl for: ~a\n" (funcdecl-name a))
+          (set! code (cons (opt a) code))))
+    (aforth (list->linklist (reverse code)) (aforth-memsize ast)
+            (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))
+    ]
+
+   [(vector? ast)
+    (list->vector (for/list ([i (* w h)])
+                    (set! id i)
+                    (opt (vector-ref ast i))))
+    ]
+
+   [(list? ast)
+    (for/list ((x ast))
+      (opt x))
+    ]
+
+   [else ast]))

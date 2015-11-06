@@ -23,7 +23,8 @@
          "visitor-printer.rkt"
          "visitor-regalloc.rkt"
          "visitor-tempinsert2.rkt" 
-         "visitor-tempinsert.rkt" 
+         "visitor-tempinsert.rkt"
+         "arrayforth-basic-optimize.rkt"
          )
 
 (provide compile test-simulate parse compile-to-IR compile-and-optimize)
@@ -211,6 +212,7 @@
   (define programs #f)
   (define real-codes #f)
   (define shorter-codes #f)
+  (define optimized-codes #f)
   ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
   (define (iterative-refinement current-capacity current-part2sym)
@@ -229,6 +231,7 @@
 
     (set! real-codes (generate-codes programs w h #f))
     (set! shorter-codes (define-repeating-codes real-codes w h))
+    (set! optimized-codes (arrayforth-basic-optimize shorter-codes w h))
 
     ;; (define new-capacity (vector-copy current-capacity))
     ;; (define sizes (program-sizes shorter-codes w h))
@@ -273,10 +276,15 @@
     (lambda ()
       (aforth-syntax-print real-codes w h #:original-format print-format)))
   
-  ;; arrayforth without superoptimization
+  ;; arrayforth without optimizations
   (with-output-to-file #:exists 'truncate (format "~a/~a-noopt2.aforth" outdir name)
     (lambda ()
       (aforth-syntax-print shorter-codes w h #:original-format print-format)))
+
+  ;; arrayforth with simple optimizations
+  (with-output-to-file #:exists 'truncate (format "~a/~a-noopt3.aforth" outdir name)
+    (lambda ()
+      (aforth-syntax-print optimized-codes w h #:original-format print-format)))
   
   (when opt
     ;; genreate reduced code
