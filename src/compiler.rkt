@@ -200,7 +200,8 @@
                               #:opt [opt #t] 
 			      #:layout [layout #t] 
 			      #:partition [xxx #t]
-                              #:sliding [sliding #t])
+                              #:sliding [sliding #t]
+                              #:original-format [print-format #t])
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; init ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (set-outdir file name)
@@ -270,12 +271,12 @@
   ;; arrayforth without superoptimization
   (with-output-to-file #:exists 'truncate (format "~a/~a-noopt1.aforth" outdir name)
     (lambda ()
-      (aforth-syntax-print real-codes w h)))
+      (aforth-syntax-print real-codes w h #:original-format print-format)))
   
   ;; arrayforth without superoptimization
   (with-output-to-file #:exists 'truncate (format "~a/~a-noopt2.aforth" outdir name)
     (lambda ()
-      (aforth-syntax-print shorter-codes w h)))
+      (aforth-syntax-print shorter-codes w h #:original-format print-format)))
   
   (when opt
     ;; genreate reduced code

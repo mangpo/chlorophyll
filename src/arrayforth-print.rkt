@@ -9,7 +9,7 @@
 (define id 0)
 
 ;; true -> orginal arrayforth format
-;; false -> rohin's interpreter
+;; false -> new interpreter
 (define original #t)
 
 (define (aforth-syntax-print code my-w my-h #:id [my-id 0] #:original-format [format #t])
@@ -129,7 +129,9 @@
     (display indent)
     (display ".. if ")
     (print (iftf-t x) (inc indent))
-    (display "; ] then ")
+    (if original
+        (display "; ] *then ")
+        (display "; then "))
     (print (iftf-f x) (inc indent))]
    
    [(-ift? x)
@@ -146,7 +148,9 @@
     (display indent)
     (display ".. -if ")
     (print (-iftf-t x) (inc indent))
-    (display "; ] then ")
+    (if original
+        (display "; ] then ")
+        (display "; then "))
     (print (-iftf-f x) (inc indent))]
     
    [(funcdecl? x)
@@ -165,12 +169,16 @@
     ]
    
    [(vardecl? x)
-    (for ([val (vardecl-val x)])
-         (display val)
-         (display " , "))
     (if original
-        (pretty-display "| br")
-        (pretty-display "green"))
+        (begin
+          (for ([val (vardecl-val x)])
+            (display val)
+            (display " , "))
+          (pretty-display "| br"))
+        (begin
+          (for ([val (vardecl-val x)])
+            (display " , ")
+            (pretty-display val))))
     ]
 
    [(aforth? x)
@@ -182,9 +190,11 @@
           (pretty-display (format "{block ~a}" (+ block-offset (* 2 id))))
           (pretty-display (format "( -) # ~a ( id ~a mem ~a) 0 org | cr" node id memsize)))
         (begin
-          (pretty-display (format "yellow ~a node" id))
-          (pretty-display (format "0 org"))))
-    
+          (pretty-display (format "node ~a" (core-id id w)))
+          (when (and (aforth-a x)
+                     (not (void? (aforth-a x))))
+            (printf "/a ~a\n" (aforth-a x)))
+          (pretty-display (format "org 0"))))
     (print (aforth-code x))
 
     ;; (unless original
@@ -195,20 +205,21 @@
 
    [(vector? x)
     ;(define size (sub1 (vector-length x)))
-    (pretty-display "{block 790}")
-    (pretty-display "host target | cr")
-    (for ([id (* w h)])
-         (when (vector-ref x id)
-               (pretty-display (format "~a node ~a load" 
-                                       (core-id id w) (+ block-offset (* 2 id))))))
+    (when original
+      (pretty-display "{block 790}")
+      (pretty-display "host target | cr")
+      (for ([id (* w h)])
+        (when (vector-ref x id)
+          (pretty-display (format "~a node ~a load"
+                                  (core-id id w) (+ block-offset (* 2 id))))))
 
-    (newline)
-    (pretty-display "{block 792}")
-    (pretty-display ": /node dup +node /ram ; | cr")
-    (for ([id (* w h)])
-         (when (vector-ref x id)
-               (pretty-display (format "~a /node $0 /p" (core-id id w)))))
-    (newline)
+      (newline)
+      (pretty-display "{block 792}")
+      (pretty-display ": /node dup +node /ram ; | cr")
+      (for ([id (* w h)])
+        (when (vector-ref x id)
+          (pretty-display (format "~a /node $0 /p" (core-id id w)))))
+      (newline))
                                
     (for ([i (* w h)])
          (set! id i)
