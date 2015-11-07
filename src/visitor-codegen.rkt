@@ -168,8 +168,10 @@
                                                  (list (gen-block "+*" 1 1)) #f #f #f)
                                         (gen-block "push" "drop" "pop" "a" 2 2)))]
 
+       ;; *.17 (x y -3- x x*y)
        [(equal? op "*/17") (save-a (list (funccall "*.17")
 					 (gen-block "push" "drop" "pop" 2 1)))]
+       ;; *. (x y -3- x x*y)
        [(equal? op "*/16") (save-a (list (funccall "*.")
 					 (gen-block "push" "drop" "pop" 2 1)))]
        [else (raise (format "visitor-codegen: gen-op: unimplemented for ~a" op))]))

@@ -4,7 +4,7 @@
 
 ;; Simple
 ;(compile-and-optimize "../examples/simple/hello.cll" "hello" 
-;                      256 #:w 2 #:h 3 #:opt #f)
+;                      256 #:w 2 #:h 3 #:opt #t)
 ;(compile-and-optimize "../examples/simple/part2core.cll" "part2core" 
 ;                      256 #:w 3 #:h 3 #:opt #f)
 
@@ -94,5 +94,8 @@
 ;(compile-and-optimize "../examples/fixedpoint/fft_inplace.cll" "fft_inplace" 
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 
+;; Actor
+(compile-and-optimize "../examples/actor/actor_v1.cll" "actor_v1" 
+                      512 #:w 3 #:h 3 #:opt #t #:partition #f)
 ;(compile-and-optimize "../examples/sensors/i2c3.cll" "i2c3" 
-;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)
+;                      512 #:w 18 #:h 8 #:opt #t #:partition #f)

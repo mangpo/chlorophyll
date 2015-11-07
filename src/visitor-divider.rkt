@@ -23,7 +23,7 @@
                 w h [n (add1 (* w h))]
                 [cores (make-vector n)] [expand-map (make-hash)])
 
-    (define debug #f)
+    (define debug #t)
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -43,7 +43,7 @@
       (core-workspace (vector-ref cores i)))
 
     (define (set-workspace i x)
-      (when debug `(set-workspace ,i ,x))
+      (when #t (pretty-display `(set-workspace ,i ,x)))
       (set-core-workspace! (vector-ref cores i) x))
 
     (define (push-workspace i x)
@@ -58,6 +58,7 @@
 	))
 
     (define (clear-workspace i)
+      (when #t `(clear-workspace ,i))
       (define (clear x)
         (define parent (get-field parent x))
         (if parent
@@ -72,7 +73,7 @@
     
     (define (set-workspace-actor i from)
       (define ws (get-workspace i))
-      (when debug (pretty-display `(set-workspace-actor ,i ,ws)))
+      (when #t (pretty-display `(set-workspace-actor ,i ,ws)))
       (push-workspace i (new PortListen% [port (direction i from w h)]))
       
       (define (top-level x)
@@ -953,6 +954,23 @@
 	      (for ([i (in-range n)])
 		   (let* ([program (vector-ref programs i)]
 			  [stmts (get-field stmts program)])
+                     
+                     ;; Move port-listen inside main.
+                     (let ([listen
+                            (findf (lambda (x) (is-a? x PortListen%)) stmts)]
+                           [main
+                            (findf (lambda (x)
+                                     (and (is-a? x FuncDecl%)
+                                          (equal? (get-field name x) "main")))
+                                   stmts)])
+                       (when (and main listen)
+                             (let ([main-body (get-field body main)])
+                               (set-field! stmts main-body
+                                           (append (get-field stmts main-body)
+                                                   (list listen)))
+                               (set-field! stmts program (remove listen stmts))
+                               )))
+                            
                      (when
                       (and (not (empty? stmts))
                            (not (equal? (get-field name (last stmts)) "main"))
