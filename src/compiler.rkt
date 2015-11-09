@@ -25,6 +25,7 @@
          "visitor-tempinsert2.rkt" 
          "visitor-tempinsert.rkt"
          "arrayforth-basic-optimize.rkt"
+         "symbolic/simulator.rkt"
          )
 
 (provide compile test-simulate parse compile-to-IR compile-and-optimize)
@@ -106,6 +107,12 @@
     (let ([program (vector-ref programs i)])
       (vector-set! machine-codes i (generate-code program i w h virtual))))
   machine-codes)
+
+(define (analyze-reg-b-all programs w h)
+  (for ([i (in-range (add1 (* w h)))])
+    (let ([program (vector-ref programs i)])
+      (when program
+            (analyze-reg-b program (get-progstate (aforth-memsize program)) i)))))
 
 
 ;; Compile HLP read from file to per-core machine codes.
@@ -230,6 +237,8 @@
     (define part2capacity (cdr refine-info))
 
     (set! real-codes (generate-codes programs w h #f))
+    ;; Mark if xxx b! can be removed
+    (analyze-reg-b-all real-codes w h)
     (set! shorter-codes (define-repeating-codes real-codes w h))
     (set! optimized-codes (arrayforth-basic-optimize shorter-codes w h))
 
@@ -288,7 +297,11 @@
   
   (when opt
     ;; genreate reduced code
-    (define virtual-codes (define-repeating-codes (generate-codes programs w h #t) w h))
+    (define virtual-codes (generate-codes programs w h #t))
+    ;; Mark if xxx b! can be removed
+    (analyze-reg-b-all virtual-codes w h)
+    (set! virtual-codes (define-repeating-codes virtual-codes w h))
+    ;;(aforth-struct-print virtual-codes)
     
     (define start (current-seconds))
     (if distributed

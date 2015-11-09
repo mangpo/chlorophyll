@@ -10,6 +10,8 @@ int@0 edge(int@2 a){
 
 void main(){
   int@0 x, b;
+  int@2 self;
+  self = 999;
   b = 0;
   x = 0;
   while(b < 10) {

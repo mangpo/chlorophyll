@@ -4,7 +4,9 @@
 
 (provide (all-defined-out))
 
-(struct block (body in out cnstr incnstr org) #:mutable)
+(struct block (body in out cnstr incnstr org [rm #:auto])
+        #:auto-value null
+        #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
 (struct funccall (name))
 (struct funcdecl (name body simple) #:mutable)
@@ -14,9 +16,9 @@
 (struct iftf (t f))
 (struct -ift (t))
 (struct -iftf (t f))
+(struct port-exec (name port at)) ;; remote function call/invoke port execution
+(struct port-listen (port)) ;; for a node to switch to port execution mode
 (struct aforth (code memsize bit indexmap a))
-(struct port-exec (name port at))
-(struct port-listen (port))
 (struct restrict (mem a b r) #:mutable)
 
 (struct linklist (prev entry next) #:mutable)
@@ -386,7 +388,7 @@
    
    [(block? x)
     (pretty-display (format "~a(block" indent))
-
+                            
     (display (format "~a\"" (inc indent)))
     (if (list? (block-body x))
         (for ([i (block-body x)])
@@ -414,20 +416,20 @@
           (display i)
           (display " "))
         (display (block-org x)))
-    (pretty-display "\")")]
+    (pretty-display (format "\" #;~a)" (block-rm x)))]
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
    
    [(port-exec? x)
-    (pretty-display (format "~a(port-exec ~a ~a ~a)"
+    (pretty-display (format "~a(port-exec \"~a\" \"~a\" ~a)"
                             indent 
                             (port-exec-name x)
                             (port-exec-port x)
                             (port-exec-at x)))]
    
    [(port-listen? x)
-    (pretty-display (format "~a(port-listen ~a)"
+    (pretty-display (format "~a(port-listen \"~a\")"
                             indent 
                             (port-listen-port x)))]
    

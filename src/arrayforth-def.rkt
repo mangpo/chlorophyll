@@ -12,7 +12,8 @@
 (define (list->linklist lst)
   (define (copy x)
     (if (block? x)
-        (struct-copy block x)
+        (block (block-body x) (block-in x) (block-out x)
+               (block-cnstr x) (block-incnstr x) (block-org x))
         x))
 
   (define (inner lst)
