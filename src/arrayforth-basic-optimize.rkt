@@ -4,7 +4,7 @@
          "arrayforth.rkt"
          "arrayforth-print.rkt")
 
-(provide arrayforth-basic-optimize)
+(provide arrayforth-basic-optimize remove-b)
 
 (define id 0)
 (define w #f)
@@ -43,6 +43,19 @@
            (aforth-syntax-print optimized w h)
            (pretty-display optimized)
            optimized)))
+      code))
+
+
+(define (remove-b code w_ h_)
+  (if code
+      (begin
+        (set! w w_)
+        (set! h h_)
+        (list->vector
+         (for/list ((a code)
+                    (id (range (* w h))))
+           (set! node (core-id id w))
+           (opt a #t))))
       code))
 
 (define (linklist-count rest [n 0])
@@ -218,49 +231,82 @@
       (string-join (reverse ret))
       (reverse ret)))
 
+(define (remove-b-reg body org)
+  (define str-b? (string? body))
+  (define str-o? (string? body))
+  (define body_l (if str-b? (string-split body) body))
+  (define org_l (if str-o? (string-split org) org))
+  (define (find a b)
+    (if (null? a)
+        #f
+        (if (equal? (car a) "b!")
+            (car b)
+            (find (cdr a) (cdr b)))))
 
-(define (opt ast)
+  ;;TODO: combine find and rm-b into a single pass
+  (define (rm-b code)
+    (if (null? code)
+        code
+        (if (and (not (null? (cdr code))) (equal? (cadr code) "b!"))
+            (rm-b (cddr code))
+            (cons (car code) (rm-b (cdr code))))))
+
+  (define body-val (find body_l (cons #f body_l)))
+  (define org-val (find org_l (cons #f org_l)))
+  (if (and body-val (equal? body-val org-val))
+        (cons (if str-b? (string-join (rm-b body_l)) (rm-b body_l))
+              (if str-o? (string-join (rm-b org_l)) (rm-b org_l)))
+      (cons body org)))
+
+(define (opt ast [rm #f])
   (cond
    [(linklist? ast)
     (linklist (linklist-prev ast)
-              (opt (linklist-entry ast))
-              (opt (linklist-next ast)))
+              (opt (linklist-entry ast) rm)
+              (opt (linklist-next ast) rm))
     ]
 
    [(block? ast)
     ;; 0 ==> dup dup or
-    (block (replace-zeros (block-body ast))
+    (define replacements (if (and rm (not (block-rm ast)))
+                             (remove-b-reg (block-body ast) (block-org ast))
+                             (cons (block-body ast) (block-org ast))))
+    (block (if rm
+               (car replacements)
+               (replace-zeros (block-body ast)))
            (block-in ast)
            (block-out ast)
            (block-cnstr ast)
            (block-incnstr ast)
-           (block-org ast))
+           (if rm
+               (cdr replacements)
+               (replace-zeros (block-org ast))))
     ]
 
    [(forloop? ast)
-    (forloop (opt (forloop-init ast))
-             (opt (forloop-body ast))
-             (opt (forloop-iter ast))
-             (opt (forloop-from ast))
-             (opt (forloop-to ast)))
+    (forloop (opt (forloop-init ast) rm)
+             (opt (forloop-body ast) rm)
+             (opt (forloop-iter ast) rm)
+             (opt (forloop-from ast) rm)
+             (opt (forloop-to ast) rm))
     ]
 
    [(ift? ast)
-    (ift (opt (ift-t ast)))
+    (ift (opt (ift-t ast) rm))
     ]
 
    [(iftf? ast)
-    (iftf (opt (iftf-t ast))
-          (opt (iftf-f ast)))
+    (iftf (opt (iftf-t ast) rm)
+          (opt (iftf-f ast) rm))
     ]
 
    [(-ift? ast)
-    (-ift (opt (-ift-t ast)))
+    (-ift (opt (-ift-t ast) rm))
     ]
 
    [(-iftf? ast)
-    (-iftf (opt (-iftf-t ast))
-           (opt (-iftf-f ast)))
+    (-iftf (opt (-iftf-t ast) rm)
+           (opt (-iftf-f ast) rm))
     ]
 
    [(mult? ast)
@@ -268,19 +314,22 @@
     ]
 
    [(funccall? ast)
-    (define name (funccall-name ast))
-    (define body (get-inline-body name))
-    (cond ((equal? name new-main)
-           (set! name "main"))
-          ((hash-has-key? function-renames name)
-           (set! name (hash-ref function-renames name))))
-    (or body (funccall name))
+    (if rm
+        (funccall (funccall-name ast))
+        (let* ((name (funccall-name ast))
+               (body (get-inline-body name)))
+          (cond ((equal? name new-main)
+                 (set! name "main"))
+                ((hash-has-key? function-renames name)
+                 (set! name (hash-ref function-renames name))))
+          (or body (funccall name))))
     ]
 
    [(funcdecl? ast)
     (define name (funcdecl-name ast))
-    (funcdecl (if (equal? name new-main) "main" name)
-              (opt (funcdecl-body ast))
+    (funcdecl (if (and (not rm)
+                       (equal? name new-main)) "main" name)
+              (opt (funcdecl-body ast) rm)
               (funcdecl-simple ast))
     ]
 
@@ -289,27 +338,30 @@
     ]
 
    [(aforth? ast)
-    (define code '())
-    (for ((a (linklist->list (aforth-code ast))))
-      ;; discard function definitions that are inlined
-      (if (and (funcdecl? a)
-               (or (get-inline-body (funcdecl-name a))
-                   (hash-has-key? function-renames (funcdecl-name a))))
-          (printf "discarding inlined funcdecl for: ~a\n" (funcdecl-name a))
-          (set! code (cons (opt a) code))))
-    (aforth (list->linklist (reverse code)) (aforth-memsize ast)
-            (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))
+    (if rm
+        (aforth (opt (aforth-code ast) rm) (aforth-memsize ast)
+                (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))
+        (let ((code '()))
+          (for ((a (linklist->list (aforth-code ast))))
+            ;; discard function definitions that are inlined
+            (if (and (funcdecl? a)
+                     (or (get-inline-body (funcdecl-name a))
+                         (hash-has-key? function-renames (funcdecl-name a))))
+                (printf "discarding inlined funcdecl for: ~a\n" (funcdecl-name a))
+                (set! code (cons (opt a rm) code))))
+          (aforth (list->linklist (reverse code)) (aforth-memsize ast)
+                  (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))))
     ]
 
    [(vector? ast)
     (list->vector (for/list ([i (* w h)])
                     (set! id i)
-                    (opt (vector-ref ast i))))
+                    (opt (vector-ref ast i) rm)))
     ]
 
    [(list? ast)
     (for/list ((x ast))
-      (opt x))
+      (opt x rm))
     ]
 
    [else ast]))

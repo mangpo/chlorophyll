@@ -239,6 +239,7 @@
     (set! real-codes (generate-codes programs w h #f))
     ;; Mark if xxx b! can be removed
     (analyze-reg-b-all real-codes w h)
+    (set! real-codes (remove-b real-codes w h))
     (set! shorter-codes (define-repeating-codes real-codes w h))
     (set! optimized-codes (arrayforth-basic-optimize shorter-codes w h))
 
@@ -296,10 +297,11 @@
       (aforth-syntax-print optimized-codes w h #:original-format print-format)))
   
   (when opt
-    ;; genreate reduced code
+    ;; generate reduced code
     (define virtual-codes (generate-codes programs w h #t))
     ;; Mark if xxx b! can be removed
     (analyze-reg-b-all virtual-codes w h)
+    (set! virtual-codes (remove-b virtual-codes w h))
     (set! virtual-codes (define-repeating-codes virtual-codes w h))
     (set! virtual-codes (arrayforth-basic-optimize virtual-codes w h))
     ;;(aforth-struct-print virtual-codes)
