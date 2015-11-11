@@ -89,10 +89,17 @@
     (newline)
     (display indent)
     (display "a! dup dup or 17 for +* unext drop drop a ")]
-   
+
    [(port-exec? x)
-    (display (format "~a b! @p [ .. ~a .. ] !b "
-                     (port-exec-port x) (port-exec-name x)))]
+    (define (index->coord n)
+      (+ (* (quotient n 18) 100) (remainder n 18)))
+    (define call (if original
+                     (format "[ .. ~a .. ]" (port-exec-name x))
+                     (format ".. ~a@~a .."
+                             (port-exec-name x)
+                             (index->coord (port-exec-at x)))))
+    (display (format "~a b! @p ~a !b " (port-exec-port x) call))
+    ]
    
    [(port-listen? x)
     (define port (port-listen-port x))
