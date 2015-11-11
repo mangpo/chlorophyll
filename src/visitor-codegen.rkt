@@ -907,6 +907,7 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Program")))
         (set! a-port (gen-port (get-field a-port ast)))
+        (set! const-a (list (and a-port #t)))
 
         (if (empty? (get-field stmts ast))
             #f

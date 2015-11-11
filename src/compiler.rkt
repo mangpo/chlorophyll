@@ -301,6 +301,7 @@
     ;; Mark if xxx b! can be removed
     (analyze-reg-b-all virtual-codes w h)
     (set! virtual-codes (define-repeating-codes virtual-codes w h))
+    (set! virtual-codes (arrayforth-basic-optimize virtual-codes w h))
     ;;(aforth-struct-print virtual-codes)
     
     (define start (current-seconds))

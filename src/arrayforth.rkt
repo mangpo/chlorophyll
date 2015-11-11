@@ -482,7 +482,7 @@
    [(aforth? x)
     (pretty-display (format "~a(aforth " indent))
     (aforth-struct-print (aforth-code x) (inc indent))
-    (pretty-display (format "~a~a ~a ~a ~a)"
+    (pretty-display (format "~a~a ~a ~a \"~a\")"
 			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x) (aforth-a x)))]
 
    [(vector? x)
