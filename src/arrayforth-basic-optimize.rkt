@@ -64,19 +64,39 @@
         (linklist-entry ll)
         (linklist-first-nonfalse (linklist-next ll)))))
 
+(define (list->linklist lst)
+  (define (copy x)
+    (if (block? x)
+        (block (block-body x) (block-in x) (block-out x)
+               (block-cnstr x) (block-incnstr x) (block-org x))
+        x))
 
-(define (linklist->list ll [tail '()])
-  (if ll
-      (linklist->list (linklist-next ll) (cons (linklist-entry ll) tail))
-      (reverse tail)))
+  (define (inner lst)
+    (if (empty? lst)
+        (linklist #f #f #f)
+        (let* ([rest (inner (cdr lst))]
+               [me (linklist #f (copy (car lst)) rest)])
+          (when rest
+            (set-linklist-prev! rest me))
+          me)))
 
-(define (list->linklist list)
-  ;;TODO: prev pointers
-  (define (to-linklist list ll)
-    (if (null? list)
-        ll
-        (to-linklist (cdr list) (linklist #f (car list) ll))))
-  (to-linklist (reverse list) #f))
+  (define non-empty (filter (lambda (x) (not (empty-block? x))) lst))
+  (define start (inner non-empty))
+  (define head (linklist #f #f start))
+  (set-linklist-prev! start head)
+  head)
+
+(define (linklist->list lst)
+  (define (inner lst)
+    (if (linklist-entry lst)
+	(cons (linklist-entry lst) (inner (linklist-next lst)))
+	(if (linklist-next lst)
+	    (raise "Invalid linklist: inproper tail.")
+	    (list))))
+
+  (if (linklist-entry lst)
+      (raise "Invalid linklist: no head.")
+      (inner (linklist-next lst))))
 
 (define (add-port p)
   (if (hash-has-key? used-ports p)
