@@ -240,10 +240,31 @@
         (when (vector-ref x id)
           (pretty-display (format "~a /node $0 /p" (core-id id w)))))
       (newline))
-                               
-    (for ([i (* w h)])
-         (set! id i)
-	 (print (vector-ref x i)))
+
+    ;; reorder-nodes for printing
+    ;;
+    (define programs (for/list ((program x)
+                                (i (* w h)))
+                       (cons i program)))
+
+    (define non-false (let ((nodes '()))
+                        (map (lambda (x) (when (cdr x)
+                                           (set! nodes (cons x nodes))))
+                             programs)
+                        nodes))
+
+    (define positions (map (lambda (x) (aforth-position (cdr x))) non-false))
+    (if (for/and ((x positions)) x)
+        (let ((sorted (sort non-false
+                            <
+                            #:key (lambda (x) (aforth-position (cdr x))))))
+          (for ((p sorted))
+            (set! id (car p))
+            (print (cdr p))))
+        ;;else: unsorted print
+        (for ([i (* w h)])
+          (set! id i)
+          (print (vector-ref x i))))
     ]
 
    [(equal? x #f) void]

@@ -339,8 +339,8 @@
 
    [(aforth? ast)
     (if rm
-        (aforth (opt (aforth-code ast) rm) (aforth-memsize ast)
-                (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))
+        (aforth (opt (aforth-code ast) rm) (aforth-memsize ast) (aforth-bit ast)
+                (aforth-indexmap ast) (aforth-a ast) (aforth-position ast))
         (let ((code '()))
           (for ((a (linklist->list (aforth-code ast))))
             ;; discard function definitions that are inlined
@@ -350,7 +350,8 @@
                 (printf "discarding inlined funcdecl for: ~a\n" (funcdecl-name a))
                 (set! code (cons (opt a rm) code))))
           (aforth (list->linklist (reverse code)) (aforth-memsize ast)
-                  (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))))
+                  (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast)
+                  (aforth-position ast))))
     ]
 
    [(vector? ast)

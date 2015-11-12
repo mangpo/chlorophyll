@@ -94,7 +94,8 @@
 
    [(aforth? ast)
     (aforth (aforth-linklist (aforth-code ast))
-	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast))]
+	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast)
+            (aforth-a ast) (aforth-position ast))]
 
    [else ast]))
 
@@ -547,9 +548,9 @@
   ;(aforth-struct-print linklist-program)
   )
 
-(define (reorder-definition program)
-  (define dependency-collector (new dependencey-collector%))
 
+
+(define (reorder-definition program dependency-collector)
   (define (get-funcdecl lst)
     (define entry (linklist-entry lst))
     (if (funcdecl? entry)
@@ -579,7 +580,7 @@
   (set-linklist-prev! (linklist-next new-start) (linklist-prev start))
 )
 
-(define (define-repeating-code program)
+(define (define-repeating-code program dependency-collector)
   (if (and program (aforth-code program))
       (let ([linklist-program (aforth-linklist program)])
         (when debug (pretty-display ">>> EXTRACT-STRUCTURES"))
@@ -591,7 +592,7 @@
         ;(when debug (pretty-display ">>> EXTRACT-SEQUENCES"))
 	;(extract-all-sequence linklist-program 3 4)
 
-	(reorder-definition linklist-program)
+	(reorder-definition linklist-program dependency-collector)
         ;(send (new block-merger%) visit linklist-program)
         linklist-program
 	)
@@ -599,9 +600,43 @@
 )
 
 (define (define-repeating-codes programs w h)
+  (define dependencies '())
+
+  (define (topo-sort lst)
+    (when debug (pretty-display `(topo-sort ,lst)))
+    (if (empty? lst)
+        lst
+        (let* ([fst (findf (lambda (pair) (set-empty? (cdr pair))) lst)]
+               [func (cdar fst)]
+               [name (caar fst)]
+               [rst (remove fst lst
+                            (lambda (x y) (equal? (caar x) (caar y))))]
+               [updated (map (lambda (pair) (cons (car pair)
+                                                  (set-remove (cdr pair) name)))
+                             rst)])
+          (cons func (topo-sort updated)))))
+
   (define res (make-vector (* w h)))
+  (define program #f)
+  (define repeating #f)
+  (define collector (new dependencey-collector%))
+  (define core #f)
+
   (for ([i (in-range (* w h))])
-       (pretty-display (format "--------------- define-repeating ~a ------------------" i))
-       (vector-set! res i (define-repeating-code (vector-ref programs i))))
+    (pretty-display
+     (format "--------------- define-repeating ~a ------------------" i))
+    (set! core (core-id i w))
+    (set! program (vector-ref programs i))
+    (set-field! dependent-nodes collector (set))
+    (set! repeating (define-repeating-code program collector))
+    (vector-set! res i repeating)
+    (set! dependencies (cons (cons (cons core repeating)
+                                   (get-field dependent-nodes collector))
+                             dependencies))
+    )
+  (for ((node (topo-sort dependencies))
+        (i (* w h)))
+    (when node
+      (set-aforth-position! node i)))
   res)
 

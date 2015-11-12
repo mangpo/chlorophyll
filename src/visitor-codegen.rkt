@@ -928,7 +928,7 @@
 		      18
                       ;(max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
                       (if virtual index-map #f)
-                      a-port)))
+                      a-port #f)))
         ]
 
        [(is-a? ast Block%)

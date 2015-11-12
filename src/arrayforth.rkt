@@ -18,7 +18,7 @@
 (struct -iftf (t f))
 (struct port-exec (name port at)) ;; remote function call/invoke port execution
 (struct port-listen (port)) ;; for a node to switch to port execution mode
-(struct aforth (code memsize bit indexmap a))
+(struct aforth (code memsize bit indexmap a position) #:mutable)
 (struct restrict (mem a b r) #:mutable)
 
 (struct linklist (prev entry next) #:mutable)
@@ -482,8 +482,8 @@
    [(aforth? x)
     (pretty-display (format "~a(aforth " indent))
     (aforth-struct-print (aforth-code x) (inc indent))
-    (pretty-display (format "~a~a ~a ~a \"~a\")"
-			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x) (aforth-a x)))]
+    (pretty-display (format "~a~a ~a ~a \"~a\" ~a)"
+			    indent (aforth-memsize x) (aforth-bit x) (aforth-indexmap x) (aforth-a x) (aforth-position x)))]
 
    [(vector? x)
     (pretty-display "(define programs")

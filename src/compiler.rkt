@@ -274,7 +274,7 @@
   ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (define real-opts shorter-codes)
-  
+
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen1.rkt" outdir name)
                        (lambda () (aforth-struct-print real-codes)))
 

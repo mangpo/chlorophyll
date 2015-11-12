@@ -310,7 +310,7 @@
     (codegen-print result)
     (define ret
       (aforth result (aforth-memsize ast) bit (aforth-indexmap ast)
-              (aforth-a ast)))
+              (aforth-a ast) (aforth-position ast)))
     
     (with-output-to-file #:exists 'append 
       (format "~a/~a-work.rkt" dir name)
