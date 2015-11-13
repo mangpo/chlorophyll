@@ -22,7 +22,7 @@
                 [n-regs 0])
 
     (define debug #f)
-    (define const-a (list #f))
+    (define const-a (list 0))
     (define cond-onstack #f)
     (define in-pre #f)
     (define rotate #f)
@@ -33,9 +33,9 @@
 	[(gen-block)
 	 (new-block (list) 0 0 (restrict #t #f #f #f) (list))]
 	[(gen-block mem)
-	 (new-block (list) 0 0 (restrict mem (car const-a) #f #f) (list))]
+	 (new-block (list) 0 0 (restrict mem (not (equal? (car const-a) 0)) #f #f) (list))]
 	[(gen-block a ... in out)
-	 (new-block (list a ...) in out (restrict #t (car const-a) #f #f) (list a ...))]))
+	 (new-block (list a ...) in out (restrict #t (not (equal? (car const-a) 0)) #f #f) (list a ...))]))
 
     (define-syntax gen-block-a
       (syntax-rules ()
@@ -45,46 +45,46 @@
     (define-syntax gen-block-in
       (syntax-rules ()
 	[(gen-block a ... in out incnstr)
-	 (new-block (list a ...) in out (restrict #t (car const-a) #f #f) incnstr 
+	 (new-block (list a ...) in out (restrict #t (not (equal? (car const-a) 0)) #f #f) incnstr 
                     (list a ...))]))
 
     (define-syntax gen-block-r
       (syntax-rules ()
 	[(gen-block-r a ... in out)
-         (new-block (list a ...) in out (restrict #t (car const-a) #f #t) (list a ...))]))
+         (new-block (list a ...) in out (restrict #t (not (equal? (car const-a) 0)) #f #t) (list a ...))]))
     
     (define-syntax gen-block-list
       (syntax-rules ()
 	[(gen-block-list insts insts-org in out)
-	 (new-block insts in out (restrict #t (car const-a) #f #f) insts-org)]
+	 (new-block insts in out (restrict #t (not (equal? (car const-a) 0)) #f #f) insts-org)]
         ))
 
     (define-syntax gen-block-org
       (syntax-rules ()
 	[(gen-block-org (a ...) (b ...) in out)
-	 (new-block (list a ...) in out (restrict #t (car const-a) #f #f) (list b ...))]))
+	 (new-block (list a ...) in out (restrict #t (not (equal? (car const-a) 0)) #f #f) (list b ...))]))
     
     (define (gen-block-store addr addr-org in)
       (if (= in 1)
-          (new-block (list addr "b!" "!b") in 0 (restrict #t (car const-a) #f #f) 
+          (new-block (list addr "b!" "!b") in 0 (restrict #t (not (equal? (car const-a) 0)) #f #f) 
                  (list addr-org "b!" "!b"))
-          (if (car const-a)
+          (if (equal? (car const-a) 1)
               (new-block (append (list "a" "push" addr "a!") 
                              (for/list ([i (in-range in)]) "!+")
                              (list "pop" "a!"))
-                     in 0 (restrict #t (car const-a) #f #f)
+                     in 0 (restrict #t (not (equal? (car const-a) 0)) #f #f)
                      (append (list "a" "push" addr-org "a!") 
                              (for/list ([i (in-range in)]) "!+")
                              (list "pop" "a!")))
               (new-block (append (list addr "a!") 
                              (for/list ([i (in-range in)]) "!+"))
-                     in 0 (restrict #t (car const-a) #f #f)
+                     in 0 (restrict #t (not (equal? (car const-a) 0)) #f #f)
                      (append (list addr-org "a!") 
                              (for/list ([i (in-range in)]) "!+"))))))
       
     (define (gen-op op e1 e2)
       (define (save-a code)
-	(if (car const-a)
+	(if (equal? (car const-a) 1)
 	    (append (list (gen-block-r "a" "push" 0 0))
 		    code
 		    (list (gen-block-r "pop" "a!" 0 0)))
@@ -542,7 +542,7 @@
           (foldl (lambda (x all) (prog-append all (send x accept this)))
                  (list) (get-field args ast)))
         (define call-code
-          (if (car const-a)
+          (if (equal? (car const-a) 1)
               (list (gen-block-r "a" "push" 0 0)
                     (funccall name)
                     (gen-block "pop" "a!" 0 0))
@@ -787,7 +787,7 @@
            
            [(is-a? array Array%)
 	    ;; constraint a
-	    (set! const-a (cons #t const-a))
+	    (set! const-a (cons 1 const-a))
             (define offset (get-field offset array))
             (define address (get-field address array))
             (define actual-addr (- (get-var address) offset))
@@ -907,7 +907,7 @@
         (when debug 
               (pretty-display (format "\nCODEGEN: Program")))
         (set! a-port (gen-port (get-field a-port ast)))
-        (set! const-a (list (and a-port #t)))
+        (set! const-a (list (if a-port 2 0)))
 
         (if (empty? (get-field stmts ast))
             #f
