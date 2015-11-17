@@ -84,7 +84,7 @@
       
     (define (gen-op op e1 e2)
       (define (save-a code)
-	(if (equal? (car const-a) 1)
+	(if (not (equal? (car const-a) 0))
 	    (append (list (gen-block-r "a" "push" 0 0))
 		    code
 		    (list (gen-block-r "pop" "a!" 0 0)))
@@ -870,7 +870,11 @@
                                                "!+" "push"))
                                  (if (= n-regs 1) (list "pop") (list))
                                  )])
-              (list (gen-block-list code code n-decls n-regs)))]
+	      (if (equal? (car const-a) 2)
+		  (list (gen-block-r "a" "push" 0 0)
+			(gen-block-list code code n-decls n-regs)
+			(gen-block "pop" "a!" 0 0))
+		  (list (gen-block-list code code n-decls n-regs))))]
            
            [else
             (list (gen-block))]))
