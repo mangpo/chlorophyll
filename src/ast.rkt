@@ -1235,17 +1235,18 @@
     (inherit-field stmts)
 
     (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
-                [uses-a #f] [a-port #f])
+                [uses-a #f] [a-port #f] [set-p #f])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
 	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]
-           [uses-a uses-a] [a-port a-port]))
+           [uses-a uses-a] [a-port a-port] [set-p set-p]))
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "PROGRAM"))
       (pretty-display (format ">> noroute = ~a" noroute))
       (pretty-display (format ">> actors = ~a" actors))
+      (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
       
       (for ([stmt stmts])
         (send stmt pretty-print indent)))
