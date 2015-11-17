@@ -66,6 +66,9 @@
        [(is-a? ast BinExp%)
         (when debug
               (pretty-display (format "\nACCESS: BinExp ~a" (send ast to-string))))
+        (when (member (get-field op (get-field op ast))
+                      '("*" "/" "%" "/%" "*:2"))
+          (set! uses-a #t))
         (send (get-field e1 ast) accept this)
         (send (get-field e2 ast) accept this)]
 
