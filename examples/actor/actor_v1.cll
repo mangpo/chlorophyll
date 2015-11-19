@@ -1,7 +1,7 @@
 // -*- c -*-
 
 # 0 --> 000
-# 2 --> 100
+# 2 --> 200
 actor edge@(0~>2);
 
 int@0 edge(int@2 a){
@@ -16,6 +16,8 @@ void main(){
   x = 0;
   while(b < 10) {
     if(b >@0 5) {
+      x = edge(x);
+      out(x);
       x = edge(x);
       out(x);
     }

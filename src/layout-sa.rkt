@@ -107,7 +107,7 @@
                    path
                    (raise (format "routing: no available route between cores ~a and ~a"
                                   i j)))
-                  (pretty-display `(path ,i ,j ,path))
+                  ;; (pretty-display `(path ,i ,j ,path))
                   (vector-2d-set! core2route n i j path)
                   (vector-2d-set! core2route n j i (reverse path))
                   (set! new-obstacles (set-union new-obstacles (list->set path))))))
@@ -126,7 +126,7 @@
                           (route i j w))])
                  (when
                   path
-                  (pretty-display `(path ,i ,j ,path))
+                  ;; (pretty-display `(path ,i ,j ,path))
                   (vector-2d-set! core2route n i j path)
                   (vector-2d-set! core2route n j i (reverse path))))))
 
