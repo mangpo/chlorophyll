@@ -150,7 +150,7 @@
     (display ".. if ")
     (print (iftf-t x) (inc indent))
     (if original
-        (display "; ] *then ")
+        (display "; ] then ")
         (display "; then "))
     (print (iftf-f x) (inc indent))]
    
