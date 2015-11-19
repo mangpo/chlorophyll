@@ -24,6 +24,7 @@
                 [cores (make-vector n)] [expand-map (make-hash)])
 
     (define debug #f)
+    (define visited-actor-funcs (set))
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -43,7 +44,7 @@
       (core-workspace (vector-ref cores i)))
 
     (define (set-workspace i x)
-      (when #t (pretty-display `(set-workspace ,i ,x)))
+      (when debug (pretty-display `(set-workspace ,i ,x)))
       (set-core-workspace! (vector-ref cores i) x))
 
     (define (push-workspace i x)
@@ -58,7 +59,7 @@
 	))
 
     (define (clear-workspace i)
-      (when #t `(clear-workspace ,i))
+      (when debug (pretty-display `(clear-workspace ,i)))
       (define (clear x)
         (define parent (get-field parent x))
         (if parent
@@ -74,10 +75,8 @@
     (define (set-workspace-actor i from)
       (define ws (get-workspace i))
       (when debug (pretty-display `(set-workspace-actor ,i ,ws)))
-      (if (is-a? ws Program%)
-	  (set-field! set-p ws (direction i from w h))
-	  (push-workspace i (new PortListen% [port (direction i from w h)])))
-      
+      (push-workspace i (new PortListen% [port (direction i from w h)]))
+
       (define (top-level x)
         (define parent (get-field parent x))
         (if parent
@@ -540,7 +539,7 @@
         (define name (get-field name ast))
         (define return-place (get-field place-type ast))
         (define type (get-field type ast))
-	(when debug
+	(when #t ;;debug
               (pretty-display (format "\nDIVIDE: FuncCall ~a, return-place ~a, type ~a\n" 
                                       (send ast to-string) return-place type)))
 
@@ -583,16 +582,25 @@
 
         ;; prepare for actor mode
         (define actors-info (hash-has-key? actors name))
+        (define need-setup #f)
         (when
          actors-info
          (set! actors-info (hash-ref actors name))
-         ;; 1. set up actor: starting function.
-         (for ([pair actors-info])
-              (let* ([actor (car pair)]
-                     [caller (cdr pair)]
-                     [path (vector-2d-ref routing-table caller actor)]
-                     [wire (take path (sub1 (length path)))])
-                (set-workspace-actor actor (last wire))))
+         (set! need-setup (not (set-member? visited-actor-funcs name)))
+         ;;(pretty-display `(ACT ,need-setup ,visited-actor-funcs))
+         
+         (when
+          need-setup
+          (set! visited-actor-funcs (set-add visited-actor-funcs name))
+          ;; 1. set up actor: starting function.
+          (for ([pair actors-info])
+               (let* ([actor (car pair)]
+                      [caller (cdr pair)]
+                      [path (vector-2d-ref routing-table caller actor)]
+                      [wire (take path (sub1 (length path)))])
+                 ;;(pretty-display `(set-workspace-actor ,actor))
+                 (set-workspace-actor actor (last wire)))))
+         
          ;; 2. set up wiring node & caller
          (define (gen-comm-actor path)
            (when (>= (length path) 3)
@@ -603,18 +611,24 @@
                    (gen-comm-actor (cdr path)))))
          ;; wiring nodes can be actors themselves, but that's okay
          (for ([pair (topo-sort actors-info)])
-              (pretty-display `(pair ,pair))
               (let* ([actor (car pair)]
                      [caller (cdr pair)]
                      [path (vector-2d-ref routing-table caller actor)]
                      [wire (drop (take path (sub1 (length path))) 1)])
                 ;; caller initiates
+                ;; (pretty-display `(caller-actor ,caller ,wire ,actor))
+                ;; (pretty-display `(add-remote-exec ,caller))
                 (add-remote-exec caller (second path) actor)
-                ;; set up while loop in the wiring nodes
-                (for ([i wire]) (add-while i))
-                ;; wiring nodes pass exec command to actor
-                (gen-comm-actor path)
-                )))
+                (when
+                 need-setup
+                 ;; set up while loop in the wiring nodes
+                 (for ([i wire])
+                      ;; (pretty-display `(add-while ,i))
+                      (add-while i))
+                 ;; wiring nodes pass exec command to actor
+                 ;; (pretty-display `(gen-comm-actor ,path))
+                 (gen-comm-actor path))
+                ))) ;; end actor
 
 	;; add expressions for arguments
         (for ([arg (get-field args ast)])
@@ -642,7 +656,7 @@
 
         ;; clean up actor mode
         (when
-         actors-info
+         need-setup
          (define actor-nodes (set))
          (for ([pair actors-info])
               (let* ([actor (car pair)]
@@ -653,6 +667,7 @@
          ;; (pretty-display `(actor-nodes ,actor-nodes))
          ;; prevent from using these nodes to do more computation.
          (for ([i actor-nodes])
+              ;; (pretty-display `(clear-workspace-actor ,i))
               (clear-workspace i)))
         ]
 
@@ -965,20 +980,29 @@
                                      (and (is-a? x FuncDecl%)
                                           (equal? (get-field name x) "main")))
                                    stmts)])
-                       (when (and main listen)
-                             (let ([main-body (get-field body main)])
-                               (set-field! stmts main-body
-                                           (append (get-field stmts main-body)
-                                                   (list listen)))
-                               (set-field! stmts program (remove listen stmts))
-                               )))
+                       (cond
+                        [(and main listen)
+                         (let ([main-body (get-field body main)])
+                           (set-field! stmts main-body
+                                       (append (get-field stmts main-body)
+                                               (list listen)))
+                           (set-field! stmts program (remove listen stmts)))]
+                        [listen
+                         (set-field! set-p program (get-field port listen))
+                         ]))
+
+                     ;; (pretty-display `(PROGRAM ,i ,program))
                             
-                     (when
-                      (and (not (empty? stmts))
-                           (not (equal? (get-field name (last stmts)) "main"))
-                           (not (regexp-match #rx"act" (get-field name (last stmts)))))
-                           
-                      (set-field! stmts program (list)))))
+                     (unless
+                      (findf
+                       (lambda (x)
+                         (let ([name (and (is-a? x FuncDecl%)
+                                          (get-field name x))])
+                           (and name (or (equal? name "main")
+                                         (regexp-match #rx"act" name)))))
+                       stmts)
+                      (set-field! stmts program (list)))
+                     ))
 		
               ;; Adjust offset
               (for ([i (in-range n)])
