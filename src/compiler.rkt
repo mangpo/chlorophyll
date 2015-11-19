@@ -274,7 +274,6 @@
   ;;;;;;;;;;;;;;;;;;;;;; iterative refinement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (define real-opts shorter-codes)
-
   (with-output-to-file #:exists 'truncate (format "~a/~a-gen1.rkt" outdir name)
                        (lambda () (aforth-struct-print real-codes)))
 
@@ -304,7 +303,7 @@
     (set! virtual-codes (remove-b virtual-codes w h))
     (set! virtual-codes (define-repeating-codes virtual-codes w h))
     (set! virtual-codes (arrayforth-basic-optimize virtual-codes w h))
-    ;;(aforth-struct-print virtual-codes)
+    (aforth-struct-print virtual-codes)
     
     (define start (current-seconds))
     (if distributed

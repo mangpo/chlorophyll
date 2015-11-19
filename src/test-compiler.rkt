@@ -96,6 +96,6 @@
 
 ;; Actor
 (compile-and-optimize "../examples/actor/actor_v1.cll" "actor_v1" 
-                      512 #:w 3 #:h 3 #:opt #t #:partition #f)
-;(compile-and-optimize "../examples/sensors/i2c3.cll" "i2c3" 
-;                      512 #:w 18 #:h 8 #:opt #t #:partition #f)
+                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/sensors/accelerometer.cll" "accelerometer" 
+;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)

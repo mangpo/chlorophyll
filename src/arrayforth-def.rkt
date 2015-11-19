@@ -127,11 +127,8 @@
   (set-linklist-next! to (linklist to #f #f))
   (constrain-mem from)
   
-  #|(pretty-display "FROM!!!!!")
-  (pretty-display (send to-string visit (linklist-entry from)))
-  (pretty-display "TO!!!!!")
-  (pretty-display (send to-string visit (linklist-entry to)))
-  (pretty-display (send to-string visit from))|#
+  ;; (pretty-display `(insert-definition ,new-name))
+  ;; (aforth-struct-print from)
   
   ;; insert new funcdecl into program
   (define def-entry (first-funcdecl-linklist (aforth-code program)))
@@ -199,44 +196,73 @@
             (set-block-org! bbb (string-join (drop org (- (length org) (length x-code))))))
         )))
 
+  ;; (for ([x lst] [i (in-naturals)])
+  ;;      (pretty-display `(input ,i))
+  ;;      (aforth-struct-print (linklist-entry x))
+  ;;      (pretty-display `(prev ,i))
+  ;;      (aforth-struct-print (linklist-entry (linklist-prev x)))
+  ;;      (newline))
+
   ;; the first common entries
   (define froms lst)
   ;; the last common entries
   (define tos lst)
   
   (define ref (linklist-entry (car lst)))
+  (define refs (map linklist-entry lst))
 
   ;; get previous entries in list of linklists x
+  ;; (define (get-from x)
+  ;;   (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
+  ;; 	     ;; compare to ref to ensure we don't extract overlapping chunk
+  ;;            (same? x))
+  ;; 	(begin
+  ;; 	  (set! froms x) 
+  ;; 	  (get-from (map linklist-prev x)))
+  ;; 	x))
   (define (get-from x)
-    (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
-	     ;; compare to ref to ensure we don't extract overlapping chunk
-             (same? x))
-	(begin
-	  (set! froms x) 
-	  (get-from (map linklist-prev x)))
-	x))
+    (unless (same? x) (raise "arrayforth-def: extract-structure does not return structures that start with different blocks"))
+    (map linklist-prev x))
 
   ;; get next entries in list of linklists x
+  ;; (define (get-to x)
+  ;;   (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
+  ;; 	     ;; compare to ref to ensure we don't extract overlapping chunk
+  ;;            (same? x))
+  ;; 	(begin
+  ;; 	  (set! tos x)
+  ;; 	  (get-to (map linklist-next x)))
+  ;; 	x))
   (define (get-to x)
-    (if (and (not (aforth-eq? (linklist-entry (car x)) ref))
-	     ;; compare to ref to ensure we don't extract overlapping chunk
-             (same? x))
+    (define overlap #f)
+    (for* ([i x] [ref refs] #:break overlap)
+	  (set! overlap (or overlap (equal? i ref))))
+
+    (if (or overlap (not (same? x)))
+	x
 	(begin
 	  (set! tos x)
-	  (get-to (map linklist-next x)))
-	x))
+	  (get-to (map linklist-next x)))))
 
   ;; the previous entries from the first common entries
-  (define from-diffs (get-from (map linklist-prev lst)))
+  ;; (define from-diffs (get-from (map linklist-prev lst)))
+  (define from-diffs (get-from lst))
   ;; the next entries from the last common entries
   (define to-diffs (get-to (map linklist-next lst)))
   
   (define is-gap (not (aforth-eq?
                        (linklist-entry (first froms))
                        (linklist-entry (linklist-next (second tos))))))
-  ;(pretty-display (send to-string visit (linklist-entry (first froms))))
-  ;(pretty-display (send to-string visit (linklist-entry (linklist-next (second tos)))))
-  ;(pretty-display no-space)
+
+  ;; (for ([from-diff from-diffs]
+  ;; 	[to-diff to-diffs]
+  ;; 	[i (in-naturals)])
+  ;;      (pretty-display `(from-diff ,i))
+  ;;      (aforth-struct-print (linklist-entry from-diff))
+  ;;      (pretty-display `(to-diff ,i))
+  ;;      (aforth-struct-print (linklist-entry to-diff))
+  ;;      (newline))
+       
                     
   (define prefix #f)
   (define prefix-org #f)
@@ -603,7 +629,7 @@
   (define dependencies '())
 
   (define (topo-sort lst)
-    (when debug (pretty-display `(topo-sort ,lst)))
+    (when #t (pretty-display `(this-topo-sort ,lst)))
     (if (empty? lst)
         lst
         (let* ([fst (findf (lambda (pair) (set-empty? (cdr pair))) lst)]

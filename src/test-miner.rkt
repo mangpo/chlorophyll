@@ -67,7 +67,7 @@
       )
     #f)
   )
-0 18 #f #f)
+0 18 #f #f #f #f)
 ))
 (set! program (define-repeating-codes program 1 1))
 (aforth-syntax-print program 1 1)

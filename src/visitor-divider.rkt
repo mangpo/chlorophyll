@@ -24,7 +24,8 @@
                 [cores (make-vector n)] [expand-map (make-hash)])
 
     (define debug #f)
-    (define visited-actor-funcs (set))
+    (define visited-actor-funcs (list))
+    (define visited-actor-pairs (list))
 
     ;; When is-lhs is true, no ghost temp for Var% and Array%
     (define is-lhs #f)
@@ -586,12 +587,12 @@
         (when
          actors-info
          (set! actors-info (hash-ref actors name))
-         (set! need-setup (not (set-member? visited-actor-funcs name)))
+         (set! need-setup (not (member name visited-actor-funcs)))
          ;;(pretty-display `(ACT ,need-setup ,visited-actor-funcs))
          
          (when
           need-setup
-          (set! visited-actor-funcs (set-add visited-actor-funcs name))
+          (set! visited-actor-funcs (cons name visited-actor-funcs))
           ;; 1. set up actor: starting function.
           (for ([pair actors-info])
                (let* ([actor (car pair)]
@@ -620,7 +621,8 @@
                 ;; (pretty-display `(add-remote-exec ,caller))
                 (add-remote-exec caller (second path) actor)
                 (when
-                 need-setup
+                 (not (member pair visited-actor-pairs))
+		 (set! visited-actor-pairs (cons pair visited-actor-pairs))
                  ;; set up while loop in the wiring nodes
                  (for ([i wire])
                       ;; (pretty-display `(add-while ,i))

@@ -98,8 +98,9 @@
                 [j (list->set (map cdr new-lst))])
               ;; (let* ([i (car pair)]
                ;;        [j (cdr pair)]
-               (unless
-                (= i j)
+               (when
+                (and (not (= i j))
+		     (not (vector-2d-ref core2route i j)))
                 (let ([path
                        (route-obs
                         i j w h (set-remove* my-obstacles i j))])
