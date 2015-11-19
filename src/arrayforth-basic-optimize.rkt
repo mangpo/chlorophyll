@@ -156,7 +156,7 @@
           (printf "renaming: ~a ==> ~a\n" name (dict-ref function-defs body-str))
           (hash-set! function-renames name (dict-ref function-defs body-str)))
         (dict-set! function-defs body-str name))
-    (define x (linklist-first-nonfalse body))
+    (define x (and body (linklist-first-nonfalse body)))
     ;;`find-new-main' is used to find the name of the function
     ;; that will be the new main. for example:
     ;;
@@ -176,13 +176,15 @@
           name))
     (when (and (= (linklist-count body) 1)
                (funccall? x))
-      (if (equal? name "main")
-          (begin
-            ;; save the name of the new main function.
-            (set! new-main (find-new-main (funccall-name x)))
-            ;; set main to be inlined so that the definition will be removed
-            (hash-set! inlined-functions "main" #t))
-          (hash-set! inlined-functions (funcdecl-name ast) (funcdecl-body ast))))
+      (cond ((equal? name "main")
+             ;; save the name of the new main function.
+             (set! new-main (find-new-main (funccall-name x)))
+             ;; set main to be inlined so that the definition will be removed
+             (hash-set! inlined-functions "main" #t))
+            ((regexp-match "act[0-9]+" name)
+             (hash-set! function-renames (funccall-name x) name)
+             (hash-set! inlined-functions name #t))
+            (else (hash-set! inlined-functions (funcdecl-name ast) (funcdecl-body ast)))))
     (scan (funcdecl-body ast))
     ]
 
@@ -254,8 +256,8 @@
   (define body-val (find body_l (cons #f body_l)))
   (define org-val (find org_l (cons #f org_l)))
   (if (and body-val (equal? body-val org-val))
-        (cons (if str-b? (string-join (rm-b body_l)) (rm-b body_l))
-              (if str-o? (string-join (rm-b org_l)) (rm-b org_l)))
+      (cons (if str-b? (string-join (rm-b body_l)) (rm-b body_l))
+            (if str-o? (string-join (rm-b org_l)) (rm-b org_l)))
       (cons body org)))
 
 (define (opt ast [rm #f])
@@ -327,8 +329,12 @@
 
    [(funcdecl? ast)
     (define name (funcdecl-name ast))
-    (funcdecl (if (and (not rm)
-                       (equal? name new-main)) "main" name)
+    (funcdecl (cond ((and (not rm)
+                          (equal? name new-main))
+                     "main")
+                    ((and (not rm) (hash-has-key? function-renames name))
+                     (hash-ref function-renames name))
+                    (else name))
               (opt (funcdecl-body ast) rm)
               (funcdecl-simple ast))
     ]
