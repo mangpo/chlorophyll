@@ -74,10 +74,8 @@
     (define (set-workspace-actor i from)
       (define ws (get-workspace i))
       (when debug (pretty-display `(set-workspace-actor ,i ,ws)))
-      (if (is-a? ws Program%)
-	  (set-field! set-p ws (direction i from w h))
-	  (push-workspace i (new PortListen% [port (direction i from w h)])))
-      
+      (push-workspace i (new PortListen% [port (direction i from w h)]))
+
       (define (top-level x)
         (define parent (get-field parent x))
         (if parent
@@ -965,13 +963,16 @@
                                      (and (is-a? x FuncDecl%)
                                           (equal? (get-field name x) "main")))
                                    stmts)])
-                       (when (and main listen)
-                             (let ([main-body (get-field body main)])
-                               (set-field! stmts main-body
-                                           (append (get-field stmts main-body)
-                                                   (list listen)))
-                               (set-field! stmts program (remove listen stmts))
-                               )))
+                       (cond
+                        [(and main listen)
+                         (let ([main-body (get-field body main)])
+                           (set-field! stmts main-body
+                                       (append (get-field stmts main-body)
+                                               (list listen)))
+                           (set-field! stmts program (remove listen stmts)))]
+                        [listen
+                         (set-field! set-p program (get-field port listen))
+                         ]))
                             
                      (when
                       (and (not (empty? stmts))
