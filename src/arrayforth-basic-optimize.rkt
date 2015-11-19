@@ -72,7 +72,7 @@
 
 (define (linklist-first-nonfalse ll)
   ;; return the first item in LL that is not false
-  (when linklist-first-nonfalse
+  (when ll
     (if (linklist-entry ll)
         (linklist-entry ll)
         (linklist-first-nonfalse (linklist-next ll)))))
@@ -340,18 +340,20 @@
    [(aforth? ast)
     (if rm
         (aforth (opt (aforth-code ast) rm) (aforth-memsize ast) (aforth-bit ast)
-                (aforth-indexmap ast) (aforth-a ast) (aforth-position ast))
+                (aforth-indexmap ast) (aforth-a ast) (aforth-position ast)
+                (aforth-set-p ast))
         (let ((code '()))
           (for ((a (linklist->list (aforth-code ast))))
             ;; discard function definitions that are inlined
             (if (and (funcdecl? a)
                      (or (get-inline-body (funcdecl-name a))
-                         (hash-has-key? function-renames (funcdecl-name a))))
+                                        ;(hash-has-key? function-renames (funcdecl-name a))
+                         ))
                 (printf "discarding inlined funcdecl for: ~a\n" (funcdecl-name a))
                 (set! code (cons (opt a rm) code))))
           (aforth (list->linklist (reverse code)) (aforth-memsize ast)
                   (aforth-bit ast) (aforth-indexmap ast) (aforth-a ast)
-                  (aforth-position ast))))
+                  (aforth-position ast) (aforth-set-p ast))))
     ]
 
    [(vector? ast)

@@ -912,6 +912,8 @@
               (pretty-display (format "\nCODEGEN: Program")))
         (set! a-port (gen-port (get-field a-port ast)))
         (set! const-a (list (if a-port 2 0)))
+        (define set-p (get-field set-p ast))
+        (set! set-p (and set-p (gen-port set-p)))
 
         (if (empty? (get-field stmts ast))
             #f
@@ -932,7 +934,7 @@
 		      18
                       ;(max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
                       (if virtual index-map #f)
-                      a-port #f)))
+                      a-port #f set-p)))
         ]
 
        [(is-a? ast Block%)

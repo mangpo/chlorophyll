@@ -322,7 +322,7 @@
           ;; superoptimized arrayforth
           (with-output-to-file #:exists 'truncate (format "~a/~a.aforth" outdir name)
                                (lambda ()
-                                 (aforth-syntax-print real-opts w h)))))
+                                 (aforth-syntax-print real-opts w h #:original-format print-format)))))
     (pretty-display (format "optimizing time: ~a s" (- (current-seconds) start)))
     (with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
       (lambda ()

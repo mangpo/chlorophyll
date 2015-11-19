@@ -211,9 +211,12 @@
           (pretty-display (format "( -) # ~a ( id ~a mem ~a) 0 org | cr" node id memsize)))
         (begin
           (pretty-display (format "node ~a" (core-id id w)))
-          (when (and (aforth-a x)
-                     (not (void? (aforth-a x))))
-            (printf "/a ~a\n" (aforth-a x)))
+          (for ([x (list (cons "a" (and (not (void? (aforth-a x)))
+                                        (aforth-a x)))
+                         (cons "p" (aforth-set-p x)))])
+            (when (cdr x)
+              (printf "/~a ~a " (car x) (cdr x))))
+
           (pretty-display (format "org 0"))))
     (print (aforth-code x))
 

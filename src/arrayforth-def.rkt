@@ -95,7 +95,7 @@
    [(aforth? ast)
     (aforth (aforth-linklist (aforth-code ast))
 	    (aforth-memsize ast) (aforth-bit ast) (aforth-indexmap ast)
-            (aforth-a ast) (aforth-position ast))]
+            (aforth-a ast) (aforth-position ast) (aforth-set-p ast))]
 
    [else ast]))
 
