@@ -681,6 +681,39 @@
            [type type] [is-stmt is-stmt] [might-need-storage might-need-storage]
            [pos pos]))))
 
+(define ModuleCall%
+  (class FuncCall%
+    (super-new)
+    (inherit-field name args pos)
+    (init-field module-name)
+
+    (define/override (clone)
+      (new FuncCall% [module-name module-name]
+           [name name] [args (map (lambda (x) (send x clone)) args)] [pos pos]))
+  
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(ModuleCall: ~a.~a"
+                              indent module-name name)) 
+      (for ([arg args])
+	   (send arg pretty-print (inc indent)))
+      (pretty-display (format "~a)" indent)))
+    ))
+
+(define ModuleCreate%
+  (class FuncCall%
+    (super-new)
+    (inherit-field name args pos)
+
+    (define/override (clone)
+      (new ModuleCreate% 
+           [name name] [args (map (lambda (x) (send x clone)) args)] [pos pos]))
+    
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(ModuleCreate: ~a" indent name))
+      (for ([arg args])
+	   (send arg pretty-print (inc indent)))
+      (pretty-display (format "~a)" indent)))
+    ))
 
 (define Const%
   (class Livable%
@@ -1235,6 +1268,7 @@
     (inherit-field stmts)
 
     (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
+                [module-decls #f] [module-inits #f]
                 [uses-a #f] [a-port #f] [set-p #f])
 
     (define/override (clone)
@@ -1247,10 +1281,38 @@
       (pretty-display (format ">> noroute = ~a" noroute))
       (pretty-display (format ">> actors = ~a" actors))
       (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
+
+      (unless (empty? module-decls)
+              (pretty-display ">> modules")
+              (pretty-display module-decls)
+              (pretty-display module-inits)
+              (for ([module module-decls])
+                   (send module pretty-print indent))
+              (for ([module module-inits])
+                   (send module pretty-print indent)))
       
       (for ([stmt stmts])
         (send stmt pretty-print indent)))
     ))
+
+(define Module%
+  (class Block%
+    (super-new)
+    (inherit-field stmts)
+    (init-field name params)
+
+    (define/override (clone)
+      (new Module% [name name] [params params]
+           [stmts (map (lambda (x) (send x clone)) stmts)]))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "MODULE ~a ~a" name params))
+      
+      (pretty-display (format ">> stmts"))
+      (for ([stmt stmts])
+        (send stmt pretty-print indent)))
+    ))
+  
 
 (define FuncDecl%
   (class Scope%

@@ -9,13 +9,14 @@
 (define-tokens a (FIX NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
 (define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
-			       = SEMICOL COMMA COL EXT
+			       = SEMICOL COMMA COL EXT DOT
                                INT VOID CLUSTER ACTOR
                                FOR WHILE IF ELSE FROM TO RETURN
                                ASSUME
 			       READ WRITE
                                PLACE HERE ANY GHOST  
-			       HASH MAP NOROUTE INVOKE))
+			       HASH MAP NOROUTE INVOKE
+                               MODULE NEW))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -51,6 +52,8 @@
    ("void"  (token-VOID))
    ("return" (token-RETURN))
    ;; ("known" (token-KNOWN))
+   ("module" (token-MODULE))
+   ("new"    (token-NEW))
    ("cluster" (token-CLUSTER))
    ("actor" (token-ACTOR))
    ;; ("#read"  (token-READ))
@@ -92,6 +95,7 @@
    ("::" (token-EXT))
    (":" (token-COL))
    ("," (token-COMMA))
+   ("." (token-DOT))
    ("=" (token-=))
    ((re-+ number10) (token-NUM (string->number lexeme)))
    (identifier      (token-VAR lexeme))
@@ -241,8 +245,12 @@
 	 ;;  (new Send% [port (string->symbol $3)] [data $5]))
 	 )
 
+    (module-call
+     ((VAR DOT VAR LPAREN args RPAREN)
+      (new ModuleCall% [module-name $1] [name $3] [args $5] [pos $1-start-pos])))
+    
     (assume
-         ((ASSUME LPAREN exp RPAREN SEMICOL) (new Assume% [e1 $3])))
+         ((ASSUME LPAREN exp RPAREN SEMICOL) (new Assume% [e1 $3] [pos $1-start-pos])))
 
     (assumes
          (() (list))
@@ -286,6 +294,7 @@
 
 	 ((LPAREN exp RPAREN) $2)
 	 ((funccall) $1)
+	 ((module-call) $1)
          )
 
     (cluster
@@ -461,6 +470,46 @@
                                  [type (car $1)] [place (cdr $1)]))]
                [pos $2-start-pos])))
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;; Module ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; Declaration
+    (var-list-ext
+     (() (list))
+     ((var-list) $1))
+    
+    (module-decl
+     ((MODULE VAR LPAREN var-list-ext RPAREN LBRACK decls RBRACK)
+      (new Module% [name $2] [params $4] [stmts $7] [pos $1-start-pos])))
+
+    (module-decls
+     (() (list))
+     ((module-decl module-decls) (cons $1 $2)))
+
+    ;; Initialization
+    (module-arg
+     ((num-unit) $1)
+     ((LBRACK num-list RBRACK) $2))
+
+    (module-args
+     ((module-arg) (list $1))
+     ((module-arg COMMA module-args) (cons $1 $3)))
+
+    (module-args-ext
+     (() (list))
+     ((module-args) $1))
+    
+    (module-init
+     ((VAR = NEW VAR LPAREN module-args-ext RPAREN SEMICOL)
+      (new Assign%
+           [lhs (new Var% [name $1] [pos $1-start-pos])]
+           [rhs (new ModuleCreate% [name $4] [args $6] [pos $4-start-pos])]
+           [pos $1-start-pos])))
+    
+    (module-inits
+     (() (list))
+     ((module-init module-inits) (cons $1 $2)))
+     
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
     (part2core
 	 (() (list))
 	 ((HASH NUM MAP NUM part2core) (cons (cons $2 $4) $5)))
@@ -479,9 +528,10 @@
          ((func-decl decls) (cons $1 $2)))
          
     (program
-     ((part2core noroute actors decls)
-      (new Program% [stmts $4] [fixed-parts $1] [noroute $2]
-           [actors (actor-map $3)])))
+     ((part2core noroute actors module-decls module-inits decls)
+      (new Program% [stmts $6] [fixed-parts $1] [noroute $2]
+           [actors (actor-map $3)] [module-decls $4] [module-inits $5]
+           )))
 
     )))
 
