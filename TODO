@@ -35,3 +35,11 @@ BENCHMARKS
 - heap
 - blackscholes (float, log, exp)
 - FFT
+
+PARALLEL MODULE
+- collect conflicts
+- global array
+- freshen concrete partitions as well
+- (clone ast) is very confusing
+- only rename global array & function within module
+- only clone the stmt if there is modulecall in there

@@ -709,10 +709,7 @@
            [name name] [args (map (lambda (x) (send x clone)) args)] [pos pos]))
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(ModuleCreate: ~a" indent name))
-      (for ([arg args])
-	   (send arg pretty-print (inc indent)))
-      (pretty-display (format "~a)" indent)))
+      (pretty-display (format "~a(ModuleCreate: ~a ~a)" indent name args)))
     ))
 
 (define Const%
@@ -1268,12 +1265,13 @@
     (inherit-field stmts)
 
     (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
-                [module-decls #f] [module-inits #f]
+                [module-decls (list)] [module-inits (list)]
                 [uses-a #f] [a-port #f] [set-p #f])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
 	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]
+           [conflict-list conflict-list]
            [uses-a uses-a] [a-port a-port] [set-p set-p]))
 
     (define/override (pretty-print [indent ""])

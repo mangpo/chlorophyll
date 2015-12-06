@@ -12,6 +12,7 @@
          "partitioner.rkt" 
          "separator.rkt"
          "visitor-initial.rkt"
+         "visitor-module-expander.rkt"
          "visitor-arrayaccess.rkt"
          "visitor-codegen.rkt"
          "visitor-desugar.rkt"
@@ -39,7 +40,10 @@
   (pretty-display "=============== before initial ===============")
   (send my-ast pretty-print)
   (send my-ast accept (new initial%))
-  (pretty-display "=============== before map-reduce ===============")
+  (pretty-display "=============== after initial ===============")
+  (send my-ast pretty-print)
+  (send my-ast accept (new module-expander%))
+  (pretty-display "=============== after module-expander ===============")
   (send my-ast pretty-print)
   (send my-ast accept (new mapper-reducer%))
   (pretty-display "=============== after map-reduce ===============")

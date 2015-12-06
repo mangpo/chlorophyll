@@ -375,8 +375,9 @@
          ((num-unit COMMA num-list) (cons $1 $3)))
 
     (array-init
-         (() #f)
-         ((= LBRACK num-list RBRACK) $3))
+     (() #f)
+     ((= VAR) (new Var% [name $2] [pos $2-start-pos]))
+     ((= LBRACK num-list RBRACK) $3))
 
     (var-decl
          ; var declaration

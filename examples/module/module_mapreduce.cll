@@ -1,0 +1,22 @@
+// Module example
+
+module Op(c) {
+  int::2 add(int::2 a) { 
+    a::0 = a::0 + c;
+    a::1 = a::1 + c;
+    return a;
+  }
+}
+
+m1 = new Op(10);
+m2 = new Op(1);
+
+void main() {
+  int::2 o1;
+  int::2 o2;
+  int::2 ans;
+
+  o1 = m1.add(o1);
+  o2 = m2.add(o2);
+  ans = o1 + o2;
+}

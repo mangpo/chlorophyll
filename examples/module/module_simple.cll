@@ -1,0 +1,18 @@
+// Module example
+
+module Op(c, arr) {
+  int add(int a, int b) { 
+    int x[3] = arr;
+    return a +@place(b) x[c] + b; 
+  }
+}
+
+m1 = new Op(0,{1,2,3});
+m2 = new Op(1,{111,222,333});
+
+void main() {
+  int o1;
+  int o2;
+  o1 = m1.add(1,2);
+  o2 = m2.add(1,2);
+}
