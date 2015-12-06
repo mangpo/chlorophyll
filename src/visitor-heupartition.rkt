@@ -80,6 +80,7 @@
                    (and
                     (or (symbolic? r1) (symbolic? r2))
                     (or (not c1) (not c2) (equal? c1 c2))
+                    ;; (conflict? r1 r2)
                     (not (hash-has-key? conflict-map (cons r1 r2)))
                     (not (hash-has-key? conflict-map (cons r2 r1)))
                     (< (+ (hash-ref space r1) (hash-ref space r2)) 
