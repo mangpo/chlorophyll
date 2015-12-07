@@ -38,12 +38,15 @@ BENCHMARKS
 
 PARALLEL MODULE
 - set b seems buggy in mapreduce/map.cll
-- regression test map/reduce (done)
-- module with paralle map/reduce (done)
+
 - test with hmm program
-- global array
+- test with softsim
 - freshen concrete partitions as well
+- global array
 - x * 8 ==> <<
+- make the sample hmm program fits
+
+- regression test
 - (clone ast) is very confusing
 - only rename global array & function within module
 - only clone the stmt if there is modulecall in there

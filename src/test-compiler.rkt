@@ -110,4 +110,4 @@
 
 ;; HMM Classifier
 (compile-and-optimize "../examples/sensors/hmm.cll" "hmm" 
-                      512 #:w 5 #:h 5 #:opt #f #:partition #f)
+                      512 #:w 10 #:h 8 #:opt #f #:partition #f)

@@ -1,0 +1,144 @@
+// -*- c -*-
+
+module Hmm(a_init) {
+
+int derive_group(fix9_t::3 acc){
+  fix9_t::3@{[0:7], [7:14]} quantizerMap[14];
+  fix9_t minDist; minDist = 262143;//0x3ffff;
+  int minGroup;
+  fix9_t a;
+  fix9_t b;
+  fix9_t c;
+  fix9_t d;
+  fix9_t::3 ref;
+
+  fix9_t::3 n0;
+  n0::0 = 5716;
+  n0::1 = 0;
+  n0::2 = 0;
+  quantizerMap[0] = n0;
+  //TODO: other elements, vector/tuple literals
+
+  for (i from 0 to 14){
+    ref = quantizerMap[i];
+    a = ref::0 - acc::0;
+    b = ref::1 - acc::1;
+    c = ref::2 - acc::2;
+    d = a*a + b*b + c*c;
+    if (d < minDist){
+      minDist = d;
+      minGroup = i;
+    }
+  }
+  return minGroup;
+}
+
+
+int forward_proc_inc(int o){
+  int started[1];
+  fix1_t sum;
+  fix1_t ord;
+  fix1_t pi[8];
+  //   solve: no satisfying execution found
+  fix1_t@{[0:32], [32:64]} a[64] = a_init; // 8X8
+  fix1_t b1[32];
+  fix1_t b2[32];
+  //fix1_t@{[0:32], [32:64],[64:96],[96:112]} b[112]; // 8X14
+  fix1_t f[8];
+  fix1_t s[8];
+  fix1_t prob;
+  fix1_t temp;
+  sum = 0.1;
+  if (o < 0){
+    started[0] = 0;
+    for (i from 0 to 8){
+      prob = prob + s[i];
+    }
+    return prob;
+  }else{
+    if (started[0]){
+      for (k from 0 to 4) {//for each state
+        sum = 0;
+        for (l from 0 to 8) {//for each state
+          sum = sum + s[l] * a[l*8+k];
+        }
+        temp = sum * b1[k<<3 + o];
+        f[k] = temp;
+        ord = ord | temp;
+      }
+      for (k from 4 to 8) {//for each state
+        sum = 0;
+        for (l from 0 to 8) {//for each state
+          sum = sum + s[l] * a[l*8+k];
+        }
+        temp = sum * b2[(k-4)<<3 + o];
+        f[k] = temp;
+        ord = ord | temp;
+      }
+
+    }else{
+      started[0] = 1;
+      for (l from 0 to 4) {//for each state
+        s[l] = pi[l] * b1[l<<3 + o];
+      }
+      for (l from 4 to 8) {//for each state
+        s[l] = pi[l] * b2[(l-4)<<3 + o];
+      }
+    }
+    return ord;
+  }
+}
+
+} // end module Hmm
+
+hmm1 = new Hmm({0.97, 0.18, 0.05, 0.77, 0.7, 0.47, 0.99, 0.73, 0.2, 0.6, 0.12, 0.05, 0.67, 0.84, 0.8, 0.84, 0.32, 0.44, 0.56, 0.57, 0.75, 0.83, 0.73, 0.96, 0.35, 0.96, 0.91, 0.48, 0.52, 0.82, 0.31, 0.73, 0.62, 0.21, 0.67, 0.24, 0.88, 0.8, 0.41, 0.34, 0.06, 0.54, 0.54, 0.33, 0.71, 0.32, 0.83, 0.38, 0.01, 0.12, 0.33, 0.53, 0.59, 0.84, 0.11, 0.84, 0.63, 0.64, 0.13, 0.59, 0.64, 0.01, 0.06, 0.91});
+hmm2 = new Hmm({0.86, 0.6, 0.95, 0.16, 0.0, 0.04, 0.29, 0.41, 0.35, 0.62, 0.13, 0.89, 0.82, 0.04, 0.52, 0.58, 0.53, 0.74, 0.1, 0.31, 0.99, 0.53, 0.19, 0.13, 0.62, 0.95, 0.02, 0.07, 0.99, 0.51, 0.15, 0.81, 0.61, 0.39, 0.63, 0.43, 0.51, 0.84, 0.87, 0.92, 0.62, 0.66, 0.73, 0.65, 0.36, 0.33, 0.83, 0.33, 0.72, 0.68, 0.74, 0.25, 0.9, 0.35, 0.51, 0.58, 0.64, 0.0, 0.83, 0.64, 0.63, 0.27, 0.28, 0.27});
+hmm3 = new Hmm({-0.68, -0.13, -0.63, -0.67, -0.79, -0.82, -0.39, 0.0, -0.53, -0.58, -0.43, -0.07, -0.24, -0.24, -0.06, -0.91, -0.63, -0.23, -0.96, -0.15, -0.07, -0.94, -0.29, -0.02, -0.34, -0.66, -0.6, -0.75, -0.49, -0.57, -0.21, -0.13, -0.63, -0.48, -0.71, -0.87, -0.16, -0.97, -0.19, -0.86, -0.68, -0.01, -0.3, -0.28, -0.95, -0.4, -0.22, -0.68, -0.84, -0.49, -0.95, -0.31, -0.33, -0.63, -0.78, -0.52, -0.76, -0.83, -0.67, -0.18, -0.14, -0.12, -0.81, -0.01});
+
+fix9_t::3 get_next_reading(){
+  //return next accelerometer reading
+  //TODO: read from serial
+  fix9_t::3 n;
+  n::0 = 111;
+  n::1 = 222;
+  n::2 = 333;
+  return n;
+}
+
+int filter(fix9_t::3 acc){
+  fix9_t abs;
+  fix9_t idle_sensitivity;
+  fix9_t def_sensitivity;
+  fix9_t dir_filter_ref[3];
+
+  abs = acc::0 * acc::0 + acc::1 * acc::1 + acc::2 * acc::2;
+
+  return 0;
+}
+
+
+void main(){
+  fix9_t::3 acc;
+  int@1 o1, ord1;
+  int@2 o2, ord2;
+  int@3 o3, ord3;
+
+  for (i from 0 to 10){ //for each accelerometer reading
+    acc = get_next_reading();
+    if (filter(acc)){
+      o1 = hmm1.derive_group(acc);
+      ord1 = ord1 | hmm1.forward_proc_inc(o1);
+      o2 = hmm2.derive_group(acc);
+      ord2 = ord2 | hmm2.forward_proc_inc(o2);
+      o3 = hmm3.derive_group(acc);
+      ord3 = ord3 | hmm3.forward_proc_inc(o3);
+    }
+  }
+  int prob1;
+  int prob2;
+  int prob3;
+  prob1 = hmm1.forward_proc_inc(-1);
+  prob2 = hmm2.forward_proc_inc(-1);
+  prob3 = hmm3.forward_proc_inc(-1);
+  
+}

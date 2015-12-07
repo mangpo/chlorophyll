@@ -26,7 +26,7 @@
 (define procs 4)
 (define check-interval 60)
 (define distributed #t)
-(define max-unroll 20)
+(define max-unroll 4)
 (define accurate-flow #t)
 
 (define srcdir srcpath)
