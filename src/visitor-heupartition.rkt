@@ -12,21 +12,47 @@
 			     refine-capacity part2capacity
 			     conflict-list my-ast)
   (define sol-map (make-hash))
-  (define conflict-map (make-hash))
   ;; Mapping from logical core (either concrete or symbolic) to physical core.
   (define node-to-core (make-hash))
-  
   (when debug (pretty-display `(conflict-list ,conflict-list)))
-  ;; Construct conflict-map
-  (for ([lst conflict-list])
-     (for* ([set-x lst]
-            [set-y lst])
-       (unless (equal? set-x set-y)
-         (for* ([x set-x]
-                [y set-y])
-           (hash-set! conflict-map (cons x y) 1)
-           (hash-set! conflict-map (cons y x) 1)))))
-  (when debug (pretty-display `(conflict-map ,conflict-map)))
+
+  (define conflict-index (make-hash))
+  (for ([conflict-id (in-naturals)]
+        [group-list conflict-list])
+       (for ([group-id (in-naturals)]
+             [group group-list])
+            (for ([p group])
+                 (if (hash-has-key? conflict-index p)
+                     (hash-set! conflict-index p
+                                (cons (cons conflict-id group-id)
+                                      (hash-ref conflict-index p)))
+                     (hash-set! conflict-index p
+                                (list (cons conflict-id group-id)))))))
+  (when debug (pretty-display `(conflict-index ,conflict-index)))
+
+  (define (conflict? x y)
+    (and (hash-has-key? conflict-index x) (hash-has-key? conflict-index y)
+         (let ([indexes-x (hash-ref conflict-index x)]
+               [indexes-y (hash-ref conflict-index y)]
+               [conflict #f])
+           (for* ([index-x indexes-x]
+                  [index-y indexes-y] #:break conflict)
+                 (when (and (= (car index-x) (car index-y))
+                            (not (= (cdr index-x) (cdr index-y))))
+                       (set! conflict #t)))
+           conflict)))
+
+  (define (update-conflict child parent)
+    (define c-conflict
+      (if (hash-has-key? conflict-index child)
+          (hash-ref conflict-index child)
+          (list)))
+    (define p-conflict
+      (if (hash-has-key? conflict-index parent)
+          (hash-ref conflict-index parent)
+          (list)))
+    (define my-conflict (append p-conflict c-conflict))
+    (unless (empty? my-conflict) (hash-set! conflict-index parent my-conflict)))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
@@ -80,9 +106,7 @@
                    (and
                     (or (symbolic? r1) (symbolic? r2))
                     (or (not c1) (not c2) (equal? c1 c2))
-                    ;; (conflict? r1 r2)
-                    (not (hash-has-key? conflict-map (cons r1 r2)))
-                    (not (hash-has-key? conflict-map (cons r2 r1)))
+                    (not (conflict? r1 r2))
                     (< (+ (hash-ref space r1) (hash-ref space r2)) 
                        (inexact->exact (floor (* limit scale)))))))
           (cond
@@ -90,9 +114,13 @@
            [(and c2 (not c1)) (hash-set! node-to-core r1 c2)])
 
           ;;(when debug (pretty-display `(root ,r1 ,r2 ,limit)))
-          (when debug (pretty-display `(merge ,r1 ,r2 ,must
-                                              ,(hash-ref space r1)
-                                              ,(hash-ref space r2))))
+          (when
+           debug
+           (pretty-display (format "merge ~a->~a + ~a->~a = parent ~a"
+                                   p1 r1 p2 r2 parent))
+           (pretty-display (format "space ~a ~a"
+                                   (hash-ref space r1) (hash-ref space r2))))
+          (update-conflict child parent)
           (point child parent)
           ))
 

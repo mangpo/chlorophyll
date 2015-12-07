@@ -332,7 +332,6 @@
     (define result (merge-sym-partition num-core space network capacity 
 					refine-capacity part2capacity
 					conflict-list my-ast))
-    (raise "done")
     (set-global-sol (sat (make-immutable-hash (hash->list (car result)))))
     (set! new-part2sym (cdr result))
     

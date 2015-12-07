@@ -9,19 +9,19 @@
   (class* object% (visitor<%>)
     (super-new)
 
+    (define debug #f)
     (define modules (make-hash))
     (define mapping #f)
     (define id #f)
 
-    (define conflict-list (list))
-    (define all-places (list))
+    (define module-summary (make-hash))
 
     (define-syntax-rule (rename name)
-      (if (and mapping (not (equal? name "#return")))
+      (if (and mapping (not (member name (list "#return" "map" "reduce"))))
           (begin
             (unless (string? name)
                     (raise (format "rename: ~a is not string" name)))
-            (format "~a_~a" id name))
+            (format "_~a_~a" id name))
           name))
 
     (define (fresh-place place)
@@ -29,10 +29,7 @@
           (cond
            [(boolean? place) place]
            [(number? place) place] ;; TODO
-           [(symbolic? place)
-            (let ([p (get-sym)])
-              (set! all-places (cons p all-places))
-              p)]
+           [(symbolic? place) (get-sym)]
            [(is-a? place Place%)
             (let ([at (get-field at place)])
               (if (string? at)
@@ -63,11 +60,11 @@
        ;;;;;;;;;;;;;;;;;;;;;;;;;;; Modules ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
        [(and (is-a? ast Assign%) (is-a? (get-field rhs ast) ModuleCreate%))
-        (pretty-display (format "MODULE: ModuleCreate"))
+        (when debug (pretty-display (format "MODULE: ModuleCreate")))
         (define rhs (get-field rhs ast))
         (define lhs (get-field lhs ast))
-        (define name (get-field name rhs))
-        (define module (hash-ref modules name))
+        (define module-name (get-field name rhs))
+        (define module (hash-ref modules module-name))
 
         (set! id (get-field name lhs))
         (set! mapping (make-hash))
@@ -78,22 +75,25 @@
         (define ret
           (for/list ([stmt (get-field stmts module)])
                     (send stmt accept this)))
-        (set! conflict-list (cons all-places conflict-list))
-        (set! all-places (list))
+        (hash-set! module-summary module-name
+                   (cons id (hash-ref module-summary module-name)))
         (set! mapping #f)
         
         ret
         ]
 
        [(is-a? ast Module%)
-        (hash-set! modules (get-field name ast) ast)]
+        (define name (get-field name ast))
+        (hash-set! modules name ast)
+        (hash-set! module-summary name (list))
+        ]
 
        [(is-a? ast ModuleCall%)
-        (pretty-display (format "MODULE: ModuleCall% ~a.~a"
-                               (get-field module-name ast)
-                               (get-field name ast)))
+        (when debug (pretty-display (format "MODULE: ModuleCall% ~a.~a"
+                                            (get-field module-name ast)
+                                            (get-field name ast))))
         (new FuncCall%
-             [name (format "~a_~a" (get-field module-name ast)
+             [name (format "_~a_~a" (get-field module-name ast)
                            (get-field name ast))]
              [args (get-field args ast)]
              [pos (get-field pos ast)])]
@@ -146,28 +146,32 @@
         (new Assume% [e1 (visit-my e1)] [pos (my pos)])]
 
        [(is-a? ast ReturnDecl%)
-        (pretty-display (format "MODULE: ReturnDecl% ~a" (my var-list)))
+        (when debug
+              (pretty-display (format "MODULE: ReturnDecl% ~a" (my var-list))))
         (new ReturnDecl% [var-list (map (lambda (x) (rename x)) (my var-list))]
              [type (my type)]
              [place (fresh-place (my place))]
              [pos (my pos)])]
        
        [(is-a? ast Param%)
-        (pretty-display (format "MODULE: Param% ~a" (my var-list)))
+        (when debug
+              (pretty-display (format "MODULE: Param% ~a" (my var-list))))
         (new Param% [var-list (map (lambda (x) (rename x)) (my var-list))]
              [type (my type)]
              [place (fresh-place (my place))]
              [pos (my pos)])]
 
        [(is-a? ast VarDecl%)
-        (pretty-display (format "MODULE: VarDecl% ~a" (my var-list)))
+        (when debug
+              (pretty-display (format "MODULE: VarDecl% ~a" (my var-list))))
         (new VarDecl% [var-list (map (lambda (x) (rename x)) (my var-list))]
              [type (my type)]
              [place (fresh-place (my place))]
              [pos (my pos)])]
 
        [(is-a? ast ArrayDecl%)
-        (pretty-display (format "MODULE: ArrayDecl% ~a" (my var)))
+        (when debug
+              (pretty-display (format "MODULE: ArrayDecl% ~a" (my var))))
         (let ([init (my init)])
           (new ArrayDecl% [var (rename (my var))]
                [type (my type)] [cluster (my cluster)] [bound (my bound)]
@@ -182,7 +186,7 @@
 
        [(is-a? ast For%)
         (new For% [iter (visit-my iter)] 
-             [from (my from)] [to (my to)] [body (visit-my block)]
+             [from (my from)] [to (my to)] [body (visit-my body)]
              [pos (my pos)])]
 
        [(is-a? ast While%)
@@ -196,11 +200,11 @@
                  [pos (my pos)])]
 
        [(is-a? ast Return%)
-        (pretty-display (format "MODULE: Return"))
+        (when debug (pretty-display (format "MODULE: Return")))
         (new Return% [val (visit-my val)] [pos (my pos)])]
 
        [(is-a? ast FuncDecl%)
-        (pretty-display (format "MODULE: FuncDecl ~a" (my name)))
+        (when debug (pretty-display (format "MODULE: FuncDecl ~a" (my name))))
         (new FuncDecl%
              [name (rename (my name))] [args (visit-my args)] 
              [precond (visit-my precond)]
@@ -209,19 +213,19 @@
              [pos (my pos)])]
 
        [(is-a? ast Program%)
-        (define pre (list))
-        (unless (empty? (my module-decls))
-                (for ([module (my module-decls)])
-                     (send module accept this))
-                (set! pre (flatten (for/list ([module (my module-inits)])
-                                             (send module accept this)))))
-
-        (set-field! module-decls ast (list))
-        (set-field! module-inits ast (list))
-        (set-field! stmts ast
-                    (append pre
-                            (map (lambda (x) (send x accept this)) (my stmts))))
-        ast]
+        (unless
+         (empty? (my module-decls))
+         (define pre (list))
+         (for ([module (my module-decls)])
+              (send module accept this))
+         (set! pre (flatten (for/list ([module (my module-inits)])
+                                             (send module accept this))))
+         (set-field! module-decls ast (list))
+         (set-field! module-inits ast module-summary)
+         (set-field! stmts ast
+                     (append pre
+                             (map (lambda (x) (send x accept this))
+                                  (my stmts)))))]
 
        [(is-a? ast Block%)
         (new Block% [stmts (map (lambda (x) (send x accept this)) (my stmts))])]

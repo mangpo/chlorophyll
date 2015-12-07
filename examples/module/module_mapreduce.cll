@@ -1,22 +1,32 @@
 // Module example
 
-module Op(c) {
-  int::2 add(int::2 a) { 
-    a::0 = a::0 + c;
-    a::1 = a::1 + c;
-    return a;
+module Op() {
+  int ssd(int a, int b) {
+    int temp;
+    temp = a -@place(temp) b;
+    return temp *@place(temp) temp;
+  }
+
+  int add(int a, int b) {
+    return a + b;
+  }
+
+  int f() {
+    int@{[0:5],[5:10]} x[10] = {7 , 3 , 7 , 9 , 0 , 1 , 6 , 4 , 9 , 9};
+    int@{[0:5],[5:10]} y[10] = {4 , 2 , 10 , 6 , 5 , 6 , 1 , 5 , 6 , 7};
+    int ans;
+    ans = reduce(add, 0, map(ssd,x,y));
+    return ans;
   }
 }
 
-m1 = new Op(10);
-m2 = new Op(1);
+m1 = new Op();
+m2 = new Op();
 
 void main() {
-  int::2 o1;
-  int::2 o2;
-  int::2 ans;
+  int o1;
+  int o2;
 
-  o1 = m1.add(o1);
-  o2 = m2.add(o2);
-  ans = o1 + o2;
+  o1 = m1.f();
+  o2 = m2.f();
 }

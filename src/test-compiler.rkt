@@ -86,7 +86,9 @@
 ;(compile-and-optimize "../examples/mapreduce/map.cll" "reduce" 
 ;                      290 #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/mapreduce/reduce-pair.cll" "reduce-pair" 
-;                      290 #:w 4 #lang racket
+;                      290 #:w 4 #:h 4 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/mapreduce/mapreduce.cll" "mapreduce" 
+;                      290 #:w 4 #:h 4 #:opt #f #:partition #f)
 
 ;; Fixed point
 ;(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
@@ -101,5 +103,11 @@
 ;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)
 
 ;; Parallel Module
-(compile-and-optimize "../examples/module/module_pair.cll" "module_pair" 
-                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/module/module_pair.cll" "module_pair" 
+;                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/module/module_mapreduce.cll" "module_mapreduce" 
+;                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
+
+;; HMM Classifier
+(compile-and-optimize "../examples/sensors/hmm.cll" "hmm" 
+                      512 #:w 5 #:h 5 #:opt #f #:partition #f)

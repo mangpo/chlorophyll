@@ -1272,6 +1272,7 @@
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
 	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]
            [conflict-list conflict-list]
+           [module-decls module-decls] [module-inits module-inits]
            [uses-a uses-a] [a-port a-port] [set-p set-p]))
 
     (define/override (pretty-print [indent ""])
@@ -1279,6 +1280,9 @@
       (pretty-display (format ">> noroute = ~a" noroute))
       (pretty-display (format ">> actors = ~a" actors))
       (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
+
+      (unless (empty? conflict-list)
+              (pretty-display (format ">> conflict-list = ~a" conflict-list)))
 
       (unless (empty? module-decls)
               (pretty-display ">> modules")

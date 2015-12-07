@@ -209,13 +209,16 @@
         (define e1 (get-field e1 ast))
         (define op (get-field op ast))
         
+        (send e1 accept this)
+        
         ;; set place-type
         (define place-type (find-place-type ast op))
+        (when (and (symbolic? place-type)
+                   (at-any? (get-field place-type e1)))
+              (set-field! place op (new Place% [at "any"]))
+              (set! place-type (new Place% [at "any"])))
         (set-field! place-type ast place-type)
-       
-        ;; Infer place-type
-        ;(send e1 infer-place place-type)
-        (send e1 accept this)]
+       ]
 
        [(is-a? ast BinExp%)
         (when debug (pretty-display (format "PLACETYPE: BinExp ~a" (send ast to-string))))
@@ -223,16 +226,18 @@
         (define e2 (get-field e2 ast))
         (define op (get-field op ast))
         
+        (send e1 accept this)
+        (send e2 accept this)
+        
         ;; set place-type
         (define place-type (find-place-type ast op))
+        (when (and (symbolic? place-type)
+                   (at-any? (get-field place-type e1))
+                   (at-any? (get-field place-type e2)))
+              (set-field! place op (new Place% [at "any"]))
+              (set! place-type (new Place% [at "any"])))
         (set-field! place-type ast place-type)
-        
-        ;; Infer place-type
-        ;(send e1 infer-place place-type)
-        ;(send e2 infer-place place-type)
-
-        (send e1 accept this)
-        (send e2 accept this)]
+        ]
 
        [(is-a? ast FuncCall%)
         (when debug (pretty-display (format "PLACETYPE: FuncCall ~a" (send ast to-string))))

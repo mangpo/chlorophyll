@@ -540,7 +540,7 @@
         (define name (get-field name ast))
         (define return-place (get-field place-type ast))
         (define type (get-field type ast))
-	(when #t ;;debug
+	(when debug
               (pretty-display (format "\nDIVIDE: FuncCall ~a, return-place ~a, type ~a\n" 
                                       (send ast to-string) return-place type)))
 

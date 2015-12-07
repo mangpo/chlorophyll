@@ -37,9 +37,13 @@ BENCHMARKS
 - FFT
 
 PARALLEL MODULE
-- collect conflicts
+- set b seems buggy in mapreduce/map.cll
+- regression test map/reduce (done)
+- module with paralle map/reduce (done)
+- test with hmm program
 - global array
 - freshen concrete partitions as well
+- x * 8 ==> <<
 - (clone ast) is very confusing
 - only rename global array & function within module
 - only clone the stmt if there is modulecall in there

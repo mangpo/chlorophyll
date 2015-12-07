@@ -102,11 +102,60 @@
         (send (get-field body ast) accept this)
         ast]
 
-
        [(is-a? ast Program%)
         (for ([decl (get-field stmts ast)])
-             (send decl accept this))]
+             (send decl accept this))
 
+        ;; Collect conflict-list from parallel modules.
+        (define module-summary (get-field module-inits ast))
+        ;;(pretty-display `(module-summary ,module-summary))
+        (when
+         (and (hash? module-summary) (not (hash-empty? module-summary)))
+         (define all-instances (flatten (hash-values module-summary)))
+         ;;(pretty-display `(all-instances ,all-instances))
+         (define conflict-map (make-hash))
+         (for ([name all-instances])
+              (hash-set! conflict-map name (set)))
+         (for ([stmt (get-field stmts ast)])
+              (let ([name #f])
+                (cond
+                 [(is-a? stmt FuncDecl%)
+                  (set! name (get-field name stmt))]
+                 
+                 [(is-a? stmt ArrayDecl%)
+                  (set! name (get-field var stmt))]
+                 
+                 [(is-a? stmt VarDecl%)
+                  (set! name (car (get-field var-list stmt)))]
+                 )
+
+                (when
+                 name
+                 ;; If there is match, stmt belong to a parallel module.
+                 ;; Then, collect places to conflict-list.
+                 (let ([match
+                        ;; with or without parallel map
+                        (or (regexp-match #rx"_[0-9]+_([^_]+)_.+" name)
+                            (regexp-match #rx"_([^_]+)_.+" name))])
+                   ;;(when match `(pretty-display `(match ,name ,match)))
+                   (when (and match (member (second match) all-instances))
+                         (define instance-name (second match))
+                         ;;(pretty-display `(instance-name ,instance-name))
+                         (hash-set!
+                          conflict-map instance-name
+                          (set-union (send stmt accept placeset-collector)
+                                     (hash-ref conflict-map instance-name))))))))
+         (define conflict-list
+           (for/list ([instances (hash-values module-summary)])
+             (for/list ([instance instances])
+                       (hash-ref conflict-map instance))))
+         (set-field! conflict-list program
+                     (append conflict-list (get-field conflict-list program)))
+         ;;(pretty-display `(conflict-list ,conflict-list))
+         )
+                
+        ast
+        ]
 
        [(is-a? ast BlockDup%)
         (define n (length (get-field unroll (get-field loop ast))))
@@ -124,13 +173,11 @@
 
         ast
         ]
-
+       
        [(is-a? ast Block%)
         (set-field! stmts ast
                     (flatten (map (lambda (x) (send x accept this)) 
                                   (get-field stmts ast))))
-        ;(pretty-display "UNROLL: Block (after)")
-        ;(send ast pretty-print)
         ast
         ]
 

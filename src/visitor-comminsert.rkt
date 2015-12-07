@@ -316,7 +316,7 @@
 
        [(is-a? ast Array%)
         (define index (get-field index ast))
-        (send index accept this)
+        (define index-ret (send index accept this))
         (convert)
         (when debug 
               (pretty-display (format "\nCOMMINSERT: Array ~a" (send ast to-string))))
@@ -326,7 +326,7 @@
         ;; (when (place-type-dist? index-sp)
         ;;       (for ([p (car index-sp)])
         ;;            (pretty-display `(send-path ,(get-field send-path p)))))
-        (set-union (all-place-type) (all-path index))
+        (set-union (all-place-type) (all-path index) index-ret)
         ]
 
        [(is-a? ast Var%)
@@ -344,10 +344,17 @@
         (send op accept this)
 
         (convert)
-        (when debug 
+        (when #t 
               (pretty-display (format "COMMINSERT: BinExp ~a" (send ast to-string))))
         (gen-path e1 ast)
         (gen-path e2 ast)
+        
+        (when #t 
+              (pretty-display (format "COMMINSERT: BinExp ~a (done)" (send ast to-string)))
+              (pretty-display `(e1 ,e1-ret ,(all-path e1)))
+              (pretty-display `(e2 ,e2-ret ,(all-path e2)))
+              (pretty-display `(all-place-type ,(all-place-type))))
+        
         (set-union e1-ret e2-ret (all-place-type) (all-path e1) (all-path e2))
         ]
 
