@@ -14,29 +14,27 @@
 (define commcode-inserter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field routing-table part2core w h obstacles actors)
+    (init-field routing-table part2core w h obstacles actors conflict-list)
     ;; TODO: check if obstacles have everything.
 
     (define debug #f)
     (define n (* w h))
     (define visited (make-hash))
     (define obs? (> (set-count obstacles) 0))
+    (define conflicts (car conflict-list))
+    (define conflict-index (cdr conflict-list))
 
     (define (get-route i j)
       (define ret (vector-2d-ref routing-table i j))
       (cond
        [ret ret]
-       [obs?
-        (define path (route-obs i j w h (set-remove* obstacles i j)))
+       [else
+        (define path (gen-route-i-j i j w h obs? obstacles
+                                    conflicts conflict-index))
         (unless
          path
          (raise (format "routing: no available route between cores ~a and ~a"
                         i j)))
-        (vector-2d-set! routing-table n i j path)
-        (vector-2d-set! routing-table n j i (reverse path))
-        path]
-       [else
-        (define path (route i j w))
         (vector-2d-set! routing-table n i j path)
         (vector-2d-set! routing-table n j i (reverse path))
         path]))
@@ -344,12 +342,12 @@
         (send op accept this)
 
         (convert)
-        (when #t 
+        (when debug
               (pretty-display (format "COMMINSERT: BinExp ~a" (send ast to-string))))
         (gen-path e1 ast)
         (gen-path e2 ast)
         
-        (when #t 
+        (when debug
               (pretty-display (format "COMMINSERT: BinExp ~a (done)" (send ast to-string)))
               (pretty-display `(e1 ,e1-ret ,(all-path e1)))
               (pretty-display `(e2 ,e2-ret ,(all-path e2)))

@@ -1,10 +1,15 @@
 // -*- c -*-
 
+# 0 --> 508
+# 1 --> 406
+# 2 --> 408
+# 3 --> 410
+
 module Hmm(a_init) {
 
 int derive_group(fix9_t::3 acc){
   fix9_t::3@{[0:7], [7:14]} quantizerMap[14];
-  fix9_t minDist; minDist = 262143;//0x3ffff;
+  fix9_t minDist; minDist = 255;//0b11111111;
   int minGroup;
   fix9_t a;
   fix9_t b;
@@ -98,7 +103,7 @@ hmm3 = new Hmm({-0.68, -0.13, -0.63, -0.67, -0.79, -0.82, -0.39, 0.0, -0.53, -0.
 fix9_t::3 get_next_reading(){
   //return next accelerometer reading
   //TODO: read from serial
-  fix9_t::3 n;
+  fix9_t::3@(0,0,0) n;
   n::0 = 111;
   n::1 = 222;
   n::2 = 333;
@@ -119,26 +124,30 @@ int filter(fix9_t::3 acc){
 
 void main(){
   fix9_t::3 acc;
-  int@1 o1, ord1;
-  int@2 o2, ord2;
-  int@3 o3, ord3;
+  fix9_t::3@(1,1,1) acc1;
+  fix9_t::3@(2,2,2) acc2;
+  fix9_t::3@(3,3,3) acc3;
+  int@4 o1, ord1;
+  int@5 o2, ord2;
+  int@6 o3, ord3;
 
   for (i from 0 to 10){ //for each accelerometer reading
     acc = get_next_reading();
     if (filter(acc)){
-      o1 = hmm1.derive_group(acc);
-      ord1 = ord1 | hmm1.forward_proc_inc(o1);
-      o2 = hmm2.derive_group(acc);
-      ord2 = ord2 | hmm2.forward_proc_inc(o2);
-      o3 = hmm3.derive_group(acc);
-      ord3 = ord3 | hmm3.forward_proc_inc(o3);
+      acc1 = acc;
+      acc2 = acc;
+      acc3 = acc;
+      o1 = hmm1.derive_group(acc1);
+      ord1 = ord1 |@4 hmm1.forward_proc_inc(o1);
+      o2 = hmm2.derive_group(acc2);
+      ord2 = ord2 |@5 hmm2.forward_proc_inc(o2);
+      o3 = hmm3.derive_group(acc3);
+      ord3 = ord3 |@6 hmm3.forward_proc_inc(o3);
     }
   }
-  int prob1;
-  int prob2;
-  int prob3;
+  int@99 prob1;
   prob1 = hmm1.forward_proc_inc(-1);
-  prob2 = hmm2.forward_proc_inc(-1);
-  prob3 = hmm3.forward_proc_inc(-1);
+  prob1 = hmm2.forward_proc_inc(-1);
+  prob1 = hmm3.forward_proc_inc(-1);
   
 }

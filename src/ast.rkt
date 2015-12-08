@@ -1284,17 +1284,18 @@
       (unless (empty? conflict-list)
               (pretty-display (format ">> conflict-list = ~a" conflict-list)))
 
-      (unless (empty? module-decls)
-              (pretty-display ">> modules")
-              (pretty-display module-decls)
-              (pretty-display module-inits)
-              (for ([module module-decls])
-                   (send module pretty-print indent))
-              (for ([module module-inits])
-                   (send module pretty-print indent)))
+      ;; (unless (empty? module-decls)
+      ;;         (pretty-display ">> modules")
+      ;;         (pretty-display module-decls)
+      ;;         (pretty-display module-inits)
+      ;;         (for ([module module-decls])
+      ;;              (send module pretty-print indent))
+      ;;         (for ([module module-inits])
+      ;;              (send module pretty-print indent)))
       
-      (for ([stmt stmts])
-        (send stmt pretty-print indent)))
+      ;; (for ([stmt stmts])
+      ;;      (send stmt pretty-print indent))
+      )
     ))
 
 (define Module%

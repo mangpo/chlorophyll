@@ -53,14 +53,53 @@
   (when (set-member? x a) (set! x (set-remove x a)))
   (when (set-member? x b) (set! x (set-remove x b)))
   x)
+
+(define-syntax-rule (gen-route-i-j i j w h obs? obstacles
+                                   conflicts conflict-index)
+  (let ([my-obs (set)]
+        [conflict-i (vector-ref conflict-index i)]
+        [conflict-j (vector-ref conflict-index j)]
+        [indices (list)])
+    (for* ([index-i conflict-i]
+           [index-j conflict-j])
+          (when (equal? index-i index-j)
+                (for ([group (vector-ref conflicts (car index-i))]
+                      [id (in-naturals)])
+                     (unless (= id (cdr index-i))
+                             (set! indices (cons index-i indices))
+                             (set! my-obs (set-union my-obs group))))))
+    
+    (cond
+     [(or obs? (> (set-count my-obs) 0))
+      (set! my-obs (set-union my-obs obstacles))
+      (let ([path (route-obs i j w h (set-remove* my-obs i j))])
+        (unless path (pretty-display `(conflicts ,conflicts)))
+        (for ([index indices])
+             (let* ([conflict (vector-ref conflicts (car index))]
+                    [current (vector-ref conflict (cdr index))])
+               (for ([core path])
+                    (unless
+                     (set-member? current core)
+                     (vector-set! conflict-index core
+                                  (cons index
+                                        (vector-ref conflict-index core)))))
+               (vector-set! conflict (cdr index)
+                            (set-union (list->set path) current))))
+        path)]
+     [else
+      (route i j w)])))
   
 ;; Gnerate (w x h + 1) x (w x h + 1) table
 ;; w x h corresponds to io
 (define (gen-route flow-graph part2core ast w h)
   (pretty-display "Generating routes...")
-  (define noroute (get-field noroute ast))
+  (define conflict-list (get-field conflict-list ast))
+  (define conflicts (car conflict-list))
+  (define conflict-index (cdr conflict-list))
+  
+  (define obstacles (get-field noroute ast))
   (define actors (get-field actors ast))
-  (define obs? (> (+ (set-count noroute) (hash-count actors)) 0))
+  (define obs? (> (+ (set-count obstacles) (hash-count actors)) 0))
               
   ;; Mapping partitions to cores in form of x*w + y
   (define n-1 (* w h))
@@ -69,8 +108,6 @@
     (list->set
      (for/list ([part (get-partitions flow-graph)])
                (vector-ref part2core part))))
-  (define obstacles
-    (list->set (for/list ([part noroute]) (vector-ref part2core part))))
   
   ;; Mapping pair of partitions to route
   (define core2route (make-vector n #f))
@@ -121,10 +158,8 @@
          [j cores])
          (when (and (< i j)
                     (not (vector-2d-ref core2route i j)))
-               (let ([path 
-                      (if obs?
-                          (route-obs i j w h (set-remove* obstacles i j))
-                          (route i j w))])
+               (let ([path (gen-route-i-j i j w h obs? obstacles
+                                          conflicts conflict-index)])
                  (when
                   path
                   ;; (pretty-display `(path ,i ,j ,path))
@@ -188,10 +223,10 @@
           (last (string-split
                  (with-output-to-string
                    ;; Use this line for fast but low quality layout.
-                   (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
+                   (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 30000000 5" 
                                               srcpath outdir name)))
                    ;; Use this line if we need better layout.
-                   ;; (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 100000000 3" 
+                   ;; (lambda () (system (format "~a/qap/sa_qap ~a/~a.dat 10000000 3" 
                    ;;                            srcpath outdir name)))
                   )
                  "\n")))))
@@ -208,6 +243,34 @@
   (for ([partition core2part]
         [index (range n)])
        (vector-set! part2core partition index))
+
+  (with-output-to-file #:exists 'truncate (format "~a/~a.part2core" outdir name)
+     (lambda ()
+       (pretty-display "part core")              
+       (for ([part n])
+            (pretty-display (format "~a ~a"
+                                    part (vector-ref part2core part))))))
+
+  ;; Convert obstacles and conflict-list.
+  (set-field! noroute ast
+              (for/set ([part (get-field noroute ast)])
+                       (vector-ref part2core part)))
+  (define conflict-index (make-vector n (list)))
+  (define conflicts
+    (for/vector
+     ([conflict (get-field conflict-list ast)]
+      [id1 (in-naturals)])
+     (for/vector
+      ([group conflict]
+       [id2 (in-naturals)])
+      (for/set ([part group])
+               (let ([core (vector-ref part2core part)])
+                 (vector-set! conflict-index core
+                              (cons (cons id1 id2)
+                                    (vector-ref conflict-index core)))
+                 core)))))
+  (set-field! conflict-list ast (cons conflicts conflict-index))
+  (pretty-display `(init-conflict-list ,conflicts))
   
   ;; Create map from pair of core (x1,y1) (x2,y2) to routing
   (define routing-table

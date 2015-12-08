@@ -138,7 +138,17 @@
 
        [(is-a? ast Block%)
         (for ([stmt (get-field stmts ast)])
-             (send stmt accept this))]
+             (send stmt accept this))
+
+        (when (is-a? ast Program%)
+              (set-field!
+               conflict-list ast
+               (for/list
+                ([conflict (get-field conflict-list ast)])
+                (for/list
+                 ([group conflict])
+                 (for/set ([part group]) (evaluate-with-sol part))))))
+        ]
 
        [(is-a? ast FuncDecl%)
 	;(pretty-display (format "EVALUATE: FuncDecl ~a" (get-field name ast)))

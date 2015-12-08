@@ -93,5 +93,6 @@
 
 (define (route-obs core-a core-b w h obstacles)
   (define indices (route-indices core-a core-b w h obstacles))
+  (pretty-display `(route-obs ,core-a ,core-b ,indices ,obstacles))
   (and indices (not (empty? indices)) indices))
 
