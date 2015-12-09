@@ -69,10 +69,10 @@
 ;; Compile IR to machine code.
 (define (generate-code program i w h virtual)
   (pretty-display `(-------------------- ,i -----------------------))
-  (send program pretty-print)
+  ;;(send program pretty-print)
 
   ;; mark forloop and array for optimization
-  (pretty-display ">>> arrayaccess >>>")
+  ;;(pretty-display ">>> arrayaccess >>>")
   (define arrayaccess (new arrayaccess%))
   (send program accept arrayaccess)
 
@@ -80,23 +80,23 @@
                                   (get-a-port (get-field port-usage arrayaccess))))
 
   ;; register allocation (optional)
-  (pretty-display ">>> registor allocation >>>")
+  ;;(pretty-display ">>> registor allocation >>>")
   (send program accept (new registor-allocator%))
-  (send program pretty-print)
+  ;;(send program pretty-print)
   
-  (pretty-display ">>> memory-mapper >>>")
+  ;;(pretty-display ">>> memory-mapper >>>")
   (define data-iter (send program accept (new memory-mapper%)))
-  (send program pretty-print)
+  ;;(send program pretty-print)
   (let* (;; only generated reduced version if mem > 5
          [reduce (and virtual (> (+ (meminfo-addr (car data-iter)) (cdr data-iter)) 
                                  reduce-limit))]
          [code-gen (new code-generator% [data-size (car data-iter)]
                         [iter-size (cdr data-iter)]
                         [core i] [w w] [h h] [virtual reduce])])
-    (pretty-display ">>> code gen")
+    ;;(pretty-display ">>> code gen")
     (define res (send program accept code-gen))
-    (pretty-display ">>> result")
-    (codegen-print res)
+    ;;(pretty-display ">>> result")
+    ;;(codegen-print res)
     res
     ;; (pretty-display ">>> repeating def")
     ;; (pretty-display virtual)

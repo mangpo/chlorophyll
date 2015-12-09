@@ -10,7 +10,7 @@
 
 (define (merge-sym-partition n space flow-graph capacity 
 			     refine-capacity part2capacity
-			     conflict-list my-ast)
+			     conflict-list my-ast #:name [name #f])
   (define sol-map (make-hash))
   
   (define fixed (make-hash))
@@ -154,6 +154,8 @@
   (for ([key (hash-keys space)])
        (hash-set! sol-map key key))
 
+  ;; (pretty-display `(space-map ,space))
+
   ;; initialize node-to-core
   (for ([pair (hash->list node-to-symbolic-core)])
        (let ([core (car pair)]
@@ -175,11 +177,12 @@
        (unify (car e) (cdr e)))
 
   ;; post merge to reduce number of cores
-  ;; (define partitions (hash-keys space))
-  ;; (for* ([p1 partitions]
-  ;; 	 [p2 partitions])
-  ;; 	(when (and (hash-has-key? space p1) (hash-has-key? space p2))
-  ;; 	      (unify p1 p2 0.7)))
+  (when #t ;;(> (hash-count space) (- n 3))
+        (define partitions (hash-keys space))
+        (for* ([p1 partitions]
+               [p2 partitions])
+              (when (and (hash-has-key? space p1) (hash-has-key? space p2))
+                    (unify p1 p2 0.5))))
 
   (define vals (hash-values sol-map))
   (define concrete-vals (list->set (filter (lambda (x) (not (symbolic? x))) vals)))
@@ -191,7 +194,7 @@
           (set! counter (add1 counter))
           (next-counter))
         counter))
-  (pretty-display `(sol-map ,sol-map))
+  ;; (pretty-display `(sol-map ,sol-map))
 
   (define concrete2sym (make-vector n #f))
   (for ([key (hash-keys sol-map)])
@@ -208,6 +211,15 @@
 	       (root key))
 	     (when (equal? (vector-ref concrete2sym val) #f)
 		   (vector-set! concrete2sym val val))))) ;; set concrete2sym
+
+  (with-output-to-file #:exists 'append (format "~a/~a.space" outdir name)
+    (lambda ()
+      (pretty-display "========== SPACE ============")
+      (for ([pair (hash->list space)])
+           (let ([p (car pair)]
+                 [s (cdr pair)])
+             (pretty-display (format "~a ~a" (hash-ref sol-map p) s))))))
+         
   
   (when debug
         (pretty-display "------------------ after merge sym partition ---------------------")
@@ -380,8 +392,8 @@
         (if (io-func? name)
             (inc-space (hash-ref node-to-symbolic-core (get-field fixed-node ast))
                        (get-built-in-space name))
-            ;; (inc-space-placeset body-places est-funccall)
-            (void)
+            (inc-space-placeset body-places est-funccall)
+            ;;(void)
             )
 
         ;; infer place-type
@@ -425,8 +437,8 @@
         (define place (get-field place ast))
         (inc-space place (* (length (get-field var-list ast))
                             (if (is-a? ast Param%)
-                                (add1 est-data)
-                                est-data)))
+                                (add1 est-data1)
+                                est-data1)))
         (list)
         ]
 
@@ -439,7 +451,7 @@
                (when (not (= from last))
                      (send ast bound-error))
                (set! last to)
-               (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
+               (inc-space (get-field place p) (* (- to from) est-data2)) ; increase space
                ))
 
         (when (not (= (get-field bound ast) last))
@@ -460,7 +472,7 @@
                            (send ast bound-error))
                      (set! last to))))
 
-        ;; (inc-space-placeset (get-field body-placeset ast) est-for)
+        (inc-space-placeset (get-field body-placeset ast) est-for)
 
         (define body-ret (send (get-field body ast) accept this))
         (multiply-weight body-ret (- (get-field to ast) (get-field from ast)))
@@ -488,7 +500,8 @@
              (set! networks (append networks (network cond-place b))))
 
         ;; increase space
-        ;; (inc-space-placeset (get-field body-placeset ast) est-if)
+        (inc-space cond-place est-comm) 
+        (inc-space-placeset (get-field body-placeset ast) est-if)
 
 	networks
         ]
@@ -507,7 +520,8 @@
              (set! networks (append networks (network cond-place b))))
           
         ;; increase space
-        ;; (inc-space-placeset (get-field body-placeset ast) est-while)
+        (inc-space cond-place est-comm) 
+        (inc-space-placeset (get-field body-placeset ast) est-while)
 
         (multiply-weight networks (get-field bound ast))
         ]
@@ -533,7 +547,7 @@
         (define sorted-edges (sort (graph->list
                                     (car (hash-ref function-network "main")))
 				   (lambda (x y) (> (cdr x) (cdr y)))))
-        (pretty-display `(sorted-edges ,sorted-edges))
+        ;;(pretty-display `(sorted-edges ,sorted-edges))
         (values space (map car sorted-edges) (get-field conflict-list ast))]
 
        [(is-a? ast Block%)

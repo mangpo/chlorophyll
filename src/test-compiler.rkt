@@ -109,7 +109,7 @@
 ;                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
 
 ;; HMM Classifier
-(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test" 
-                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
-;(compile-and-optimize "../examples/sensors/hmm.cll" "hmm" 
-;                      512 #:w 18 #:h 6 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test" 
+;                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/sensors/hmm.cll" "hmm" 
+                      420 #:w 18 #:h 6 #:opt #f #:partition #f)

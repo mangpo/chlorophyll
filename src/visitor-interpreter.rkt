@@ -395,7 +395,7 @@
 	]
 
        [(is-a? ast TempDecl%)
-        (inc-space (get-field place ast) est-data)
+        (inc-space (get-field place ast) est-data1)
         0]
                 
        [(is-a? ast VarDecl%) 
@@ -407,8 +407,8 @@
         
         (inc-space place (* (length var-list) 
                             (if (is-a? ast Param%)
-                                (add1 est-data)
-                                est-data))) ; increase space
+                                (add1 est-data1)
+                                est-data1))) ; increase space
         
         (when debug
               (pretty-display (format ">> VarDecl ~a (after)" var-list)))
@@ -429,7 +429,7 @@
                (when (not (= from last))
                      (send ast bound-error))
                (set! last to)
-               (inc-space (get-field place p) (* (- to from) est-data)) ; increase space
+               (inc-space (get-field place p) (* (- to from) est-data2)) ; increase space
                ))
         
         (when (not (= (get-field bound ast) last))

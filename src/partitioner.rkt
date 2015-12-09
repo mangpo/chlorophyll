@@ -176,7 +176,7 @@
         (pretty-display "\n=== Update Global Solution ===")
         (send func-ast accept concise-printer) 
         (pretty-display global-sol)
-        (display-cores cores)
+        ;; (display-cores cores)
         (pretty-display (format "synthesis time = ~a sec" (- stop start)))
 	(with-output-to-file #:exists 'append (format "~a/~a.time" outdir name)
 	  (lambda ()
@@ -331,7 +331,7 @@
       (send my-ast accept (new heuristic-partitioner%)))
     (define result (merge-sym-partition num-core space network capacity 
 					refine-capacity part2capacity
-					conflict-list my-ast))
+					conflict-list my-ast #:name name))
     (set-global-sol (sat (make-immutable-hash (hash->list (car result)))))
     (set! new-part2sym (cdr result))
     
@@ -348,9 +348,9 @@
   (with-output-to-file #:exists 'truncate (format "~a/~a.part" outdir name)
     (lambda () (send my-ast accept concise-printer)))
   
-  (pretty-display "\n=== Final Solution ===")
-  (send my-ast accept concise-printer)
-  (display-cores cores)
+  ;; (pretty-display "\n=== Final Solution ===")
+  ;; (send my-ast accept concise-printer)
+  ;; (display-cores cores)
   
   (when verbose
     (pretty-display "\n=== After evaluate ===")
