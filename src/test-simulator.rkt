@@ -50,7 +50,8 @@
 ;(test "../examples/fixedpoint/cos_round.cll"      "cos_round" "null" 256 #:w 3 #:h 3)
 ;(test "../examples/fixedpoint/cos_radius.cll"     "cos_radius" "null" 256 #:w 3 #:h 3)
 
-(test "../examples/module/module_simple.cll"     "module_simple" "null" 256 #:w 3 #:h 3)
+;(test "../examples/module/module_simple.cll"     "module_simple" "null" 256 #:w 3 #:h 3)
+(test "../examples/sensors/hmm_test.cll"     "hmm_test" "null" 256 #:w 3 #:h 3)
 
 
 (for ([res (reverse result)])

@@ -38,7 +38,6 @@ BENCHMARKS
 
 PARALLEL MODULE
 
-- x * 8 ==> <<
 - make the sample hmm program fits
 
 - freshen concrete partitions as well

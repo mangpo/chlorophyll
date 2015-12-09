@@ -116,7 +116,7 @@
                        (forloop (gen-block)
                                 (list (gen-block "+*" 1 1)) #f #f #f)
                        (gen-block "push" "dup" "or" "pop" 
-                                  (number->string (- 18 (fix_t-int type))) 
+                                  (number->string (- 18 1 (fix_t-int type))) 
                                   2 3)
                        (forloop (gen-block)
                                 (list (gen-block "+*" 1 1)) #f #f #f)
@@ -125,6 +125,23 @@
             ;; else
             (save-a (list (mult))))]
 
+       ;; --u/mod: h l d - r q
+       [(equal? op "/")
+        (define type (get-field type e1))
+        (if (fix_t? type)
+            (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
+                          (funccall "--u/mod") 
+                          (gen-block "push" "drop" "pop"
+                                     (number->string (- 18 1 (fix_t-int type)))
+                                     2 2)
+                          (forloop (gen-block)
+                                   (list (gen-block "2*" 1 1)) #f #f #f)
+                          ))
+            (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
+                          (funccall "--u/mod") 
+                          (gen-block "push" "drop" "pop" 2 1))))
+        ]
+       
        [(equal? op "-") (list (gen-block "-" "1" "+" "+" 2 1))]
        [(equal? op "+") (list (gen-block "+" 2 1))]
 
@@ -150,15 +167,10 @@
 			(gen-block "push" "drop" "pop" "a" 2 2)))
 		 (list (gen-block "dup" "or" 1 1))
 		 )))]
-        
 
        [(equal? op "&") (list (gen-block "and" 2 1))]
        [(equal? op "^") (list (gen-block "or" 2 1))]
        [(equal? op "|") (list (gen-block "over" "-" "and" "+" 2 1))]
-       ;; --u/mod: h l d - r q
-       [(equal? op "/") (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
-				      (funccall "--u/mod") 
-				      (gen-block "push" "drop" "pop" 2 1)))]
        [(equal? op "%") (save-a (list (gen-block "push" "push" "0" "pop" "pop" "-" "1" "+" 2 3) 
 				      (funccall "--u/mod") 
 				      (gen-block "drop" 1 0)))]

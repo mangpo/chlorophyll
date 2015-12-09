@@ -2,7 +2,7 @@
 
 (require "header.rkt" "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
 
-(provide (all-defined-out))
+(provide loop-optimizer%)
 
 ;; 1) Get rid of loop with 1 iteration
 ;; 2) Convert x[i+10] offset 10 to x[i]
@@ -61,8 +61,46 @@
         ast]
 
        [(is-a? ast BinExp%)
-        (set-field! e1 ast (send (get-field e1 ast) accept this))
-        (set-field! e2 ast (send (get-field e2 ast) accept this))
+        (define e1 (send (get-field e1 ast) accept this))
+        (define e2 (send (get-field e2 ast) accept this))
+        (set-field! e1 ast e1)
+        (set-field! e2 ast e2)
+
+        (define op (send ast get-op))
+        (when
+         (member op (list "*" "/"))
+         (define shf1 (and (is-a? e1 Num%) (log-2 (send e1 get-value))))
+         (define shf2 (and (is-a? e2 Num%) (log-2 (send e2 get-value))))
+         
+         (when (and (equal? op "*") shf1)
+               (define t e1)
+               (set! e1 e2) (set! e2 t)
+               (set! t shf1) (set! shf1 shf2) (set! shf2 t)
+               )
+
+         (when shf2
+               (pretty-display "before >>")
+               (send ast pretty-print)
+               (define type (get-field type e1))
+               (define shf
+                 (if (fix_t? type)
+                     (- shf2 (- 18 (fix_t-int type)))
+                     shf2))
+               (define new-op
+                 (cond
+                  [(equal? op "*") "<<"]
+                  [(equal? op "/") ">>"]))
+
+               (set-field! op ast (new Op% [op new-op]))
+               (set-field! e1 ast e1)
+               (set-field! e2 ast
+                           (new Num% [n (new Const% [n shf])] [type "int"]))
+               (pretty-display "after >>")
+               (send ast pretty-print)
+               ;;(raise "done")
+               )
+         )
+        
         ast]
 
        [(is-a? ast FuncCall%)
@@ -143,4 +181,11 @@
        [else
         (raise (format "visitor-loopopt: unimplemented for ~a" ast))]))))
           
-          
+
+(define (log-2 x)
+  (define (loop n count)
+    (if (= (modulo n 2) 0)
+        (loop (arithmetic-shift n -1) (add1 count))
+        (and (= n 1) count)))
+  (and (> x 0) (loop (bitwise-and x #x3ffff) 0)))
+    

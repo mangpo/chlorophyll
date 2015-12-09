@@ -536,6 +536,8 @@
     (inherit-field known-type place-type pos type)
     (init-field op e1 e2)
     (inherit print-send-path)
+
+    (define/public (get-op) (get-field op op))
         
     (define/override (clone)
       (new BinExp% [op (send op clone)] [e1 (send e1 clone)] [e2 (send e2 clone)]
