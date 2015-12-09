@@ -104,7 +104,7 @@
 
 ;; Parallel Module
 (compile-and-optimize "../examples/module/module_simple.cll" "module_simple" 
-                      512 #:w 3 #:h 3 #:opt #f #:partition #t)
+                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/module/module_mapreduce.cll" "module_mapreduce" 
 ;                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
 

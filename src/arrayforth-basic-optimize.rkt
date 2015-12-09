@@ -270,7 +270,7 @@
 
    [(block? ast)
     ;; 0 ==> dup dup or
-    (define replacements (if (and rm (not (block-rm ast)))
+    (define replacements (if (and rm (block-rm ast))
                              (remove-b-reg (block-body ast) (block-org ast))
                              (cons (block-body ast) (block-org ast))))
     (block (if rm
