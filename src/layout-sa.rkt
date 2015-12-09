@@ -225,11 +225,14 @@
         (display (vector-ref fix i)) (display " "))
       (newline) (newline)
 
+      ;; Pinning clusters.
       (define clusters (get-field module-inits ast))
       (pretty-display (length clusters))
       (for ([cluster clusters])
            (let ([parts (car cluster)]
                  [cores (cdr cluster)])
+             (when (> (set-count parts) (length cores))
+                   (raise "Cannot pin a module instance because # of logical partitions inside the instance exceeds # of provided cores."))
              (display (set-count parts)) (display " ")
              (for ([p parts]) (display (add1 p)) (display " "))
              (newline)
