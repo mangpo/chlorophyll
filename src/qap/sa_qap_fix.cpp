@@ -37,6 +37,17 @@ using namespace std;
 4 0 0 0 5
 1 2 0 5 0
 
+// Fixed partitions
+// core order
+// core 2 has partition 4
+// core 3 has partition 5
+0 0 4 5 0
+
+// Fixed modules
+1          // # of modules
+3 1 2 3    // # of partitions, followed by partitions
+4 0 1 2 3  // # of cores, followed by cores
+
    Additionnal parameters : Number of iterations, number of runs
 
 */
@@ -96,9 +107,25 @@ long unif(long low, long high)
  {return(low + long(double(high - low + 1) *  mon_rand() ));
  }
 
+/************************** helper ********************************/
+long rand_in_module(long id, long size, type_matrice &module_locs) {
+  long index = unif(0,size-1);
+  //cout << "rand[" << 0 << "," << size-1 << "] = " << index << endl;
+  return module_locs[id][index];
+}
+
+
 /************************** sa for qap ********************************/
 
-void lire(long &n, type_matrice &a, type_matrice &b, type_vecteur &fix, char* file) {
+long  n, nb_iterations, nb_res, no_res;
+long Cout;
+type_matrice a, b;
+type_vecteur p, fix;
+long n_modules;
+type_vecteur module_id, module_size;
+type_matrice module_locs;
+
+void init(char* file) {
   freopen(file, "r", stdin);
   cin >> n;
   cout << "n=" << n << endl;
@@ -110,6 +137,22 @@ void lire(long &n, type_matrice &a, type_matrice &b, type_vecteur &fix, char* fi
       cin >> b[i][j];
   for(int i = 1; i <= n; i++)
     cin >> fix[i];
+
+  cin >> n_modules;
+  for(int i = 1; i <= n_modules; i++) {
+    int s;
+    cin >> s;
+    for(int j = 1; j <= s; j++) {
+      int p;
+      cin >> p;
+      module_id[p] = i;
+    }
+    cin >> s;
+    module_size[i] = s;
+    for(int j = 0; j < s; j++) {
+      cin >> module_locs[i][j];
+    }
+  }
   fclose(stdin);
  }
 
@@ -133,23 +176,56 @@ long calcule_cout(long n, type_matrice & a, type_matrice & b, type_vecteur & p)
  }
 
 type_vecteur pos;
-void tire_solution_aleatoire(long n, type_vecteur  & p, type_vecteur & fix)
- {long i;
-  for (i = 1; i <= n; i = i+1) p[i] = i;
-  for (i = 2; i <= n; i = i+1) swap(p[i-1], p[unif(i-1, n)]);
+// Initial solution.
+void tire_solution_aleatoire()
+{long i, id;
+   
+   type_vecteur sizes;
+   memset(sizes, 0, (n_modules+1)*sizeof(long));
+   memset(p, 0, (n+1)*sizeof(long));
+   //for (i = 1; i <= n_modules; i = i+1) sizes[i] = 0;
+   //for (i = 1; i <= n; i = i+1) p[i] = 0;
+   
+   for (i = 1; i <= n; i = i+1) {
+     id = module_id[i];
+     if(id > 0) {
+       p[module_locs[id][sizes[id]]] = i;
+       sizes[id]++;
+     }
+   }
+
+   id = 1;
+   while(module_id[id] > 0) id++;
+   
+   for (i = 1; i <= n; i = i+1) {
+     if(p[i] == 0) {
+       p[i] = id;
+       do{
+         id++;
+       } while(module_id[id] > 0);
+     }
+   }
+    
+   for (i = 1; i < n; i = i+1) {
+     id = module_id[p[i]];
+     if(id == 0) {
+       long j = unif(i, n);
+       while(module_id[p[j]] > 0 && j <= n) j++;
+       if(j > n) {
+         j = 0;
+         while(module_id[p[j]] > 0) j++;
+       }
+       swap(p[i], p[j]);
+     }
+     else {
+       swap(p[i],p[rand_in_module(id,module_size[id],module_locs)]);
+     }
+   }
 
   for (i = 1; i <= n; ++i) {
     pos[p[i]] = i;
   }
-  // cout << "p: ";
-  // for(long i = 1; i <= n; ++i) {
-  //   cout << p[i] << " ";
-  // }
-  // cout << "pos: ";
-  // for(long i = 1; i <= n; ++i) {
-  //   cout << pos[i] << " ";
-  // }
-  // cout << endl;
+  
   for (i = 1; i <= n; ++i) {
     if(fix[i] > 0) {
       long index = pos[fix[i]];
@@ -163,8 +239,8 @@ void tire_solution_aleatoire(long n, type_vecteur  & p, type_vecteur & fix)
 
 long first;
 type_vecteur next;
-void recuit(long n, type_matrice & a, type_matrice & b, type_vecteur & fix,
-            type_vecteur & meilleure_sol, long & meilleur_cout,
+// Simulated annealing.
+void recuit(type_vecteur & meilleure_sol, long & meilleur_cout,
             long nb_iterations) {
   type_vecteur p;
   long i, r, s;
@@ -194,19 +270,30 @@ void recuit(long n, type_matrice & a, type_matrice & b, type_vecteur & fix,
     if(fix[r] > 0) r = next[r];
     if(r > n) r = first;
 
-    s = unif(1, n-1);
-    if(fix[s] > 0) s = next[s];
-    if(s > n) s = first;
+    long id = module_id[p[r]];
 
-    if (s >= r) s = next[s];
-    if (s > n) s = first;
+    if(id == 0) {
+      s = unif(1, n-1);
+      if(fix[s] > 0) s = next[s];
+      if(s > n) s = first;
+      while(module_id[p[s]] > 0 && s <= n) s = next[s];
+      if(s > n) {
+        s = first;
+        while(module_id[p[s]] > 0) s = next[s];
+      }
+      // if (s >= r) s = next[s];
+      // if (s > n) s = first;
+    } else {
+      // in this case fix[r] == 0
+      s = rand_in_module(id,module_size[id],module_locs);
+    }
 
     delta = calc_delta_complet2(n,a,b,p,r,s);
     if (delta > 0)
      {dmin = min(dmin, delta); dmax = max(dmax, delta);}; 
     Cout = Cout + delta;
     swap(p[r], p[s]);
-   };
+  }
   t0 = dmin + (dmax - dmin)/10.0;
   tf = dmin;
   beta = (t0 - tf)/(nb_iterations*t0*tf);
@@ -214,19 +301,36 @@ void recuit(long n, type_matrice & a, type_matrice & b, type_vecteur & fix,
   nb_fail = 0;
   tfound = t0;
   temperature = t0;
-  r = first; s = next[r];
+  r = first;
+  s = r;
+  long id = module_id[p[r]];
+  long size = 0;
   for (no_iteration = 1; 
        no_iteration <= nb_iterations - nb_iter_initialisation; 
        no_iteration = no_iteration + 1)
     { temperature = temperature / (1.0 + beta*temperature);
 
-      s = next[s];
-      if (s > n){
-	r = next[r];
+      if(((id == 0) && (s > n)) ||
+         size >= module_size[id]) {
+        r = next[r];
         if (next[r] > n) r = first;
-        s = next[r];
-       };
-
+        
+        s = r;
+        id = module_id[p[r]];
+        size = 0;
+      }
+      
+      if(id == 0) {
+          s = next[s];
+          if(s > n) continue;
+          while(module_id[p[s]] > 0 && s <= n) s = next[s];
+          if(s > n) continue;
+      }
+      else {
+        s = module_locs[id][size];
+        size++;
+      }
+      
       delta = calc_delta_complet2(n,a,b,p,r,s);
       if ((delta < 0) || (mon_rand() < exp(-double(delta)/temperature)) ||
            mxfail == nb_fail)
@@ -251,13 +355,9 @@ void recuit(long n, type_matrice & a, type_matrice & b, type_vecteur & fix,
  }
 
 
-long  n, nb_iterations, nb_res, no_res;
-long Cout;
-type_matrice a, b;
-type_vecteur p, fix;
 
 int main(int argc, char* argv[]) {
-  lire(n, a, b, fix, argv[1]);
+  init(argv[1]);
   cout << "nr iterations, nr resolutions : \n";
   nb_iterations = atoi(argv[2]);
   nb_res = atoi(argv[3]);
@@ -282,13 +382,14 @@ int main(int argc, char* argv[]) {
   // cout << endl;
 
   for (no_res = 1; no_res <= nb_res; no_res = no_res + 1) {
-    tire_solution_aleatoire(n, p, fix);
+    cout << "---------------------------------" << endl;
+    tire_solution_aleatoire();
     // cout << "INIT SOL: ";
     // for(long i = 1; i <= n; ++i) {
     //   cout << p[i] << " ";
     // }
     // cout << endl;
-    recuit(n,a,b,fix,p,Cout, nb_iterations);
+    recuit(p,Cout, nb_iterations);
   };
   return 0;
 }

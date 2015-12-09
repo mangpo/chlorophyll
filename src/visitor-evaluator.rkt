@@ -140,14 +140,24 @@
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
 
-        (when (is-a? ast Program%)
-              (set-field!
-               conflict-list ast
-               (for/list
-                ([conflict (get-field conflict-list ast)])
-                (for/list
-                 ([group conflict])
-                 (for/set ([part group]) (evaluate-with-sol part))))))
+        (when
+         (is-a? ast Program%)
+         (set-field!
+          conflict-list ast
+          (for/list
+           ([conflict (get-field conflict-list ast)])
+           (for/list
+            ([group conflict])
+            (for/set ([part group]) (evaluate-with-sol part)))))
+         
+         (set-field!
+          module-inits ast
+          (for/list ([pair (get-field module-inits ast)])
+                    (cons (for/set ([x (car pair)]) (evaluate-with-sol x))
+                          (cdr pair))
+                    ))
+         )
+                
         ]
 
        [(is-a? ast FuncDecl%)

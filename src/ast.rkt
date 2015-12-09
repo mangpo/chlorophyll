@@ -703,10 +703,12 @@
   (class FuncCall%
     (super-new)
     (inherit-field name args pos)
+    (init-field locations)
 
     (define/override (clone)
       (new ModuleCreate% 
-           [name name] [args (map (lambda (x) (send x clone)) args)] [pos pos]))
+           [name name] [args (map (lambda (x) (send x clone)) args)]
+           [locations locations] [pos pos]))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(ModuleCreate: ~a ~a)" indent name args)))
@@ -1281,10 +1283,19 @@
       (pretty-display (format ">> actors = ~a" actors))
       (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
 
+      (when (and (list? fixed-parts) (not (empty? fixed-parts)))
+            (pretty-display (format ">> fixed-parts = ~a" fixed-parts)))
+      
       (unless (empty? conflict-list)
               (pretty-display (format ">> conflict-list = ~a" conflict-list)))
+      
+      (when (and (list? module-inits)
+                 (not (empty? module-inits))
+                 (pair? (car module-inits)))
+            (pretty-display ">> module-inits")
+            (pretty-display module-inits))
 
-      ;; (unless (empty? module-decls)
+      ;; (when (and (list? module-decls) (not (empty? module-decls)))
       ;;         (pretty-display ">> modules")
       ;;         (pretty-display module-decls)
       ;;         (pretty-display module-inits)

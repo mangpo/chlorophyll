@@ -16,7 +16,7 @@
 			       READ WRITE
                                PLACE HERE ANY GHOST  
 			       HASH MAP NOROUTE INVOKE
-                               MODULE NEW))
+                               MODULE NEW REG))
 
 (define-lex-trans number
   (syntax-rules ()
@@ -72,6 +72,7 @@
    ("@" (token-@))
    ("#" (token-HASH))
    ("noroute" (token-NOROUTE))
+   ("REG" (token-REG))
    ("-->" (token-MAP))
    ("~>" (token-INVOKE))
    (arith-op1 (token-ARITHOP1 lexeme))
@@ -497,12 +498,19 @@
     (module-args-ext
      (() (list))
      ((module-args) $1))
+
+    (module-locs
+     (() (list))
+     ((@ LBRACK num-list RBRACK) $3)
+     ((@ REG LPAREN NUM COMMA NUM RPAREN) (get-location-list $4 $6))
+     )
     
     (module-init
-     ((VAR = NEW VAR LPAREN module-args-ext RPAREN SEMICOL)
+     ((VAR = NEW VAR LPAREN module-args-ext RPAREN module-locs SEMICOL)
       (new Assign%
            [lhs (new Var% [name $1] [pos $1-start-pos])]
-           [rhs (new ModuleCreate% [name $4] [args $6] [pos $4-start-pos])]
+           [rhs (new ModuleCreate% [name $4] [args $6] [pos $4-start-pos]
+                     [locations $8])]
            [pos $1-start-pos])))
     
     (module-inits
@@ -536,6 +544,15 @@
 
     )))
 
+(define (get-location-list from to)
+  (define row-from (quotient from 100))
+  (define row-to (quotient to 100))
+  (define col-from (modulo from 100))
+  (define col-to (modulo to 100))
+  (for*/list ([r (range row-from (add1 row-to))]
+              [c (range col-from (add1 col-to))])
+             (+ (* 100 r) c)))
+
 (define (actor-map l)
   (define map (make-hash))
   (for ([x l])
@@ -564,4 +581,3 @@
 
 (define (ast input)
   (simple-math-parser (lex-this simple-math-lexer input)))
-

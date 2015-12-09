@@ -107,7 +107,7 @@
              (send decl accept this))
 
         ;; Collect conflict-list from parallel modules.
-        (define module-summary (get-field module-inits ast))
+        (define module-summary (get-field module-decls ast))
         ;;(pretty-display `(module-summary ,module-summary))
         (when
          (and (hash? module-summary) (not (hash-empty? module-summary)))
@@ -121,10 +121,8 @@
                 (cond
                  [(is-a? stmt FuncDecl%)
                   (set! name (get-field name stmt))]
-                 
                  [(is-a? stmt ArrayDecl%)
                   (set! name (get-field var stmt))]
-                 
                  [(is-a? stmt VarDecl%)
                   (set! name (car (get-field var-list stmt)))]
                  )
@@ -149,8 +147,17 @@
            (for/list ([instances (hash-values module-summary)])
              (for/list ([instance instances])
                        (hash-ref conflict-map instance))))
-         (set-field! conflict-list program
-                     (append conflict-list (get-field conflict-list program)))
+         (set-field!
+          conflict-list ast
+          (append conflict-list (get-field conflict-list ast)))
+
+         (set-field!
+          module-inits ast
+          (for/list ([l (get-field module-inits ast)])
+                    (let ([instance-name (car l)]
+                          [locations (cdr l)])
+                      (cons (hash-ref conflict-map instance-name) locations))))
+         
          ;;(pretty-display `(conflict-list ,conflict-list))
          )
                 

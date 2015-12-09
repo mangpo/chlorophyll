@@ -22,7 +22,7 @@ if not (output.find("not found") == -1):
   sys.exit(0)
 
 # Simulated Annealing
-os.system("g++ src/qap/sa_qap_fix.cpp -o src/qap/sa_qap")
+os.system("g++ -O3 src/qap/sa_qap_fix.cpp -o src/qap/sa_qap")
 
 # Create path.rtk
 status, abs_path = commands.getstatusoutput("pwd")

@@ -220,8 +220,19 @@
               (send module accept this))
          (set! pre (flatten (for/list ([module (my module-inits)])
                                              (send module accept this))))
-         (set-field! module-decls ast (list))
-         (set-field! module-inits ast module-summary)
+         (set-field! module-decls ast module-summary)
+         (set-field!
+          module-inits ast
+          (filter identity ;; filter when locations field is empty
+                  (map (lambda (x)
+                         (let* ([lhs (get-field lhs x)]
+                                [rhs (get-field rhs x)]
+                                [locations (get-field locations rhs)])
+                           (and (not (empty? locations))
+                                (cons (get-field name lhs) ;; instance name
+                                      (get-field locations rhs)))))
+                       (my module-inits))))
+           
          (set-field! stmts ast
                      (append pre
                              (map (lambda (x) (send x accept this))

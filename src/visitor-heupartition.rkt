@@ -12,6 +12,15 @@
 			     refine-capacity part2capacity
 			     conflict-list my-ast)
   (define sol-map (make-hash))
+  
+  (define fixed (make-hash))
+  (for ([pair (get-field fixed-parts my-ast)])
+       (hash-set! fixed (car pair) (cdr pair)))
+  (for ([pair (get-field module-inits my-ast)]
+        [cluster-id (in-naturals)])
+       (for ([p (car pair)])
+            (hash-set! fixed p (- (add1 cluster-id)))))
+  
   ;; Mapping from logical core (either concrete or symbolic) to physical core.
   (define node-to-core (make-hash))
   (when debug (pretty-display `(conflict-list ,conflict-list)))
@@ -31,16 +40,23 @@
   (when debug (pretty-display `(conflict-index ,conflict-index)))
 
   (define (conflict? x y)
-    (and (hash-has-key? conflict-index x) (hash-has-key? conflict-index y)
-         (let ([indexes-x (hash-ref conflict-index x)]
-               [indexes-y (hash-ref conflict-index y)]
-               [conflict #f])
-           (for* ([index-x indexes-x]
-                  [index-y indexes-y] #:break conflict)
-                 (when (and (= (car index-x) (car index-y))
-                            (not (= (cdr index-x) (cdr index-y))))
-                       (set! conflict #t)))
-           conflict)))
+    (define conflict #f)
+    (when
+     (and (hash-has-key? conflict-index x) (hash-has-key? conflict-index y))
+     (let ([indexes-x (hash-ref conflict-index x)]
+           [indexes-y (hash-ref conflict-index y)]
+           [conflict #f])
+       (for* ([index-x indexes-x]
+              [index-y indexes-y] #:break conflict)
+             (when (and (= (car index-x) (car index-y))
+                        (not (= (cdr index-x) (cdr index-y))))
+                   (set! conflict #t)))))
+
+    (when (and (not conflict)
+               (hash-has-key? fixed x)
+               (hash-has-key? fixed y))
+          (set! conflict (not (equal? (hash-ref fixed x) (hash-ref fixed y)))))
+    conflict)
 
   (define (update-conflict child parent)
     (define c-conflict
@@ -64,12 +80,14 @@
           r)))
   
   (define (point r1 r2)
+    (when (hash-has-key? fixed r1)
+          (hash-set! fixed r2 (hash-ref fixed r1)))
     (hash-set! sol-map r1 r2)
     (hash-set! space r2 (+ (hash-ref space r1) (hash-ref space r2)))
     (hash-remove! space r1))
   
   (define (unify p1 p2 [scale 1] #:must [must #f])
-    ;; (when debug (pretty-display `(unify ,p1 ,p2)))
+    (when debug (pretty-display `(unify ,p1 ,p2)))
     (define r1 (root p1))
     (define r2 (root p2))
     (define c1 (and (hash-has-key? node-to-core r1) (hash-ref node-to-core r1)))
@@ -83,7 +101,8 @@
           (set! parent r1)
           (set! child r2)
           )
-    (when (and (hash-has-key? part2capacity r2) (< (hash-ref part2capacity r2) limit))
+    (when (and (hash-has-key? part2capacity r2)
+               (< (hash-ref part2capacity r2) limit))
           (set! limit (hash-ref part2capacity r2))
           (set! parent r2)
           (set! child r1)
@@ -100,7 +119,7 @@
     (unless parent
             (set! parent r1)
             (set! child r2))
-
+    
     (when (and (not (equal? r1 r2))
                (or must
                    (and
@@ -122,7 +141,8 @@
                                    (hash-ref space r1) (hash-ref space r2))))
           (update-conflict child parent)
           (point child parent)
-          ))
+          )
+    )
 
 
   (when debug

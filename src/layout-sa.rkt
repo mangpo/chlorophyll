@@ -56,18 +56,28 @@
 
 (define-syntax-rule (gen-route-i-j i j w h obs? obstacles
                                    conflicts conflict-index)
-  (let ([my-obs (set)]
-        [conflict-i (vector-ref conflict-index i)]
-        [conflict-j (vector-ref conflict-index j)]
-        [indices (list)])
-    (for* ([index-i conflict-i]
-           [index-j conflict-j])
-          (when (equal? index-i index-j)
-                (for ([group (vector-ref conflicts (car index-i))]
-                      [id (in-naturals)])
-                     (unless (= id (cdr index-i))
-                             (set! indices (cons index-i indices))
-                             (set! my-obs (set-union my-obs group))))))
+    
+  (let* ([my-obs (set)]
+         [conflict-i (vector-ref conflict-index i)]
+         [conflict-j (vector-ref conflict-index j)]
+         [indices (list)]
+         [update-obs
+          (lambda (index-i update-indices)
+            (for ([group (vector-ref conflicts (car index-i))]
+                  [id (in-naturals)])
+                 (unless (= id (cdr index-i))
+                         (set! indices (cons index-i indices))
+                         (set! my-obs (set-union my-obs group)))))])
+
+    (cond
+     [(empty? conflict-i) (for ([index-j conflict-j]) (update-obs index-j #f))]
+     [(empty? conflict-j) (for ([index-i conflict-i]) (update-obs index-i #f))]
+     [else
+      (for* ([index-i conflict-i]
+             [index-j conflict-j])
+            (when (equal? index-i index-j)
+                  (update-obs index-i #t)))
+      ])
     
     (cond
      [(or obs? (> (set-count my-obs) 0))
@@ -93,6 +103,9 @@
 ;; w x h corresponds to io
 (define (gen-route flow-graph part2core ast w h)
   (pretty-display "Generating routes...")
+  (define n-1 (* w h))
+  (define n (add1 n-1))
+  
   (define conflict-list (get-field conflict-list ast))
   (define conflicts (car conflict-list))
   (define conflict-index (cdr conflict-list))
@@ -102,8 +115,6 @@
   (define obs? (> (+ (set-count obstacles) (hash-count actors)) 0))
               
   ;; Mapping partitions to cores in form of x*w + y
-  (define n-1 (* w h))
-  (define n (add1 n-1))
   (define cores
     (list->set
      (for/list ([part (get-partitions flow-graph)])
@@ -154,17 +165,17 @@
   (set-field! noroute ast obstacles)
   (pretty-display `(gen-route ,cores ,new-actors ,obstacles))
   
-  (for* ([i cores]
-         [j cores])
-         (when (and (< i j)
-                    (not (vector-2d-ref core2route i j)))
-               (let ([path (gen-route-i-j i j w h obs? obstacles
-                                          conflicts conflict-index)])
-                 (when
-                  path
-                  ;; (pretty-display `(path ,i ,j ,path))
-                  (vector-2d-set! core2route n i j path)
-                  (vector-2d-set! core2route n j i (reverse path))))))
+  ;; (for* ([i cores]
+  ;;        [j cores])
+  ;;        (when (and (< i j)
+  ;;                   (not (vector-2d-ref core2route i j)))
+  ;;              (let ([path (gen-route-i-j i j w h obs? obstacles
+  ;;                                         conflicts conflict-index)])
+  ;;                (when
+  ;;                 path
+  ;;                 ;; (pretty-display `(path ,i ,j ,path))
+  ;;                 (vector-2d-set! core2route n i j path)
+  ;;                 (vector-2d-set! core2route n j i (reverse path))))))
 
   (vector-set! core2route n-1 (make-vector n #f))
   (for ([i (in-range n)])
@@ -208,10 +219,27 @@
 		 [core (cdr mapping)])
 	     (vector-set! fix (+ (* (quotient core 100) w) (modulo core 100))
 			  (add1 part))))
-	   
+
+      (newline)
       (for ([i (in-range (* w h))])
         (display (vector-ref fix i)) (display " "))
-      (newline)))
+      (newline) (newline)
+
+      (define clusters (get-field module-inits ast))
+      (pretty-display (length clusters))
+      (for ([cluster clusters])
+           (let ([parts (car cluster)]
+                 [cores (cdr cluster)])
+             (display (set-count parts)) (display " ")
+             (for ([p parts]) (display (add1 p)) (display " "))
+             (newline)
+             (display (length cores)) (display " ")
+             (for ([core cores])
+                  (display (+ 1 (* (quotient core 100) w) (modulo core 100)))
+                  (display " "))
+             (newline)
+             ))
+      ))
   
   ;; Mapping from cores to partitions
   (define start (current-seconds))
