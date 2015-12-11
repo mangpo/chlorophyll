@@ -1270,7 +1270,7 @@
     (inherit-field stmts)
 
     (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
-                [module-decls #f] [module-inits #f]
+                [module-decls (list)] [module-inits (list)]
                 [uses-a #f] [a-port #f] [set-p #f])
 
     (define/override (clone)

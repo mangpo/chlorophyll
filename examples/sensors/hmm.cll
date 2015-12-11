@@ -84,7 +84,6 @@ module Hmm(a_init) {
           f[k] = temp;
           ord = ord | temp;
         }
-      return ord;
     } else {
       started = 1;
       for (l from 0 to 3) {//for each state
@@ -93,8 +92,8 @@ module Hmm(a_init) {
       for (l from 3 to 6) {//for each state
         s[l] = pi[l] *@place(pi[l]) b2[((l-3)<<3) + o];
       }
-      return ord;
     }
+    return ord;
   }
 
 } // end module Hmm
