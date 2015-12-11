@@ -454,6 +454,9 @@
 
          ; function call
          ((funccall SEMICOL) $1)
+
+         ; module call
+         ((module-call SEMICOL) $1)
          )
 
     (stmts
@@ -482,9 +485,9 @@
      ((MODULE VAR LPAREN var-list-ext RPAREN LBRACK decls RBRACK)
       (new Module% [name $2] [params $4] [stmts $7] [pos $1-start-pos])))
 
-    (module-decls
-     (() (list))
-     ((module-decl module-decls) (cons $1 $2)))
+    ;; (module-decls
+    ;;  (() (list))
+    ;;  ((module-decl module-decls) (cons $1 $2)))
 
     ;; Initialization
     (module-arg
@@ -513,9 +516,9 @@
                      [locations $8])]
            [pos $1-start-pos])))
     
-    (module-inits
-     (() (list))
-     ((module-init module-inits) (cons $1 $2)))
+    ;; (module-inits
+    ;;  (() (list))
+    ;;  ((module-init module-inits) (cons $1 $2)))
      
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
@@ -532,14 +535,21 @@
          ((ACTOR VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL actors)
           (cons (list $2 $5 $7) $10)))
 
+    (decl-unit
+     ((func-decl) $1)
+     ((var-decl) $1)
+     ((module-decl) $1)
+     ((module-init) $1)
+     )
+
     (decls
-         ((func-decl) (list $1))
-         ((func-decl decls) (cons $1 $2)))
+         ((decl-unit) (list $1))
+         ((decl-unit decls) (cons $1 $2)))
          
     (program
-     ((part2core noroute actors module-decls module-inits decls)
-      (new Program% [stmts $6] [fixed-parts $1] [noroute $2]
-           [actors (actor-map $3)] [module-decls $4] [module-inits $5]
+     ((part2core noroute actors decls)
+      (new Program% [stmts $4] [fixed-parts $1] [noroute $2]
+           [actors (actor-map $3)]
            )))
 
     )))

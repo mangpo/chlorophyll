@@ -986,10 +986,11 @@
            [compress compress]))
     
     (define/override (pretty-print [indent ""])
-      (pretty-display (format "~a(ARRAYDECL ~a ~a @~a (known=~a) (cluster=~a) (compress=~a) " 
+      (pretty-display (format "~a(ARRAYDECL ~a ~a @~a" 
                               indent type var
-			      (place-to-string place-list)
-                              known cluster compress))
+			      (place-to-string place-list)))
+      (when address (pretty-display (format "~aaddress = ~a" (inc indent) 
+                                            (meminfo-addr address))))
       (when ghost (pretty-display (format "~aghost@{~a}" (inc indent) 
                                           (place-to-string ghost))))
       (pretty-display (format "~a(init ~a)" (inc indent) init))
@@ -1269,7 +1270,7 @@
     (inherit-field stmts)
 
     (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
-                [module-decls (list)] [module-inits (list)]
+                [module-decls #f] [module-inits #f]
                 [uses-a #f] [a-port #f] [set-p #f])
 
     (define/override (clone)
@@ -1281,12 +1282,12 @@
 
     (define/override (pretty-print [indent ""])
       (pretty-display (format "PROGRAM"))
-      (pretty-display (format ">> noroute = ~a" noroute))
-      (pretty-display (format ">> actors = ~a" actors))
-      (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
+      ;; (pretty-display (format ">> noroute = ~a" noroute))
+      ;; (pretty-display (format ">> actors = ~a" actors))
+      ;; (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
 
-      (when (and (list? fixed-parts) (not (empty? fixed-parts)))
-            (pretty-display (format ">> fixed-parts = ~a" fixed-parts)))
+      ;; (when (and (list? fixed-parts) (not (empty? fixed-parts)))
+      ;;       (pretty-display (format ">> fixed-parts = ~a" fixed-parts)))
       
       (unless (empty? conflict-list)
               (pretty-display (format ">> conflict-list = ~a" conflict-list)))
@@ -1296,15 +1297,6 @@
                  (pair? (car module-inits)))
             (pretty-display ">> module-inits")
             (pretty-display module-inits))
-
-      ;; (when (and (list? module-decls) (not (empty? module-decls)))
-      ;;         (pretty-display ">> modules")
-      ;;         (pretty-display module-decls)
-      ;;         (pretty-display module-inits)
-      ;;         (for ([module module-decls])
-      ;;              (send module pretty-print indent))
-      ;;         (for ([module module-inits])
-      ;;              (send module pretty-print indent)))
       
       ;; (for ([stmt stmts])
       ;;      (send stmt pretty-print indent))

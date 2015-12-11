@@ -20,6 +20,8 @@
 ;                      256 #:opt #t)
 ;(compile-and-optimize "../examples/simple/extendshift.cll" "extendshift" 
 ;                      256 #:opt #f)
+;(compile-and-optimize "../examples/simple/global.cll" "global" 
+;                      256 #:opt #f #:partition #f)
 
 ;; Matrix multiply
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
@@ -72,7 +74,7 @@
 ;(compile-and-optimize "../examples/md5/leftrotate.cll" "leftrotate"
 ;		      1024 #:w 4 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/md5/md1-rightrot-noassume.cll" "md1-rightrot-noassume"
-;		      1024 #:w 8 #:h 8 #:opt #t)
+;		      1024 #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../examples/md5/md1-circular2.cll" "md1-entire"
 ;		      1024 #:w 8 #:h 8 #:opt #t)
 ;(compile-and-optimize "../examples/sha/sha.cll" "sha"
@@ -107,9 +109,11 @@
 ;                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/module/module_mapreduce.cll" "module_mapreduce" 
 ;                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/module/module_global.cll" "module_global" 
+;                      400 #:w 3 #:h 3 #:opt #f #:partition #f)
 
 ;; HMM Classifier
 ;(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test" 
 ;                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
 (compile-and-optimize "../examples/sensors/hmm.cll" "hmm" 
-                      420 #:w 18 #:h 6 #:opt #f #:partition #f)
+                      420 #:w 18 #:h 7 #:opt #f #:partition #f)

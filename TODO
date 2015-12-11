@@ -39,9 +39,9 @@ BENCHMARKS
 PARALLEL MODULE
 
 - make the sample hmm program fits
+- test return inside if-else
 
 - freshen concrete partitions as well
-- global array
 - regression test
 
 - (clone ast) is very confusing

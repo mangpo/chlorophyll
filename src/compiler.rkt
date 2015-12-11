@@ -37,13 +37,13 @@
 (define (parse file)
   ;(define concise-printer (new printer% [out #t]))
   (define my-ast (ast-from-file file))
-  (pretty-display "=============== before initial ===============")
-  (send my-ast pretty-print)
-  (send my-ast accept (new initial%))
-  (pretty-display "=============== after initial ===============")
+  (pretty-display "=============== after parsing ===============")
   (send my-ast pretty-print)
   (send my-ast accept (new module-expander%))
   (pretty-display "=============== after module-expander ===============")
+  (send my-ast pretty-print)
+  (send my-ast accept (new initial%))
+  (pretty-display "=============== after initial ===============")
   (send my-ast pretty-print)
   (send my-ast accept (new mapper-reducer%))
   (pretty-display "=============== after map-reduce ===============")
@@ -86,7 +86,7 @@
   
   ;;(pretty-display ">>> memory-mapper >>>")
   (define data-iter (send program accept (new memory-mapper%)))
-  ;;(send program pretty-print)
+  (send program pretty-print)
   (let* (;; only generated reduced version if mem > 5
          [reduce (and virtual (> (+ (meminfo-addr (car data-iter)) (cdr data-iter)) 
                                  reduce-limit))]

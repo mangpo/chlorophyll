@@ -7,42 +7,39 @@
 
 module Hmm(a_init) {
 
-int derive_group(fix9_t::3 acc){
   fix9_t::3 quantizerMap[14];
-  fix9_t minDist; minDist = 255;//0b11111111;
-  int minGroup;
-  fix9_t a;
-  fix9_t b;
-  fix9_t c;
-  fix9_t d;
-  fix9_t::3 ref;
 
-  fix9_t::3 n0;
-  n0::0 = 5716;
-  n0::1 = 0;
-  n0::2 = 0;
-  quantizerMap[0] = n0;
-  //TODO: other elements, vector/tuple literals
+  int derive_group(fix9_t::3 acc){
+    fix9_t minDist; minDist = 255;//0b11111111;
+    int minGroup;
+    fix9_t a;
+    fix9_t b;
+    fix9_t c;
+    fix9_t d;
+    fix9_t::3 ref;
 
-  for (i from 0 to 14){
-    ref = quantizerMap[i];
-    a = ref::0 - acc::0;
-    b = ref::1 - acc::1;
-    c = ref::2 - acc::2;
-    d = a*a + b*b + c*c;
-    if (d < minDist){
-      minDist = d;
-      minGroup = i;
+    fix9_t::3 n0;
+    n0::0 = 5716;
+    n0::1 = 0;
+    n0::2 = 0;
+    quantizerMap[0] = n0;
+    //TODO: other elements, vector/tuple literals
+
+    for (i from 0 to 14){
+      ref = quantizerMap[i];
+      a = ref::0 - acc::0;
+      b = ref::1 - acc::1;
+      c = ref::2 - acc::2;
+      d = a*a + b*b + c*c;
+      if (d < minDist){
+        minDist = d;
+        minGroup = i;
+      }
     }
+    return minGroup;
   }
-  return minGroup;
-}
 
 
-int forward_proc_inc(int o){
-  int started[1];
-  fix1_t sum;
-  fix1_t ord;
   fix1_t pi[8];
   //   solve: no satisfying execution found
   fix1_t@{[0:32], [32:64]} a[64] = a_init; // 8X8, might need smaller chunk (24 instead of 32)
@@ -51,48 +48,54 @@ int forward_proc_inc(int o){
   //fix1_t@{[0:32], [32:64],[64:96],[96:112]} b[112]; // 8X14
   fix1_t f[8];
   fix1_t s[8];
-  fix1_t prob;
-  fix1_t temp;
-  sum = 0.1;
-  if (o < 0){
-    started[0] = 0;
+  int started;
+
+  int forward_proc_out() {
+    fix1_t prob;
+    prob = 0;
+    started = 0;
     for (i from 0 to 8){
       prob = prob + s[i];
     }
     return prob;
-  }else{
-    if (started[0]){
-      for (k from 0 to 3) {//for each state
-        sum = 0;
-        for (l from 0 to 8) {//for each state
-          sum = sum + s[l] *@place(s[l]) a[l*8+k];
-        }
-        temp = sum *@place(sum) b1[(k<<3) + o];
-        f[k] = temp;
-        ord = ord | temp;
-      }
-      for (k from 3 to 6) {//for each state
-        sum = 0;
-        for (l from 0 to 8) {//for each state
-          sum = sum + s[l] *@place(s[l]) a[l*8+k];
-        }
-        temp = sum *@place(sum) b2[((k-3)<<3) + o];
-        f[k] = temp;
-        ord = ord | temp;
-      }
+  }
 
-    }else{
-      started[0] = 1;
+  int forward_proc_inc(int o){
+    fix1_t sum;
+    fix1_t ord;
+    fix1_t temp;
+    sum = 0.1;
+    if(started == 1) {
+        for (k from 0 to 3) {//for each state
+          sum = 0;
+          for (l from 0 to 8) {//for each state
+            sum = sum + s[l] *@place(s[l]) a[l*8+k];
+          }
+          temp = sum *@place(sum) b1[(k<<3) + o];
+          f[k] = temp;
+          ord = ord | temp;
+        }
+        for (k from 3 to 6) {//for each state
+          sum = 0;
+          for (l from 0 to 8) {//for each state
+            sum = sum + s[l] *@place(s[l]) a[l*8+k];
+          }
+          temp = sum *@place(sum) b2[((k-3)<<3) + o];
+          f[k] = temp;
+          ord = ord | temp;
+        }
+      return ord;
+    } else {
+      started = 1;
       for (l from 0 to 3) {//for each state
         s[l] = pi[l] *@place(pi[l]) b1[(l<<3) + o];
       }
       for (l from 3 to 6) {//for each state
         s[l] = pi[l] *@place(pi[l]) b2[((l-3)<<3) + o];
       }
+      return ord;
     }
-    return ord;
   }
-}
 
 } // end module Hmm
 
@@ -120,9 +123,6 @@ int filter(fix9_t::3 acc){
 
 void main(){
   fix9_t::3@(0,0,0) acc;
-  //fix9_t::3@(1,1,1) acc1;
-  //fix9_t::3@(2,2,2) acc2;
-  //fix9_t::3@(3,3,3) acc3;
   int@4 o1, ord1;
   int@5 o2, ord2;
   //int@6 o3, ord3;
@@ -139,8 +139,7 @@ void main(){
     }
   }
   int@99 prob1;
-  prob1 = hmm1.forward_proc_inc(-1);
-  //prob1 = hmm2.forward_proc_inc(-1);
-  //prob1 = hmm3.forward_proc_inc(-1);
+  prob1 = hmm1.forward_proc_out();
+  prob1 = hmm2.forward_proc_out();
   
 }

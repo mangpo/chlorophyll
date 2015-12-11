@@ -13,7 +13,7 @@
     (define arrays (make-hash))
     (define env (make-hash))
 
-    (define debug #f)
+    (define debug #t)
 
     (define (push-scope)
       ;(pretty-display `(push-scope))
@@ -95,8 +95,12 @@
 	     (send stmt accept this))
 
 	(when (is-a? ast Program%)
-	      (set-field! stmts ast (filter (lambda (x) (set-member? functions (get-field name x)))
-					    (get-field stmts ast))))
+	      (set-field!
+               stmts ast
+               (filter (lambda (x)
+                         (or (not (is-a? x FuncDecl%))
+                             (set-member? functions (get-field name x))))
+                       (get-field stmts ast))))
 	]
 
        [else void]))))

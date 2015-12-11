@@ -22,6 +22,7 @@
 ;(test "../examples/simple/while.cll"     "while" "10" 256)
 ;(test "../examples/simple/unroll.cll"    "unroll" "null" 1024 #:w 2 #:h 3)
 ;(test "../examples/simple/extendshift.cll"     "extendshift" "null" 256)
+;(test "../examples/simple/global.cll"     "global" "null" 256)
 
 ;(test "../examples/matrixmultiply/matrixmult6.cll"     "matrixmult6" "72" 500) ;capacity issue
 ;(test "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" "null" 500)
@@ -32,9 +33,9 @@
 ;(test "../examples/mapreduce/reduce-pair.cll" "reduce-pair" "null" 290 #:partition #f)
 ;(test "../examples/mapreduce/mapreduce.cll"   "mapreduce" "null" 290 #:partition #f)
 
-;(test "../examples/rom/interp.cll"      "interp" "1" 256 #:w 3 #:h 3)
-;(test "../examples/rom/poly.cll"        "poly" "1" 256 #:w 3 #:h 3)
-;(test "../examples/rom/cos.cll"         "cos" "1" 300 #:w 3 #:h 3)
+(test "../examples/rom/interp.cll"      "interp" "1" 256 #:w 3 #:h 3)
+(test "../examples/rom/poly.cll"        "poly" "1" 256 #:w 3 #:h 3)
+(test "../examples/rom/cos.cll"         "cos" "1" 300 #:w 3 #:h 3)
 ;(test "../examples/rom/sqrt2.cll"       "sqrt2" "2" 400 #:w 3 #:h 3)
 ;(test "../examples/rom/complex3.cll"    "complex3" "1" 300 #:w 4 #:h 4)
 
@@ -51,7 +52,7 @@
 ;(test "../examples/fixedpoint/cos_radius.cll"     "cos_radius" "null" 256 #:w 3 #:h 3)
 
 ;(test "../examples/module/module_simple.cll"     "module_simple" "null" 256 #:w 3 #:h 3)
-(test "../examples/sensors/hmm_test.cll"     "hmm_test" "null" 256 #:w 3 #:h 3)
+;(test "../examples/sensors/hmm_test.cll"     "hmm_test" "null" 256 #:w 3 #:h 3)
 
 
 (for ([res (reverse result)])

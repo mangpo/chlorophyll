@@ -1,0 +1,42 @@
+// global varialbes and arrays
+
+int o;
+
+module Add(init) {
+  int s[8] = init;
+
+  void inc() {
+    for(i from 0 to 8) {
+      s[i] = s[i] + o;
+    }
+  }
+
+  int val() {
+    int sum;
+    sum = 0;
+    for(i from 0 to 8) {
+      sum = sum + s[i];
+    }
+    return sum;
+  }
+}
+
+add1 = new Add({0,1,2,3,4,5,6,7});
+add2 = new Add({1,1,1,1,1,1,1,1});
+
+void main() {
+  out(add1.val());
+  out(add2.val());
+
+  o = 1;
+  add1.inc();
+  add2.inc();
+  out(add1.val());
+  out(add2.val());
+
+  o = 2;
+  add1.inc();
+  add2.inc();
+  out(add1.val());
+  out(add2.val());
+}

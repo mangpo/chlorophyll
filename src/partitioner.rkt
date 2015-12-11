@@ -292,6 +292,8 @@
                (hash-set! part2capacity sym cap))))
 
   (send my-ast accept placeset-collector)
+  (pretty-display "=== After bound compute  ===")
+  (send my-ast pretty-print)
     
   (cond
    [synthesis

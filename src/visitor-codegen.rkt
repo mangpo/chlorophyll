@@ -297,16 +297,18 @@
 
        [(is-a? ast ArrayDecl%)
         (when debug
-              (pretty-display (format "\nCODEGEN: VarDecl ~a" (get-field var ast))))
+              (pretty-display (format "\nCODEGEN: ArrayDecl ~a" (get-field var ast))))
         (define init (get-field init ast))
         (when init ;(and (not virtual) init)
               (define address (get-field address ast))
+              (when debug
+                    (pretty-display (format "init-address = ~a" address)))
               (for ([i (in-range (length init))]
                     [val init])
                    (vector-set! data (+ (meminfo-addr address) i) val)))
 
         (when debug
-              (pretty-display (format "\nCODEGEN: VarDecl ~a (done)" (get-field var ast))))
+              (pretty-display (format "\nCODEGEN: ArrayDecl ~a (done)" (get-field var ast))))
         (list)
         ]
 
@@ -927,26 +929,33 @@
         (define set-p (get-field set-p ast))
         (set! set-p (and set-p (gen-port set-p)))
 
-        (if (empty? (get-field stmts ast))
+        (define stmts (get-field stmts ast))
+
+        (if (empty? stmts)
             #f
             
             ;; return list of function list
-            (let ([main-funcs
-                   (for/list ([decl (filter (lambda (x) (is-a? x FuncDecl%)) 
-                                            (get-field stmts ast))])
-                             (send decl accept this))])
-              
-              (dict-set! index-map 
-                         (+ (meminfo-virtual data-size) iter-size)
-                         (+ (meminfo-addr data-size) iter-size))
-              (aforth (append (list (vardecl (vector->list data))) 
-                              (reverse helper-funcs) 
-                              main-funcs) 
-                      (+ (get-var data-size) iter-size) 
-		      18
-                      ;(max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
-                      (if virtual index-map #f)
-                      a-port #f set-p)))
+            (begin
+              ;; visit global variables first
+              (for ([decl (filter (lambda (x) (not (is-a? x FuncDecl%))) stmts)])
+                   (send decl accept this))
+              ;; then visit function declarations
+              (let ([main-funcs 
+                     (for/list
+                      ([decl (filter (lambda (x) (is-a? x FuncDecl%)) stmts)])
+                      (send decl accept this))])
+                
+                (dict-set! index-map 
+                           (+ (meminfo-virtual data-size) iter-size)
+                           (+ (meminfo-addr data-size) iter-size))
+                (aforth (append (list (vardecl (vector->list data))) 
+                                (reverse helper-funcs) 
+                                main-funcs) 
+                        (+ (get-var data-size) iter-size) 
+                        18
+                        ;;(max (inexact->exact (floor (+ (/ (log maxnum) (log 2)) 2))) ga-bit)
+                        (if virtual index-map #f)
+                        a-port #f set-p))))
         ]
 
        [(is-a? ast Block%)

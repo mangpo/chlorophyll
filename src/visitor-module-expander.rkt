@@ -13,11 +13,16 @@
     (define modules (make-hash))
     (define mapping #f)
     (define id #f)
+    (define global-vars (list))
 
     (define module-summary (make-hash))
+    (define module-clusters (list))
 
     (define-syntax-rule (rename name)
-      (if (and mapping (not (member name (list "#return" "map" "reduce"))))
+      (if (and mapping
+               (not (member name
+                            (append (list "#return" "map" "reduce")
+                                    global-vars))))
           (begin
             (unless (string? name)
                     (raise (format "rename: ~a is not string" name)))
@@ -61,8 +66,8 @@
 
        [(and (is-a? ast Assign%) (is-a? (get-field rhs ast) ModuleCreate%))
         (when debug (pretty-display (format "MODULE: ModuleCreate")))
-        (define rhs (get-field rhs ast))
-        (define lhs (get-field lhs ast))
+        (define rhs (my rhs))
+        (define lhs (my lhs))
         (define module-name (get-field name rhs))
         (define module (hash-ref modules module-name))
 
@@ -75,8 +80,16 @@
         (define ret
           (for/list ([stmt (get-field stmts module)])
                     (send stmt accept this)))
+
+        ;; update module-summary
         (hash-set! module-summary module-name
                    (cons id (hash-ref module-summary module-name)))
+        ;; update module-inits
+        (define locations (get-field locations rhs))
+        (unless (empty? locations)
+                (set! module-clusters
+                      (cons (cons (get-field name lhs) locations)
+                            module-clusters)))
         (set! mapping #f)
         
         ret
@@ -86,6 +99,7 @@
         (define name (get-field name ast))
         (hash-set! modules name ast)
         (hash-set! module-summary name (list))
+        (list)
         ]
 
        [(is-a? ast ModuleCall%)
@@ -213,30 +227,25 @@
              [pos (my pos)])]
 
        [(is-a? ast Program%)
-        (unless
-         (empty? (my module-decls))
-         (define pre (list))
-         (for ([module (my module-decls)])
-              (send module accept this))
-         (set! pre (flatten (for/list ([module (my module-inits)])
-                                             (send module accept this))))
-         (set-field! module-decls ast module-summary)
-         (set-field!
-          module-inits ast
-          (filter identity ;; filter when locations field is empty
-                  (map (lambda (x)
-                         (let* ([lhs (get-field lhs x)]
-                                [rhs (get-field rhs x)]
-                                [locations (get-field locations rhs)])
-                           (and (not (empty? locations))
-                                (cons (get-field name lhs) ;; instance name
-                                      (get-field locations rhs)))))
-                       (my module-inits))))
-           
+        (define stmts (my stmts))
+        (define run (ormap (lambda (x) (is-a? x Module%)) stmts))
+        (when
+         run
+         ;; Collect global variables
+         (for ([stmt stmts])
+              (cond
+               [(is-a? stmt VarDecl%)
+                (set! global-vars (append (get-field var-list stmt) global-vars))]
+               [(is-a? stmt ArrayDecl%)
+                (set! global-vars (cons (get-field var stmt) global-vars))]))
+
+         ;; Then visit the AST
          (set-field! stmts ast
-                     (append pre
-                             (map (lambda (x) (send x accept this))
-                                  (my stmts)))))]
+                     (flatten
+                      (map (lambda (x) (send x accept this)) stmts)))
+         
+         (set-field! module-decls ast module-summary)
+         (set-field! module-inits ast module-clusters))]
 
        [(is-a? ast Block%)
         (new Block% [stmts (map (lambda (x) (send x accept this)) (my stmts))])]
