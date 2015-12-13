@@ -246,6 +246,9 @@
     (set! real-codes (remove-b real-codes w h))
     (set! shorter-codes (define-repeating-codes real-codes w h))
     (set! optimized-codes (arrayforth-basic-optimize shorter-codes w h))
+    
+    ;; (set! shorter-codes real-codes)
+    ;; (set! optimized-codes real-codes)
 
     ;; (define new-capacity (vector-copy current-capacity))
     ;; (define sizes (program-sizes shorter-codes w h))

@@ -407,10 +407,14 @@
 
     (define/public (set-value x)
       (set-field! n n x))
+
+    (define/public (set-place-sym)
+      (set! place-type (get-sym)))
     
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Num:~a @~a @~a (type=~a) (expand=~a/~a))" 
-			      indent (get-field n n) place-type
+			      indent (get-field n n)
+                              place-type
                               (get-field place n)
                               type expand expect))
       (print-send-path indent))
@@ -1269,13 +1273,16 @@
     (super-new)
     (inherit-field stmts)
 
-    (init-field [fixed-parts #f] [noroute #f] [actors #f] [conflict-list (list)]
+    (init-field [fixed-parts #f] [noroute #f]
+                [actors #f] [actors* #f] [actors*-no-cf-map #f]
+                [conflict-list (list)]
                 [module-decls (list)] [module-inits (list)]
                 [uses-a #f] [a-port #f] [set-p #f])
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
-	   [fixed-parts fixed-parts] [noroute noroute] [actors actors]
+	   [fixed-parts fixed-parts] [noroute noroute]
+           [actors actors] [actors* actors*] [actors*-no-cf-map actors*-no-cf-map]
            [conflict-list conflict-list]
            [module-decls module-decls] [module-inits module-inits]
            [uses-a uses-a] [a-port a-port] [set-p set-p]))
@@ -1283,7 +1290,11 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "PROGRAM"))
       ;; (pretty-display (format ">> noroute = ~a" noroute))
-      ;; (pretty-display (format ">> actors = ~a" actors))
+      (pretty-display (format ">> actors  = ~a" actors))
+      (pretty-display (format ">> actors* = ~a" actors*))
+      (when (and actors*-no-cf-map (> (hash-count actors*-no-cf-map) 0))
+            (pretty-display
+             (format ">> actors*-no-cf-map = ~a" actors*-no-cf-map)))
       ;; (when set-p (pretty-display (format ">> set-p = ~a" set-p)))
 
       ;; (when (and (list? fixed-parts) (not (empty? fixed-parts)))
@@ -1298,8 +1309,8 @@
             (pretty-display ">> module-inits")
             (pretty-display module-inits))
       
-      ;; (for ([stmt stmts])
-      ;;      (send stmt pretty-print indent))
+      (for ([stmt stmts])
+           (send stmt pretty-print indent))
       )
     ))
 

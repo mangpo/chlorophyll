@@ -14,10 +14,11 @@
 (define commcode-inserter%
   (class* object% (visitor<%>)
     (super-new)
-    (init-field routing-table part2core w h obstacles actors conflict-list)
+    (init-field routing-table part2core w h obstacles conflict-list
+                actors*-no-cf-map)
     ;; TODO: check if obstacles have everything.
 
-    (define debug #f)
+    (define debug #t)
     (define n (* w h))
     (define visited (make-hash))
     (define obs? (> (set-count obstacles) 0))
@@ -142,6 +143,19 @@
         ))
 
     (define/public (visit ast)
+      (define (update-placeset addition)
+        (pretty-display `(update-addition ,addition))
+        (pretty-display `(update-old
+                          ,(for/set ([p (get-field body-placeset ast)])
+                                    (vector-ref part2core p))
+                          ,(get-field body-placeset ast)))
+        (define ret (set-union
+                     (for/set ([p (get-field body-placeset ast)])
+                              (vector-ref part2core p))
+                     addition))
+        (set-field! body-placeset ast ret)
+        ret)
+      
       (define (convert-base p)
         (cond
          [(number? p)
@@ -301,10 +315,9 @@
               (when (number? place)
                     (set-field! place-list ast (vector-ref part2core place)))))
 
-        (let ([body-ret (send (get-field body ast) accept this)])
-              ;(convert-placeset)
-              (set-field! body-placeset ast body-ret)
-              body-ret)]
+        (let ([body-ret
+               (update-placeset (send (get-field body ast) accept this))])
+          body-ret)]
 
        [(is-a? ast Num%)
         (when debug 
@@ -410,16 +423,31 @@
 	     (gen-path arg param)
 	     (set! path-ret (set-union path-ret (all-path arg))))
 
+        
+
         (define ret
           (set-union path-ret args-ret 
                      (get-field body-placeset (get-field signature ast)) (all-place-type)))
-        (when (hash-has-key? actors name)
-              (define l (hash-ref actors name))
-              (for ([pair l])
-                   (let* ([caller (cdr pair)]
-                          [actor (car pair)]
-                          [path (vector-2d-ref routing-table caller actor)])
-                     (set! ret (set-subtract ret (list->set (drop path 1)))))))
+        
+        (pretty-display `(funccall-before ,ret))
+        (when
+         (hash-has-key? actors*-no-cf-map name)
+         (pretty-display `(actors*-no-cf-map ,(hash-ref actors*-no-cf-map name name)))
+         (set! ret (set-subtract ret (hash-ref actors*-no-cf-map name name))))
+        ;; (cond
+        ;;  [(hash-has-key? actors*-no-cf-map name)
+        ;;   (pretty-display `(actors*-no-cf-map ,(hash-ref actors*-no-cf-map name name)))
+        ;;   (set! ret (set-subtract ret (hash-ref actors*-no-cf-map name name)))]
+         
+        ;;  [(hash-has-key? actors name)
+        ;;   (define l (hash-ref actors name))
+        ;;   (for ([pair l])
+        ;;        (let* ([caller (cdr pair)]
+        ;;               [actor (car pair)]
+        ;;               [path (vector-2d-ref routing-table caller actor)])
+        ;;          (set! ret (set-subtract ret (list->set (drop path 1))))))])
+
+        (pretty-display `(funccall-after ,ret))
         ret
         ]
 
@@ -461,10 +489,9 @@
               (set)))
         ;(convert-placeset)
         (when debug 
-              (pretty-display (format "COMMINSERT: If")))
+              (pretty-display (format "\nCOMMINSERT: If")))
         
-        (define body-ret (set-union true-ret false-ret))
-        (set-field! body-placeset ast body-ret)
+        (define body-ret (update-placeset (set-union true-ret false-ret)))
         
         (gen-path-condition ast)
         (set-union body-ret cond-ret (all-path ast))
@@ -477,10 +504,9 @@
         ;(convert-placeset)
         ;; TODO
         (when debug 
-              (pretty-display (format "COMMINSERT: While")))
+              (pretty-display (format "\nCOMMINSERT: While")))
 
-        (define ret (set-union pre-ret cond-ret body-ret))
-        (set-field! body-placeset ast ret)
+        (define ret (update-placeset (set-union pre-ret cond-ret body-ret)))
 
         (gen-path-condition ast)
         (set-union ret (all-path ast))
@@ -488,7 +514,7 @@
 
        [(is-a? ast Block%) 
         (when debug 
-              (pretty-display (format "COMMINSERT: Block")))
+              (pretty-display (format "\nCOMMINSERT: Block")))
         (define ret (set))
         (for ([stmt (get-field stmts ast)])
              (set! ret (set-union ret (send stmt accept this))))
@@ -497,7 +523,7 @@
        [(is-a? ast FuncDecl%)
         (when debug 
           (pretty-display "\n--------------------------------------------")
-          (pretty-display (format "COMMINSERT: FuncDecl ~a" (get-field name ast))))
+          (pretty-display (format "\nCOMMINSERT: FuncDecl ~a" (get-field name ast))))
         (cond [(hash-has-key? visited (get-field name ast))
                (hash-ref visited (get-field name ast))]
               [else
@@ -515,8 +541,9 @@
                                      (set->list (get-field body-placeset ast))))
                      (set)))
 
-               (let ([ret (set-union return-ret args-ret body-ret new-placeset)])
-                 (set-field! body-placeset ast ret)
+               (let ([ret
+                      (update-placeset
+                       (set-union return-ret args-ret body-ret new-placeset))])
                  (hash-set! visited (get-field name ast) ret)
                  ret)
                ])]

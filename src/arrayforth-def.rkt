@@ -629,7 +629,7 @@
   (define dependencies '())
 
   (define (topo-sort lst)
-    (when debug (pretty-display `(this-topo-sort ,lst)))
+    (when #t (pretty-display `(this-topo-sort ,lst)))
     (if (empty? lst)
         lst
         (let* ([fst (findf (lambda (pair) (set-empty? (cdr pair))) lst)]
@@ -656,9 +656,13 @@
     (set-field! dependent-nodes collector (set))
     (set! repeating (define-repeating-code program collector))
     (vector-set! res i repeating)
-    (set! dependencies (cons (cons (cons core repeating)
-                                   (get-field dependent-nodes collector))
-                             dependencies))
+    (set! dependencies
+          (cons (cons (cons core repeating)
+                      (get-field dependent-nodes collector)
+                      ;;(for/set ([d (get-field dependent-nodes collector)])
+                      ;;         (core-id d w))
+                      )
+                dependencies))
     )
   (for ((node (topo-sort dependencies))
         (i (* w h)))

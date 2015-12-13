@@ -79,7 +79,7 @@
                                  [part2core part2core]
                                  [w w] [h h]
                                  [obstacles (get-field noroute ast)]
-                                 [actors (get-field actors ast)]
+                                 [actors*-no-cf-map (get-field actors*-no-cf-map ast)]
                                  [conflict-list (get-field conflict-list ast)]))
   (send ast accept commcode-inserter)
   (when verbose

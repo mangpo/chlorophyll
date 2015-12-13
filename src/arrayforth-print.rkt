@@ -11,6 +11,7 @@
 ;; true -> orginal arrayforth format
 ;; false -> new interpreter
 (define original #t)
+(define reg-a #f)
 
 (define (aforth-syntax-print code my-w my-h #:id [my-id 0] #:original-format [format #t])
   (set! w my-w)
@@ -98,7 +99,9 @@
                      (format ".. ~a@~a .."
                              (port-exec-name x)
                              (index->coord (port-exec-at x)))))
-    (display (format "~a b! @p ~a !b " (port-exec-port x) call))
+    (if (equal? (port-exec-port x) reg-a)
+        (display (format "@p ~a ! " call))
+        (display (format "~a b! @p ~a !b " (port-exec-port x) call)))
     ]
    
    [(port-listen? x)
@@ -204,6 +207,7 @@
    [(aforth? x)
     (define memsize (aforth-memsize x))
     (define node (core-id id w))
+    (set! reg-a (aforth-a x))
 
     (if original
         (begin

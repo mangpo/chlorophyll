@@ -10,7 +10,7 @@
 (define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT DOT
-                               INT VOID CLUSTER ACTOR
+                               INT VOID CLUSTER ACTOR ACTOR*
                                FOR WHILE IF ELSE FROM TO RETURN
                                ASSUME
 			       READ WRITE
@@ -55,6 +55,7 @@
    ("module" (token-MODULE))
    ("new"    (token-NEW))
    ("cluster" (token-CLUSTER))
+   ("actor*" (token-ACTOR*))
    ("actor" (token-ACTOR))
    ;; ("#read"  (token-READ))
    ;; ("#write" (token-WRITE))
@@ -533,7 +534,10 @@
     (actors
          (() (list))
          ((ACTOR VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL actors)
-          (cons (list $2 $5 $7) $10)))
+          (cons (list $2 $5 $7 #t) $10))
+         ((ACTOR* VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL actors)
+          (cons (list $2 $5 $7 #f) $10))
+         )
 
     (decl-unit
      ((func-decl) $1)
@@ -549,7 +553,7 @@
     (program
      ((part2core noroute actors decls)
       (new Program% [stmts $4] [fixed-parts $1] [noroute $2]
-           [actors (actor-map $3)]
+           [actors (actor-map $3 #t)] [actors* (actor-map $3 #f)] 
            )))
 
     )))
@@ -563,9 +567,9 @@
               [c (range col-from (add1 col-to))])
              (+ (* 100 r) c)))
 
-(define (actor-map l)
+(define (actor-map l non-star)
   (define map (make-hash))
-  (for ([x l])
+  (for ([x (filter (lambda (x) (equal? (fourth x) non-star)) l)])
        (let ([func (first x)]
              [caller (second x)]
              [actor (third x)])

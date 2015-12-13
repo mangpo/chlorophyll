@@ -8,6 +8,8 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field num-cores)
+    (define actors #f)
+    (define actors* #f)
     
     (define/public (visit ast)
 
@@ -96,9 +98,16 @@
               (send func-ast accept this))
 
 	;; infer
+        (define place #f)
 	(for ([param params] ; signature
               [arg   (flatten-arg (get-field args ast))]) ; actual
-          (send arg infer-place (get-field place-type param))
+             (unless
+              (get-field place-type arg)
+              (if (and (not (hash-has-key? actors name))
+                       (not (hash-has-key? actors* name)))
+                  (send arg infer-place (get-field place-type param))
+                  (set-field! place-type arg place)))
+             (set! place (get-field place-type arg))
           )
         ;; return can't be at any, so we don't need to infer return
         ]
@@ -137,11 +146,17 @@
         ]
 
        [(is-a? ast Block%)
+        (when
+         (is-a? ast Program%)
+         (set! actors (get-field actors ast))
+         (set! actors* (get-field actors* ast)))
+         
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
 
         (when
          (is-a? ast Program%)
+         
          (set-field!
           conflict-list ast
           (for/list
@@ -156,6 +171,15 @@
                     (cons (for/set ([x (car pair)]) (evaluate-with-sol x))
                           (cdr pair))
                     ))
+
+         ;; (define old-map (get-field actors*-no-cf-map ast))
+         ;; (define new-map (make-hash))
+         ;; (for ([pair (hash->list old-map)])
+         ;;      (let ([key (car pair)]
+         ;;            [node-set (cdr pair)])
+         ;;        (hash-set! new-map key
+         ;;                   (for/set ([x node-set]) (evaluate-with-sol x)))))
+         ;; (set-field! actors*-no-cf-map ast new-map)
          )
                 
         ]

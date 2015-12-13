@@ -9,7 +9,8 @@
   (class* object% (visitor<%>)
     (super-new)
     ;; save - save placeset into body-placeset field or not.      
-    (init-field save actors)
+    (init-field save actors actors* [need-cf (set)])
+    
     (define functions (make-hash))
     (define env (make-hash))
 
@@ -70,24 +71,31 @@
        [(is-a? ast FuncCall%)
         (define ret (make-set (get-field place-type ast)))
         (define name (get-field name ast))
+
+        (define (union-in x)
+          (when (hash-has-key? actors* name)
+                (set! x (set-intersect need-cf x)))
+          (set! ret (set-union ret x)))
+        
 	(cond
          ;; for visitor-unroll (save = #f)
-         [(hash-has-key? functions (get-field name ast))
-          (set! ret
-                (set-union
-                 ret 
-                 (send (hash-ref functions (get-field name ast)) accept this)))]
+         [(hash-has-key? functions name)
+          (union-in (send (hash-ref functions name) accept this))]
          ;; for standlone (save = #t)
          [(hash-has-key? env name)
-          (set! ret (set-union ret (hash-ref env name)))])
+          (union-in (hash-ref env name))])
 
         (for ([arg (get-field args ast)])
              (set! ret (set-union ret (make-set (get-field place-type arg)))))
 
+        (pretty-display (format "PLACESET: FuncCall ~a" name))
+        (pretty-display `(placeset-before ,ret))
         (when (hash-has-key? actors name)
               (define l (hash-ref actors name))
+              (pretty-display `(remove ,l))
               (for ([pair l])
                    (set! ret (set-remove ret (car pair)))))
+        (pretty-display `(placeset-after ,ret))
         ret]
 
        [(is-a? ast VarDecl%)
@@ -118,6 +126,19 @@
        [(is-a? ast Return%)
         (set)]
 
+       [(is-a? ast Program%)
+        (for ([stmt (get-field stmts ast)])
+             (send stmt accept this))
+
+        (when
+         save
+         (define main
+           (findf (lambda (x) (and (is-a? x FuncDecl%)
+                                   (equal? (get-field name x) "main")))
+                  (get-field stmts ast)))
+         (set-field! body-placeset ast (get-field body-placeset main)))
+        ]
+
        [(is-a? ast Block%)
         (save? (foldl (lambda (stmt all) (set-union all (send stmt accept this)))
                       (set) (get-field stmts ast)))]
@@ -125,10 +146,31 @@
        [(is-a? ast FuncDecl%)
         (define ret (save? (set-union (send (get-field args ast) accept this)
                                       (send (get-field body ast) accept this))))
-        (when save (hash-set! env (get-field name ast) ret))
+        (when save
+              (hash-set! env (get-field name ast) ret))
         ret
         ]
 
        [else (raise (format "visitor-placeset: unimplemented for ~a" ast))]
-       ))))
+       ))
+
+    (define/public (get-actors*-need-cf ast all-main-actors)
+      (define actors*-nodes (set))
+      (for ([name (hash-keys actors*)])
+           (set! actors*-nodes (set-union actors*-nodes (hash-ref env name))))
+      
+      (set-subtract
+       (set-intersect (get-field body-placeset ast)
+                      (set-subtract actors*-nodes need-cf))
+       ;; subtract main actor nodes.
+       all-main-actors))
+
+    (define/public (get-actors*-no-cf-map need-cf)
+      (define ret (make-hash))
+      (for ([name (hash-keys actors*)])
+           (hash-set! ret name (set-subtract (hash-ref env name) need-cf)))
+      ret)
+           
+
+    ))
         

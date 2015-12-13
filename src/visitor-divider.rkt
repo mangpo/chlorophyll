@@ -104,22 +104,19 @@
 
     (define (add-while i)
       (define ws (get-workspace i))
-      (unless
-       (is-a? ws BlockActor%)
-
-       (when (is-a? ws Program%)
-             (define body (new Block% [stmts (list)]))
-             (define new-func
-               (new FuncDecl% [name "main"]
-                    [args (new Block% [stmts (list)])]
-                    [return #f]
-                    [body body]
-                    [parent ws]))
-             (set-field! parent body new-func)
-             (push-workspace i new-func)
-             (set-workspace i body)
-             (set-func i new-func)
-             )
+      (when
+       (is-a? ws Program%)
+       (define main-body (new Block% [stmts (list)]))
+       (define main-func
+         (new FuncDecl% [name "main"]
+              [args (new Block% [stmts (list)])]
+              [return #f]
+              [body main-body]
+              [parent ws]))
+       (set-field! parent main-body main-func)
+       (push-workspace i main-func)
+       (set-workspace i main-body)
+       (set-func i main-func)
        
        ;; create while(1)
        (define body (new BlockActor% [stmts (list)]))
@@ -954,66 +951,93 @@
              func)))]
          
 
-       [(is-a? ast Block%)
+       [(is-a? ast Program%)
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
-        (when (is-a? ast Program%)
-              (for ([i (in-range n)])
-                   (unless
-                    (is-a? (get-workspace i) Program%)
-                    (raise (format "Top level scope @core ~a is not Program!" i)))
-                   (reverse-workspace i)
-                   ;(pretty-display `(program ,i ,(get-field stmts (get-workspace i))))
-                   )
-              
-	      (define programs (make-vector n))
-	      (for ([i (in-range n)])
-		   (vector-set! programs i (get-workspace i)))
+        (for ([i (in-range n)])
+             (unless
+              (is-a? (get-workspace i) Program%)
+              (raise (format "Top level scope @core ~a is not Program!" i)))
+             (reverse-workspace i)
+             ;;(pretty-display `(program ,i ,(get-field stmts (get-workspace i))))
+             )
+        
+        (define programs (make-vector n))
+        (for ([i (in-range n)])
+             (vector-set! programs i (get-workspace i)))
 
-	      (for ([i (in-range n)])
-		   (let* ([program (vector-ref programs i)]
-			  [stmts (get-field stmts program)])
-                     
-                     ;; Move port-listen inside main.
-                     (let ([listen
-                            (findf (lambda (x) (is-a? x PortListen%)) stmts)]
-                           [main
-                            (findf (lambda (x)
-                                     (and (is-a? x FuncDecl%)
-                                          (equal? (get-field name x) "main")))
-                                   stmts)])
-                       (cond
-                        [(and main listen)
-                         (let ([main-body (get-field body main)])
-                           (set-field! stmts main-body
-                                       (append (get-field stmts main-body)
-                                               (list listen)))
-                           (set-field! stmts program (remove listen stmts)))]
-                        [listen
-                         (set-field! set-p program (get-field port listen))
-                         ]))
+        (for ([i (in-range n)])
+             (let* ([program (vector-ref programs i)]
+                    [stmts (get-field stmts program)])
+               
+               ;; Move port-listen inside main.
+               (let ([listen
+                      (findf (lambda (x) (is-a? x PortListen%)) stmts)]
+                     [main
+                      (findf (lambda (x)
+                               (and (is-a? x FuncDecl%)
+                                    (equal? (get-field name x) "main")))
+                             stmts)])
+                 (cond
+                  [(and main listen)
+                   (let ([main-body (get-field body main)])
+                     (set-field! stmts main-body
+                                 (append (get-field stmts main-body)
+                                         (list listen)))
+                     (set-field! stmts program (remove listen stmts)))]
+                  [listen
+                   (set-field! set-p program (get-field port listen))
+                   ]
 
-                     ;; (pretty-display `(PROGRAM ,i ,program))
-                            
-                     (unless
-                      (findf
-                       (lambda (x)
-                         (let ([name (and (is-a? x FuncDecl%)
-                                          (get-field name x))])
-                           (and name (or (equal? name "main")
-                                         (regexp-match #rx"act" name)))))
-                       stmts)
-                      (set-field! stmts program (list)))
-                     ))
-		
-              ;; Adjust offset
-              (for ([i (in-range n)])
-                   (send (vector-ref programs i) accept (new offset-modifier%)))
+                  [(and (not main)
+                        (findf (lambda (x) (is-a? x FuncDecl%)) stmts))
+                   (let* ([last-funcdecl
+                          (findf (lambda (x) (is-a? x FuncDecl%))
+                                 (reverse stmts))]
+                          [main-stmts
+                           (list
+                            (new FuncCall%
+                                 [name (get-field name last-funcdecl)]
+                                 [args (list)] [type "void"])
+                            (new FuncCall%
+                                 [name "main"]
+                                 [args (list)] [type "void"]))]
+                          [main-body (new Block% [stmts main-stmts])]
+                          [main-func
+                           (new FuncDecl% [name "main"]
+                                [args (new Block% [stmts (list)])]
+                                [return #f]
+                                [body main-body])])
+                     (set! stmts (append stmts (list main-func)))
+                     (set-field! stmts program stmts))
+                   ]
 
-	      programs
-	      )
+                  ))
+
+               ;; (pretty-display `(PROGRAM ,i ,program))
+               
+               (unless
+                (findf
+                 (lambda (x)
+                   (let ([name (and (is-a? x FuncDecl%)
+                                    (get-field name x))])
+                     (and name (or (equal? name "main")
+                                   (regexp-match #rx"act" name)))))
+                 stmts)
+                (set-field! stmts program (list)))
+               ))
+        
+        ;; Adjust offset
+        (for ([i (in-range n)])
+             (send (vector-ref programs i) accept (new offset-modifier%)))
+
+        programs
 	]
 
+       [(is-a? ast Block%)
+        (for ([stmt (get-field stmts ast)])
+             (send stmt accept this))]
+       
        [else (raise (format "visitor-divider: unimplemented for ~a" ast))]
 
        ))))

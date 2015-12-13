@@ -72,7 +72,6 @@
 
   (define (root place)
     (define parent (hash-ref sol-map place))
-    ;;(pretty-display `(root ,place ,parent))
     (if (equal? place parent)
         place
         (let ([r (root parent)])
@@ -198,7 +197,6 @@
 
   (define concrete2sym (make-vector n #f))
   (for ([key (hash-keys sol-map)])
-       ;(pretty-display `(key ,key))
        (let ([val (root key)])
          (if (symbolic? val)
 	     (begin
@@ -212,7 +210,7 @@
 	     (when (equal? (vector-ref concrete2sym val) #f)
 		   (vector-set! concrete2sym val val))))) ;; set concrete2sym
 
-  (with-output-to-file #:exists 'append (format "~a/~a.space" outdir name)
+  (with-output-to-file #:exists 'truncate (format "~a/~a.space" outdir name)
     (lambda ()
       (pretty-display "========== SPACE ============")
       (for ([pair (hash->list space)])
@@ -233,6 +231,8 @@
     (init-field [space (make-hash)])
 
     (define function-network (make-hash))
+    (define actors #f)
+    (define actors* #f)
     
     ;; Declare IO function: in(), out(data)
     (hash-set! function-network "in" (cons (list) (set)))
@@ -248,13 +248,15 @@
                    (cons (list) (set)))))
 
     (define (inc-space place sp)
-      ;(pretty-display `(inc-space ,place))
-      (if (is-a? place TypeExpansion%)
-          (for ([p (get-field place-list place)])
-               (inc-space p sp))
-          (if (hash-has-key? space place)
-              (hash-set! space place (+ (hash-ref space place) sp))
-              (hash-set! space place sp))))
+      ;;(pretty-display `(inc-space ,place))
+      (when
+       place
+       (if (is-a? place TypeExpansion%)
+           (for ([p (get-field place-list place)])
+                (inc-space p sp))
+           (if (hash-has-key? space place)
+               (hash-set! space place (+ (hash-ref space place) sp))
+               (hash-set! space place sp)))))
 
     (define (inc-space-placeset places sp)
       (for ([p places]) (inc-space p sp)))
@@ -306,7 +308,6 @@
 	       (hash-set! h e1 w)])))
 
       (hash->list h))
-	      
     
     (define/public (visit ast)
       (cond
@@ -392,16 +393,27 @@
         (if (io-func? name)
             (inc-space (hash-ref node-to-symbolic-core (get-field fixed-node ast))
                        (get-built-in-space name))
-            (inc-space-placeset body-places est-funccall)
-            ;;(void)
+            ;;(inc-space-placeset (filter-out body-places name) est-funccall)
+            (void)
             )
 
         ;; infer place-type
 	(for ([param (get-field stmts (get-field args (get-field signature ast)))]
 	      [arg (flatten-arg (get-field args ast))])
-	     (when debug 
-		   (pretty-display (format "HEU: FuncCall(2) param=~a, arg=~a" param arg)))
-	     (send arg infer-place (get-field place-type param))
+	     (when #t 
+		   (pretty-display (format "HEU: FuncCall(2) ~a param=~a, arg=~a" name param arg)))
+             (when
+              (and (not (hash-has-key? actors name))
+                   (not (hash-has-key? actors* name)))
+              (when #t (pretty-display (format "HEU: infer!")))
+              (send arg infer-place (get-field place-type param)))
+             ;; (if
+             ;;  (or (hash-has-key? actors name)
+             ;;      (hash-has-key? actors* name))
+             ;;  (when (and (is-a? arg Num%) (not (get-field place-type arg)))
+             ;;        (send arg set-place-sym))
+             ;;  (begin (pretty-display (format "HEU: infer!"))
+             ;;         (send arg infer-place (get-field place-type param))))
 	     (set! networks 
 		   (append networks
 			   (network (get-field place-type arg) (get-field place-type param)))))
@@ -472,7 +484,7 @@
                            (send ast bound-error))
                      (set! last to))))
 
-        (inc-space-placeset (get-field body-placeset ast) est-for)
+        ;;(inc-space-placeset (get-field body-placeset ast) est-for)
 
         (define body-ret (send (get-field body ast) accept this))
         (multiply-weight body-ret (- (get-field to ast) (get-field from ast)))
@@ -501,7 +513,7 @@
 
         ;; increase space
         (inc-space cond-place est-comm) 
-        (inc-space-placeset (get-field body-placeset ast) est-if)
+        ;;(inc-space-placeset (get-field body-placeset ast) est-if)
 
 	networks
         ]
@@ -521,7 +533,7 @@
           
         ;; increase space
         (inc-space cond-place est-comm) 
-        (inc-space-placeset (get-field body-placeset ast) est-while)
+        ;;(inc-space-placeset (get-field body-placeset ast) est-while)
 
         (multiply-weight networks (get-field bound ast))
         ]
@@ -541,6 +553,9 @@
 	]
 
        [(is-a? ast Program%)
+        (set! actors (get-field actors ast))
+        (set! actors* (get-field actors* ast))
+        
 	(for/list ([stmt (get-field stmts ast)])
 		  (send stmt accept this))
 

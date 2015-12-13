@@ -93,8 +93,6 @@
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))
   (define interpreter (new count-msg-interpreter% [places cores]))
-  (define placeset-collector
-    (new placeset-collector% [save #t] [actors (get-field actors my-ast)]))
   
   ;; Place holder for solution
   (define num-msg #f)
@@ -133,38 +131,6 @@
     
     (define (update-global-sol)
       ;; Unify solutions symbolically. Use this when solve function by function
-      #|(define unified-hash (make-hash))
-      (define concrete-to-sym (make-hash))
-      
-      (for ([mapping (solution->list global-sol)])
-        (let ([key (car mapping)]
-              [val (evaluate (cdr mapping) best-sol)])
-          (hash-set! concrete-to-sym val key)
-          (hash-set! unified-hash key val)))
-      
-      (for ([mapping (solution->list best-sol)])
-        (let ([key (car mapping)]
-              [val (evaluate (cdr mapping) best-sol)])
-          (when (not (hash-has-key? unified-hash key))
-            (hash-set! concrete-to-sym val key)
-            (hash-set! unified-hash key val))))
-      
-      (if (equal? (get-field name func-ast) "main")
-          (set-global-sol (sat (make-immutable-hash (hash->list unified-hash))))
-          (let ([global-hash (make-hash)])
-            (hash-for-each unified-hash 
-                           (lambda (key val) 
-                             (hash-set! global-hash key (hash-ref concrete-to-sym val))))
-            (set-global-sol (sat (make-immutable-hash (hash->list global-hash))))))   
-
-      ;; Unify solutions concretely. Don't use this
-      (for ([mapping (solution->list best-sol)])
-        (let ([key (car mapping)]
-              [val (cdr mapping)])
-          (when (not (hash-has-key? partial-hash key))
-            (hash-set! partial-hash key val))))
-        
-      (set-global-sol (sat (make-immutable-hash (hash->list partial-hash)))|#
       
       ;; Use this when solve the entire program at once.
       (set-global-sol best-sol)
@@ -185,60 +151,6 @@
       )
     
     (define t 0)
-      
-                
-    ;; (define (inner-loop)
-    ;;   (pretty-display (format "num-msg <= ~a" middle))
-    ;;   #|(if middle
-    ;;       (solve-with-sol (assert (<= num-msg middle)) global-sol)
-    ;;       (solve-with-sol (assert #t) global-sol))|#
-    ;;   (set! t (current-seconds))
-    ;;   (if middle
-    ;;       (solve (assert (<= num-msg middle)))
-    ;;       (solve (assert #t)))
-    ;;   (pretty-display `(solve-time ,(- (current-seconds) t)))
-    ;;   (set! upperbound (evaluate num-msg))
-    ;;   (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-      
-    ;;   (set! best-sol (current-solution))
-      
-    ;;   ;; display
-    ;;   (pretty-display (format "# messages = ~a" (evaluate num-msg)))
-    ;;   (pretty-display (format "# cores = ~a" (evaluate num-cores)))
-      
-    ;;   ;; recored best-so-far solution
-    ;;   (let ([saved-sol global-sol])
-    ;;     (set-global-sol best-sol)
-    ;;     (with-output-to-file #:exists 'truncate (format "~a/~a.bestsofar" outdir name)
-    ;;       (lambda () 
-    ;;         (pretty-display (format "# messages = ~a" (evaluate num-msg)))
-    ;;         (send my-ast accept concise-printer)
-    ;;         (display-cores cores)))
-    ;;     (set-global-sol saved-sol))
-      
-    ;;   (if (< lowerbound upperbound)
-    ;;       (inner-loop)
-    ;;       (update-global-sol))
-    ;;   )
-    
-    ;; (define (outter-loop)
-    ;;   (with-handlers* 
-    ;;    ([exn:fail? (lambda (e) 
-    ;;                  (pretty-display `(solve-time ,(- (current-seconds) t)))
-    ;;                  (if (and upperbound (or (equal? (exn-message e)
-    ;;                                                  "solve: no satisfying execution found")
-    ;;                                          (equal? (exn-message e)
-    ;;                                                  "assert: failed")))
-    ;;                      (begin
-    ;;                        (set! lowerbound (add1 middle))
-    ;;                        (set! middle (floor (/ (+ lowerbound upperbound) 2)))
-    ;;                        (if (< lowerbound upperbound)
-    ;;                            (outter-loop)
-    ;;                            (update-global-sol)))
-    ;;                      (begin
-    ;;                        (pretty-display e)
-    ;;                        (raise e))))])
-    ;;    (inner-loop)))
 
     (define (inner-loop)
       (set! t (current-seconds))
@@ -290,8 +202,14 @@
 		    (or (not (hash-has-key? part2capacity sym))
 			(> (hash-ref part2capacity sym) cap)))
                (hash-set! part2capacity sym cap))))
-
+  
+  (define placeset-collector
+    (new placeset-collector% [save #t]
+         [actors (get-field actors my-ast)]
+         [actors* (get-field actors* my-ast)]
+         [need-cf (set)]))
   (send my-ast accept placeset-collector)
+    
   (pretty-display "=== After bound compute  ===")
   (send my-ast pretty-print)
     
@@ -359,6 +277,36 @@
     (send my-ast accept concise-printer)
     ;(send my-ast pretty-print)
     )
+  ;; Handle actors
+  (define actors (get-field actors my-ast))
+  (define actors* (get-field actors* my-ast))
+  (define all-main-actors (set))
+  (pretty-display `(all-main-actors ,all-main-actors))
+  (for* ([actor-list (hash-values actors)]
+         [pair actor-list])
+        (set! all-main-actors (set-add all-main-actors (car pair))))
+  (for* ([actor-list (hash-values actors*)]
+         [pair actor-list])
+        (set! all-main-actors (set-add all-main-actors (car pair))))
+  
+  (define (loop need-cf)
+    (define placeset-collector
+      (new placeset-collector% [save #t]
+           [actors actors]
+           [actors* actors*]
+           [need-cf need-cf]))
+    (send my-ast accept placeset-collector)
+
+    ;; extra actors that need cf
+    (define actors*-need-cf
+      (send placeset-collector get-actors*-need-cf my-ast all-main-actors))
+    (pretty-display `(actors*-need-cf ,need-cf ,actors*-need-cf))
+    (if (set-empty? actors*-need-cf)
+        (send placeset-collector get-actors*-no-cf-map need-cf)
+        (loop (set-union need-cf actors*-need-cf)))
+    )
+  (set-field! actors*-no-cf-map my-ast (loop (set)))
+  (send my-ast pretty-print)
   
   (cons new-part2sym part2capacity)
 )

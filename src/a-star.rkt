@@ -55,5 +55,6 @@
             (heap-add! open-set y))))
       #f)
  
-    (printf "visited ~a nodes\n" count)))
+    ;;(printf "visited ~a nodes\n" count)
+    ))
  

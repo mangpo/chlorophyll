@@ -266,7 +266,7 @@
           (void)
           ]
 
-         [(port-exec? x) (void)]
+         [(port-exec? x) (set! b (get-sym))]
          [(port-listen? x) (void)]
 
          [(mult? x)

@@ -3,7 +3,7 @@
 (provide (all-defined-out))
 
 (define est-data1 4)
-(define est-data2 8)
+(define est-data2 6) ;; 8 is too high
 (define est-num 5)
 (define est-var 4) ; @p a! @ . addr
 (define est-comm 8) ; @p a! ! . up
