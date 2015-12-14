@@ -299,6 +299,7 @@
                 (pop-stack (car path)))))
 
       (define (gen-comm-condition)
+        (define body (get-field body-placeset ast))
 	(when debug (pretty-display `(gen-comm-condition)))
         (let ([path (get-field send-path ast)]
               [place (get-field place-type (get-field condition ast))])
@@ -316,21 +317,24 @@
                                    [lhs (new Temp% [name "_cond"] [place-type x] 
                                              [type "int"])]
                                    [rhs (gen-recv x from)]))
-                (push-stack x (new Temp% [name "_cond"] [place-type x] [type "int"]))))
+                (when (set-member? body x)
+                      (push-stack x (new Temp% [name "_cond"] [place-type x] [type "int"])))))
             (when (> (length path) 2)
                     (gen-condition-path (cdr path))))
 
           
           (when path
-		;(pretty-display `(gen-comm-condition:push-workspace))
+		;;(pretty-display `(gen-comm-condition:push-workspace))
                 (push-workspace place (new Assign% 
                                            ;; special variable
                                            [lhs (new Temp% [name "_cond"] 
                                                      [place-type place] 
                                                      [type "int"])]
                                            [rhs (pop-stack place)]))
-		;(pretty-display `(gen-comm-condition:push-stack))
-                (push-stack place (new Temp% [name "_cond"] [place-type place] [type "int"]))
+                ;;(pretty-display `(gen-comm-condition:push-stack))
+                
+                (when (set-member? body place)
+                      (push-stack place (new Temp% [name "_cond"] [place-type place] [type "int"])))
                 (for ([p path])
                      (gen-condition-path p)))
         ))
@@ -832,6 +836,7 @@
         (when (get-field false-block ast)
               (send (get-field false-block ast) accept this))
               
+	(when debug (pretty-display (format "\nDIVIDE: If (cleaning)\n")))
 	;; pop scope
         (for ([c (get-field body-placeset ast)])
              (let* ([false-block (get-workspace c)]
@@ -845,6 +850,7 @@
 	       (when (and (empty? (get-field stmts (get-field true-block if)))
 			  (empty? (get-field stmts false-block)))
 		     (set-field! stmts old-workspace (cdr (get-field stmts old-workspace))))))
+	(when debug (pretty-display (format "\nDIVIDE: If (done)\n")))
 	]
                
        [(is-a? ast While%)

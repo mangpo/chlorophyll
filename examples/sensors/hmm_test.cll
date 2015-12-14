@@ -1,33 +1,91 @@
 // c
 
-# 0 --> 000
-# 1 --> 100
+fix9_t::3@(6,6,6) dir_filter_ref;
 
-actor* step@(0~>1);
+int filter(fix9_t::3@(5,5,5) acc_in){
 
-int@0 step(int::3@(1,1,1) acc, int@1 o) {
-  int@1 prob;
-  if(o > 0) {
-      prob = acc::0 *@2 acc::1;
-  } else {
-    prob = acc::2 *@2 acc::1;
+  // node 5
+  fix9_t@6 abs;
+  abs = acc_in::0 *@5 acc_in::0 +@5 acc_in::1 *@5 acc_in::1 +@5 acc_in::2 *@5 acc_in::2;
+
+  // node 6
+  int@6 ret2;
+  fix9_t::3@(6,6,6) acc2;
+  acc2 = acc_in;
+
+  ret2 = 0;
+  if (abs >@6 1.1){
+    ret2 = 1;
   }
-  return prob;
+  if (abs <@6 0.9){
+      ret2 = 1;
+  }
+
+  // node 4
+  int@4 ret;
+  ret = ret2;
+  //fix9_t idle_sensitivity = 0.1;//0.3;
+  fix9_t@4 def_sensitivity;
+  def_sensitivity = 0.4;//0.5;
+
+  fix9_t::3@(4,4,4) acc;
+  acc = acc_in;
+
+  if (ret){
+    ret = 0;
+    if (acc::0 <@4 dir_filter_ref::0 -@4 def_sensitivity){
+      ret = 1;
+    }
+    if (acc::0 >@4 dir_filter_ref::0 +@4 def_sensitivity){
+      ret = 1;
+    }
+    if (acc::1 <@4 dir_filter_ref::1 -@4 def_sensitivity){
+      ret = 1;
+    }
+    if (acc::1 >@4 dir_filter_ref::1 +@4 def_sensitivity){
+      ret = 1;
+    }
+    if (acc::2 <@4 dir_filter_ref::2 -@4 def_sensitivity){
+      ret = 1;
+    }
+    if (acc::2 >@4 dir_filter_ref::2 +@4 def_sensitivity){
+      ret = 1;
+    }
+  }
+
+  // node 6
+  ret2 = ret;
+  if (ret2){
+    dir_filter_ref = acc2;                 
+  }
+
+  return ret;
 }
 
-int@0 filter(int::3@(0,0,0) acc){ 
-  return acc::0 + acc::1 + acc::2;
+void input_reading(fix9_t::3 acc){
+  //input the next accelerometer reading
+  int ord;
+  int@0 o1;
+  int@1 o2;
+  ord = 0;
+  if (filter(acc)){
+    //o1 = hmm1.derive_group(acc);
+    //ord = ord |@4 hmm1.forward_proc_inc(o1);
+    //o2 = hmm2.derive_group(acc);
+    ord = ord |@5 o1;
+    //o3 = hmm3.derive_group(acc);
+    //ord3 = ord3 |@6 hmm3.forward_proc_inc(o3);
+  }
+  
+   int n;
+   n = 0;
+   while (ord > 0){
+     n = n + 1;
+     ord = ord << 1;
+   }
 }
 
 void main(){
-  int::3 acc;
-  int@0 ans;
-
-  for (i from 0 to 10){ //for each accelerometer reading
-    if (filter(acc)){
-      ans = step(acc,1);
-    }
-  }
-  ans = step(acc,-1);
-  
+  fix9_t::3 acc;
+  input_reading(acc);
 }
