@@ -338,7 +338,7 @@
          (cond
           ;;[(and (is-a? e1 Num%) (is-a? e2 Num%)) (set-field! type ast "int")]
 
-          [(member op-str (list "+" "-" "*" "/" "!=" "==" "<" ">" ">=" "<=" "|" "&" "^"))
+          [(member op-str (list "+" "-" "*" "/" "|" "&" "^"))
            (cond
             [(is-a? e1 Num%)
              (when (fix_t? e2-type)
@@ -362,6 +362,30 @@
              ])
            ]
 
+          [(member op-str (list "!=" "==" "<" ">" ">=" "<="))
+           (cond
+            [(is-a? e1 Num%)
+             (when (fix_t? e2-type)
+                   (send e1 set-value (d2fp (send e1 get-value) (fix_t-int e2-type)))
+                   (set-field! type e1 e2-type)
+                   )
+             (set-field! type ast "int")]
+
+            [(is-a? e2 Num%)
+             (when (fix_t? e1-type)
+                   (send e2 set-value (d2fp (send e2 get-value) (fix_t-int e1-type)))
+                   (set-field! type e2 e1-type)
+                   )
+             (set-field! type ast "int")]
+
+            [else
+             ;; TODO: add conversion
+             (unless (same-type? e1-type e2-type)
+                     (raise (format "visitor-linker: operands of ~a have different types." op-str)))
+             (set-field! type ast "init")
+             ])
+           ]
+          
           [(member op-str (list "<<" ">>"))
            (unless (equal? e2-type "int")
                    (raise (format "visitor-linker: 2nd operand of ~a should be 'int' but ~a is given." op-str e2-type)))
