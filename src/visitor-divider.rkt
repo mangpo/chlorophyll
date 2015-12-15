@@ -106,6 +106,7 @@
       (define ws (get-workspace i))
       (when
        (is-a? ws Program%)
+       ;; only do this if that node don't have other computation.
        (define main-body (new Block% [stmts (list)]))
        (define main-func
          (new FuncDecl% [name "main"]

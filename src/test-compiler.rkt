@@ -99,7 +99,7 @@
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 
 ;; Actor
-(compile-and-optimize "../examples/actor/sactor_v4.cll" "sactor_v4" 
+(compile-and-optimize "../examples/actor/sactor_v2.cll" "sactor_v2" 
                       512 #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
 ;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)

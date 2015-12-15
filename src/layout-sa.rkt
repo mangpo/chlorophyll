@@ -63,18 +63,21 @@
          [indices (list)]
          [update-obs
           (lambda (index-i update-indices)
+            (set! indices (cons index-i indices))
+            ;; adding obstacle from the other paralle units.
             (for ([group (vector-ref conflicts (car index-i))]
                   [id (in-naturals)])
                  (unless (= id (cdr index-i))
-                         (set! indices (cons index-i indices))
                          (set! my-obs (set-union my-obs group)))))])
 
     (cond
-     [(empty? conflict-i) (for ([index-j conflict-j]) (update-obs index-j #f))]
-     [(empty? conflict-j) (for ([index-i conflict-i]) (update-obs index-i #f))]
+     ;; [(empty? conflict-i) (for ([index-j conflict-j]) (update-obs index-j #f))]
+     ;; [(empty? conflict-j) (for ([index-i conflict-i]) (update-obs index-i #f))]
+     [#f (void)]
      [else
       (for* ([index-i conflict-i]
              [index-j conflict-j])
+            ;; if in the same parallel unit.
             (when (equal? index-i index-j)
                   (update-obs index-i #t)))
       ])
@@ -82,6 +85,7 @@
     (cond
      [(or obs? (> (set-count my-obs) 0))
       (set! my-obs (set-union my-obs obstacles))
+      (pretty-display `(my-obs ,my-obs))
       (let ([path (route-obs i j w h (set-remove* my-obs i j))])
         (unless path (pretty-display `(conflicts ,conflicts)))
         (for ([index indices])
@@ -90,6 +94,7 @@
                (for ([core path])
                     (unless
                      (set-member? current core)
+                     ;; add this core to the parallel unit.
                      (vector-set! conflict-index core
                                   (cons index
                                         (vector-ref conflict-index core)))))
@@ -159,65 +164,72 @@
     (loop)
     new-group)
 
-  ;; Within actor group
+  (define actors (get-field actors ast))
+  (define actors* (get-field actors* ast))
+  (define new-actors (make-hash))
+  (define (route-caller-actor func actors my-obstacles)
+    (let* ([lst (hash-ref actors func)]
+           [new-lst (map (lambda (pair)
+                           (cons (vector-ref part2core (car pair))
+                                 (vector-ref part2core (cdr pair))))
+                         lst)]
+           [all-actors (list->set (map car new-lst))]
+           [all-callers (list->set (map cdr new-lst))]
+           [new-obstacles obstacles]
+            )
+      (unless my-obstacles
+              (set! my-obstacles
+                    (set-union obstacles
+                               (set-subtract cores all-actors all-callers))))
+           
+      (pretty-display `(func ,func ,obstacles ,my-obstacles))
+      (hash-set! new-actors func new-lst)
+      (for ([j (map car new-lst)]  ;; actor
+            [i (map cdr new-lst)]) ;; caller
+           (when
+            (and (not (= i j)) (not (vector-2d-ref core2route i j)))
+            ;;(pretty-display `(actor-caller ,i ,j ,my-obstacles))
+            (let ([path (route-obs i j w h (set-remove* my-obstacles i j))])
+              (unless path (raise (format "routing: no available route between cores ~a and ~a" i j)))
+              ;; (pretty-display `(path ,i ,j ,path))
+              (vector-2d-set! core2route n i j path)
+              (vector-2d-set! core2route n j i (reverse path))
+              (hash-set! new-actors*-no-cf-map func
+                         (set-union
+                          (hash-ref new-actors*-no-cf-map func)
+                          (list->set (drop path 1))))
+              (set! new-obstacles (set-union new-obstacles
+                                             (list->set (drop path 1)))))))
+      (set! obstacles new-obstacles)))
+
+  ;; actors*
   (define new-actors*-no-cf-map (make-hash))
   (pretty-display `(actors*-no-cf-map ,(get-field actors*-no-cf-map ast)))
-  (for ([pair (hash->list (get-field actors*-no-cf-map ast))])
+  (for ([pair
+         (sort (hash->list (get-field actors*-no-cf-map ast))
+               (lambda (x y) (< (set-count (cdr x)) (set-count (cdr y)))))])
        (let* ([name (car pair)]
               [node-group (cdr pair)]
               [group (for/set ([x node-group]) (vector-ref part2core x))]
               [my-obstacles
-               (set-union obstacles (set-subtract cores group))]
+               (set-union obstacles (set-subtract cores group))
+               ] ;; a lot of restriction if using my-obstacles
               [_ (pretty-display `(func*-before ,name ,group ,obstacles ,my-obstacles))]
-              [new-group (keep-routing name group my-obstacles)]
+              [new-group (keep-routing name group obstacles)]
               )
-         (pretty-display `(func*-after ,name ,new-group))
+         ;;(pretty-display `(func*-after ,name ,new-group))
          (hash-set! new-actors*-no-cf-map name new-group)
-         (set! obstacles (set-union obstacles new-group))))
+         (route-caller-actor name actors* obstacles)
+         (set! obstacles (set-union obstacles new-group))
+         ))
 
+  ;; actors
   (for ([name (hash-keys (get-field actors ast))])
        (hash-set! new-actors*-no-cf-map name (set)))
-  
-  ;; Between callers and main actors
-  (define new-actors (make-hash))
-  (define (route-caller-actor actors)
-    (for ([func-lst (hash->list actors)])
-         (let* ([func (car func-lst)]
-                [lst (cdr func-lst)]
-                [new-lst (map (lambda (pair)
-                                (cons (vector-ref part2core (car pair))
-                                      (vector-ref part2core (cdr pair))))
-                              lst)]
-                [all-actors (list->set (map car new-lst))]
-                [all-callers (list->set (map cdr new-lst))]
-                [new-obstacles obstacles]
-                ;; don't route through other compute nodes.
-                [my-obstacles
-                 (set-union obstacles
-                            (set-subtract cores all-actors all-callers))]
-                )
-           (pretty-display `(func ,func ,obstacles ,my-obstacles))
-           (hash-set! new-actors func new-lst)
-           (for ([j (map car new-lst)]  ;; actor
-                 [i (map cdr new-lst)]) ;; caller
-                (when
-                 (and (not (= i j)) (not (vector-2d-ref core2route i j)))
-                 ;;(pretty-display `(actor-caller ,i ,j ,my-obstacles))
-                 (let ([path (route-obs i j w h (set-remove* my-obstacles i j))])
-                   (unless path (raise (format "routing: no available route between cores ~a and ~a" i j)))
-                   ;; (pretty-display `(path ,i ,j ,path))
-                   (vector-2d-set! core2route n i j path)
-                   (vector-2d-set! core2route n j i (reverse path))
-                   (hash-set! new-actors*-no-cf-map func
-                              (set-union
-                               (hash-ref new-actors*-no-cf-map func)
-                               (list->set (drop path 1))))
-                   (set! new-obstacles (set-union new-obstacles (list->set path))))))
-           (set! obstacles new-obstacles)))
-    )
-  (route-caller-actor (get-field actors ast))
-  (route-caller-actor (get-field actors* ast))
-  
+  (for ([name (hash-keys actors)])
+       (route-caller-actor name actors #f))
+
+  ;; update
   (set-field! actors ast new-actors) ;; store routing from caller -> actor
   (set-field! actors* ast #f)
   (set-field! actors*-no-cf-map ast new-actors*-no-cf-map) ;; store no-cf nodes

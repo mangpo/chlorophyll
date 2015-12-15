@@ -109,6 +109,7 @@
         (save? (send (get-field body ast) accept this))]
 
        [(is-a? ast If%)
+        ;; TODO: do we have to save condition's placeset is ast's placeset?
         (save? (set-union (send (get-field condition ast) accept this)
                           (send (get-field true-block ast) accept this)
                           (if (get-field false-block ast)
