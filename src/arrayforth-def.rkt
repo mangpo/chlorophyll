@@ -658,9 +658,9 @@
     (vector-set! res i repeating)
     (set! dependencies
           (cons (cons (cons core repeating)
-                      (get-field dependent-nodes collector)
-                      ;;(for/set ([d (get-field dependent-nodes collector)])
-                      ;;         (core-id d w))
+                      ;;(get-field dependent-nodes collector)
+                      (for/set ([d (get-field dependent-nodes collector)])
+                               (core-id d w))
                       )
                 dependencies))
     )

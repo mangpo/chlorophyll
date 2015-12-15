@@ -1,0 +1,21 @@
+// -*- c -*-
+
+actor* edge@(0~>1);
+
+int@2 c;
+
+int edge(int@1 a){
+  c = c + 1;
+  return a + c;
+}
+
+void main(){
+  int@0 x, b;
+  c = 99;
+  x = 0;
+  while(1) {
+  if(b > 0) {
+    x = edge(x);
+  }
+  }
+}

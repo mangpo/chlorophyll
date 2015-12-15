@@ -1,0 +1,51 @@
+// c
+
+module Hmm() {
+
+  actor* derive_group;
+  int derive_group(fix9_t::3 acc){
+    int x, y;
+    return x + y + 99;
+  }
+
+  int forward_proc_inc(int o){
+    return 0;
+  }
+
+  int start;
+
+  int input(fix9_t::3 acc){
+    int ret;
+    if(start == 0) {
+      start = 1;
+    } else {
+      ret = forward_proc_inc(derive_group(acc));
+    }
+    return ret;
+  }
+
+}
+
+hmm1 = new Hmm();
+hmm2 = new Hmm();
+
+int filter(fix9_t::3 acc) {
+  return 1;
+}
+
+actor* step;
+int step(fix9_t::3@(2,2,2) acc) {
+  int@0 ord1;
+  int@1 ord2;
+  ord1 = ord1 | hmm1.input(acc);
+  ord2 = ord2 | hmm2.input(acc);
+  return ord1 |@2 ord2;
+}
+
+void main() {
+  fix9_t::3 acc;
+  int o;
+  if(filter(acc)) {
+    o = step(acc);
+  }
+}

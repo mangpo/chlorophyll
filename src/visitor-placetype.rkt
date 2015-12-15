@@ -12,7 +12,7 @@
     (super-new)
     (define env (make-hash))
     (define param-decls (make-hash))
-    
+    (define actors* (make-hash))
 
     (define debug #f)
     
@@ -388,7 +388,20 @@
        [(is-a? ast FuncDecl%)
         (when debug (pretty-display (format "\nPLACETYPE: FuncDecl ~a" (get-field name ast))))
         (push-scope)
-        (send (get-field args ast) accept this)
+        (define args (get-field args ast))
+        (send args accept this)
+
+        ;; If this function is actor*, then make sure all its paramers are at the same place.
+        (when (hash-has-key? actors* (get-field name ast))
+              (define args-list (get-field stmts args))
+              (when (> (length args-list) 1)
+                    (define place (get-field place (car args-list)))
+                    (define place-type (get-field place-type (car args-list)))
+                    (for ([arg (drop args-list 1)])
+                         (set-field! place arg place)
+                         (set-field! place-type arg place-type)
+                         )))
+        
         (when (get-field precond ast)
               (send (get-field precond ast) accept this))
         (when (get-field return ast)
@@ -396,7 +409,9 @@
         (send (get-field body ast) accept this)
         (pop-scope)]
 
-       [(is-a? ast Block%) 
+       [(is-a? ast Block%)
+        (when (is-a? ast Program%)
+              (set! actors* (get-field actors* ast)))
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))]
 		

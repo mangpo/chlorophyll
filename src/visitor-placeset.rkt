@@ -13,6 +13,7 @@
     
     (define functions (make-hash))
     (define env (make-hash))
+    (define return-map (make-hash))
 
     (define (make-set x)
       ;(pretty-display `(make-set ,x))
@@ -88,14 +89,14 @@
         (for ([arg (get-field args ast)])
              (set! ret (set-union ret (make-set (get-field place-type arg)))))
 
-        (pretty-display (format "PLACESET: FuncCall ~a" name))
+        ;;(pretty-display (format "PLACESET: FuncCall ~a" name))
         (pretty-display `(placeset-before ,ret))
         (when (hash-has-key? actors name)
               (define l (hash-ref actors name))
-              (pretty-display `(remove ,l))
+              ;;(pretty-display `(remove ,l))
               (for ([pair l])
                    (set! ret (set-remove ret (car pair)))))
-        (pretty-display `(placeset-after ,ret))
+        ;;(pretty-display `(placeset-after ,ret))
         ret]
 
        [(is-a? ast VarDecl%)
@@ -144,6 +145,7 @@
                       (set) (get-field stmts ast)))]
 
        [(is-a? ast FuncDecl%)
+        (hash-set! return-map (get-field name ast) (get-field return ast))
         (define ret (save? (set-union (send (get-field args ast) accept this)
                                       (send (get-field body ast) accept this))))
         (when save
@@ -168,9 +170,18 @@
     (define/public (get-actors*-no-cf-map need-cf)
       (define ret (make-hash))
       (for ([name (hash-keys actors*)])
-           (hash-set! ret name (set-subtract (hash-ref env name) need-cf)))
+           (hash-set! ret name
+                      (set-subtract (hash-ref env name)
+                                    need-cf
+                                    ;; CAUTION: subtract return is a hack!
+                                    (get-return-set name))))
       ret)
-           
+
+    (define (get-return-set name)
+      (define return (hash-ref return-map name))
+      (if return
+          (make-set (get-field place return))
+          (set)))
 
     ))
         

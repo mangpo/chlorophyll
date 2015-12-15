@@ -1437,6 +1437,17 @@
       (format "[~a,~a]" from to))
     ))
 
+(define Actor%
+  (class Base%
+    (super-new)
+    (init-field info)
+
+    (define/override (clone)
+      (raise "no clone for Actor%"))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Actor ~a)" indent info)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define digital-nodes '(701 705 708 715 517 417 317 217 8 1 100 200 300 500 600))

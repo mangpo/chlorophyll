@@ -1,0 +1,22 @@
+// -*- c -*-
+
+actor* edge@(0~>2);
+
+int edge(int@2 a){
+  return a + 1;
+}
+
+void main(){
+  int@0 x, b;
+  b = 0;
+  x = 0;
+  while(b < 10) {
+    if(b > 5) {
+      x = edge(x);
+      //out(x);
+      x = edge(x);
+      //out(x);
+    }
+    b = b+1;
+  }
+}

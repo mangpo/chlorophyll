@@ -10,6 +10,7 @@
     (init-field num-cores)
     (define actors #f)
     (define actors* #f)
+    (define backup-placeset #f)
     
     (define/public (visit ast)
 
@@ -145,43 +146,40 @@
         (evaluate-placeset)
         ]
 
-       [(is-a? ast Block%)
-        (when
-         (is-a? ast Program%)
-         (set! actors (get-field actors ast))
-         (set! actors* (get-field actors* ast)))
+       [(is-a? ast Program%)
+        (set! actors (get-field actors ast))
+        (set! actors* (get-field actors* ast))
+
+        (for ([stmt (get-field stmts ast)])
+             (when (and (is-a? stmt FuncDecl%)
+                        (equal? (get-field name stmt) "main"))
+                   (set! backup-placeset
+                         (for/set ([x (get-field body-placeset stmt)])
+                                  (evaluate-with-sol x)))))
          
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
 
-        (when
-         (is-a? ast Program%)
-         
-         (set-field!
-          conflict-list ast
+        (set-field!
+         conflict-list ast
+         (for/list
+          ([conflict (get-field conflict-list ast)])
           (for/list
-           ([conflict (get-field conflict-list ast)])
-           (for/list
-            ([group conflict])
-            (for/set ([part group]) (evaluate-with-sol part)))))
-         
-         (set-field!
-          module-inits ast
-          (for/list ([pair (get-field module-inits ast)])
-                    (cons (for/set ([x (car pair)]) (evaluate-with-sol x))
-                          (cdr pair))
-                    ))
-
-         ;; (define old-map (get-field actors*-no-cf-map ast))
-         ;; (define new-map (make-hash))
-         ;; (for ([pair (hash->list old-map)])
-         ;;      (let ([key (car pair)]
-         ;;            [node-set (cdr pair)])
-         ;;        (hash-set! new-map key
-         ;;                   (for/set ([x node-set]) (evaluate-with-sol x)))))
-         ;; (set-field! actors*-no-cf-map ast new-map)
-         )
+           ([group conflict])
+           (for/set ([part group]) (evaluate-with-sol part)))))
+        
+        (set-field!
+         module-inits ast
+         (for/list ([pair (get-field module-inits ast)])
+                   (cons (for/set ([x (car pair)]) (evaluate-with-sol x))
+                         (cdr pair))
+                   ))
                 
+        ]
+
+       [(is-a? ast Block%)
+        (for ([stmt (get-field stmts ast)])
+             (send stmt accept this))
         ]
 
        [(is-a? ast FuncDecl%)
@@ -190,7 +188,26 @@
               (send (get-field return ast) accept this))
         (send (get-field args ast) accept this)
         (send (get-field body ast) accept this)
-        (evaluate-placeset)]
+        (evaluate-placeset)
+
+        ;; Assign caller-actor for actor* if not specified by the user.
+        (define name (get-field name ast))
+        (when (and (hash-has-key? actors* name)
+                   (not (caar (hash-ref actors* name))))
+              (define args (get-field stmts (get-field args ast)))
+              (define return (get-field return ast))
+              (define placeset (get-field body-placeset ast))
+              (define caller
+                (if return
+                    (get-field place return)
+                    (set-first (set-subtract backup-placeset placeset))))
+              (define actor
+                (if (empty? args)
+                    (set-first (set-remove placeset caller))
+                    (get-field place (car args))))
+              (hash-set! actors* name (list (cons actor caller)))
+              )
+        ]
 
        [else (raise (format "Error: symbolic-evaluator unimplemented for ~a!" ast))]
 

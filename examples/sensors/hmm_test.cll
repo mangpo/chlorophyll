@@ -62,19 +62,14 @@ int filter(fix9_t::3@(5,5,5) acc_in){
   return ret;
 }
 
-void input_reading(fix9_t::3 acc){
+void input_reading(fix9_t::3@(3,3,3) acc){
   //input the next accelerometer reading
   int ord;
   int@0 o1;
   int@1 o2;
   ord = 0;
   if (filter(acc)){
-    //o1 = hmm1.derive_group(acc);
-    //ord = ord |@4 hmm1.forward_proc_inc(o1);
-    //o2 = hmm2.derive_group(acc);
-    ord = ord |@5 o1;
-    //o3 = hmm3.derive_group(acc);
-    //ord3 = ord3 |@6 hmm3.forward_proc_inc(o3);
+    ord = ord | o1;
   }
   
    int n;

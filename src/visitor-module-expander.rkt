@@ -17,6 +17,8 @@
 
     (define module-summary (make-hash))
     (define module-clusters (list))
+    (define actors (make-hash))
+    (define actors* (make-hash))
 
     (define-syntax-rule (rename name)
       (if (and mapping
@@ -228,27 +230,53 @@
 
        [(is-a? ast Program%)
         (define stmts (my stmts))
-        (define run (ormap (lambda (x) (is-a? x Module%)) stmts))
-        (when
-         run
-         ;; Collect global variables
-         (for ([stmt stmts])
-              (cond
-               [(is-a? stmt VarDecl%)
-                (set! global-vars (append (get-field var-list stmt) global-vars))]
-               [(is-a? stmt ArrayDecl%)
-                (set! global-vars (cons (get-field var stmt) global-vars))]))
+        
+        (cond
+         [(ormap (lambda (x) (is-a? x Module%)) stmts)
+          ;; Collect global variables
+          (for ([stmt stmts])
+               (cond
+                [(is-a? stmt VarDecl%)
+                 (set! global-vars (append (get-field var-list stmt) global-vars))]
+                [(is-a? stmt ArrayDecl%)
+                 (set! global-vars (cons (get-field var stmt) global-vars))]))
 
-         ;; Then visit the AST
-         (set-field! stmts ast
-                     (flatten
-                      (map (lambda (x) (send x accept this)) stmts)))
-         
-         (set-field! module-decls ast module-summary)
-         (set-field! module-inits ast module-clusters))]
+          ;; Then visit the AST
+          (set-field! stmts ast
+                      (flatten
+                       (map (lambda (x) (send x accept this)) stmts)))
+          
+          (set-field! module-decls ast module-summary)
+          (set-field! module-inits ast module-clusters)]
+
+         [(ormap (lambda (x) (is-a? x Actor%)) stmts)
+          (set-field!
+           stmts ast
+           (flatten
+            (for/list ([x stmts])
+                      (if (is-a? x Actor%) (send x accept this) x))))
+          ])
+
+        (set-field! actors ast actors)
+        (set-field! actors* ast actors*)
+          
+        ]
 
        [(is-a? ast Block%)
         (new Block% [stmts (map (lambda (x) (send x accept this)) (my stmts))])]
+
+       [(is-a? ast Actor%)
+        (define x (get-field info ast))
+        (define actor-map (if (fourth x) actors actors*))
+        (let ([func (rename (first x))]
+              [caller (second x)]
+              [actor (third x)])
+          (if (hash-has-key? actor-map func)
+              (hash-set! actor-map func (cons (cons actor caller)
+                                              (hash-ref actor-map func)))
+              (hash-set! actor-map func (list (cons actor caller)))))
+        (list)
+        ]
 
        ))))
        

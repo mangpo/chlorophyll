@@ -1,0 +1,28 @@
+// -*- c -*-
+
+actor* edge;
+
+int edge(int a){
+  return a + 1;
+}
+
+actor* wrap;
+
+int wrap(int a){
+  return edge(a) + 3;
+}
+
+void main(){
+  int x, b;
+  b = 0;
+  x = 0;
+  while(b < 10) {
+    if(b > 5) {
+      x = wrap(x);
+      //out(x);
+      x = wrap(x);
+      //out(x);
+    }
+    b = b+1;
+  }
+}

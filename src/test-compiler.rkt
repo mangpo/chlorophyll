@@ -99,8 +99,8 @@
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 
 ;; Actor
-;(compile-and-optimize "../examples/actor/sactor_v1.cll" "sactor_v1" 
-;                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/actor/sactor_v4.cll" "sactor_v4" 
+                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
 ;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)
 
@@ -113,7 +113,7 @@
 ;                      400 #:w 3 #:h 3 #:opt #f #:partition #f)
 
 ;; HMM Classifier
-(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test" 
-                      420 #:w 3 #:h 3 #:opt #f #:partition #f #:original-format #t)
-;(compile-and-optimize "../examples/sensors/hmm3.cll" "hmm3" 
-;                      256 #:w 18 #:h 7 #:opt #f #:partition #f)
+;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug" 
+;                      420 #:w 3 #:h 3 #:opt #f #:partition #f
+;                      #:original-format #t)
+;(compile-and-optimize "../examples/sensors/hmm3.cll" "hmm3" 256 #:w 18 #:h 7 #:opt #f #:partition #f)

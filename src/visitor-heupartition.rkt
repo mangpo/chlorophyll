@@ -12,7 +12,11 @@
 			     refine-capacity part2capacity
 			     conflict-list my-ast #:name [name #f])
   (define sol-map (make-hash))
-  
+
+  ;; Prevent
+  ;; 1) fixed-partitions and pinned modules to be merged.
+  ;; 2) fixed-partitions vs fixed-partitions
+  ;; 3) pinned modules vs pinned modules
   (define fixed (make-hash))
   (for ([pair (get-field fixed-parts my-ast)])
        (hash-set! fixed (car pair) (cdr pair)))
@@ -20,6 +24,14 @@
         [cluster-id (in-naturals)])
        (for ([p (car pair)])
             (hash-set! fixed p (- (add1 cluster-id)))))
+
+  (define actors*-map (make-hash))
+  (for ([group (sort
+                (hash-values (get-field actors*-no-cf-map my-ast))
+                (lambda (x y) (> (set-count x) (set-count y))))]
+        [id (in-naturals)])
+       (for ([x group])
+            (hash-set! actors*-map x id)))
   
   ;; Mapping from logical core (either concrete or symbolic) to physical core.
   (define node-to-core (make-hash))
@@ -55,6 +67,17 @@
                (hash-has-key? fixed x)
                (hash-has-key? fixed y))
           (set! conflict (not (equal? (hash-ref fixed x) (hash-ref fixed y)))))
+    
+    ;; This prevents normal nodes to merge with group actors!!!
+    (unless
+     conflict
+     (cond
+      [(and (hash-has-key? actors*-map x) (hash-has-key? actors*-map y))
+       (set! conflict (not (equal? (hash-ref actors*-map x)
+                                   (hash-ref actors*-map y))))]
+      [(or (hash-has-key? actors*-map x) (hash-has-key? actors*-map y))
+       (set! conflict #t)]))
+       
     conflict)
 
   (define (update-conflict child parent)
@@ -408,13 +431,7 @@
                    (not (hash-has-key? actors* name)))
               (when #t (pretty-display (format "HEU: infer!")))
               (send arg infer-place (get-field place-type param)))
-             ;; (if
-             ;;  (or (hash-has-key? actors name)
-             ;;      (hash-has-key? actors* name))
-             ;;  (when (and (is-a? arg Num%) (not (get-field place-type arg)))
-             ;;        (send arg set-place-sym))
-             ;;  (begin (pretty-display (format "HEU: infer!"))
-             ;;         (send arg infer-place (get-field place-type param))))
+
 	     (set! networks 
 		   (append networks
 			   (network (get-field place-type arg) (get-field place-type param)))))

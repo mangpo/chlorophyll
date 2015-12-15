@@ -24,6 +24,9 @@
 
     (define debug #t)
     (define debug-sym #f)
+    (define actors #f)
+    (define actors* #f)
+    
     
     ;; Declare IO function: in(), out(data)
     (declare env "in" (comminfo 0 (set)))
@@ -214,6 +217,9 @@
 				[y set-y])
 			       (assert (not (= x y)))))))
 
+      ;; Prevent
+      ;; 1) fixed-partitions and pinned group actors to be merged.
+      ;; 2) pinned group actors vs pinned group actors
       (define fixed-parts (get-field fixed-parts ast))
       (define module-inits (get-field module-inits ast))
       (for* ([pair fixed-parts]
@@ -226,6 +232,9 @@
                     (for* ([x (car cluster-x)]
                            [y (car cluster-y)])
                           (assert (not (= x y))))))
+
+      ;; TODO: prevent normal nodes to merge with group actors!!!
+      ;; heuristic handles this.
       
       ;; unify concrete fixed node to its symbolic node
       (for ([mapping fixed-parts])
@@ -364,7 +373,10 @@
           ;; infer place-type
           (for ([param (get-field stmts (get-field args func-ast))]
                 [arg (flatten-arg (get-field args ast))])
-               (send arg infer-place (get-field place-type param))
+               (when
+                (and (not (hash-has-key? actors name))
+                     (not (hash-has-key? actors* name)))
+                (send arg infer-place (get-field place-type param)))
                )
 
           ;; visit children
@@ -549,6 +561,8 @@
 	0]
 
        [(is-a? ast Program%)
+        (set! actors (get-field actors ast))
+        (set! actors* (get-field actors* ast))
         (when debug (pretty-display ">> Program"))
 
 	(define ret #f)

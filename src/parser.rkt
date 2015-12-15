@@ -409,6 +409,7 @@
                  [pos $3-start-pos])))
          
     (stmt 
+     
          ((var-decl) $1)
 
          ; assignment
@@ -440,7 +441,7 @@
                  [true-block $6] 
                  [pos $1-start-pos]))
 
-         ; if-else
+         ;; if-else
          ((IF LPAREN exp RPAREN LBRACK block RBRACK ELSE LBRACK block RBRACK)
             (new If% [condition $3] 
                  [true-block $6] 
@@ -453,11 +454,12 @@
             ;;      [rhs $2] [pos $1-start-pos]))
 	    (new Return% [val $2] [pos $1-start-pos]))
 
-         ; function call
+         ;; function call
          ((funccall SEMICOL) $1)
 
-         ; module call
+         ;; module call
          ((module-call SEMICOL) $1)
+
          )
 
     (stmts
@@ -486,10 +488,6 @@
      ((MODULE VAR LPAREN var-list-ext RPAREN LBRACK decls RBRACK)
       (new Module% [name $2] [params $4] [stmts $7] [pos $1-start-pos])))
 
-    ;; (module-decls
-    ;;  (() (list))
-    ;;  ((module-decl module-decls) (cons $1 $2)))
-
     ;; Initialization
     (module-arg
      ((num-unit) $1)
@@ -516,10 +514,6 @@
            [rhs (new ModuleCreate% [name $4] [args $6] [pos $4-start-pos]
                      [locations $8])]
            [pos $1-start-pos])))
-    
-    ;; (module-inits
-    ;;  (() (list))
-    ;;  ((module-init module-inits) (cons $1 $2)))
      
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
@@ -531,12 +525,13 @@
          (() (list))
 	 ((NOROUTE @ LBRACK num-list RBRACK) $4))
 
-    (actors
-         (() (list))
-         ((ACTOR VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL actors)
-          (cons (list $2 $5 $7 #t) $10))
-         ((ACTOR* VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL actors)
-          (cons (list $2 $5 $7 #f) $10))
+    (actor-unit
+         ((ACTOR VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL)
+          (list $2 $5 $7 #t))
+         ((ACTOR* VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL)
+          (list $2 $5 $7 #f))
+         ((ACTOR* VAR SEMICOL)
+          (list $2 #f #f #f))
          )
 
     (decl-unit
@@ -544,6 +539,7 @@
      ((var-decl) $1)
      ((module-decl) $1)
      ((module-init) $1)
+     ((actor-unit) (new Actor% [info $1]))
      )
 
     (decls
@@ -551,12 +547,12 @@
          ((decl-unit decls) (cons $1 $2)))
          
     (program
-     ((part2core noroute actors decls)
-      (new Program% [stmts $4] [fixed-parts $1] [noroute $2]
-           [actors (actor-map $3 #t)] [actors* (actor-map $3 #f)] 
-           )))
-
+     ((part2core noroute decls)
+      (new Program% [stmts $3] [fixed-parts $1] [noroute $2])
+      ))
+   
     )))
+
 
 (define (get-location-list from to)
   (define row-from (quotient from 100))

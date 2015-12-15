@@ -203,13 +203,14 @@
 			(> (hash-ref part2capacity sym) cap)))
                (hash-set! part2capacity sym cap))))
   
-  (define placeset-collector
-    (new placeset-collector% [save #t]
-         [actors (get-field actors my-ast)]
-         [actors* (get-field actors* my-ast)]
-         [need-cf (set)]))
-  (send my-ast accept placeset-collector)
-    
+  ;; (define placeset-collector
+  ;;   (new placeset-collector% [save #t]
+  ;;        [actors (get-field actors my-ast)]
+  ;;        [actors* (get-field actors* my-ast)]
+  ;;        [need-cf (set)]))
+  ;; (send my-ast accept placeset-collector)
+  
+  (placeset-collector-loop my-ast)
   (pretty-display "=== After bound compute  ===")
   (send my-ast pretty-print)
     
@@ -275,8 +276,16 @@
   (when verbose
     (pretty-display "\n=== After evaluate ===")
     (send my-ast accept concise-printer)
-    ;(send my-ast pretty-print)
+    (send my-ast pretty-print)
     )
+
+  (placeset-collector-loop my-ast)
+  (send my-ast pretty-print)
+  
+  (cons new-part2sym part2capacity)
+  )
+
+(define (placeset-collector-loop my-ast)
   ;; Handle actors
   (define actors (get-field actors my-ast))
   (define actors* (get-field actors* my-ast))
@@ -306,10 +315,8 @@
         (loop (set-union need-cf actors*-need-cf)))
     )
   (set-field! actors*-no-cf-map my-ast (loop (set)))
-  (send my-ast pretty-print)
-  
-  (cons new-part2sym part2capacity)
-)
+  (pretty-display `(actors*-no-cf-map ,(get-field actors*-no-cf-map my-ast)))
+  )
 
 #|
 (define t (current-seconds))
