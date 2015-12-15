@@ -44,8 +44,7 @@
     (when
      (and (hash-has-key? conflict-index x) (hash-has-key? conflict-index y))
      (let ([indexes-x (hash-ref conflict-index x)]
-           [indexes-y (hash-ref conflict-index y)]
-           [conflict #f])
+           [indexes-y (hash-ref conflict-index y)])
        (for* ([index-x indexes-x]
               [index-y indexes-y] #:break conflict)
              (when (and (= (car index-x) (car index-y))
@@ -68,7 +67,9 @@
           (hash-ref conflict-index parent)
           (list)))
     (define my-conflict (append p-conflict c-conflict))
-    (unless (empty? my-conflict) (hash-set! conflict-index parent my-conflict)))
+    (unless (empty? my-conflict)
+            (hash-set! conflict-index parent my-conflict)
+            (hash-set! conflict-index child my-conflict)))
 
   (define (root place)
     (define parent (hash-ref sol-map place))
