@@ -21,7 +21,8 @@
                 [array-map (make-hash)] 
                 [entry #f]
                 [stmt-level #f]
-                [lowerbound (new lowerbound%)])
+                [lowerbound (new lowerbound%)]
+                [funcs (list)])
     ;; env maps
     ;; 1) var-name  -> (cons type known)
     ;; 2) func-name -> func-ast
@@ -401,6 +402,11 @@
         [(is-a? ast FuncCall%)
          ;;(pretty-display (format "LINKER: FuncCall ~a" (send ast to-string)))
 	 (define name (get-field name ast))
+
+         ;; We visit backward, so we shouldn't expect to see func declaration.
+         (when (member name funcs)
+               (raise (format "Function ~a cannot be used before its definition." name)))
+         
 	 (when (io-func? name)
            (let ([node (send (car (get-field args ast)) get-value)])
              (set-field! name ast (format "~a~a" name node))
@@ -696,6 +702,7 @@
 	 (send (get-field args ast) accept this)
          (send (get-field body ast) accept this)
 	 (pop-scope)
+         (set! funcs (cons (get-field name ast) funcs))
          ]
         
         [else
