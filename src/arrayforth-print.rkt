@@ -214,7 +214,7 @@
           (pretty-display (format "{block ~a}" (+ block-offset (* 2 id))))
           (pretty-display (format "( -) # ~a ( id ~a mem ~a) 0 org | cr" node id memsize)))
         (begin
-          (pretty-display (format "node ~a" (core-id id w)))
+          (pretty-display (format "node ~a ( core ~a )" (core-id id w) id))
           (for ([x (list (cons "a" (and (not (void? (aforth-a x)))
                                         (aforth-a x)))
                          (cons "p" (aforth-set-p x)))])
