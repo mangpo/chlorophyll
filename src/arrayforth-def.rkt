@@ -645,7 +645,7 @@
   (define res (make-vector (* w h)))
   (define program #f)
   (define repeating #f)
-  (define collector (new dependencey-collector%))
+  (define collector (new dependencey-collector% [w w]))
   (define core #f)
 
   (for ([i (in-range (* w h))])

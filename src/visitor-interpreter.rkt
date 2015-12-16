@@ -20,12 +20,11 @@
                 [env (make-hash)] ;; map function name -> comminfo
                 [has-func-temp #f]
 		[used-io-nodes (set)]
+                [actors #f] [actors* #f]
 		)
 
     (define debug #t)
     (define debug-sym #f)
-    (define actors #f)
-    (define actors* #f)
     
     
     ;; Declare IO function: in(), out(data)
@@ -561,8 +560,6 @@
 	0]
 
        [(is-a? ast Program%)
-        (set! actors (get-field actors ast))
-        (set! actors* (get-field actors* ast))
         (when debug (pretty-display ">> Program"))
 
 	(define ret #f)

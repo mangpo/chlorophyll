@@ -177,7 +177,7 @@ long calcule_cout(long n, type_matrice & a, type_matrice & b, type_vecteur & p)
 
 type_vecteur pos;
 // Initial solution.
-void tire_solution_aleatoire()
+void init_solution()
 {long i, id;
    
    type_vecteur sizes;
@@ -205,6 +205,12 @@ void tire_solution_aleatoire()
        } while(module_id[id] > 0);
      }
    }
+
+   // cout << "DEBUG: ";
+   //  for(long i = 1; i <= n; ++i) {
+   //    cout << p[i] << " ";
+   //  }
+   //  cout << endl;
     
    for (i = 1; i < n; i = i+1) {
      id = module_id[p[i]];
@@ -212,7 +218,7 @@ void tire_solution_aleatoire()
        long j = unif(i, n);
        while(module_id[p[j]] > 0 && j <= n) j++;
        if(j > n) {
-         j = 0;
+         j = 1;
          while(module_id[p[j]] > 0) j++;
        }
        swap(p[i], p[j]);
@@ -383,7 +389,7 @@ int main(int argc, char* argv[]) {
 
   for (no_res = 1; no_res <= nb_res; no_res = no_res + 1) {
     cout << "---------------------------------" << endl;
-    tire_solution_aleatoire();
+    init_solution();
     // cout << "INIT SOL: ";
     // for(long i = 1; i <= n; ++i) {
     //   cout << p[i] << " ";

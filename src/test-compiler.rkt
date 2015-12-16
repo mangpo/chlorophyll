@@ -105,15 +105,17 @@
 ;                      512 #:w 18 #:h 8 #:opt #f #:partition #f)
 
 ;; Parallel Module
-;(compile-and-optimize "../examples/module/module_simple.cll" "module_simple" 
-;                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
-;(compile-and-optimize "../examples/module/module_mapreduce.cll" "module_mapreduce" 
-;                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
-;(compile-and-optimize "../examples/module/module_global.cll" "module_global" 
-;                      400 #:w 3 #:h 3 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/module/module_simple.cll" "module_simple" 
+                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/module/module_mapreduce.cll" "module_mapreduce" 
+                      512 #:w 4 #:h 4 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/module/module_global.cll" "module_global" 
+                      400 #:w 3 #:h 3 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/module/module_concrete.cll" "module_concrete" 
+                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
 
 ;; HMM Classifier
 (compile-and-optimize "../examples/sensors/hmm_array_b.cll" "hmm_array_b" 
-                      300 #:w 5 #:h 5 #:opt #f #:partition #f
+                      350 #:w 5 #:h 5 #:opt #f #:partition #f
                       #:original-format #f)
-;(compile-and-optimize "../examples/sensors/hmm3.cll" "hmm3" 256 #:w 18 #:h 7 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/sensors/hmm3.cll" "hmm3" 256 #:w 18 #:h 7 #:opt #f #:partition #f)

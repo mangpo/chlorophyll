@@ -69,6 +69,8 @@
                    (send (get-field e1 ast) accept this)
                    (send (get-field e2 ast) accept this))]
 
+       [(is-a? ast ModuleCreate%) (set)]
+       
        [(is-a? ast FuncCall%)
         (define ret (make-set (get-field place-type ast)))
         (define name (get-field name ast))
@@ -90,7 +92,7 @@
              (set! ret (set-union ret (make-set (get-field place-type arg)))))
 
         ;;(pretty-display (format "PLACESET: FuncCall ~a" name))
-        (pretty-display `(placeset-before ,ret))
+        ;;(pretty-display `(placeset-before ,ret))
         (when (hash-has-key? actors name)
               (define l (hash-ref actors name))
               ;;(pretty-display `(remove ,l))
@@ -128,17 +130,32 @@
        [(is-a? ast Return%)
         (set)]
 
+       [(is-a? ast Actor%)
+        (define info (get-field info ast))
+        (if (second info)
+            (set (second info) (third info))
+            (set))]
+
+       [(and (is-a? ast Program%) (not save))
+        ;;(pretty-display "PLACESET: Program (no save)")
+        (define ret (set))
+        (for ([stmt (get-field stmts ast)])
+             (set! ret (set-union ret (send stmt accept this))))
+
+        ret
+        ]
+
        [(is-a? ast Program%)
+        ;;(pretty-display "PLACESET: Program (save)")
         (for ([stmt (get-field stmts ast)])
              (send stmt accept this))
 
-        (when
-         save
-         (define main
-           (findf (lambda (x) (and (is-a? x FuncDecl%)
-                                   (equal? (get-field name x) "main")))
-                  (get-field stmts ast)))
-         (set-field! body-placeset ast (get-field body-placeset main)))
+        (define main
+          (findf (lambda (x) (and (is-a? x FuncDecl%)
+                                  (equal? (get-field name x) "main")))
+                 (get-field stmts ast)))
+        (set-field! body-placeset ast (get-field body-placeset main))
+        (get-field body-placeset main)
         ]
 
        [(is-a? ast Block%)
@@ -146,6 +163,7 @@
                       (set) (get-field stmts ast)))]
 
        [(is-a? ast FuncDecl%)
+        ;;(pretty-display (format "PLACESET: FuncDecl ~a" (get-field name ast)))
         (hash-set! return-map (get-field name ast) (get-field return ast))
         (define ret (save? (set-union (send (get-field args ast) accept this)
                                       (send (get-field body ast) accept this))))

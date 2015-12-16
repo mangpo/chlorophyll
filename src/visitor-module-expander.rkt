@@ -1,6 +1,7 @@
 #lang racket
 
-(require "header.rkt" "ast.rkt" "ast-util.rkt" "visitor-interface.rkt")
+(require "header.rkt" "ast.rkt" "ast-util.rkt" "visitor-interface.rkt"
+         "visitor-placeset.rkt")
 
 (provide (all-defined-out))
 
@@ -12,6 +13,7 @@
     (define debug #f)
     (define modules (make-hash))
     (define mapping #f)
+    (define place-mapping #f)
     (define id #f)
     (define global-vars (list))
 
@@ -19,7 +21,6 @@
     (define module-clusters (list))
     (define actors (make-hash))
     (define actors* (make-hash))
-
     (define-syntax-rule (rename name)
       (if (and mapping
                (not (member name
@@ -31,11 +32,24 @@
             (format "_~a_~a" id name))
           name))
 
+    (define placeset #f)
+    (define place-id -1)
+    (define (get-new-place)
+      (set! place-id (add1 place-id))
+      (if (set-member? placeset place-id)
+          (get-new-place)
+          place-id))
+
     (define (fresh-place place)
       (if mapping
           (cond
            [(boolean? place) place]
-           [(number? place) place] ;; TODO
+           [(number? place)
+            (if (hash-has-key? place-mapping place)
+                (hash-ref place-mapping place)
+                (let ([ret (get-new-place)])
+                  (hash-set! place-mapping place ret)
+                  ret))]
            [(symbolic? place) (get-sym)]
            [(is-a? place Place%)
             (let ([at (get-field at place)])
@@ -75,6 +89,7 @@
 
         (set! id (get-field name lhs))
         (set! mapping (make-hash))
+        (set! place-mapping (make-hash))
         (for ([param (get-field params module)]
               [val (get-field args rhs)])
              (hash-set! mapping param val))
@@ -229,6 +244,14 @@
              [pos (my pos)])]
 
        [(is-a? ast Program%)
+        
+        (define placeset-collector
+          (new placeset-collector% [save #f]
+               ;; don't care about actors* to collect placeset in this pass.
+               [actors (make-hash)]
+               [actors* (make-hash)]))
+        (set! placeset (send ast accept placeset-collector))
+        
         (define stmts (my stmts))
         
         (cond

@@ -249,7 +249,7 @@
 (define dependencey-collector%
   (class object%
     (super-new)
-    (init-field [dependent-nodes (set)])
+    (init-field w [dependent-nodes (set)])
     (define result (set))
     (define func #f)
 
@@ -279,10 +279,9 @@
 	(send this visit (-iftf-f ast))]
 
        [(port-exec? ast)
-        (define (index->coord n)
-          (+ (* (quotient n 18) 100) (remainder n 18)))
         (set! dependent-nodes (set-add dependent-nodes
-                                       (index->coord (port-exec-at ast)) ))
+                                       (core-id (port-exec-at ast) w)
+                                       ))
         ]
 
        [(funcdecl? ast)

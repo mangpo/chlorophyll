@@ -92,7 +92,9 @@
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))
-  (define interpreter (new count-msg-interpreter% [places cores]))
+  (define interpreter (new count-msg-interpreter% [places cores]
+                           [actors (get-field actors my-ast)]
+                           [actors* (get-field actors* my-ast)]))
   
   ;; Place holder for solution
   (define num-msg #f)

@@ -427,9 +427,10 @@
 
         (define ret
           (set-union path-ret args-ret 
-                     (get-field body-placeset (get-field signature ast)) (all-place-type)))
+                     (get-field body-placeset (get-field signature ast))
+                     (all-place-type)))
         
-        (pretty-display `(funccall-before ,ret))
+        (when debug (pretty-display `(funccall-before ,ret)))
         (when
          (hash-has-key? actors*-no-cf-map name)
          (pretty-display `(actors*-no-cf-map ,(hash-ref actors*-no-cf-map name name)))
@@ -447,7 +448,10 @@
         ;;               [path (vector-2d-ref routing-table caller actor)])
         ;;          (set! ret (set-subtract ret (list->set (drop path 1))))))])
 
-        (pretty-display `(funccall-after ,ret))
+        (when debug (pretty-display `(funccall-after ,ret)))
+        
+	(when debug 
+	      (pretty-display (format "COMMINSERT: FuncCall ~a, return ~a" (get-field name ast) ret)))
         ret
         ]
 
@@ -521,9 +525,10 @@
         ret]
 
        [(is-a? ast FuncDecl%)
+        (define name (get-field name ast))
         (when debug 
           (pretty-display "\n--------------------------------------------")
-          (pretty-display (format "\nCOMMINSERT: FuncDecl ~a" (get-field name ast))))
+          (pretty-display (format "\nCOMMINSERT: FuncDecl ~a" name)))
         (cond [(hash-has-key? visited (get-field name ast))
                (hash-ref visited (get-field name ast))]
               [else
@@ -541,10 +546,15 @@
                                      (set->list (get-field body-placeset ast))))
                      (set)))
 
+
                (let ([ret
-                      (update-placeset
-                       (set-union return-ret args-ret body-ret new-placeset))])
-                 (hash-set! visited (get-field name ast) ret)
+                      (if (member name (list "in" "out"))
+                          (set-union return-ret args-ret body-ret new-placeset)
+                          (update-placeset
+                           (set-union return-ret args-ret body-ret new-placeset)))])
+                 (set-field! body-placeset ast ret)
+                 (hash-set! visited name ret)
+                 (pretty-display (format "\nCOMMINSERT: FuncDecl ~a, return = ~a" name ret))
                  ret)
                ])]
        [else (raise (format "Error: in comm-inserter, ~a unimplemented!" ast))]

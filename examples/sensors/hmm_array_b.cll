@@ -5,9 +5,9 @@ module Hmm() {
     return 0;
   }
 
-  fix1_t b1[28]; // 2x14
-  fix1_t b2[42]; // 3x14
-  fix1_t b3[42]; // 3x14
+  fix1_t@0 b1[28]; // 2x14
+  fix1_t@1 b2[42]; // 3x14
+  fix1_t@2 b3[42]; // 3x14
 
   actor* get_b3;
   fix1_t get_b3(int i) {
@@ -18,7 +18,7 @@ module Hmm() {
   fix1_t get_b2(int i) {
     fix1_t ret;
     if(i < 70) {
-      ret = b1[i-28];
+      ret = b2[i-28];
     } else {
       ret = get_b3(i);
     }
@@ -53,6 +53,7 @@ module Hmm() {
 } // end module Hmm
 
 hmm1 = new Hmm();
+hmm2 = new Hmm();
 
 
 int filter(fix9_t::3 acc){
@@ -63,11 +64,12 @@ int filter(fix9_t::3 acc){
 }
 
 void main(){
-  fix9_t::3 acc;
-  int ord;
+  fix9_t::3@(10,10,10) acc;
+  int@11 ord;
 
   if (filter(acc)){
     ord = ord | hmm1.input(acc);
+    ord = ord | hmm2.input(acc);
   }
   
 }

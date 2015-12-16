@@ -35,7 +35,7 @@
      (block body in out cnstr incnstr org)]))
 
 (define (core-id id w)
-  (+ (* 100 (floor (/ id w))) (modulo id w) node-offset))
+  (+ (* 100 (quotient id w)) (remainder id w) node-offset))
 
 (define (inout inst)
   (cond
