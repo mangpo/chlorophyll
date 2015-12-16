@@ -1,86 +1,82 @@
-// c
+// -*- c -*-
 
-fix9_t::3@(6,6,6) dir_filter_ref;
+//# 57 --> 507
+//# 60 --> 600
+//# 67 --> 607
+//# 68 --> 608
 
-int filter(fix9_t::3@(5,5,5) acc_in){
+module Hmm(a_init) {
 
-  // node 5
-  fix9_t@6 abs;
-  abs = acc_in::0 *@5 acc_in::0 +@5 acc_in::1 *@5 acc_in::1 +@5 acc_in::2 *@5 acc_in::2;
-
-  // node 6
-  int@6 ret2;
-  fix9_t::3@(6,6,6) acc2;
-  acc2 = acc_in;
-
-  ret2 = 0;
-  if (abs >@6 1.1){
-    ret2 = 1;
-  }
-  if (abs <@6 0.9){
-      ret2 = 1;
+  int derive_group(fix9_t::3 acc){
+    return 0;
   }
 
-  // node 4
-  int@4 ret;
-  ret = ret2;
-  //fix9_t idle_sensitivity = 0.1;//0.3;
-  fix9_t@4 def_sensitivity;
-  def_sensitivity = 0.4;//0.5;
+  fix1_t b1[28]; // 2x14
+  fix1_t b2[42]; // 3x14
+  fix1_t b3[42]; // 3x14
 
-  fix9_t::3@(4,4,4) acc;
-  acc = acc_in;
-
-  if (ret){
-    ret = 0;
-    if (acc::0 <@4 dir_filter_ref::0 -@4 def_sensitivity){
-      ret = 1;
-    }
-    if (acc::0 >@4 dir_filter_ref::0 +@4 def_sensitivity){
-      ret = 1;
-    }
-    if (acc::1 <@4 dir_filter_ref::1 -@4 def_sensitivity){
-      ret = 1;
-    }
-    if (acc::1 >@4 dir_filter_ref::1 +@4 def_sensitivity){
-      ret = 1;
-    }
-    if (acc::2 <@4 dir_filter_ref::2 -@4 def_sensitivity){
-      ret = 1;
-    }
-    if (acc::2 >@4 dir_filter_ref::2 +@4 def_sensitivity){
-      ret = 1;
-    }
+  actor* get_b3;
+  fix1_t get_b3(int i) {
+    return b3[i-70];
   }
 
-  // node 6
-  ret2 = ret;
-  if (ret2){
-    dir_filter_ref = acc2;                 
+  actor* get_b2;
+  fix1_t get_b2(int i) {
+    fix1_t ret;
+    if(i < 70) {
+      ret = b1[i-28];
+    } else {
+      ret = get_b3(i);
+    }
+    return ret;
   }
 
-  return ret;
-}
-
-void input_reading(fix9_t::3@(3,3,3) acc){
-  //input the next accelerometer reading
-  int ord;
-  int@0 o1;
-  int@1 o2;
-  ord = 0;
-  if (filter(acc)){
-    ord = ord | o1;
+  actor* get_b;
+  fix1_t get_b(int i) {
+    fix1_t ret;
+    if(i < 28) {
+      ret = b1[i];
+    } else {
+      ret = get_b2(i);
+    }
+    return ret;
   }
-  
-   int n;
-   n = 0;
-   while (ord > 0){
-     n = n + 1;
-     ord = ord << 1;
-   }
+
+  int forward_proc_inc(int o){
+    fix1_t sum;
+    fix1_t temp;
+    sum = 0.1;
+        for (k from 0 to 8) {
+          temp = sum * get_b(k*14+o);
+        }
+    return 0;
+  }
+
+  int input(fix9_t::3 acc){
+    return forward_proc_inc(derive_group(acc));
+  }
+
+} // end module Hmm
+
+hmm1 = new Hmm({0.97, 0.18, 0.05, 0.77, 0.7, 0.47, 0.99, 0.73, 0.2, 0.6, 0.12, 0.05, 0.67, 0.84, 0.8, 0.84, 0.32, 0.44, 0.56, 0.57, 0.75, 0.83, 0.73, 0.96, 0.35, 0.96, 0.91, 0.48, 0.52, 0.82, 0.31, 0.73, 0.62, 0.21, 0.67, 0.24, 0.88, 0.8, 0.41, 0.34, 0.06, 0.54, 0.54, 0.33, 0.71, 0.32, 0.83, 0.38, 0.01, 0.12, 0.33, 0.53, 0.59, 0.84, 0.11, 0.84, 0.63, 0.64, 0.13, 0.59, 0.64, 0.01, 0.06, 0.91});//@REG(004,407);
+hmm2 = new Hmm({0.86, 0.6, 0.95, 0.16, 0.0, 0.04, 0.29, 0.41, 0.35, 0.62, 0.13, 0.89, 0.82, 0.04, 0.52, 0.58, 0.53, 0.74, 0.1, 0.31, 0.99, 0.53, 0.19, 0.13, 0.62, 0.95, 0.02, 0.07, 0.99, 0.51, 0.15, 0.81, 0.61, 0.39, 0.63, 0.43, 0.51, 0.84, 0.87, 0.92, 0.62, 0.66, 0.73, 0.65, 0.36, 0.33, 0.83, 0.33, 0.72, 0.68, 0.74, 0.25, 0.9, 0.35, 0.51, 0.58, 0.64, 0.0, 0.83, 0.64, 0.63, 0.27, 0.28, 0.27});//@REG(008,411);
+//hmm3 = new Hmm({-0.68, -0.13, -0.63, -0.67, -0.79, -0.82, -0.39, 0.0, -0.53, -0.58, -0.43, -0.07, -0.24, -0.24, -0.06, -0.91, -0.63, -0.23, -0.96, -0.15, -0.07, -0.94, -0.29, -0.02, -0.34, -0.66, -0.6, -0.75, -0.49, -0.57, -0.21, -0.13, -0.63, -0.48, -0.71, -0.87, -0.16, -0.97, -0.19, -0.86, -0.68, -0.01, -0.3, -0.28, -0.95, -0.4, -0.22, -0.68, -0.84, -0.49, -0.95, -0.31, -0.33, -0.63, -0.78, -0.52, -0.76, -0.83, -0.67, -0.18, -0.14, -0.12, -0.81, -0.01})@REG(010,412);
+
+
+int filter(fix9_t::3 acc){
+  fix9_t abs;
+  abs = acc::0 * acc::0 + acc::1 * acc::1 + acc::2 * acc::2;
+
+  return abs;
 }
 
 void main(){
   fix9_t::3 acc;
-  input_reading(acc);
+  int ord;
+
+  if (filter(acc)){
+    ord = ord | hmm1.input(acc);
+    ord = ord | hmm2.input(acc);
+  }
+  
 }

@@ -1,0 +1,73 @@
+// -*- c -*-
+module Hmm() {
+
+  int derive_group(fix9_t::3 acc){
+    return 0;
+  }
+
+  fix1_t b1[28]; // 2x14
+  fix1_t b2[42]; // 3x14
+  fix1_t b3[42]; // 3x14
+
+  actor* get_b3;
+  fix1_t get_b3(int i) {
+    return b3[i-70];
+  }
+
+  actor* get_b2;
+  fix1_t get_b2(int i) {
+    fix1_t ret;
+    if(i < 70) {
+      ret = b1[i-28];
+    } else {
+      ret = get_b3(i);
+    }
+    return ret;
+  }
+
+  actor* get_b;
+  fix1_t get_b(int i) {
+    fix1_t ret;
+    if(i < 28) {
+      ret = b1[i];
+    } else {
+      ret = get_b2(i);
+    }
+    return ret;
+  }
+
+  int forward_proc_inc(int o){
+    fix1_t sum;
+    fix1_t temp;
+    sum = 0.1;
+        for (k from 0 to 8) {
+          temp = sum * get_b(k*14+o);
+        }
+    return 0;
+  }
+
+  int input(fix9_t::3 acc){
+    return forward_proc_inc(derive_group(acc));
+  }
+
+} // end module Hmm
+
+hmm1 = new Hmm();
+
+
+int filter(fix9_t::3 acc){
+  fix9_t abs;
+  abs = acc::0 * acc::0 + acc::1 * acc::1 + acc::2 * acc::2;
+
+  return abs;
+}
+
+void main(){
+  fix9_t::3 acc;
+  int ord;
+
+  if (filter(acc)){
+    ord = ord | hmm1.input(acc);
+  }
+  
+}

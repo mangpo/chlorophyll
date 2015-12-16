@@ -104,9 +104,11 @@
 
     (define (add-while i)
       (define ws (get-workspace i))
+      (define need-cleanup #f)
       (when
        (is-a? ws Program%)
        ;; only do this if that node don't have other computation.
+       (set! need-cleanup #t)
        (define main-body (new Block% [stmts (list)]))
        (define main-func
          (new FuncDecl% [name "main"]
@@ -129,6 +131,7 @@
        (set-field! parent body new-while)
        (push-workspace i new-while)
        (set-workspace i body))
+      need-cleanup
       )
 
     (define (add-remote-exec i to node)
@@ -586,6 +589,7 @@
         ;; prepare for actor mode
         (define actors-info (hash-has-key? actors name))
         (define need-setup #f)
+        (define need-cleanup (list))
         (when
          actors-info
          (set! actors-info (hash-ref actors name))
@@ -621,6 +625,7 @@
                 ;; caller initiates
                 ;; (pretty-display `(caller-actor ,caller ,wire ,actor))
                 ;; (pretty-display `(add-remote-exec ,caller))
+                (set! need-cleanup (cons actor need-cleanup))
                 (add-remote-exec caller (second path) actor)
                 (when
                  (not (member pair visited-actor-pairs))
@@ -628,7 +633,8 @@
                  ;; set up while loop in the wiring nodes
                  (for ([i wire])
                       ;; (pretty-display `(add-while ,i))
-                      (add-while i))
+                      (when (add-while i)
+                            (set! need-cleanup (cons i need-cleanup))))
                  ;; wiring nodes pass exec command to actor
                  ;; (pretty-display `(gen-comm-actor ,path))
                  (gen-comm-actor path))
@@ -661,16 +667,8 @@
         ;; clean up actor mode
         (when
          need-setup
-         (define actor-nodes (set))
-         (for ([pair actors-info])
-              (let* ([actor (car pair)]
-                     [caller (cdr pair)]
-                     [path (vector-2d-ref routing-table caller actor)]
-                     [wire (drop path 1)])
-                (set! actor-nodes (set-union actor-nodes (list->set wire)))))
-         ;; (pretty-display `(actor-nodes ,actor-nodes))
          ;; prevent from using these nodes to do more computation.
-         (for ([i actor-nodes])
+         (for ([i (list->set need-cleanup)])
               ;; (pretty-display `(clear-workspace-actor ,i))
               (clear-workspace i)))
         ]
@@ -835,12 +833,14 @@
 
 	;; add content inside false-block
         (when (get-field false-block ast)
+              (pretty-display `(visit-false))
               (send (get-field false-block ast) accept this))
               
 	(when debug (pretty-display (format "\nDIVIDE: If (cleaning)\n")))
 	;; pop scope
         (for ([c (get-field body-placeset ast)])
              (let* ([false-block (get-workspace c)]
+                    [_ (pretty-display `(false-block ,c ,false-block))]
                     [if (get-field parent false-block)]
 		    [old-workspace (get-field parent if)])
                (clear-stack c)

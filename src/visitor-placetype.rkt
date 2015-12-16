@@ -399,8 +399,7 @@
                     (define place-type (get-field place-type (car args-list)))
                     (for ([arg (drop args-list 1)])
                          (set-field! place arg place)
-                         (set-field! place-type arg place-type)
-                         )))
+                         (set-field! place-type arg place-type))))
         
         (when (get-field precond ast)
               (send (get-field precond ast) accept this))

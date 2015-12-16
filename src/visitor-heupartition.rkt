@@ -11,6 +11,7 @@
 (define (merge-sym-partition n space flow-graph capacity 
 			     refine-capacity part2capacity
 			     conflict-list my-ast #:name [name #f])
+  (pretty-display "Start merging symbolic partitions...")
   (define sol-map (make-hash))
 
   ;; Prevent
@@ -176,6 +177,7 @@
   ;; point to itself
   (for ([key (hash-keys space)])
        (hash-set! sol-map key key))
+  (pretty-display `(sol-map ,sol-map))
 
   ;; (pretty-display `(space-map ,space))
 
@@ -273,8 +275,8 @@
 
     (define (inc-space place sp)
       ;;(pretty-display `(inc-space ,place))
-      (when
-       place
+      (unless
+       (at-any? place)
        (if (is-a? place TypeExpansion%)
            (for ([p (get-field place-list place)])
                 (inc-space p sp))
@@ -424,12 +426,12 @@
         ;; infer place-type
 	(for ([param (get-field stmts (get-field args (get-field signature ast)))]
 	      [arg (flatten-arg (get-field args ast))])
-	     (when #t 
+	     (when debug
 		   (pretty-display (format "HEU: FuncCall(2) ~a param=~a, arg=~a" name param arg)))
              (when
               (and (not (hash-has-key? actors name))
                    (not (hash-has-key? actors* name)))
-              (when #t (pretty-display (format "HEU: infer!")))
+              (when debug (pretty-display (format "HEU: infer!")))
               (send arg infer-place (get-field place-type param)))
 
 	     (set! networks 
@@ -445,7 +447,7 @@
         ]
 
        [(is-a? ast Assign%)
-        (when debug
+        (when #t
               (pretty-display (format "HEU: Assign% ~a = ~a" 
                                       (send (get-field lhs ast) to-string)
                                       (send (get-field rhs ast) to-string))))
@@ -453,6 +455,7 @@
         (define rhs (get-field rhs ast))
 
         ;; infer place
+        (pretty-display `(lhs-rhs ,(get-field place-type lhs) ,(get-field place-type rhs)))
         (send rhs infer-place (get-field place-type lhs))
         (send lhs infer-place (get-field place-type rhs))
 

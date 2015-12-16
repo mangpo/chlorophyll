@@ -99,17 +99,23 @@
               (send func-ast accept this))
 
 	;; infer
-        (define place #f)
 	(for ([param params] ; signature
-              [arg   (flatten-arg (get-field args ast))]) ; actual
-             (unless
-              (get-field place-type arg)
-              (if (and (not (hash-has-key? actors name))
-                       (not (hash-has-key? actors* name)))
-                  (send arg infer-place (get-field place-type param))
-                  (set-field! place-type arg place)))
-             (set! place (get-field place-type arg))
-          )
+              [arg (flatten-arg (get-field args ast))]) ; actual
+             (when
+              (at-any? (get-field place-type arg))
+              (cond
+               [(hash-has-key? actors name)
+                (define caller-place (cdar (hash-ref actors name)))
+                (send arg infer-place caller-place)]
+               
+               [(hash-has-key? actors* name)
+                (define caller-place (cdar (hash-ref actors* name)))
+                (pretty-display `(infer ,name ,caller-place))
+                (send arg infer-place caller-place)]
+
+               [else
+                (send arg infer-place (get-field place-type param))]
+               )))
         ;; return can't be at any, so we don't need to infer return
         ]
 
