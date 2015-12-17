@@ -389,7 +389,6 @@
         (when debug (pretty-display (format "\nPLACETYPE: FuncDecl ~a" (get-field name ast))))
         (push-scope)
         (define args (get-field args ast))
-        (send args accept this)
 
         ;; If this function is actor*, then make sure all its paramers are at the same place.
         (when (hash-has-key? actors* (get-field name ast))
@@ -401,6 +400,7 @@
                          (set-field! place arg place)
                          (set-field! place-type arg place-type))))
         
+        (send args accept this)
         (when (get-field precond ast)
               (send (get-field precond ast) accept this))
         (when (get-field return ast)
