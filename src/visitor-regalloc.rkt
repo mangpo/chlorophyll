@@ -42,12 +42,12 @@
                   (begin
                     (hash-set! var-map name (+ (hash-ref var-map name) 3))
                     (set-field! address ast (if (= items 0) 't 's)))))
-
         (unless (on-stack? name)
                 (set! items (add1 items)))
         
-        (when debug 
-              (pretty-display (format "REGALLOC: Var ~a => ~a" (send ast to-string)
+        (when debug
+              (pretty-display (format "REGALLOC: Var ~a => ~a"
+                                      (send ast to-string)
                                       items)))
         ]
         
@@ -106,7 +106,7 @@
           (when (hash-has-key? var-map name)
                 (if (= items 1)
                     (set-field! address lhs 't)
-                    (raise "visitor-regalloc: there should be only one item on stock for assignment"))
+                    (raise "visitor-regalloc: there should be only one item on stack for assignment"))
                 (hash-set! var-map name (+ (hash-ref var-map name) 2)))
           (set! items (sub1 items))])
 
@@ -124,9 +124,11 @@
         ]
 
        [(or (is-a? ast Return%)
-            (is-a? ast PortListen%)
-            (is-a? ast PortExec%))
+            (is-a? ast PortListen%))
         (set! items 0)]
+
+       [(is-a? ast PortExec%)
+        (void)]
 
        [(is-a? ast Send%)
 	(send (get-field data ast) accept this)
