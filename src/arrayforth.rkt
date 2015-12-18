@@ -482,12 +482,16 @@
    [(aforth? x)
     (pretty-display (format "~a(aforth " indent))
     (aforth-struct-print (aforth-code x) (inc indent))
-    (pretty-display (format "~a~a ~a ~a \"~a\" ~a ~a)"
+    (pretty-display (format "~a~a ~a ~a ~a ~a ~a)"
 			    indent (aforth-memsize x) (aforth-bit x)
-                            (aforth-indexmap x) (aforth-a x) (aforth-position x)
+                            (aforth-indexmap x)
+                            (if (aforth-a x)
+                                (format "\"~a\"" (aforth-a x))
+                                #f)
+                            (aforth-position x)
                             (if (aforth-set-p x)
-                              (format "\"~a\"" (aforth-set-p x))
-                              #f)))]
+                                (format "\"~a\"" (aforth-set-p x))
+                                #f)))]
 
    [(vector? x)
     (pretty-display "(define programs")
