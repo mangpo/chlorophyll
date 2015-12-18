@@ -80,7 +80,8 @@
                                   (get-a-port (get-field port-usage arrayaccess))))
 
   ;; register allocation (optional)
-  ;;(pretty-display ">>> registor allocation >>>")
+  (send program pretty-print)
+  (pretty-display ">>> registor allocation >>>")
   (send program accept (new registor-allocator%))
   ;;(send program pretty-print)
   

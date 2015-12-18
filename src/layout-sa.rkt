@@ -197,7 +197,8 @@
               (hash-set! new-actors*-no-cf-map func
                          (set-union
                           (hash-ref new-actors*-no-cf-map func)
-                          (list->set (drop path 1))))
+                          (set-subtract (list->set (drop path 1)) cores)))
+              (pretty-display `(update-actors*-no-cf-map ,func ,(hash-ref new-actors*-no-cf-map func) ,(set-subtract (list->set (drop path 1)) cores)))
               (set! new-obstacles (set-union new-obstacles
                                              (list->set (drop path 1)))))))
       (set! obstacles new-obstacles)))
@@ -224,8 +225,10 @@
          ))
 
   ;; actors
-  (for ([name (hash-keys (get-field actors ast))])
-       (hash-set! new-actors*-no-cf-map name (set)))
+  (for ([name (hash-keys actors)])
+       (hash-set! new-actors*-no-cf-map name
+                  (list->set (map (lambda (x) (vector-ref part2core (car x)))
+                                  (hash-ref actors name)))))
   (for ([name (hash-keys actors)])
        (route-caller-actor name actors #f))
 

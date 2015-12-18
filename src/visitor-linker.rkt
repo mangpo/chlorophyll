@@ -1,4 +1,4 @@
-#lang racket
+#lang s-exp rosette
 
 (require "header.rkt"
          "ast.rkt" "ast-util.rkt" 
@@ -40,6 +40,35 @@
       (declare env (format "digital_wakeup~a" node) (get-digital-wakeup node))
       (declare env (format "delay_ns~a" node) (get-delay-ns node))
       (declare env (format "delay_unext~a" node) (get-delay-unext node)))
+
+    (define actors* (make-hash))
+    
+    (define (get-first x)
+      (cond
+       [(number? x) x]
+       [(is-a? x TypeExpansion%) (car (get-field place-list x))]))
+
+    (define (update-place x p)
+      (define old-place (get-field place x))
+      (cond
+       [(equal? old-place #f) (set-field! place x p)]
+       [(number? old-place) (set-field! place x p)]
+       [(is-a? old-place TypeExpansion%)
+        (set-field! place-list old-place
+                    (for/list ([x (get-field place-list old-place)]) p))]
+       [else
+        (raise (format "linker: update-place for actors* cannot update place ~a" old-place))]))
+
+    (define (update-place-type x p)
+      (define old-place (get-field place-type x))
+      (cond
+       [(equal? old-place #f) (set-field! place-type x p)]
+       [(number? old-place) (set-field! place-type x p)]
+       [(is-a? old-place TypeExpansion%)
+        (set-field! place-list old-place
+                    (for/list ([x (get-field place-list old-place)]) p))]
+       [else
+        (raise (format "linker: update-place for actors* cannot update place ~a" old-place))]))
 
     (struct val (type expand known) #:mutable)
 
@@ -662,6 +691,7 @@
         
         [(is-a? ast Program%)
          ;(pretty-display "LINKER: Program")
+         (set! actors* (get-field actors* ast))
          (define stmts (get-field stmts ast))
          
          ;; update env front to back
@@ -690,6 +720,8 @@
         
         [(is-a? ast FuncDecl%)
 	 (push-scope)
+         (define name (get-field name ast))
+         (define args (get-field args ast))
          (define return (get-field return ast))
 	 (when return 
                (send return accept this)
@@ -699,10 +731,30 @@
                (when (> entry 1)
                      (set-field! type return (cons (get-field type return) entry))))
 
-	 (send (get-field args ast) accept this)
+	 (send args accept this)
          (send (get-field body ast) accept this)
 	 (pop-scope)
-         (set! funcs (cons (get-field name ast) funcs))
+         (set! funcs (cons name funcs))
+
+         ;; If this function is actor*, then make sure all its paramers are at the same place.
+         (when (hash-has-key? actors* name)
+               (define info (car (hash-ref actors* name)))
+               (define actor (car info))
+               (define caller (cdr info))
+               (define args-list (get-field stmts args))
+               (when (> (length args-list) 0)
+                     (define place
+                       (or actor (get-first (get-field place (car args-list)))))
+                     (define place-type
+                       (or actor (get-first (get-field place-type (car args-list)))))
+                     (for ([arg args-list])
+                          (update-place arg place)
+                          (update-place-type arg place-type)
+                          ))
+               (when (and return caller (symbolic? (get-field place return)))
+                     (update-place return caller)
+                     )
+               )
          ]
         
         [else

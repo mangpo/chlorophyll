@@ -174,6 +174,10 @@
         (pretty-display space)
         (pretty-display `(flow-graph ,flow-graph ,(list? flow-graph))))
 
+    (with-output-to-file #:exists 'truncate (format "~a/~a.network" outdir name)
+    (lambda ()
+      (pretty-display flow-graph)))
+
   ;; point to itself
   (for ([key (hash-keys space)])
        (hash-set! sol-map key key))

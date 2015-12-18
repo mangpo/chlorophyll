@@ -1,0 +1,30 @@
+// -*- c -*-
+
+
+# 0 --> 000
+# 1 --> 100
+# 2 --> 200
+
+int c;
+
+actor* edge@(0~>2);
+int edge(int a){
+  c = c + 1;
+  return a + c;
+}
+
+int f(int x) {
+  return edge(x);
+}
+
+void main(){
+  int@1 x;
+  int@0 b;
+  x = 0;
+  b = 1;
+  while(1) {
+  if(b > 0) {
+    x = f(x);
+  }
+  }
+}
