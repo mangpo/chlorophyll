@@ -16,11 +16,9 @@ int edge(int@2 a){
 }
 
 void main(){
-  int@0 x, b;
+  int@0 x;
   x = 0;
-  while(1) {
-  if(b > 0) {
+  for(i from 0 to 10) {
     x = edge(x);
-  }
   }
 }

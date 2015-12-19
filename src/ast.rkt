@@ -1273,7 +1273,7 @@
     (super-new)
     (inherit-field stmts)
 
-    (init-field [fixed-parts #f] [noroute #f]
+    (init-field [fixed-parts #f] [noroute #f] [cores #f]
                 [actors #f] [actors* #f] [actors*-no-cf-map #f]
                 [conflict-list (list)]
                 [module-decls (list)] [module-inits (list)]
@@ -1281,7 +1281,7 @@
 
     (define/override (clone)
       (new Program% [stmts (map (lambda (x) (send x clone)) stmts)] 
-	   [fixed-parts fixed-parts] [noroute noroute]
+	   [fixed-parts fixed-parts] [noroute noroute] [cores cores]
            [actors actors] [actors* actors*] [actors*-no-cf-map actors*-no-cf-map]
            [conflict-list conflict-list]
            [module-decls module-decls] [module-inits module-inits]

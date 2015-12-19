@@ -629,7 +629,7 @@
   (define dependencies '())
 
   (define (topo-sort lst)
-    (when #t (pretty-display `(this-topo-sort ,lst)))
+    (when debug (pretty-display `(this-topo-sort ,lst)))
     (if (empty? lst)
         lst
         (let* ([fst (findf (lambda (pair) (set-empty? (cdr pair))) lst)]

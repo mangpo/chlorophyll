@@ -15,7 +15,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field routing-table part2core w h obstacles conflict-list
-                actors*-no-cf-map)
+                actors*-no-cf-map actor-index cores)
     ;; TODO: check if obstacles have everything.
 
     (define debug #t)
@@ -30,8 +30,9 @@
       (cond
        [ret ret]
        [else
-        (define path (gen-route-i-j i j w h obs? obstacles
-                                    conflicts conflict-index))
+        (define path (gen-route-i-j i j w h obstacles cores
+                                    conflicts conflict-index
+                                    actors*-no-cf-map actor-index))
         (unless
          path
          (raise (format "routing: no available route between cores ~a and ~a"

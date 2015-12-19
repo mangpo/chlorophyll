@@ -17,7 +17,6 @@ module Hmm() {
   fix1_t@15 s[8]; //fix1_t@20 s[8];
   int@15 started;
 
-
   actor* get_b3;
   fix1_t@5 get_b3(int@6 i) {
     return b3[i -@6 70];
@@ -61,13 +60,13 @@ module Hmm() {
     return ret;
   }
 
-  //actor* forward_proc_inc;
+  actor* forward_proc_inc;
   int forward_proc_inc(int@8 o){
     fix1_t@23 sum;
     fix1_t@24 ord;
     fix1_t@24 temp;
     ord = 0;
-    if(started <@8 0) {
+    if(started <@15 0) {
       sum = 0;
       for (k from 0 to 8) {
         for (l from 0 to 8) {
@@ -97,7 +96,7 @@ module Hmm() {
 
     fix9_t@0 minDist; minDist = 255;//0b11111111;
     int@0 minGroup;
-    int@4 ret;
+    //int@4 ret;
 
     fix9_t@0 dx;
     fix9_t@0 dy;
@@ -120,8 +119,8 @@ module Hmm() {
       }
     }
 
-    ret = minGroup;
-    return ret;
+    //ret = minGroup;
+    return minGroup;
     //ret = forward_proc_inc(minGroup);
     //return ret;
   }
@@ -142,10 +141,8 @@ module Hmm() {
     }
   }
 
-  int input(fix9_t::3 acc){
-    int ord;
-    ord = forward_proc_inc(derive_group(acc));
-    return ord;
+  int input(fix9_t::3@(26,26,26) acc){
+    return forward_proc_inc(derive_group(acc));
   }
 
 
@@ -153,8 +150,8 @@ module Hmm() {
 
 //hmm1 = new Hmm()@REG(1,404);
 //hmm2 = new Hmm()@REG(106,409);
-hmm1 = new Hmm()@REG(102,506);
-hmm2 = new Hmm()@REG(107,511);
+hmm1 = new Hmm()@REG(000,406);
+//hmm2 = new Hmm()@REG(007,413);
 //hmm1 = new Hmm();
 //hmm2 = new Hmm();
 
@@ -243,7 +240,7 @@ void main(){
     //ord = ord |@13 hmm1.derive_group(acc);
     //ord = ord |@13 hmm2.derive_group(acc);
     ord = ord |@13 hmm1.input(acc);
-    ord = ord |@13 hmm2.input(acc);
+    //ord = ord |@13 hmm2.input(acc);
     n = 0;
     while (ord >@16 0){
       n = n +@16 1;
@@ -252,12 +249,12 @@ void main(){
     if (n >@16 3){
       n = n -@16 3;
       hmm1.swap_shift(n);
-      hmm2.swap_shift(n);
+      //hmm2.swap_shift(n);
     }
   }
   fix1_t@13 out1;
   fix1_t@13 out2;
 
   out1 = hmm1.forward_proc_out();
-  out2 = hmm2.forward_proc_out();
+  //out2 = hmm2.forward_proc_out();
 }

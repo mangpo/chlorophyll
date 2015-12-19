@@ -83,8 +83,11 @@
                                  [part2core part2core]
                                  [w w] [h h]
                                  [obstacles (get-field noroute ast)]
+                                 [cores (get-field cores ast)]
                                  [actors*-no-cf-map (get-field actors*-no-cf-map ast)]
-                                 [conflict-list (get-field conflict-list ast)]))
+                                 [actor-index (get-field actors* ast)]
+                                 [conflict-list (get-field conflict-list ast)]
+                                 ))
   (send ast accept commcode-inserter)
   (when verbose
         (pretty-display "--- after insert communication ---")

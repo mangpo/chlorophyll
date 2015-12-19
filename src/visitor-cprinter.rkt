@@ -208,6 +208,8 @@
 		   (display (format ", ~a" (fix_t-int (get-field type (car args)))))
 		   (display (fix_t-int (get-field type ast))))
 	       )
+
+         (when (regexp-match #rx"main" name) (display "dummy"))
          (display ")")]
         ;; )]
 
