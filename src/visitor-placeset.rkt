@@ -111,17 +111,25 @@
         (save? (send (get-field body ast) accept this))]
 
        [(is-a? ast If%)
-        ;; TODO: do we have to save condition's placeset is ast's placeset?
-        (save? (set-union (send (get-field condition ast) accept this)
-                          (send (get-field true-block ast) accept this)
-                          (if (get-field false-block ast)
-                              (send (get-field false-block ast) accept this)
-                              (set))))]
+        (define cond-ret (send (get-field condition ast) accept this))
+        (define true-ret (send (get-field true-block ast) accept this))
+        (define false-ret
+          (if (get-field false-block ast)
+              (send (get-field false-block ast) accept this)
+              (set)))
+
+        (save? (set-union true-ret false-ret))
+        (set-union cond-ret true-ret false-ret)
+        ]
 
        [(is-a? ast While%)
-        (save? (set-union (send (get-field pre ast) accept this)
-                          (send (get-field condition ast) accept this)
-                          (send (get-field body ast) accept this)))]
+        (define pre-ret (send (get-field pre ast) accept this))
+        (define cond-ret (send (get-field condition ast) accept this))
+        (define body-ret (send (get-field body ast) accept this))
+
+        (save? body-ret)
+        (set-union cond-ret pre-ret body-ret)
+        ]
 
        [(is-a? ast Assign%) 
         (set-union (send (get-field lhs ast) accept this)

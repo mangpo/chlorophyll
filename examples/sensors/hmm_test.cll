@@ -13,42 +13,10 @@ module Hmm() {
   fix1_t@22 a2[40];
 
   fix1_t@14 pi[8];
-  fix1_t@15 f[8];
+  fix1_t@25 f[8];
   fix1_t@15 s[8]; //fix1_t@20 s[8];
-  int@18 started;
+  int@15 started;
 
-  int derive_group(fix9_t::3@(4,4,4) acc){
-    fix9_t@1 x;
-    fix9_t@2 y;
-    fix9_t@3 z;
-    x = acc::0;
-    y = acc::1;
-    z = acc::2;
-
-    fix9_t@0 minDist; minDist = 255;//0b11111111;
-    int@0 minGroup;
-    int@4 ret;
-
-    fix9_t@0 dx;
-    fix9_t@0 dy;
-    fix9_t@0 dz;
-    fix9_t@0 d;
-
-    for (i from 0 to 14){
-
-      dx = (quantizerMap_x[i] -@1 x) *@1 (quantizerMap_x[i] -@1 x);
-      dy = (quantizerMap_y[i] -@2 y) *@2 (quantizerMap_y[i] -@2 y);
-      dz = (quantizerMap_z[i] -@3 z) *@3 (quantizerMap_z[i] -@3 z);
-
-      d = dx +@0 dy +@0 dz;
-      if (d <@0 minDist){
-        minDist = d;
-        minGroup = i;
-      }
-    }
-    ret = minGroup;
-    return ret;
-  }
 
   actor* get_b3;
   fix1_t@5 get_b3(int@6 i) {
@@ -67,7 +35,7 @@ module Hmm() {
   }
 
   actor* get_b;
-  fix1_t get_b(int@7 i) {
+  fix1_t@8 get_b(int@7 i) {
     fix1_t@7 ret;
     if(i <@7 28) {
       ret = b1[i];
@@ -77,110 +45,109 @@ module Hmm() {
     return ret;
   }
 
-  //   actor* get_a2;
-  //   fix1_t@17 get_a2(int@22 i) {
-  //     return a2[i -@22 28];
-  //   }
-  // 
-  //   actor* get_a;
-  //   fix1_t get_a(int@17 i) {
-  //     fix1_t@17 ret;
-  //     if(i <@17 28) {
-  //       ret = a1[i];
-  //     } else {
-  //       ret = get_a2(i);
-  //     }
-  //     return ret;
-  //   }
+  actor* get_a2;
+  fix1_t@17 get_a2(int@22 i) {
+    return a2[i -@22 24];
+  }
 
+  actor* get_a;
+  fix1_t@23 get_a(int@17 i) {
+    fix1_t@17 ret;
+    if(i <@17 24) {
+      ret = a1[i];
+    } else {
+      ret = get_a2(i);
+    }
+    return ret;
+  }
 
-//  actor* get_s__;
-//  fix1_t@20 get_s__(int@20 i){
-//    return s[i];
-//  }
-//  fix1_t@21 get_s(int@21 i){
-//    return get_s__(i);
-//  }
-//
-//  actor* set_s__;
-//  void set_s__(int@20 i, fix1_t@20 x){
-//    s[i] = x;
-//  }
-//  void set_s(int@21 i, fix1_t@21 x){
-//    set_s__(i, x);
-//  }
-//
-//  actor* get_t__;
-//  fix1_t@15 get_t__(int@15 i){
-//    return s[i];
-//  }
-//
-//  fix1_t@21 get_t(int@21 i){
-//    return get_t__(i);
-//  }
-//
-//  actor* set_t__;
-//  void set_t__(int@15 i, fix1_t@15 x){
-//    s[i] = x;
-//  }
-//  void set_t(int@21 i, fix1_t@21 x){
-//    set_t__(i, x);
-//  }
-  
-
-  actor* forward_proc_inc;
+  //actor* forward_proc_inc;
   int forward_proc_inc(int@8 o){
-    fix1_t@8 sum;
-    fix1_t@8 ord;
-    fix1_t@8 temp;
+    fix1_t@23 sum;
+    fix1_t@24 ord;
+    fix1_t@24 temp;
     ord = 0;
-    if(started == 1) {
+    if(started <@8 0) {
       sum = 0;
       for (k from 0 to 8) {
-        temp = sum *@8 get_b(k *@8 14 +@8 o);
-        //f[k] = temp;
-        //for (l from 0 to 8){
-        //sum = sum + get_a((3 <<@8 3) +@8 k);
-        //sum = get_a((3 <<@8 3) +@8 k);
-        //sum = a1[(3 <<@8 3) +@8 k];
-        sum = 2;
-          //}
-        ///ord = ord | temp;
+        for (l from 0 to 8) {
+          sum = sum +@23 get_a(l <<@23 3 +@23 k) *@23 s[l];
+        }
+        temp = sum *@24 get_b(k *@8 14 +@8 o);
+        f[k] = temp;
+        ord = ord |@24 temp;
       }
     }else{
-      started = 1;
-      for (k from 0 to 8) {
-        temp = sum *@8 get_b(k *@8 14 +@8 o);
+      started = 0;
+      for (l from 0 to 8) {
+        s[l] = pi[l] *@8 get_b(l *@8 14 +@8 o);
       }
     }
     return ord;
   }
 
+  actor* derive_group;
+  int derive_group(fix9_t::3@(4,4,4) acc){
+    fix9_t@1 x;
+    fix9_t@2 y;
+    fix9_t@3 z;
+    x = acc::0;
+    y = acc::1;
+    z = acc::2;
+
+    fix9_t@0 minDist; minDist = 255;//0b11111111;
+    int@0 minGroup;
+    int@4 ret;
+
+    fix9_t@0 dx;
+    fix9_t@0 dy;
+    fix9_t@0 dz;
+    fix9_t@0 d;
+
+    for (i from 0 to 14){
+      dx = (quantizerMap_x[i] -@1 x) *@1 (quantizerMap_x[i] -@1 x);
+      dy = (quantizerMap_y[i] -@2 y) *@2 (quantizerMap_y[i] -@2 y);
+      dz = (quantizerMap_z[i] -@3 z) *@3 (quantizerMap_z[i] -@3 z);
+
+      //dx = calc_dx(i, acc::0);
+      //dy = calc_dy(i, acc::1);
+      //dz = calc_dz(i, acc::2);
+
+      d = dx +@0 dy +@0 dz;
+      if (d <@0 minDist){
+        minDist = d;
+        minGroup = i;
+      }
+    }
+
+    ret = minGroup;
+    return ret;
+    //ret = forward_proc_inc(minGroup);
+    //return ret;
+  }
+
   fix1_t forward_proc_out() {
-    fix1_t@19 prob;
+    fix1_t@15 prob;
     prob = 0;
-    started = 0;
+    started = -1;
     for (i from 0 to 8){
-      prob = prob +@19 s[i];
+      prob = prob +@15 s[i];
     }
     return prob;
   }
 
-  //actor* shift_s;
-  //void shift_s(int n){
-    //  for (i from 0 to 8){
-      //    set_s(i, get_s(i) <<@17 n);
-      //  }
-    //}
+  void swap_shift(int n){
+    for (i from 0 to 8){
+      s[i] = f[i] <<@25 n;
+    }
+  }
 
-  //  actor* input;
-  // ==>
-  // uncaught exception: "visitor-regalloc: there should be only one item on stock for assignment"
-  int input(fix9_t::3@(9,9,9) acc){
-    int@9 ord;
+  int input(fix9_t::3 acc){
+    int ord;
     ord = forward_proc_inc(derive_group(acc));
     return ord;
   }
+
 
 } // end module Hmm
 
@@ -200,9 +167,9 @@ hmm2 = new Hmm()@REG(107,511);
 //}
 
 //fix9_t::3@(12,12,12) dir_filter_ref;
-fix9_t@12 filter_ref_x;
-fix9_t@12 filter_ref_y;
-fix9_t@12 filter_ref_z;
+fix9_t@9 filter_ref_x;
+fix9_t@9 filter_ref_y;
+fix9_t@9 filter_ref_z;
 
 int filter(fix9_t@11 x_in, fix9_t@11 y_in, fix9_t@11 z_in){
 
@@ -212,9 +179,9 @@ int filter(fix9_t@11 x_in, fix9_t@11 y_in, fix9_t@11 z_in){
 
   // node 6
   int@10 ret2;
-  fix9_t@10 x;
-  fix9_t@10 y;
-  fix9_t@10 z;
+  fix9_t@12 x;
+  fix9_t@12 y;
+  fix9_t@12 z;
   x = x_in;
   y = y_in;
   z = z_in;
@@ -237,29 +204,28 @@ int filter(fix9_t@11 x_in, fix9_t@11 y_in, fix9_t@11 z_in){
 
   if (ret){
     ret = 0;
-    if (x <@12 filter_ref_x -@12 0.4){
+    if (x <@12 filter_ref_x -@9 0.4){
       ret = 1;
     }
-    if (x >@12 filter_ref_x +@12 0.4){
+    if (x >@12 filter_ref_x +@9 0.4){
       ret = 1;
     }
-    if (y <@12 filter_ref_y -@12 0.4){
+    if (y <@12 filter_ref_y -@9 0.4){
       ret = 1;
     }
-    if (y >@12 filter_ref_y +@12 0.4){
+    if (y >@12 filter_ref_y +@9 0.4){
       ret = 1;
     }
-    if (z <@12 filter_ref_z -@12 0.4){
+    if (z <@12 filter_ref_z -@9 0.4){
       ret = 1;
     }
-    if (z >@12 filter_ref_z +@12 0.4){
+    if (z >@12 filter_ref_z +@9 0.4){
       ret = 1;
     }
   }
 
   // node 6
-  ret2 = ret;
-  if (ret2){
+  if (ret){
     filter_ref_x = x;
     filter_ref_y = y;
     filter_ref_z = z;
@@ -273,7 +239,9 @@ void main(){
   fix9_t::3@(13,13,13) acc;
   int@13 ord;
   int@16 n;
-  if (filter(acc::0, acc::1, acc::2)){
+  if (filter(acc::0, acc::1, acc::2) != 0){
+    //ord = ord |@13 hmm1.derive_group(acc);
+    //ord = ord |@13 hmm2.derive_group(acc);
     ord = ord |@13 hmm1.input(acc);
     ord = ord |@13 hmm2.input(acc);
     n = 0;
@@ -283,8 +251,8 @@ void main(){
     }
     if (n >@16 3){
       n = n -@16 3;
-      //hmm1.shift_s(n);
-      //hmm2.shift_s(n);
+      hmm1.swap_shift(n);
+      hmm2.swap_shift(n);
     }
   }
   fix1_t@13 out1;

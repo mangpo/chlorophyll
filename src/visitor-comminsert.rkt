@@ -423,8 +423,6 @@
 	     (gen-path arg param)
 	     (set! path-ret (set-union path-ret (all-path arg))))
 
-        
-
         (define ret
           (set-union path-ret args-ret 
                      (get-field body-placeset (get-field signature ast))
@@ -510,10 +508,10 @@
         (when debug 
               (pretty-display (format "\nCOMMINSERT: While")))
 
-        (define ret (update-placeset (set-union pre-ret cond-ret body-ret)))
+        (define ret (update-placeset (set-union body-ret)))
 
         (gen-path-condition ast)
-        (set-union ret (all-path ast))
+        (set-union pre-ret cond-ret ret (all-path ast))
         ]
 
        [(is-a? ast Block%) 
