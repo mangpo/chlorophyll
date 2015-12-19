@@ -2,8 +2,8 @@
 
 
 # 0 --> 000
-# 1 --> 100
-# 2 --> 200
+# 1 --> 001
+# 2 --> 002
 
 int c;
 
@@ -20,11 +20,10 @@ int f(int x) {
 void main(){
   int@1 x;
   int@0 b;
+  c = 0;
   x = 0;
-  b = 1;
-  while(1) {
-  if(b > 0) {
+  for(i from 0 to 10) {
     x = f(x);
-  }
+    out(x);
   }
 }

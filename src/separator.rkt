@@ -59,7 +59,11 @@
 	     (send (vector-ref programs i) accept cprinter)
 	     (newline))
 	(print-main)
-	)))
+	))
+
+    (system (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a/~a" 
+                    outdir name outdir name)
+            ))
   
   ;; Unroll for loop according to array distributions of variables inside its body.
   ;; Note: given AST is mutated.

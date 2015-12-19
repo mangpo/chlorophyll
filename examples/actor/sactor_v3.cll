@@ -2,26 +2,27 @@
 
 actor* edge;
 
-int edge(int a){
-  return a + 1;
+fix1_t edge(int a){
+  return a + 0.06;
 }
 
 actor* wrap;
 
-int wrap(int a){
-  return edge(a) + 3;
+fix1_t wrap(fix1_t a){
+  return edge(a) + 0.0025;
 }
 
 void main(){
-  int x, b;
+  fix1_t x;
+  int b;
   b = 0;
   x = 0;
   while(b < 10) {
     if(b > 5) {
       x = wrap(x);
-      //out(x);
+      out(x);
       x = wrap(x);
-      //out(x);
+      out(x);
     }
     b = b+1;
   }

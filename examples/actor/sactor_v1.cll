@@ -13,9 +13,9 @@ void main(){
   while(b < 10) {
     if(b > 5) {
       x = edge(x);
-      //out(x);
+      out(x);
       x = edge(x);
-      //out(x);
+      out(x);
     }
     b = b+1;
   }

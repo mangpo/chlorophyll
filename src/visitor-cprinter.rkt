@@ -318,13 +318,18 @@
 
          (define stmts (get-field stmts new-ast))
          (for ([stmt stmts])
-           (unless (is-a? stmt PortListen%)
-                   (unless (is-a? stmt Block%)
-                           (newline)
-                           (display indent))
-                   (send stmt accept this)
-                   (when (is-a? stmt Exp%)
-                         (display ";"))))
+              (when (or (is-a? stmt Block%)
+                        (is-a? stmt FuncDecl%)
+                        (is-a? stmt VarDecl%)
+                        (is-a? stmt ArrayDecl%))
+                         
+                    (unless (is-a? stmt Block%)
+                            (newline)
+                            (display indent))
+                    (send stmt accept this)
+                    ;; (when (is-a? stmt Exp%)
+                    ;;       (display ";"))
+                    ))
          
          (for ([stmt stmts])
               (when

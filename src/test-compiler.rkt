@@ -99,7 +99,7 @@
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 
 ;; Actor
-#;(compile-and-optimize "../examples/actor/sactor_dup.cll" "sactor_dup" 
+(compile-and-optimize "../examples/actor/sactor_v3.cll" "sactor_v3" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
                       512 #:w 18 #:h 8 #:opt #f #:partition #f)
@@ -121,6 +121,6 @@
 #;(compile-and-optimize "../examples/sensors/derive_group.cll" "derive_group" 
                       350 #:w 5 #:h 5 #:opt #f #:partition #f
                       #:original-format #f)
-(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test"
+#;(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
