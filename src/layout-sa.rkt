@@ -121,20 +121,23 @@
                (vector-set! conflict (cdr index)
                             (set-union (list->set path) current))))
         ;; update actors-map & actor-index
-        (for ([index actor-indices])
-             (let ([current (hash-ref actors-map index)])
-               (for ([core path])
-                    (unless
-                     (set-member? current core)
-                     (vector-set! actor-index core
-                                  (cons index
-                                        (vector-ref actor-index core)))))
-               (hash-set! actors-map index
-                          (set-union (set-subtract (list->set path) cores)
-                                     current))))]
+        (pretty-display `(actor-indices ,actor-indices))
+        (let ([additions (set-subtract (list->set path) cores)])
+          (for ([index actor-indices])
+               (let ([current (hash-ref actors-map index)])
+                 (for ([core additions])
+                      (unless
+                       (set-member? current core)
+                       (vector-set! actor-index core
+                                    (cons index
+                                          (vector-ref actor-index core)))))
+                 (hash-set! actors-map index
+                            (set-union additions current)))))
+        ]
        [else
         (set! path (route i j w))])
       (set-union! cores (list->set path))
+      (pretty-display `(done))
       path
       )))
   
