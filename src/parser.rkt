@@ -517,13 +517,19 @@
      
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
-    (part2core
-	 (() (list))
-	 ((HASH NUM MAP NUM part2core) (cons (cons $2 $4) $5)))
+    ;; (part2core
+    ;;      (() (list))
+    ;;      ((HASH NUM MAP NUM part2core) (cons (cons $2 $4) $5)))
 
-    (noroute
-         (() (list))
-	 ((NOROUTE @ LBRACK num-list RBRACK) $4))
+    ;; (noroute
+    ;;      (() (list))
+    ;;      ((NOROUTE @ LBRACK num-list RBRACK) $4))
+
+    (part2core-unit
+     ((HASH NUM MAP NUM) (cons $2 $4)))
+
+    (noroute-unit
+     ((NOROUTE @ LBRACK num-list RBRACK) $4))
 
     (actor-unit
          ((ACTOR VAR @ LPAREN NUM INVOKE NUM RPAREN SEMICOL)
@@ -540,16 +546,20 @@
      ((module-decl) $1)
      ((module-init) $1)
      ((actor-unit) (new Actor% [info $1]))
-     )
+     ((part2core-unit) (new Pin% [pin $1]))
+     ((noroute-unit) (new Obstacle% [nodes $1])))
 
     (decls
          ((decl-unit) (list $1))
          ((decl-unit decls) (cons $1 $2)))
          
+    ;; (program
+    ;;  ((part2core noroute decls)
+    ;;   (new Program% [stmts $3] [fixed-parts $1] [noroute $2])
+    ;;   ))
+         
     (program
-     ((part2core noroute decls)
-      (new Program% [stmts $3] [fixed-parts $1] [noroute $2])
-      ))
+     ((decls) (new Program% [stmts $1])))
    
     )))
 

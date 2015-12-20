@@ -295,8 +295,9 @@ void recuit(type_vecteur & meilleure_sol, long & meilleur_cout,
     }
 
     delta = calc_delta_complet2(n,a,b,p,r,s);
-    if (delta > 0)
-     {dmin = min(dmin, delta); dmax = max(dmax, delta);}; 
+    if (delta > 0) {
+        dmin = min(dmin, delta); dmax = max(dmax, delta);
+    }; 
     Cout = Cout + delta;
     swap(p[r], p[s]);
   }
@@ -319,8 +320,7 @@ void recuit(type_vecteur & meilleure_sol, long & meilleur_cout,
       if(((id == 0) && (s > n)) ||
          size >= module_size[id]) {
         r = next[r];
-        if (next[r] > n) r = first;
-        
+        if (r > n) r = first;
         s = r;
         id = module_id[p[r]];
         size = 0;
@@ -336,11 +336,15 @@ void recuit(type_vecteur & meilleure_sol, long & meilleur_cout,
         s = module_locs[id][size];
         size++;
       }
+      // cout << "r,s,p[r],p[s] =" << r << "," << s << "," << p[r] << "," << p[s] << endl;
+      // for (i = 1; i <= n; i = i + 1) cout << p[i] << ' ';
+      // cout << '\n';
       
       delta = calc_delta_complet2(n,a,b,p,r,s);
       if ((delta < 0) || (mon_rand() < exp(-double(delta)/temperature)) ||
-           mxfail == nb_fail)
-       {Cout = Cout + delta; swap(p[r], p[s]); nb_fail = 0;}
+          mxfail == nb_fail) {
+        Cout = Cout + delta; swap(p[r], p[s]); nb_fail = 0;
+      }
       else nb_fail = nb_fail + 1;
 
       if (mxfail == nb_fail) {beta = 0; temperature = tfound;};
@@ -381,11 +385,11 @@ int main(int argc, char* argv[]) {
       last = i;
   }
   
-  // cout << "first: " << first << endl;
-  // for(long i = 1; i <= n; ++i) {
-  //   cout << next[i] << " ";
-  // }
-  // cout << endl;
+  cout << "first: " << first << endl;
+  for(long i = 1; i <= n; ++i) {
+    cout << next[i] << " ";
+  }
+  cout << endl;
 
   for (no_res = 1; no_res <= nb_res; no_res = no_res + 1) {
     cout << "---------------------------------" << endl;

@@ -99,7 +99,7 @@
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 
 ;; Actor
-#;(compile-and-optimize "../examples/actor/sactor_v5.cll" "sactor_v5" 
+#;(compile-and-optimize "../examples/actor/sactor_v6.cll" "sactor_v6" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
                       512 #:w 18 #:h 8 #:opt #f #:partition #f)
@@ -113,6 +113,8 @@
                       400 #:w 3 #:h 3 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/module/module_concrete.cll" "module_concrete" 
                       512 #:w 3 #:h 3 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/module/module_pinning.cll" "module_pinning" 
+                      512 #:w 3 #:h 3 #:opt #f #:partition #f)
 
 ;; HMM Classifier
 #;(compile-and-optimize "../examples/sensors/hmm_array_b.cll" "hmm_array_b" 
@@ -121,9 +123,12 @@
 #;(compile-and-optimize "../examples/sensors/derive_group.cll" "derive_group" 
                       350 #:w 5 #:h 5 #:opt #f #:partition #f
                       #:original-format #f)
-(compile-and-optimize "../examples/sensors/hmm_test.cll" "hmm_test"
+#;(compile-and-optimize "../examples/sensors/hmm_test2.cll" "hmm_test2"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
-                      350 #:w 3 #:h 3 #:opt #f #:partition #f
+                      350 #:w 18 #:h 8 #:opt #f #:partition #f
+                      #:original-format #f)
+#;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
+                      350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)

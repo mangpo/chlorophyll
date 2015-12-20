@@ -19,8 +19,13 @@
 
     (define module-summary (make-hash))
     (define module-clusters (list))
+    (define my-cluster #f)
+    
     (define actors (make-hash))
     (define actors* (make-hash))
+    (define part2core (list))
+    (define noroute (list))
+    
     (define-syntax-rule (rename name)
       (if (and mapping
                (not (member name
@@ -86,10 +91,12 @@
         (define lhs (my lhs))
         (define module-name (get-field name rhs))
         (define module (hash-ref modules module-name))
+        (define locations (get-field locations rhs))
 
         (set! id (get-field name lhs))
         (set! mapping (make-hash))
         (set! place-mapping (make-hash))
+        (set! my-cluster locations)
         (for ([param (get-field params module)]
               [val (get-field args rhs)])
              (hash-set! mapping param val))
@@ -102,12 +109,12 @@
         (hash-set! module-summary module-name
                    (cons id (hash-ref module-summary module-name)))
         ;; update module-inits
-        (define locations (get-field locations rhs))
         (unless (empty? locations)
                 (set! module-clusters
                       (cons (cons (get-field name lhs) locations)
                             module-clusters)))
         (set! mapping #f)
+        (set! my-cluster #f)
         
         ret
         ]
@@ -272,16 +279,23 @@
           (set-field! module-decls ast module-summary)
           (set-field! module-inits ast module-clusters)]
 
-         [(ormap (lambda (x) (is-a? x Actor%)) stmts)
+         [(ormap (lambda (x)
+                   (or (is-a? x Actor%) (is-a? x Pin%) (is-a? x Obstacle%)))
+                 stmts)
           (set-field!
            stmts ast
            (flatten
-            (for/list ([x stmts])
-                      (if (is-a? x Actor%) (send x accept this) x))))
+            (for/list
+             ([x stmts])
+             (if (or (is-a? x Actor%) (is-a? x Pin%) (is-a? x Obstacle%))
+                 (send x accept this)
+                 x))))
           ])
 
         (set-field! actors ast actors)
         (set-field! actors* ast actors*)
+        (set-field! fixed-parts ast part2core)
+        (set-field! noroute ast noroute)
           
         ]
 
@@ -300,6 +314,30 @@
               (hash-set! actor-map func (list (cons actor caller)))))
         (list)
         ]
+
+       [(is-a? ast Pin%)
+        (cond
+         [mapping
+          (when (empty? my-cluster)
+                (raise "Cannot pin partitions because locations of moduleis unspeciified"))
+
+          (define offset (car my-cluster))
+          (define pair (get-field pin ast))
+          (set! part2core (cons (cons (fresh-place (car pair))
+                                      (+ (cdr pair) offset))
+                                part2core))]
+
+         [else
+          (set! part2core (cons (get-field pin ast) part2core))])
+        (list)
+        ]
+          
+       [(is-a? ast Obstacle%)
+        (set! noroute (append (map fresh-place (get-field nodes ast)) noroute))
+        (list)
+        ]
+
+       [else (raise (format "visitor-module-expander: unimplemented for ~a" ast))]     
 
        ))))
        

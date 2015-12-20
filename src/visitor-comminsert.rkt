@@ -15,7 +15,7 @@
   (class* object% (visitor<%>)
     (super-new)
     (init-field routing-table part2core w h obstacles conflict-list
-                actors*-no-cf-map actor-index cores)
+                actors actors*-no-cf-map actor-index cores)
     ;; TODO: check if obstacles have everything.
 
     (define debug #t)
@@ -432,8 +432,16 @@
         (when debug (pretty-display `(funccall-before ,ret)))
         (when
          (hash-has-key? actors*-no-cf-map name)
+         (for ([pair (hash-ref actors name)])
+              (let ([actor (car pair)]
+                    [caller (cdr pair)])
+                (set! ret
+                      (set-union
+                       ret
+                       (list->set (vector-2d-ref routing-table caller actor))))))
          (pretty-display `(actors*-no-cf-map ,(hash-ref actors*-no-cf-map name name)))
-         (set! ret (set-subtract ret (hash-ref actors*-no-cf-map name name))))
+         (set! ret (set-subtract ret
+                                 (hash-ref actors*-no-cf-map name name))))
         ;; (cond
         ;;  [(hash-has-key? actors*-no-cf-map name)
         ;;   (pretty-display `(actors*-no-cf-map ,(hash-ref actors*-no-cf-map name name)))

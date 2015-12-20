@@ -144,6 +144,12 @@
             (set (second info) (third info))
             (set))]
 
+       [(is-a? ast Pin%)
+        (set (car (get-field pin ast)))]
+
+       [(is-a? ast Obstacle%)
+        (list->set (get-field nodes ast))]
+
        [(and (is-a? ast Program%) (not save))
         ;;(pretty-display "PLACESET: Program (no save)")
         (define ret (set))

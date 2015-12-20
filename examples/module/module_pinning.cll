@@ -3,7 +3,8 @@
 # 0 --> 100
 
 module Op(c, arr) {
-  int add(int a, int b) { 
+  # 0 --> 001
+  int@1 add(int@0 a, int@0 b) { 
     int x[3] = arr;
     return a +@place(b) x[c] + b; 
   }

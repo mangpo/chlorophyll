@@ -212,7 +212,8 @@
                                  (vector-ref part2core (cdr pair))))
                          lst)]
            [all-actors (list->set (map car new-lst))]
-           [all-callers (list->set (map cdr new-lst))])
+           [all-callers (list->set (map cdr new-lst))]
+           [cores-before (for/set ([x cores]) x)])
       (hash-set! new-actors func new-lst)
       (for ([j (map car new-lst)]  ;; actor
             [i (map cdr new-lst)]) ;; caller
@@ -226,30 +227,13 @@
               ;; (pretty-display `(path ,i ,j ,path))
               (vector-2d-set! core2route n i j path)
               (vector-2d-set! core2route n j i (reverse path))
-              (hash-set! new-actors*-no-cf-map func
-                         (set-union
-                          (hash-ref new-actors*-no-cf-map func)
-                          (set-subtract (list->set (drop path 1)) cores))))))))
-
-  ;; actors*
-  ;; (pretty-display `(actors*-no-cf-map ,(get-field actors*-no-cf-map ast)))
-  ;; (for ([pair
-  ;;        (sort (hash->list (get-field actors*-no-cf-map ast))
-  ;;              (lambda (x y) (< (set-count (cdr x)) (set-count (cdr y)))))])
-  ;;      (let* ([name (car pair)]
-  ;;             [node-group (cdr pair)]
-  ;;             [group (for/set ([x node-group]) (vector-ref part2core x))]
-  ;;             [my-obstacles
-  ;;              (set-union obstacles (set-subtract cores group))
-  ;;              ] ;; a lot of restriction if using my-obstacles
-  ;;             [_ (pretty-display `(func*-before ,name ,group ,obstacles ,my-obstacles))]
-  ;;             [new-group (keep-routing name group obstacles)]
-  ;;             )
-  ;;        ;;(pretty-display `(func*-after ,name ,new-group))
-  ;;        (hash-set! new-actors*-no-cf-map name new-group)
-  ;;        (route-caller-actor name actors* obstacles)
-  ;;        (set! obstacles (set-union obstacles new-group))
-  ;;        ))
+              (let ([additions
+                     (set-subtract (list->set (drop path 1)) cores-before)])
+                ;;(pretty-display `(additions ,additions ,(drop path 1) ,cores-before))
+                (hash-set! new-actors*-no-cf-map func
+                           (set-union
+                            (hash-ref new-actors*-no-cf-map func)
+                            additions))))))))
 
   ;; actors
   (for ([name (hash-keys actors*-no-cf-map)])
@@ -272,6 +256,7 @@
                   core))
               (hash-ref actors name)))))
   
+  (pretty-display `(cores-before ,cores))
   (pretty-display `(actors*-map-before ,new-actors*-no-cf-map))
   
   (for ([name (hash-keys actors*)])
@@ -290,18 +275,6 @@
   (set-field! noroute ast obstacles)
   (set-field! cores ast cores)
   (pretty-display `(gen-route ,cores ,obstacles))
-  
-  ;; (for* ([i cores]
-  ;;        [j cores])
-  ;;        (when (and (< i j)
-  ;;                   (not (vector-2d-ref core2route i j)))
-  ;;              (let ([path (gen-route-i-j i j w h obs? obstacles
-  ;;                                         conflicts conflict-index)])
-  ;;                (when
-  ;;                 path
-  ;;                 ;; (pretty-display `(path ,i ,j ,path))
-  ;;                 (vector-2d-set! core2route n i j path)
-  ;;                 (vector-2d-set! core2route n j i (reverse path))))))
 
   (vector-set! core2route n-1 (make-vector n #f))
   (for ([i (in-range n)])
@@ -340,11 +313,15 @@
       ;; Set to talk to Polyforth
       ;; (vector-set! fix (* w 2) (* w h)) ;; index [physical] (no +1), value [logical] (+1)
 
+      (define parts-fixed (mutable-set))
+      (define cores-fixed (mutable-set))
       (for ([mapping (get-field fixed-parts ast)])
-	   (let ([part (car mapping)]
-		 [core (cdr mapping)])
-	     (vector-set! fix (+ (* (quotient core 100) w) (modulo core 100))
-			  (add1 part))))
+	   (let* ([part (car mapping)]
+                  [core (cdr mapping)]
+                  [core-id (+ (* (quotient core 100) w) (modulo core 100))])
+             (set-add! parts-fixed part)
+             (set-add! cores-fixed core)
+	     (vector-set! fix core-id (add1 part))))
 
       (newline)
       (for ([i (in-range (* w h))])
@@ -355,14 +332,17 @@
       (define clusters (get-field module-inits ast))
       (pretty-display (length clusters))
       (for ([cluster clusters])
-           (let ([parts (car cluster)]
-                 [cores (cdr cluster)])
-             (when (> (set-count parts) (length cores))
+           (let* ([parts (set-subtract (car cluster) parts-fixed)]
+                  [cores (set-subtract (list->set (cdr cluster)) cores-fixed)]
+                  [n-parts (set-count parts)]
+                  [n-cores (set-count cores)]
+                  )
+             (when (> n-parts n-cores)
                    (raise "Cannot pin a module instance because # of logical partitions inside the instance exceeds # of provided cores."))
-             (display (set-count parts)) (display " ")
+             (display n-parts) (display " ")
              (for ([p parts]) (display (add1 p)) (display " "))
              (newline)
-             (display (length cores)) (display " ")
+             (display n-cores) (display " ")
              (for ([core cores])
                   (display (+ 1 (* (quotient core 100) w) (modulo core 100)))
                   (display " "))

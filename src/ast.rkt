@@ -1448,6 +1448,28 @@
     (define/override (pretty-print [indent ""])
       (pretty-display (format "~a(Actor ~a)" indent info)))))
 
+(define Pin%
+  (class Base%
+    (super-new)
+    (init-field pin)
+
+    (define/override (clone)
+      (raise "no clone for Pin%"))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Pin ~a)" indent pin)))))
+
+(define Obstacle%
+  (class Base%
+    (super-new)
+    (init-field nodes)
+
+    (define/override (clone)
+      (raise "no clone for Obstacle%"))
+
+    (define/override (pretty-print [indent ""])
+      (pretty-display (format "~a(Obstacle ~a)" indent nodes)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define digital-nodes '(701 705 708 715 517 417 317 217 8 1 100 200 300 500 600))

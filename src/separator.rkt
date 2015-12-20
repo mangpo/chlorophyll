@@ -84,6 +84,7 @@
                                  [w w] [h h]
                                  [obstacles (get-field noroute ast)]
                                  [cores (get-field cores ast)]
+                                 [actors (get-field actors ast)]
                                  [actors*-no-cf-map (get-field actors*-no-cf-map ast)]
                                  [actor-index (get-field actors* ast)]
                                  [conflict-list (get-field conflict-list ast)]
