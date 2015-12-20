@@ -113,7 +113,7 @@
                       400 #:w 3 #:h 3 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/module/module_concrete.cll" "module_concrete" 
                       512 #:w 3 #:h 3 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/module/module_pinning.cll" "module_pinning" 
+#;(compile-and-optimize "../examples/module/module_pinning.cll" "module_pinning" 
                       512 #:w 3 #:h 3 #:opt #f #:partition #f)
 
 ;; HMM Classifier
@@ -130,5 +130,8 @@
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
+                      350 #:w 18 #:h 8 #:opt #f #:partition #f
+                      #:original-format #f)
+(compile-and-optimize "../examples/sensors/hmm_module_pinning.cll" "hmm_module_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
