@@ -353,7 +353,7 @@
             ;; discard function definitions that are inlined
             (if (and (funcdecl? a)
                      (or (get-inline-body (funcdecl-name a))
-                                        ;(hash-has-key? function-renames (funcdecl-name a))
+                         (hash-has-key? function-renames (funcdecl-name a))
                          ))
                 (printf "discarding inlined funcdecl for: ~a\n" (funcdecl-name a))
                 (set! code (cons (opt a rm) code))))
