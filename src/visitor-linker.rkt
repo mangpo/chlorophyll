@@ -697,7 +697,9 @@
          ;; update env front to back
          (for ([stmt stmts])
 	      (if (is-a? stmt FuncDecl%)
-		  (declare env (get-field name stmt) stmt)
+                  (if (hash-has-key? env (get-field name stmt))
+                      (raise (format "redefine function ~a" (get-field name stmt)))
+                      (declare env (get-field name stmt) stmt))
 		  (send stmt accept this)))
          
          ;; desugar back to front

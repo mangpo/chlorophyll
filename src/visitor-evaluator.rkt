@@ -172,12 +172,18 @@
           ([conflict (get-field conflict-list ast)])
           (for/list
            ([group conflict])
-           (for/set ([part group]) (evaluate-with-sol part)))))
+           (list->set
+            (filter
+             (lambda (x) (not (symbolic? x)))
+             (for/list ([part group]) (evaluate-with-sol part)))))))
         
         (set-field!
          module-inits ast
          (for/list ([pair (get-field module-inits ast)])
-                   (cons (for/set ([x (car pair)]) (evaluate-with-sol x))
+                   (cons (list->set
+                          (filter
+                           (lambda (x) (not (symbolic? x)))
+                           (for/list ([x (car pair)]) (evaluate-with-sol x))))
                          (cdr pair))
                    ))
                 
