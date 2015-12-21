@@ -19,7 +19,7 @@
     (struct core (program workspace stack temp func) #:mutable)
 
     (super-new)
-    (init-field routing-table actors
+    (init-field routing-table actors actors*-no-cf-map
                 w h [n (add1 (* w h))]
                 [cores (make-vector n)] [expand-map (make-hash)])
 
@@ -594,7 +594,7 @@
          actors-info
          (set! actors-info (hash-ref actors name))
          (set! need-setup (not (member name visited-actor-funcs)))
-         ;;(pretty-display `(ACT ,need-setup ,visited-actor-funcs))
+         (pretty-display `(ACTOR ,name ,need-setup ,visited-actor-funcs))
          
          (when
           need-setup
@@ -605,10 +605,17 @@
                       [caller (cdr pair)]
                       [path (vector-2d-ref routing-table caller actor)]
                       [wire (take path (sub1 (length path)))])
-                 ;;(pretty-display `(set-workspace-actor ,actor))
-                 (set-workspace-actor actor (last wire)))))
+                 (pretty-display `(set-workspace-actor ,actor))
+                 (set-workspace-actor actor (last wire))))
+
+          ;; 2. set up wiring node & caller
+          (for ([i (hash-ref actors*-no-cf-map name)])
+               (when (add-while i)
+                     (pretty-display `(add-while ,i))
+                     (set! need-cleanup (cons i need-cleanup))))
+          )
          
-         ;; 2. set up wiring node & caller
+         ;; 3. set up path
          (define (gen-comm-actor path)
            (when (>= (length path) 3)
                  (let ([a (car path)]
@@ -617,28 +624,48 @@
                    (push-workspace b (transfer a b c))
                    (gen-comm-actor (cdr path)))))
          ;; wiring nodes can be actors themselves, but that's okay
+         ;; (for ([pair (topo-sort actors-info)])
+         ;;      (let* ([actor (car pair)]
+         ;;             [caller (cdr pair)]
+         ;;             [path (vector-2d-ref routing-table caller actor)]
+         ;;             [wire (drop (take path (sub1 (length path))) 1)]
+         ;;             )
+         ;;        ;; caller initiates
+         ;;        ;; (pretty-display `(caller-actor ,caller ,wire ,actor))
+         ;;        ;; (pretty-display `(add-remote-exec ,caller))
+         ;;        (set! need-cleanup (cons actor need-cleanup))
+         ;;        (add-remote-exec caller (second path) actor)
+         ;;        (when
+         ;;         (not (member pair visited-actor-pairs))
+	 ;;         (set! visited-actor-pairs (cons pair visited-actor-pairs))
+         ;;         ;; set up while loop in the wiring nodes
+         ;;         (for ([i wire])
+         ;;              ;; (pretty-display `(add-while ,i))
+         ;;              (when (add-while i)
+         ;;                    (set! need-cleanup (cons i need-cleanup))))
+         ;;         ;; wiring nodes pass exec command to actor
+         ;;         ;; (pretty-display `(gen-comm-actor ,path))
+         ;;         (gen-comm-actor path))
+         ;;        ))
+
+         ;; 4. remote execuation path
          (for ([pair (topo-sort actors-info)])
               (let* ([actor (car pair)]
                      [caller (cdr pair)]
                      [path (vector-2d-ref routing-table caller actor)]
-                     [wire (drop (take path (sub1 (length path))) 1)])
+                     )
                 ;; caller initiates
-                ;; (pretty-display `(caller-actor ,caller ,wire ,actor))
+                ;; (pretty-display `(caller-actor ,caller ,actor))
                 ;; (pretty-display `(add-remote-exec ,caller))
                 (set! need-cleanup (cons actor need-cleanup))
                 (add-remote-exec caller (second path) actor)
                 (when
                  (not (member pair visited-actor-pairs))
 		 (set! visited-actor-pairs (cons pair visited-actor-pairs))
-                 ;; set up while loop in the wiring nodes
-                 (for ([i wire])
-                      ;; (pretty-display `(add-while ,i))
-                      (when (add-while i)
-                            (set! need-cleanup (cons i need-cleanup))))
-                 ;; wiring nodes pass exec command to actor
-                 ;; (pretty-display `(gen-comm-actor ,path))
                  (gen-comm-actor path))
-                ))) ;; end actor
+                ))
+         
+         ) ;; end actor
 
 	;; add expressions for arguments
         (for ([arg (get-field args ast)])
@@ -669,7 +696,7 @@
          need-setup
          ;; prevent from using these nodes to do more computation.
          (for ([i (list->set need-cleanup)])
-              ;; (pretty-display `(clear-workspace-actor ,i))
+              (pretty-display `(clear-workspace-actor ,i))
               (clear-workspace i)))
         ]
 
@@ -964,6 +991,9 @@
         (for ([i (in-range n)])
              (unless
               (is-a? (get-workspace i) Program%)
+              (pretty-display (format "Top level scope @core ~a is not Program!" i))
+              (pretty-display (get-workspace i))
+              (send (get-workspace i) pretty-print)
               (raise (format "Top level scope @core ~a is not Program!" i)))
              (reverse-workspace i)
              ;;(pretty-display `(program ,i ,(get-field stmts (get-workspace i))))

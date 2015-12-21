@@ -99,6 +99,7 @@
   (define divider (new ast-divider%
                        [routing-table routing-table]
                        [actors (get-field actors ast)]
+                       [actors*-no-cf-map (get-field actors*-no-cf-map ast)]
                        [w w] [h h]))
   (define programs (send ast accept divider))
   (when verbose (pretty-display "--- after dividing ---"))

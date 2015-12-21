@@ -1,0 +1,20 @@
+// c
+
+# 0 --> 000
+# 1 --> 002
+# 2 --> 102
+
+int@1 a[10];
+int@2 c;
+
+actor* get_a;
+int@0 get_a(int@1 i) {
+  return a[i] + c;
+}
+
+void main() {
+  int i;
+  c = 1;
+  i = get_a(i);
+  i = get_a(i);
+}
