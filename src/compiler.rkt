@@ -135,7 +135,7 @@
   (define concise-printer (new printer% [out #t]))
   
   ;; generate sequantial simulation code
-  (when run (simulate-onecore my-ast name input))
+  (simulate-onecore my-ast name input run)
   
   (when verbose
     (pretty-display "--- before partition ---")

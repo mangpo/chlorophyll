@@ -130,7 +130,10 @@
 #;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
-(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
+#;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
+                      350 #:w 18 #:h 8 #:opt #f #:partition #f
+                      #:original-format #f)
+(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_module_pinning.cll" "hmm_module_pinning"

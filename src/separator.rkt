@@ -127,7 +127,7 @@
       (send ast accept cprinter)))
   )
 
-(define (simulate-onecore ast name input)
+(define (simulate-onecore ast name input run)
   (define cpp    (format "~a/~a_seq.cpp" outdir name))
   (define binary (format "~a/~a_seq" outdir name))
   (define expect (format "~a/out/~a_~a.out" datadir name input))
@@ -138,13 +138,16 @@
   (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a -o ~a" 
 					 cpp
 					 binary)))
-	;; error
-	(raise "compilation error at sequantial simulation file."))
-  (pretty-display (format "GENERATE ~a" expect))
-  (system (format "./~a < ~a/~a > ~a"
-                  binary
-                  datadir input  ;; input
-                  expect)) ;; output
+          ;; error
+          (raise "compilation error at sequantial simulation file."))
+
+  (when run
+        (pretty-display (format "GENERATE ~a" expect))
+        (system (format "./~a < ~a/~a > ~a"
+                        binary
+                        datadir input  ;; input
+                        expect)) ;; output
+        )
   )
        
 (define (simulate-multicore name input)
