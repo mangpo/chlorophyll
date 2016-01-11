@@ -257,6 +257,9 @@
    [(mult? ast)
     (mult)]
 
+   [(abs? ast)
+    (abs)]
+
    [(port-exec? ast)
     (port-exec (port-exec-name ast) (port-exec-port ast) (port-exec-at ast))]
 

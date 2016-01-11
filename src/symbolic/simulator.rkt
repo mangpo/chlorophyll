@@ -272,6 +272,9 @@
          [(mult? x)
           (stack-2 (lambda (x y) (clip (* x y))))]
 
+         [(abs? x)
+          (void)]
+
          [(funccall? x)
           (define prev-scope current-scope)
           (define name (funccall-name x))

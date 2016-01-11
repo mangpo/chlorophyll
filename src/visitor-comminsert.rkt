@@ -18,7 +18,7 @@
                 actors actors*-no-cf-map actor-index cores)
     ;; TODO: check if obstacles have everything.
 
-    (define debug #t)
+    (define debug #f)
     (define n (* w h))
     (define visited (make-hash))
     (define obs? (> (set-count obstacles) 0))

@@ -87,7 +87,6 @@
          (display (get-field op ast))
          ]
 
-
         [(is-a? ast Num%)
 	 (display (get-field n (get-field n ast)))
          ]
@@ -127,10 +126,25 @@
          ]
         
         [(is-a? ast UnaExp%)
-         (display "(")
-	 (display (send (get-field op ast) to-string))
-         (send (get-field e1 ast) accept this)
-         (display ")")
+	 (define op (get-field op (get-field op ast)))
+         (cond
+          [(and (equal? op "**2") (fix_t? (get-field type (get-field e1 ast))))
+           (display "finitize(( (abs_tmp=")
+           (send (get-field e1 ast) accept this)
+           (display (format ") * abs_tmp) >> ~a)" (- 18 (fix_t-int (get-field type (get-field e1 ast))))))
+           ]
+
+          [(equal? op "**2")
+           (display "finitize( (abs_tmp=")
+           (send (get-field e1 ast) accept this)
+           (display ") * abs_tmp)")
+           ]
+
+          [else
+           (display "(")
+           (display (send (get-field op ast) to-string))
+           (send (get-field e1 ast) accept this)
+           (display ")")])
          ]
         
         [(is-a? ast BinExp%)
@@ -419,6 +433,7 @@
               (display (format "long~a ~a_~a; " 
 			       (if (> (cdr temp) 1) (cdr temp) "")
 			       (car temp) core)))
+         (pretty-display "long abs_tmp;")
 
          ;; Body
          (send (get-field body ast) accept this)

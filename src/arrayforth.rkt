@@ -8,6 +8,7 @@
         #:auto-value null
         #:mutable)
 (struct mult ()) ;; : mult (x y -> z) a! 0 17 for +* next drop drop a ;
+(struct abs ())  ;; : abs (x -> |x|) -if - 1 . + then ;
 (struct funccall (name))
 (struct funcdecl (name body simple) #:mutable)
 (struct vardecl (val))
@@ -239,6 +240,7 @@
         (aforth-eq? (linklist-next a) (linklist-next b)))
    (and (block? a) (block? b) (equal? (block-body a) (block-body b)))
    (and (mult? a) (mult? b))
+   (and (abs? a) (abs? b))
    (and (funccall? a) (funccall? b) (equal? (funccall-name a) (funccall-name b)))
    (and (forloop? a) (forloop? b) (equal? (forloop-iter a) (forloop-iter b))
         (aforth-eq? (forloop-body a) (forloop-body b)))
@@ -302,6 +304,9 @@
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
+   
+   [(abs? x)
+    (pretty-display (format "~a(abs)" indent))]
    
    [(port-exec? x)
     (pretty-display (format "~a(port-exec: ~a, port=~a, node=~a)"
@@ -420,6 +425,9 @@
    
    [(mult? x)
     (pretty-display (format "~a(mult)" indent))]
+   
+   [(abs? x)
+    (pretty-display (format "~a(abs)" indent))]
    
    [(port-exec? x)
     (pretty-display (format "~a(port-exec \"~a\" \"~a\" ~a)"

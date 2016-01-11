@@ -6,7 +6,7 @@
 
 (provide ast-from-string ast-from-file)
  
-(define-tokens a (FIX NUM VAR ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
+(define-tokens a (FIX NUM VAR ARITHOP0 ARITHOP1 ARITHOP2 ARITHOP3 RELOP EQOP))
 (define-empty-tokens b (@ NOT BAND BXOR BOR AND OR EOF
 			       LPAREN RPAREN LBRACK RBRACK LSQBR RSQBR
 			       = SEMICOL COMMA COL EXT DOT
@@ -34,6 +34,7 @@
   (line-comment (re-: "//" (re-* (char-complement #\newline)) #\newline))
   (digit10 (char-range "0" "9"))
   (number10 (number digit10))
+  (arith-op0 "**2")
   (arith-op1 (re-or "*" "*/17" "*/16" "/" "%" "/%" "*:2"))
   (arith-op2 (re-or "+" "-" "~"))
   (arith-op3 (re-or "<<" ">>" ">>:2" ">>>"))
@@ -76,6 +77,7 @@
    ("REG" (token-REG))
    ("-->" (token-MAP))
    ("~>" (token-INVOKE))
+   (arith-op0 (token-ARITHOP0 lexeme))
    (arith-op1 (token-ARITHOP1 lexeme))
    (arith-op2 (token-ARITHOP2 lexeme))
    (arith-op3 (token-ARITHOP3 lexeme))
@@ -161,7 +163,8 @@
     (left ARITHOP3)
     (left ARITHOP2)
     (left ARITHOP1)
-    (left NOT))
+    (left NOT)
+    (left ARITHOP0))
    (src-pos)
    (grammar
     (at-place 
@@ -262,6 +265,7 @@
 	 ((ele) $1)
 
          ((NOT exp)          (UnaExp "!" $2 $1-start-pos))
+         ((exp ARITHOP0)     (UnaExp "**2" $1 $2-start-pos))
          ((ARITHOP2 exp)     (prec NOT) 
 	                     (if (and (equal? $1 "-") (is-a? $2 Num%))
 				 (new Num% 
@@ -282,6 +286,7 @@
          ((exp OR exp)       (BinExp $1 "||" $3 $2-start-pos))
          
          ((NOT @ place-type-dist-expand exp)         (prec NOT) (UnaExp "!" $4 $3 $1-start-pos))
+         ((exp ARITHOP0 @ place-type-dist-expand)    (prec ARITHOP0) (UnaExp "**2" $1 $4 $2-start-pos))
          ((ARITHOP2 @ place-type-dist-expand exp)     (prec NOT) (UnaExp $1 $4 $3 $1-start-pos))
          ((exp ARITHOP1 @ place-type-dist-expand exp) (prec ARITHOP1) (BinExp $1 $2 $5 $4 $2-start-pos))
          ((exp ARITHOP2 @ place-type-dist-expand exp) (prec ARITHOP2) (BinExp $1 $2 $5 $4 $2-start-pos))
@@ -368,9 +373,10 @@
          ((param-list) $1))
 
     (num-unit
-         ((NUM) $1)
-         ((ARITHOP2 NUM) (- $2))
-         ((LPAREN num-list RPAREN) $2))
+     ((NUM) $1)
+     ((NUM ARITHOP0) (* $1 $1))
+     ((ARITHOP2 NUM) (- $2))
+     ((LPAREN num-list RPAREN) $2))
          
     (num-list
          ((num-unit) (list $1))

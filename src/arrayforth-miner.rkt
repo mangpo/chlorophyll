@@ -66,7 +66,7 @@
 	(send this visit (-iftf-t ast))
 	(send this visit (-iftf-f ast))]
 
-       [(or (mult? ast) (port-exec? ast) (port-listen? ast))
+       [(or (mult? ast) (abs? ast) (port-exec? ast) (port-listen? ast))
         (hash-structure)]
 
        [(funcdecl? ast)

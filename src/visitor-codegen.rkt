@@ -81,49 +81,51 @@
                      in 0 (restrict #t (not (equal? (car const-a) 0)) #f #f)
                      (append (list addr-org "a!") 
                              (for/list ([i (in-range in)]) "!+"))))))
+
+    (define (save-a code)
+      (if (not (equal? (car const-a) 0))
+          (append (list (gen-block-r "a" "push" 0 0))
+                  code
+                  (list (gen-block-r "pop" "a!" 0 0)))
+          code))
+      
+    (define (gen-mult type)
+      (if (fix_t? type)
+          (cond
+           [(= 1 (fix_t-int type))
+            (save-a (list (funccall "*.17")
+                          (gen-block "push" "drop" "pop" 2 1)))]
+
+           [(= 2 (fix_t-int type))
+            (save-a (list (funccall "*.")
+                          (gen-block "push" "drop" "pop" 2 1)))]
+
+           [(= 0 (fix_t-int type))
+            (save-a (list (gen-block-a "a!" "0" "17" 2 3)
+                          (forloop (gen-block)
+                                   (list (gen-block "+*" 1 1)) #f #f #f)
+                          (gen-block "push" "drop" "pop" 2 1)))]
+
+           [else
+            (save-a (list 
+                     (gen-block-a "a!" "0" "17" 2 3)
+                     (forloop (gen-block)
+                              (list (gen-block "+*" 1 1)) #f #f #f)
+                     (gen-block "push" "dup" "or" "pop" 
+                                (number->string (- 18 1 (fix_t-int type))) 
+                                2 3)
+                     (forloop (gen-block)
+                              (list (gen-block "+*" 1 1)) #f #f #f)
+                     (gen-block "drop" "drop" "a" 2 1)))]
+           )
+          ;; else
+          (save-a (list (mult)))))
       
     (define (gen-op op e1 e2)
-      (define (save-a code)
-	(if (not (equal? (car const-a) 0))
-	    (append (list (gen-block-r "a" "push" 0 0))
-		    code
-		    (list (gen-block-r "pop" "a!" 0 0)))
-	    code))
 
       (cond
        [(equal? op "*") 
-        (define type (get-field type e1))
-        ;; already checked earlier that they are equal
-        (if (fix_t? type)
-            (cond
-             [(= 1 (fix_t-int type))
-              (save-a (list (funccall "*.17")
-                            (gen-block "push" "drop" "pop" 2 1)))]
-
-             [(= 2 (fix_t-int type))
-              (save-a (list (funccall "*.")
-                            (gen-block "push" "drop" "pop" 2 1)))]
-
-             [(= 0 (fix_t-int type))
-              (save-a (list (gen-block-a "a!" "0" "17" 2 3)
-                            (forloop (gen-block)
-                                     (list (gen-block "+*" 1 1)) #f #f #f)
-                            (gen-block "push" "drop" "pop" 2 1)))]
-
-             [else
-              (save-a (list 
-                       (gen-block-a "a!" "0" "17" 2 3)
-                       (forloop (gen-block)
-                                (list (gen-block "+*" 1 1)) #f #f #f)
-                       (gen-block "push" "dup" "or" "pop" 
-                                  (number->string (- 18 1 (fix_t-int type))) 
-                                  2 3)
-                       (forloop (gen-block)
-                                (list (gen-block "+*" 1 1)) #f #f #f)
-                       (gen-block "drop" "drop" "a" 2 1)))]
-             )
-            ;; else
-            (save-a (list (mult))))]
+        (gen-mult (get-field type e1))]
 
        ;; --u/mod: h l d - r q
        [(equal? op "/")
@@ -391,7 +393,8 @@
        [(is-a? ast UnaExp%)
         (when debug 
               (pretty-display (format "\nCODEGEN: UnaExp ~a" (send ast to-string))))
-	(define e1-ret (send (get-field e1 ast) accept this))
+        (define e1 (get-field e1 ast))
+	(define e1-ret (send e1 accept this))
 	(define op (get-field op (get-field op ast)))
 
         (define op-ret
@@ -400,6 +403,9 @@
             (list (gen-block "-" "1" "+" 1 1))]
            [(equal? op "~")
             (list (gen-block "-" 1 1))]
+           [(equal? op "**2")
+            (prog-append (list (abs) (gen-block "dup" 1 2))
+                         (gen-mult (get-field type e1)))]
            [else
             (raise (format "visitor-codegen: do not support unary-op ~a at line ~a"
                            op (send ast get-line)))]))

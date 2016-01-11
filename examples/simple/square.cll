@@ -1,0 +1,15 @@
+int f() {
+  return 10;
+}
+
+void main () {
+  int@0 a;
+  fix1_t@1 b;
+  fix2_t::2@(2,2) c;
+  fix9_t@3 d;
+  a = a**2;
+  b = b**2;
+  c = c**2;
+  d = d**2;
+  a = -1**2 * -f()**2 + 3;
+}

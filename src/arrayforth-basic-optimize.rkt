@@ -315,6 +315,9 @@
     ast
     ]
 
+   [(abs? ast)
+    ast]
+
    [(funccall? ast)
     (if rm
         (funccall (funccall-name ast))

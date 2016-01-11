@@ -90,6 +90,11 @@
     (newline)
     (display indent)
     (display "a! dup dup or 17 for +* unext drop drop a ")]
+   
+   [(abs? x)
+    (newline)
+    (display indent)
+    (display "-if - 1 . + then ")]
 
    [(port-exec? x)
     (define (index->coord n)
@@ -321,6 +326,9 @@
 
        [(mult? ast)
 	"mult"]
+
+       [(abs? ast)
+        "abs"]
 
        [(funccall? ast)
 	(funccall-name ast)]

@@ -183,9 +183,9 @@ int@30 derive_group(fix9_t::3@(0,0,0) acc){
   fix9_t@0 d;
 
   for (i from 0 to 14){
-    dx = (quantizerMap_x[i] -@1 x) *@1 (quantizerMap_x[i] -@1 x);
-    dy = (quantizerMap_y[i] -@2 y) *@2 (quantizerMap_y[i] -@2 y);
-    dz = (quantizerMap_z[i] -@3 z) *@3 (quantizerMap_z[i] -@3 z);
+    dx = (quantizerMap_x[i] -@1 x) **2@1;
+    dy = (quantizerMap_y[i] -@2 y) **2@2;
+    dz = (quantizerMap_z[i] -@3 z) **2@3;
 
     //dx = calc_dx(i, acc::0);
     //dy = calc_dy(i, acc::1);
@@ -241,7 +241,7 @@ int@13 filter(fix9_t@11 x_in, fix9_t@11 y_in, fix9_t@11 z_in){
 
   // node 5
   fix9_t@10 abs;
-  abs = x_in *@11 x_in +@11 y_in *@11 y_in +@11 z_in *@11 z_in;
+  abs = x_in **2@11 +@11 y_in**2@11 +@11 z_in**2@11;
 
   // node 6
   int@10 ret2;

@@ -23,6 +23,8 @@
 ;                      256 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/simple/hello-io.cll" "hello-io" 
                       256 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/simple/square.cll" "square" 
+                      256 #:opt #f #:partition #f)
 
 ;; Matrix multiply
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
@@ -102,6 +104,8 @@
 ;; Actor
 #;(compile-and-optimize "../examples/actor/sactor_multicalls.cll" "sactor_multicalls" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/actor/actor_before.cll" "actor_before" 
+                      300 #:w 3 #:h 3 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
                       512 #:w 18 #:h 8 #:opt #f #:partition #f)
 
@@ -128,7 +132,7 @@
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
-                      350 #:w 18 #:h 8 #:opt #f #:partition #f
+                      350 #:w 3 #:h 3 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
