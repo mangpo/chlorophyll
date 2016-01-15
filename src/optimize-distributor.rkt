@@ -74,6 +74,13 @@
 ;; Create file for each core and optimize each core on a subprocess.
 ;; Combine result to one file.
 (define (distribute-and-optimize programs name w h sliding)
+  (define positions
+    (filter pair?
+            (for/list ([id (* w h)]
+                       [p programs])
+                      (and p (cons id (aforth-position p))))))
+  (set! positions (sort positions < #:key cdr))
+  
   ;; Create file for each core.
   (define files
     (for/list ([i (in-range (* w h))])
@@ -97,7 +104,8 @@
       ;; Linker
       (pretty-display "{block 790}")
       (pretty-display "host target | cr")
-      (for ([id (* w h)])
+      (for ([id (map car positions)])
+      ;;(for ([id (* w h)])
            (unless (vector-ref empty-content id)
                    (pretty-display (format "~a node ~a load"
                                            (core-id id w) (+ block-offset (* 2 id))))))
@@ -111,8 +119,9 @@
                    (pretty-display (format "~a /node $0 /p" (core-id id w)))))
       (newline)
 
-      (for ([i (in-range (* w h))])
-        (let ([port (open-input-file (format "~a/~a-~a-opt.aforth" outdir name i))])
+      (for ([id (map car positions)])
+      ;;(for ([id (in-range (* w h))])
+        (let ([port (open-input-file (format "~a/~a-~a-opt.aforth" outdir name id))])
           (read-port port)
           (close-input-port port)
           ))

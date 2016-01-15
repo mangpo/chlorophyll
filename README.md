@@ -10,6 +10,7 @@ Note: Chlorophyll compiler has only been tested on Linux OS, so it might be inco
 
 ### Requirements
 
+- Python and Python's numpy package
 - [Racket](http://download.racket-lang.org)
 - [Rosette](http://github.com/emina/rosette)
 - [F18A superoptimizer](http://bitbucket.org/rohinmshah/forth-interpreter): install as a local package. In command terminal, type:

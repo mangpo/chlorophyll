@@ -239,14 +239,25 @@
     ]
 
    [(vector? x)
+  
     ;(define size (sub1 (vector-length x)))
     (when original
+          (define order
+            (filter pair?
+                    (for/list ([id (* w h)]
+                               [p x])
+                              (and p (aforth-position p) (cons id (aforth-position p))))))
+          (set! order (sort order < #:key cdr))
+          (if (empty? order)
+              (set! order (* w h))
+              (set! order (map car order)))
+    
       (pretty-display "{block 790}")
       (pretty-display "host target | cr")
-      (for ([id (* w h)])
-        (when (vector-ref x id)
+      (for ([id order])
           (pretty-display (format "~a node ~a load"
-                                  (core-id id w) (+ block-offset (* 2 id))))))
+                                  (core-id id w) (+ block-offset (* 2 id))))
+          )
 
       (newline)
       (pretty-display "{block 792}")

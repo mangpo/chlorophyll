@@ -23,11 +23,11 @@
 ;                      256 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/simple/hello-io.cll" "hello-io" 
                       256 #:opt #f #:partition #f)
-#;(compile-and-optimize "../examples/simple/square.cll" "square" 
-                      256 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/simple/square.cll" "square" 
+                      256 #:opt #t #:partition #f)
 #;(compile-and-optimize "../examples/simple/check_neg.cll" "check_neg" 
                       256 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/simple/precision.cll" "precision" 
+#;(compile-and-optimize "../examples/simple/precision.cll" "precision" 
                       256 #:opt #f #:partition #f)
 
 ;; Matrix multiply
