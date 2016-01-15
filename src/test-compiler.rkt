@@ -27,6 +27,8 @@
                       256 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/simple/check_neg.cll" "check_neg" 
                       256 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/simple/precision.cll" "precision" 
+                      256 #:opt #f #:partition #f)
 
 ;; Matrix multiply
 ;(compile-and-optimize "../examples/matrixmultiply/matrixmult4-dup.cll" "matrixmult4-dup" 
@@ -136,7 +138,7 @@
 #;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
                       350 #:w 3 #:h 3 #:opt #f #:partition #f
                       #:original-format #f)
-(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
+#;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
