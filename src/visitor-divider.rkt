@@ -425,8 +425,8 @@
       (cond
        [(is-a? ast Num%)
 	(when debug (pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string))))
-        ;;(push-stack-temp (get-field place-type ast) ast)
-	(push-stack (get-field place-type ast) ast) ;;TODO?
+        (push-stack-temp (get-field place-type ast) ast)
+	;;(push-stack (get-field place-type ast) ast) ;;TODO?
         (gen-comm)
         ]
 

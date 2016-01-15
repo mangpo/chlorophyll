@@ -20,6 +20,9 @@
   (set! original format)
   (print code))
 
+(define-syntax-rule (positive x)
+  (bitwise-and #x3ffff x))
+
 (define (print x [indent ""])
   (define (inc indent)
     (string-append indent "  "))
@@ -200,13 +203,13 @@
     (if original
         (begin
           (for ([val (vardecl-val x)])
-            (display val)
+            (display (positive val))
             (display " , "))
           (pretty-display "| br"))
         (begin
           (for ([val (vardecl-val x)])
             (display " , ")
-            (pretty-display val))))
+            (pretty-display val)))) ;; TODO: convert to postive?
     ]
 
    [(aforth? x)
@@ -249,8 +252,15 @@
       (pretty-display "{block 792}")
       (pretty-display ": /node dup +node /ram ; | cr")
       (for ([id (* w h)])
-        (when (vector-ref x id)
-          (pretty-display (format "~a /node $0 /p" (core-id id w)))))
+           (let ([p (vector-ref x id)])
+             (when p
+                   (display (format "~a /node " (core-id id w)))
+                   (if (aforth-set-p p)
+                       (display (format "~a /p " (aforth-set-p p)))
+                       (display "$0 /p "))
+                   (unless (void? (aforth-a p))
+                         (display (format "~a /a " (aforth-a p))))
+                   (newline))))
       (newline))
 
     ;; reorder-nodes for printing

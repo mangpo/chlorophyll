@@ -91,17 +91,12 @@ fix1_t@7 get_b2(int@5 i) {
 
 actor* get_b;
 fix1_t@8 get_b(int@7 i) {
-  //int out_;
-  //out_ = 888;
-  //out(out_);
-  //out(i);
   fix1_t@7 ret;
   if(i <@7 28) {
     ret = b1[i];
   } else {
     ret = get_b2(i);
   }
-  //out(ret);
   return ret;
 
 }
@@ -128,36 +123,22 @@ int@30 forward_proc_inc(int@8 o){
   fix1_t@24 ord;
   fix1_t@24 temp;
   fix1_t xxx;
-  int out_;
-  out_ = 404;
-  out(out_);
-  out(o);
-  out_ = o <<@8 3;
-  out(out_);
   ord = 0;
-  out(started);
   //if(started <@8 0) {
   if(started <@15 0) {
-    out_ = 100999;
-    out(out_);
     for (k from 0 to 8) {
       sum = 0;
       for (l from 0 to 8) {
         sum = sum +@23 s[l] *@23 get_a((l <<@23 3) +@23 k);
       }
-      //out(k);
       temp = sum *@24 get_b((o <<@8 3) +@8 k);
-      out(temp);
       f[k] = temp;
       ord = ord |@24 temp;
     }
   }else{
     started = -1;
-    out_ = 100009;
-    out(out_);
     for (l from 0 to 8) {
       f[l] = pi[l] *@8 get_b((o <<@8 3) +@8 l);
-      out(f[l]);
     }
     ord = -1;
   }
@@ -221,14 +202,7 @@ void swap_shift(int n){
 }
 
 int input(fix9_t::3 acc){
-  int@30 temp;
-  temp = 102;
-  out(temp);
-  temp = derive_group(acc);
-  out(temp);
-  temp = forward_proc_inc(temp);
-  out(temp);
-  return temp;
+  return forward_proc_inc(derive_group(acc));
 }
 
 
@@ -304,58 +278,43 @@ int@13 filter(fix9_t@11 x_in, fix9_t@11 y_in, fix9_t@11 z_in){
   return ret;
 }
 
-fix9_t::3@({[0:4]=13},{[0:4]=13},{[0:4]=13}) acc_data[4] = {
+fix9_t::3@({[0:7]=13},{[0:7]=13},{[0:7]=13}) acc_data[7] = {
 (-0.01,0.11,1.11),
 (0.00,0.07,1.00),
 (0.04,-0.48,1.08),
-(-0.18,0.09,1.11)};
+(-0.18,0.09,1.11),
+(0,-0.37,1.05),
+(-0.05,-0.36,1.01),
+(0.09,0.24,1.10)
+};
 
 void main(){
-  int out_;
-  int@13 out_int;
   fix1_t@13 out_fix;
 
   int@13 ord;
   int@16 n;
   fix9_t::3@(13,13,13) acc;
 
-  for(i from 0 to 4) {
+  for(i from 0 to 7) {
   acc = acc_data[i];
   
-  out_int = 1111; out(out_int);
   if (filter(acc::0, acc::1, acc::2) != 0){
     ord = 0;
-    out_int = 2222; out(out_int);
     ord = ord |@13 input(acc);
     n = 0;
     
-   
-    out(ord);
     while (ord >@16 0){
-
-      //out_int = 3333; out(out_int);
       n = n +@16 1;
-      ord = ord <<@16 1;
-      out(ord);
+      ord = ord <<@13 1;
     }
-    out(n);
     if (n >@16 3){
-      n = n -@16 3;
-      swap_shift(n);
+      swap_shift(n -@16 3);
     } else {
       swap_shift(0);
     }
-  }else{
-    out_int = 99999;
-    out(out_int);
   }
 
   }
 
-  out_int = 4444;
-  out(out_int);
   out_fix = forward_proc_out();
-  out(out_fix);
-  out_int = 5555;
-  out(out_int);
 }

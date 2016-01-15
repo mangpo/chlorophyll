@@ -7,8 +7,8 @@
 ;                      256 #:w 2 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/simple/part2core.cll" "part2core" 
 ;                      256 #:w 3 #:h 3 #:opt #f)
-;(compile-and-optimize "../examples/simple/array.cll" "array" 
-;                      256 #:w 2 #:h 3 #:opt #f)
+#;(compile-and-optimize "../examples/simple/array.cll" "array" 
+                      256 #:w 2 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/simple/offset.cll" "offset" 
 ;                      512 #:w 2 #:h 3 #:opt #f #:partition #f)
 ;(compile-and-optimize "../examples/simple/function.cll" "function" 
@@ -24,6 +24,8 @@
 #;(compile-and-optimize "../examples/simple/hello-io.cll" "hello-io" 
                       256 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/simple/square.cll" "square" 
+                      256 #:opt #f #:partition #f)
+#;(compile-and-optimize "../examples/simple/check_neg.cll" "check_neg" 
                       256 #:opt #f #:partition #f)
 
 ;; Matrix multiply
@@ -104,7 +106,7 @@
 ;; Actor
 #;(compile-and-optimize "../examples/actor/sactor_multicalls.cll" "sactor_multicalls" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
-#;(compile-and-optimize "../examples/actor/actor_before.cll" "actor_before" 
+#;(compile-and-optimize "../examples/actor/sactor_v1.cll" "sactor_v1" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
                       512 #:w 18 #:h 8 #:opt #f #:partition #f)
@@ -134,12 +136,12 @@
 #;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
                       350 #:w 3 #:h 3 #:opt #f #:partition #f
                       #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
+(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
-(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
+#;(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
-                      #:original-format #f)
+                      #:original-format #t)
 #;(compile-and-optimize "../examples/sensors/hmm_module_pinning.cll" "hmm_module_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)

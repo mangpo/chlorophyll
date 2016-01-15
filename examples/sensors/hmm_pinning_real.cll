@@ -188,7 +188,7 @@ int@30 derive_group(fix9_t::3@(0,0,0) acc){
 fix1_t forward_proc_out() {
   fix1_t@18 prob;
   prob = 0;
-  started = 0;
+  //started = 0;
   for (i from 0 to 8){
     prob = prob +@18 s[i];
   }
@@ -292,11 +292,10 @@ void main(){
     
     while (ord >@16 0){
       n = n +@16 1;
-      ord = ord <<@16 1;
+      ord = ord <<@13 1;
     }
     if (n >@16 3){
-      n = n -@16 3;
-      swap_shift(n);
+      swap_shift(n -@16 3);
     } else {
       swap_shift(0);
     }
