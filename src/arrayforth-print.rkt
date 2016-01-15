@@ -97,7 +97,7 @@
    [(abs? x)
     (newline)
     (display indent)
-    (display "-if - 1 . + then ")]
+    (display ".. -if - 1 . + then ")]
 
    [(port-exec? x)
     (define (index->coord n)

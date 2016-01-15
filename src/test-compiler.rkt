@@ -23,7 +23,7 @@
 ;                      256 #:opt #f #:partition #f)
 #;(compile-and-optimize "../examples/simple/hello-io.cll" "hello-io" 
                       256 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/simple/square.cll" "square" 
+#;(compile-and-optimize "../examples/simple/square.cll" "square" 
                       256 #:opt #t #:partition #f)
 #;(compile-and-optimize "../examples/simple/check_neg.cll" "check_neg" 
                       256 #:opt #f #:partition #f)
@@ -108,8 +108,8 @@
 ;; Actor
 #;(compile-and-optimize "../examples/actor/sactor_multicalls.cll" "sactor_multicalls" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
-#;(compile-and-optimize "../examples/actor/sactor_v1.cll" "sactor_v1" 
-                      300 #:w 3 #:h 3 #:opt #f #:partition #f)
+(compile-and-optimize "../examples/actor/sactor_v2.cll" "sactor_v2" 
+                      300 #:w 3 #:h 3 #:opt #t #:partition #f)
 #;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
                       512 #:w 18 #:h 8 #:opt #f #:partition #f)
 
