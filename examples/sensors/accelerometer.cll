@@ -1,0 +1,264 @@
+// -*- c -*-
+
+// requires a 32.768 khz watch crystal from 715.0 to gnd
+
+
+# 13 --> 713
+# 6 --> 600
+# 8 --> 608
+# 7 --> 708
+# 9 --> 709
+
+actor go@(13~>8);
+actor emit_18@(8~>6);
+actor read_accelerometer@(8~>7);
+actor edge_wait_709@(7~>9);
+
+////////////////////////////////////////////////////////////////////////////////
+// serial out
+
+void emit_1(int@6 n){
+  if (n &@6 1){
+    set_io(600, SINK);
+  }else{
+    set_io(600, SOURCE);
+  }
+  delay_unext(600, 904);
+}
+
+int emit_8(int@6 n){
+  emit_1(0);
+  for (i from 0 to 8){
+    emit_1(n);
+    n = n >>@6 1;
+  }
+  emit_1(1);
+  return n;
+}
+
+void emit_18(int@6 w){
+  //emit_8(0xa5);
+  int@6 x;
+  x = emit_8(0);
+  w = emit_8(w);
+  w = emit_8(w);
+  w = emit_8(w);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Crystal Oscillator
+
+void osc(int@1 k){//, int n){
+  //for (i from 0 to n){
+  for (i from 0 to 5000){
+    set_io(715, SOURCE);
+    delay_unext(715, k);
+    set_io(715, SINK);
+    delay_unext(715, k);
+  }
+  set_io(715, IMPED);
+  for (i from 0 to 30000){
+    if (digital_read(715, 0)){
+      while (1){
+        
+        set_io(715, SOURCE);
+        set_io(715, HIGH_IMPEDANCE, WAKEUP_LOW);
+        digital_wakeup(715);
+
+        set_io(715, SINK);
+        set_io(715, HIGH_IMPEDANCE, WAKEUP_HIGH);
+        digital_wakeup(715);
+      }
+    }
+  }
+}
+
+void crystal_main(){
+  int@1 period;
+  period = 12900;
+  while (1){
+    osc(period >>@1 1);
+    period = period +@1 1;
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// i2c
+
+void wait_until_high_708(){
+  // wait until clock goes high
+  //while (digital_read(708, 0) == 0);
+  int@7 x;
+  while (x == 0){
+    x = digital_read(708, 0);
+    //TODO: wait on edges in loop    
+  }
+}
+
+// CAUTION: return has to not be in the actor!
+int@7 edge_wait_709(){
+  // wait for the next clock edge, observed from node 709 on the shared pin
+  int@9 x; // x is used for force a data dependency
+  if (digital_read(709, 0) < 0){
+    set_io(709, 3, WAKEUP_LOW);
+  }else{
+    set_io(709, 3, WAKEUP_HIGH);
+  }
+  digital_wakeup(709);
+  return x;
+}
+
+//int edge_wait(){
+void edge_wait_708(){
+  int@7 x;
+  x = edge_wait_709(); //TODO: need 
+  //return x;
+}
+
+void high_low(){
+  set_io(708, IMPED, SINK);
+  wait_until_high_708();   // wait if clock is stretched
+  edge_wait_708();
+}
+void high_high(){
+  set_io(708, IMPED, IMPED);
+  wait_until_high_708();
+  edge_wait_708();
+}
+void low_high(){
+  set_io(708, SINK, IMPED);
+  edge_wait_708();
+}
+void low_low(){
+  set_io(708, SINK, SINK);
+  edge_wait_708();
+}
+
+
+void set_high(){
+  low_high();
+  high_high();
+}
+
+void set_low(){
+  low_low();
+  high_low();
+}
+
+void out_8(int@7 n){
+  // emit bits 15-8
+  n = n << 1;
+  for (i from 0 to 8){
+    n = n << 1;
+    //out_1(n);
+    if ( n < 0 ){
+      set_high();
+
+    }else{
+      set_low();
+    }
+  }
+  set_high();
+}
+
+void start_out_8(int@7 n){ // start or restart chip
+  low_high();
+  high_high();  
+  //set_high();
+  high_low();
+  //return out_8(n);
+  out_8(n);
+}
+
+int@7 in_8(){
+  int@7 val;
+  val = 0;
+  for (i from 0 to 8){
+    val = val << 1;
+    //val = val ^ in_1();
+    set_high();
+    val = val ^ digital_read(708, 1);
+  }
+  set_low();
+  return val >> 1;
+}
+
+int@7 read_16(){
+  return (in_8() <<@7 8) ^@7 in_8();  
+}
+
+int::3@(8,8,8) read_accelerometer(){
+  int::3@(7,7,7) x;
+  start_out_8(7686); //0x1e06
+  out_8(132608); // 0x1e06<<8
+  start_out_8(7942); // 0x1e06^0x100
+  x::0 = read_16();
+  x::1 = read_16();
+  x::2 = read_16();
+  set_low();
+  high_high();
+  return x;
+}
+
+
+int@8 swap_bytes(int@8 x){
+  return ((x & 255) << 8) + ((x >> 8) & 255);
+}
+
+void go(int@8 sec){
+  int::3@(8,8,8) x;
+  //emit_18(sec);
+  x = read_accelerometer();
+  emit_18(swap_bytes(x::0));
+  emit_18(swap_bytes(x::1));
+  emit_18(swap_bytes(x::2));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Timer - react to crystal edges
+
+void edge(){
+  int@13 count; // counts ticks between seconds
+  int@13 seconds; // counts elapsed seconds
+  count = 0;
+  seconds = 0;
+  int x;
+  while (1){
+    set_io(713, 0, WAKEUP_LOW);
+    digital_wakeup(713);
+    set_io(713, 0, WAKEUP_HIGH);
+    digital_wakeup(713);
+    if (count ==@13 3200){
+      count = 0;
+      seconds = seconds +@13 1;
+      go(seconds);
+    }else{
+      count = count +@13 1;
+    }
+  }
+}
+
+
+void main(){
+  // set_io(709, 3); // i2c clock pullup
+  set_io(717, 3, IMPED); //i2c data pullup
+
+  crystal_main();  
+
+  edge();
+
+  /*
+  //init
+  start_out_8(34818); // 0x8802
+  out_8(512); //0x8802<<8
+  out_8(132096); // 0x20400
+  out_8(0);//0x20400<<8
+  //stop();
+  set_low();
+  high_high();
+
+  */
+}
+
