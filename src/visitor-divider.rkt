@@ -31,6 +31,7 @@
     (define is-lhs #f)
     ;; When is-index-var is true, no ghost temp for Var%
     (define is-index #f)
+    (define is-io-arg #f)
 
     ;; Need to set up cores outside the initialization.
     (for ([i (in-range n)])
@@ -425,8 +426,9 @@
       (cond
        [(is-a? ast Num%)
 	(when debug (pretty-display (format "\nDIVIDE: Num ~a\n" (send ast to-string))))
-        (push-stack-temp (get-field place-type ast) ast)
-	;;(push-stack (get-field place-type ast) ast) ;;TODO?
+        (if is-io-arg
+            (push-stack (get-field place-type ast) ast)
+            (push-stack-temp (get-field place-type ast) ast))
         (gen-comm)
         ]
 
@@ -667,9 +669,16 @@
          
          ) ;; end actor
 
+        (when (or (regexp-match #rx"set_io" name)
+                  (regexp-match #rx"digital_read" name)
+                  (regexp-match #rx"digital_wakeup" name)
+                  (regexp-match #rx"delay_ns" name)
+                  (regexp-match #rx"delay_unext" name))
+              (set! is-io-arg #t))
 	;; add expressions for arguments
         (for ([arg (get-field args ast)])
              (send arg accept this))
+        (set! is-io-arg #f)
 
         (let* ([place (get-field place-type ast)]
 	       [sig (get-field signature ast)]

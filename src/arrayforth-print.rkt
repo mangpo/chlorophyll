@@ -190,10 +190,9 @@
 
     (print (funcdecl-body x) "  ")
 
-    (when original 
-          (when (equal? (funcdecl-name x) "main")
-	  (display "warm "))
-          (display "= $0 "))
+    (when (equal? (funcdecl-name x) "main")
+          (display "warm "))
+    (when original (display "= $0 "))
     (display "; ")
     (when original (display "| cr"))
     (newline)
@@ -209,7 +208,7 @@
         (begin
           (for ([val (vardecl-val x)])
             (display " , ")
-            (pretty-display val)))) ;; TODO: convert to postive?
+            (pretty-display (positive val)))))
     ]
 
    [(aforth? x)

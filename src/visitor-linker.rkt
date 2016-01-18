@@ -236,6 +236,10 @@
 	 (define init (get-field init ast))
 	 (when init
 	       (cond
+                [(not (list? init))
+                 (raise (format "Cannot initialize ~a with ~a"
+                                (get-field var ast)
+                                init))]
 		[(fix_t? type)
 		 (set-field! init ast (d2fp-rec init (fix_t-int type)))]
 		[(and (pair? type) (fix_t? (car type)))

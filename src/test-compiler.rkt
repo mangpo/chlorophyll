@@ -108,7 +108,7 @@
 ;; Actor
 #;(compile-and-optimize "../examples/actor/sactor_multicalls.cll" "sactor_multicalls" 
                       300 #:w 3 #:h 3 #:opt #f #:partition #f)
-(compile-and-optimize "../examples/actor/sactor_v2.cll" "sactor_v2" 
+#;(compile-and-optimize "../examples/actor/sactor_v2.cll" "sactor_v2" 
                       300 #:w 3 #:h 3 #:opt #t #:partition #f)
 #;(compile-and-optimize "../examples/sensors/i2c4.cll" "i2c4" 
                       512 #:w 18 #:h 8 #:opt #f #:partition #f)
@@ -136,14 +136,14 @@
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
-                      350 #:w 3 #:h 3 #:opt #f #:partition #f
+                      350 #:w 5 #:h 2 #:opt #f #:partition #f
                       #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
+(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
-                      #:original-format #t)
+                      #:original-format #f)
 #;(compile-and-optimize "../examples/sensors/hmm_module_pinning.cll" "hmm_module_pinning"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)

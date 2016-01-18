@@ -57,6 +57,7 @@
 (define (gen-route-i-j i j w h obstacles cores
                        conflicts conflict-index
                        actors-map actor-index)
+  (pretty-display `(gen-route-i-j ,i ,j))
   (define my-obs obstacles)
   (for ([more-obs (hash-values actors-map)])
        (set! my-obs (set-union my-obs more-obs)))
@@ -77,6 +78,7 @@
                          (set! my-obs (set-union my-obs group)))))]
          [actor-indices (list)]
          )
+    (pretty-display `(actor-index ,actor-i ,actor-j))
 
     ;; substract my actors
     (for ([index-i actor-i])
@@ -107,35 +109,38 @@
         (pretty-display `(my-obs ,my-obs))
         (set! path (route-obs i j w h (set-remove* my-obs i j)))
         (unless path (pretty-display `(conflicts ,conflicts)))
-        ;; update date conflict-list & conflict-index
-        (for ([index conflict-indices])
-             (let* ([conflict (vector-ref conflicts (car index))]
-                    [current (vector-ref conflict (cdr index))])
-               (for ([core path])
-                    (unless
-                     (set-member? current core)
-                     ;; add this core to the parallel unit.
-                     (vector-set! conflict-index core
-                                  (cons index
-                                        (vector-ref conflict-index core)))))
-               (vector-set! conflict (cdr index)
-                            (set-union (list->set path) current))))
-        ;; update actors-map & actor-index
-        (pretty-display `(actor-indices ,actor-indices))
-        (let ([additions (set-subtract (list->set path) cores)])
-          (for ([index actor-indices])
-               (let ([current (hash-ref actors-map index)])
-                 (for ([core additions])
-                      (unless
-                       (set-member? current core)
-                       (vector-set! actor-index core
-                                    (cons index
-                                          (vector-ref actor-index core)))))
-                 (hash-set! actors-map index
-                            (set-union additions current)))))
         ]
        [else
         (set! path (route i j w))])
+
+      ;; update date conflict-list & conflict-index
+      (for ([index conflict-indices])
+           (let* ([conflict (vector-ref conflicts (car index))]
+                  [current (vector-ref conflict (cdr index))])
+             (for ([core path])
+                  (unless
+                   (set-member? current core)
+                   ;; add this core to the parallel unit.
+                   (vector-set! conflict-index core
+                                (cons index
+                                      (vector-ref conflict-index core)))))
+             (vector-set! conflict (cdr index)
+                          (set-union (list->set path) current))))
+      ;; update actors-map & actor-index
+      (pretty-display `(actor-indices ,actor-indices))
+      (let ([additions (set-subtract (list->set path) cores)])
+        (pretty-display `(addtions ,additions))
+        (for ([index actor-indices])
+             (let ([current (hash-ref actors-map index)])
+               (for ([core additions])
+                    (unless
+                     (set-member? current core)
+                     (vector-set! actor-index core
+                                  (cons index
+                                        (vector-ref actor-index core)))))
+               (hash-set! actors-map index
+                          (set-union additions current)))))
+        
       (set-union! cores (list->set path))
       (pretty-display `(done))
       path
@@ -229,7 +234,7 @@
               (vector-2d-set! core2route n j i (reverse path))
               (let ([additions
                      (set-subtract (list->set (drop path 1)) cores-before)])
-                ;;(pretty-display `(additions ,additions ,(drop path 1) ,cores-before))
+                (pretty-display `(additions ,additions ,(drop path 1) ,cores-before))
                 (hash-set! new-actors*-no-cf-map func
                            (set-union
                             (hash-ref new-actors*-no-cf-map func)
