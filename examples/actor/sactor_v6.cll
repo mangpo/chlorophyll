@@ -1,0 +1,25 @@
+// c
+
+# 0 --> 001
+# 1 --> 201
+# 2 --> 100
+# 3 --> 102
+
+actor* add;
+int@0 add(int@1 x) {
+  return x + 1;
+}
+
+actor* sub;
+int@2 sub(int@3 x) {
+  return x - 1;
+}
+
+void main() {
+  int@0 x;
+  int@2 y;
+  x = 100;
+  y = 100;
+  x = add(x);
+  y = sub(y);
+}

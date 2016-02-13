@@ -1,0 +1,1586 @@
+node 715
+/a io org 0
+: 2rep ! dup 
+  for 
+    unext ; 
+: 1while 196608 ! 2048 ! up b! @b drop 131072 ! dup dup or ! up b! @b drop 1while ; 
+: 1if 
+  .. if drop 1while ; then drop ; 
+: osc 
+  4999 for 
+    196608 2rep 131072 2rep next dup dup or ! 
+  29999 for 
+    @ 131072 and 1if next drop ; 
+: 2while dup 2/ osc dup 1 . + push drop pop 2while ; 
+: main dup dup or 12900 push drop pop 2while drop ; 
+
+node 712
+/a left org 0
+: main right b! @b ! right b! @b ! main ; 
+
+node 711
+/a down org 0
+: main left b! @b ! left b! @b ! main ; 
+
+node 709
+/a io /p right org 0
+: 1if 
+  .. -if drop 2390 ! ; then drop 342 ! ; 
+: act135 dup dup or @ 131072 and 1if up b! dup !b dup right b! !b drop ; 
+
+node 708
+/a io /p down org 0
+: wait_until_high_708 @ -if drop ; then drop wait_until_high_708 ;
+: edge_wait_708 right b! @p .. act135@709 .. !b @b drop ; 
+: high_low 2 ! wait_until_high_708 edge_wait_708 ; 
+: high_high dup dup or ! wait_until_high_708 edge_wait_708 ; 
+: low_high 131072 ! edge_wait_708 ; 
+: low_low 131074 ! edge_wait_708 ; 
+: set_high low_high high_high ; 
+: set_low low_low high_low ; 
+: 2if 
+  .. -if set_high ; then set_low ; 
+: out_8 dup 2* push drop pop 
+  7 for 
+    2* 2if next set_high drop ; 
+: start_out_8 low_high high_high high_low out_8 ; 
+: in_8 dup dup or
+  7 for 
+    2* set_high @ 2 and or next set_low 2/ ; 
+: read_16 in_8 2* 2* 2* 2* 2* 2* 2* 2* in_8 or ; 
+: act134 7686 start_out_8 132608 out_8 7942 start_out_8
+  read_16 read_16 read_16 set_low high_high down b! !b !b !b ; 
+
+node 611
+/a right org 0
+: main down b! @b ! down b! @b ! main ; 
+
+node 610
+/a left org 0
+: main right b! @b ! right b! @b ! main ; 
+
+node 609
+/a right org 0
+: main left b! @b ! left b! @b ! main ; 
+
+node 608
+/a left /p right org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: read_accelerometer down b! @b down b! @b down b! @b ; 
+: swap_bytes dup 255 and 2* 2* 2* 2* 2* 2* 2* 2* over 2/ 2/ 2/ 2/ 2/ 2/ 2/ 2/ 255 and . + push drop pop ; 
+: go down b! @p .. act134@708 .. !b read_accelerometer 5 b! !b 4 b! !b dup dup or b! !b 4 b! @b 1 b! !b 5 b! @b 2 b! !b dup dup or b! @b swap_bytes ! 1 b! @b swap_bytes ! 2 b! @b swap_bytes ! drop ; 
+: act116 right b! @b go ; 
+
+node 713
+/a io org 0
+ , 0
+: 1if 
+  .. if drop dup 1 . + push drop pop ; then drop dup dup or push drop pop dup dup or b! @b 1 . + dup dup or b! !b right b! @p .. act116@608 .. !b dup dup or b! @b right b! !b ; 
+: 1while 2389 ! up b! dup !b 341 ! up b! dup !b dup 3200 - 1 . + . + 1if 1while ; 
+: main dup dup or dup dup or push drop pop dup dup or dup dup or b! !b 1while drop ; 
+
+node 607 ( core 115 )
+/a up org 0
+: 1if 
+  .. -if drop 65536 over - 1 . + . + push drop pop ; then drop dup - 1 . + push drop pop ; 
+: convert 32768 over - 1 . + . + 1if dup push drop pop ; 
+: main left b! @b convert ! main ; 
+
+node 606 ( core 114 )
+/a left org 0
+: main up b! @b ! warm ; 
+
+node 605 ( core 113 )
+/a left org 0
+: main @ right b! !b warm ; 
+
+node 604 ( core 112 )
+/a right org 0
+: main @ left b! !b warm ; 
+
+node 603 ( core 111 )
+/a left org 0
+: main @ right b! !b warm ; 
+
+node 602 ( core 110 )
+/a right org 0
+: main @ left b! !b warm ; 
+
+node 601 ( core 109 )
+/a right org 0
+: main up b! @b ! left b! @b ! warm ; 
+
+node 600 ( core 108 )
+/a io org 0
+ , 0
+: 1if 
+  .. if drop 131072 ! ; then drop 196608 ! ; 
+: emit_1 dup 1 and 1if 
+  904 for 
+    unext drop ; 
+: emit_8 dup dup or emit_1 
+  7 for 
+    dup emit_1 dup 2/ push drop pop next 1 emit_1 dup push drop pop ; 
+: print dup dup or emit_8 dup dup or b! !b dup emit_8 push drop pop dup emit_8 push drop pop dup emit_8 push drop pop drop ; 
+: main right b! @b print right b! @b print warm ; 
+
+node 511 ( core 101 )
+/a right org 0
+ , 0
+ , 0
+ , 0
+: 31rep - 1 . + . + dup ! ; 
+: 30rep drop @b 6554 . + @ 31rep drop ; 
+: 29rep 30rep @ ; 
+: 28rep b! @b 6554 - 1 . + . + 31rep ; 
+: 1if 
+  .. if drop @ dup dup or 28rep 29rep 1 28rep 29rep 2 28rep 30rep ; then drop ; 
+: 2if 
+  .. if drop @ dup dup or b! !b @ 1 b! !b @ 2 b! !b ; then drop ; 
+: filter @ 1if @ 2if ; 
+: main 
+  999 for 
+    filter @ dup down b! !b drop next warm ; 
+
+node 510 ( core 100 )
+/a right org 0
+ , 0
+ , 0
+ , 0
+: 27rep 
+  .. -if drop 1 push drop pop ; then drop ; 
+: 7if 
+  .. if dup or push drop pop dup b! @b ! @ 27rep @b ! @ 27rep 1 b! @b ! @ 27rep @b ! @ 27rep 2 b! @b ! @ 27rep @b ! @ 27rep ; then drop ; 
+: 8if 
+  .. if dup or b! @b ! 1 b! @b ! 2 b! @b ! ; then drop ; 
+: filter left b! @b dup dup or b! !b left b! @b 1 b! !b left b! @b 2 b! !b dup dup or left b! @b push drop pop dup dup ! 7if dup dup ! 8if dup left b! !b drop ; 
+: main 
+  999 for 
+    filter @b dup ! drop next warm ; 
+
+node 509 ( core 99 )
+/a right org 0
+ , 0
+: 26rep 
+  .. -if drop 1 push drop pop ; then drop ; 
+: 3if 
+  .. if drop @ down b! !b @ !b @ !b ; then drop ; 
+: filter @ dup dup or b! !b dup dup or dup dup or push drop pop 2949 @b - 1 . + . + 26rep @b 328 - 1 . + . + 26rep @ left b! !b @ !b @ !b dup !b @b ! drop ; 
+: main 
+  999 for 
+    filter @ dup !b 3if next warm ; 
+
+node 508 ( core 98 )
+/a left org 0
+ , 0
+ , 0
+: 24rep 
+  for 
+    +* unext ; 
+: 25rep 
+  .. -if - 1 . + then dup a push a! dup dup or 17 24rep push dup or pop 14 24rep drop drop a pop a! ; 
+: 1if 
+  .. if drop @ right b! !b @ !b @ !b down b! @b ! @ !b ; then drop ; 
+: filter a push dup dup or a! push !+ !+ pop pop a! 1 b! @b 25rep dup dup or b! @b 25rep . + over 25rep . + right b! !b 1 b! @b right b! !b dup dup or b! @b right b! !b dup !b @b ! drop ; 
+: main 
+  999 for 
+    @ @ @ filter @ dup !b dup down b! !b 1if next warm ; 
+
+node 507 ( core 97 )
+/a left org 0
+ , 0
+ , 0
+ , 0
+: 23rep b! !b dup dup or b! @b ! 1 b! @b ! 2 b! @b ! ; 
+: 1while dup dup or over - 1 . + . + dup !b 
+  .. -if drop 2* 1while ; then drop ; 
+: 2if 
+  .. if dup or b! @b right b! !b 1 b! @b right b! !b 2 b! @b right 23rep right b! @b - @ and . + 1while @b ! ; then drop ; 
+: filter @ ; 
+: main dup dup or 
+  999 for 
+    up b! @b dup dup or b! !b up b! @b 1 b! !b up b! @b 2 23rep drop filter dup ! dup right b! !b dup down b! !b 2if next warm ; 
+
+node 506 ( core 96 )
+/a right org 0
+: 1while @ 
+  .. -if drop dup 1 . + push drop pop 1while ; then drop ; 
+: 2if 
+  .. -if drop dup 3 - 1 . + . + push drop pop ; then drop dup dup or push drop pop ; 
+: 3if 
+  .. if drop @ left b! !b @ !b @ !b down b! @b ! dup dup or push drop pop 1while 3 over - 1 . + . + 2if dup left b! !b dup ! ; then drop ; 
+: main dup dup or 
+  999 for 
+    @ dup left b! !b dup down b! !b 3if next down b! @b up b! !b warm ; 
+
+node 505 ( core 95 )
+/a left org 0
+: 1if 
+  .. if drop @ down b! !b @ !b @ !b @ right b! !b ; then drop ; 
+: main 
+  999 for 
+    @ dup right b! !b 1if next warm ; 
+
+node 504 ( core 94 )
+/a right org 0
+: 1if 
+  .. if drop @ down b! !b ; then drop ; 
+: main 
+  999 for 
+    @ dup left b! !b 1if next warm ; 
+
+node 503 ( core 93 )
+/a left org 0
+: main 
+  999 for 
+    @ dup right b! !b drop next warm ; 
+
+node 502 ( core 92 )
+/a right org 0
+: main 
+  999 for 
+    @ dup left b! !b drop next warm ; 
+
+node 501 ( core 91 )
+/a down org 0
+: main 
+  999 for 
+    left b! @b dup ! drop next @ up b! !b warm ; 
+
+node 414 ( core 86 )
+/a left org 0
+: main 
+  999 for 
+    @ dup up b! !b drop next warm ; 
+
+node 413 ( core 85 )
+/a left org 0
+: main 
+  999 for 
+    right b! @b dup up b! !b dup ! drop next warm ; 
+
+node 412 ( core 84 )
+/a right org 0
+: main 
+  999 for 
+    left b! @b dup up b! !b dup ! drop next warm ; 
+
+node 411 ( core 83 )
+/a left org 0
+: main 
+  999 for 
+    down b! @b dup ! dup up b! !b drop next warm ; 
+
+node 409 ( core 81 )
+/a up org 0
+: 1if 
+  .. if drop down b! @b ! @b ! @b ! right b! @b ! ; then drop ; 
+: main 
+  999 for 
+    right b! @b dup ! 1if next warm ; 
+
+node 408 ( core 80 )
+/a down org 0
+: 1if 
+  .. if drop up b! @b push drop pop dup ! @ right b! !b ; then drop ; 
+: main dup dup or 
+  999 for 
+    @ dup right b! !b 1if next warm ; 
+
+node 407 ( core 79 )
+/a up org 0
+: main 
+  999 for 
+    down b! @b dup ! drop next @ right b! !b warm ; 
+
+node 406 ( core 78 )
+/a down org 0
+: 1if 
+  .. if drop up b! @b push drop pop dup ! ; then drop ; 
+: main dup dup or 
+  999 for 
+    @ dup left b! !b 1if next right b! @b ! warm ; 
+
+node 405 ( core 77 )
+/a up org 0
+: 1if 
+  .. if drop down b! @b ! @b ! @b ! ; then drop ; 
+: main 
+  999 for 
+    left b! @b dup right b! !b dup ! 1if next warm ; 
+
+node 404 ( core 76 )
+/a right org 0
+: 1if 
+  .. if drop down b! @b up b! !b ; then drop ; 
+: main 
+  999 for 
+    @ 1if next warm ; 
+
+node 401 ( core 73 )
+/a down org 0
+: main 
+  999 for 
+    @ dup up b! !b drop next @b ! warm ; 
+
+node 314 ( core 68 )
+/a up org 0
+: main 
+  999 for 
+    @ dup down b! !b drop next warm ; 
+
+node 313 ( core 67 )
+org 0
+ , 12990
+ , 7048
+ , 0
+ , -7048
+ , -9968
+ , -7048
+ , 1125
+ , 7991
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 371
+: 22rep right b! @b down b! !b ; 
+: 21rep 
+  for 
+    +* unext ; 
+: hmm2_derive_group dup dup or @b push drop pop 
+  dup dup or a! 13 for 
+    @+ over - 1 . + . + 
+    .. -if - 1 . + then dup a push a! dup dup or 17 21rep push dup or pop 14 21rep drop drop a pop a! !b next drop ; 
+: hmm2_input 22rep 22rep 22rep hmm2_derive_group ; 
+: 1if 
+  .. if drop hmm2_input ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup down b! !b 1if next warm ; 
+
+node 312 ( core 66 )
+/a right org 0
+: hmm2_input left b! @b ! @b ! @b ! ; 
+: 1if 
+  .. if drop hmm2_input ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup down b! !b 1if next warm ; 
+
+node 311 ( core 65 )
+/a left org 0
+: hmm2_input right b! @b ! @b ! @b ! ; 
+: 1if 
+  .. if drop hmm2_input ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup down b! !b 1if next warm ; 
+
+node 310 ( core 64 )
+/a left org 0
+: hmm2_input @ right b! !b @ !b @ !b ; 
+: 1if 
+  .. if drop hmm2_input @ down b! !b ; then drop ; 
+: main 
+  999 for 
+    @ dup down b! !b 1if next warm ; 
+
+node 309 ( core 63 )
+/a left org 0
+ , 0
+ , 0
+: hmm2_forward_proc_out dup dup or dup dup or push drop pop 
+  7 for 
+    dup down b! @b . + push drop pop next dup push drop pop ; 
+: hmm2_input a push dup dup or a! !+ push !+ pop pop a! 1 b! @b ! dup ! dup dup or b! @b ! drop ; 
+: 1if 
+  .. if drop up b! @b @b @b hmm2_input down b! @b right b! !b up b! @b ! ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup ! dup down b! !b 1if next hmm2_forward_proc_out right b! !b warm ; 
+
+node 308 ( core 62 )
+/a right org 0
+: 1if 
+  .. if drop @ up b! !b ; then drop ; 
+: main 
+  999 for 
+    left b! @b dup down b! !b 1if next @ left b! !b warm ; 
+
+node 307 ( core 61 )
+/a left org 0
+: main 
+  999 for 
+    up b! @b dup ! dup right b! !b dup down b! !b drop next @ up b! !b warm ; 
+
+node 306 ( core 60 )
+org 0
+ , 9238
+ , 6532
+ , 0
+ , -6532
+ , -9238
+ , -6532
+ , -453
+ , 6532
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 20rep left b! @b down b! !b ; 
+: 19rep 
+  for 
+    +* unext ; 
+: hmm1_derive_group dup dup or @b push drop pop 
+  dup dup or a! 13 for 
+    @+ over - 1 . + . + 
+    .. -if - 1 . + then dup a push a! dup dup or 17 19rep push dup or pop 14 19rep drop drop a pop a! !b next drop ; 
+: hmm1_input 20rep 20rep 20rep hmm1_derive_group ; 
+: 1if 
+  .. if drop hmm1_input @b up b! !b ; then drop ; 
+: main 
+  999 for 
+    right b! @b 1if next warm ; 
+
+node 305 ( core 59 )
+/a right org 0
+: hmm1_input @ left b! !b @ !b @ !b ; 
+: 1if 
+  .. if drop @b ! @b ! @b ! hmm1_input ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup ! 1if next warm ; 
+
+node 304 ( core 58 )
+/a right org 0
+: hmm1_input @b ! @b ! @b ! ; 
+: 1if 
+  .. if drop @ !b @ !b @ !b hmm1_input up b! @b down b! !b ; then drop ; 
+: main 
+  999 for 
+    @ dup left b! !b 1if next warm ; 
+
+node 303 ( core 57 )
+/a left org 0
+: hmm1_input @b ! @b ! @b ! ; 
+: 1if 
+  .. if drop @ !b @ !b @ !b hmm1_input ; then drop ; 
+: main 
+  999 for 
+    @ dup right b! !b 1if next warm ; 
+
+node 302 ( core 56 )
+/a right org 0
+ , 0
+ , 0
+: hmm1_forward_proc_out dup dup or dup dup or push drop pop 
+  7 for 
+    dup down b! @b . + push drop pop next dup push drop pop ; 
+: hmm1_input a push dup dup or a! !+ !+ push pop pop a! dup ! 1 b! @b ! dup dup or b! @b ! drop ; 
+: 1if 
+  .. if drop @ @ @ hmm1_input ; then drop ; 
+: main 
+  999 for 
+    @ 1if next hmm1_forward_proc_out left b! !b warm ; 
+
+node 301 ( core 55 )
+/a up org 0
+: main 
+  999 for 
+    @ dup down b! !b drop next left b! @b ! warm ; 
+
+node 214 ( core 50 )
+org 0
+ , -322
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , -264
+ , -34
+ , 9968
+ , 7048
+ , -7048
+ , -9968
+ , -7048
+ , 7838
+: 18rep 
+  for 
+    +* unext ; 
+: hmm2_derive_group dup dup or left b! @b push drop pop 
+  dup dup or a! 13 for 
+    @+ over - 1 . + . + 
+    .. -if - 1 . + then dup a push a! dup dup or 17 18rep push dup or pop 14 18rep drop drop a pop a! !b next drop ; 
+: 1if 
+  .. if drop hmm2_derive_group ; then drop ; 
+: main 
+  999 for 
+    down b! @b 1if next warm ; 
+
+node 213 ( core 49 )
+/a down org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop dup !b 8 b! @b 4 b! !b ; then drop ; 
+: hmm2_derive_group a push dup dup or a! !+ !+ !+ pop a! 2 b! @b ! 1 b! @b left b! !b dup dup or b! @b up b! !b 98304 3 b! !b dup dup or 
+  dup dup or 8 b! !b 13 for 
+    @ 5 b! !b left b! @b 6 b! !b up b! @b 7 b! !b 5 b! @b 6 b! @b . + 7 b! @b . + push drop pop dup 3 b! @b - 1 . + . + 1if 8 b! @b 1 . + !b next 4 b! @b right b! !b drop ; 
+: hmm2_input @ @ @ hmm2_derive_group ; 
+: 2if 
+  .. if drop hmm2_input ; then drop ; 
+: main 
+  999 for 
+    @ dup up b! !b 2if next warm ; 
+
+node 212 ( core 48 )
+/a left org 0
+: hmm2_forward_proc_inc up b! @b ; 
+: hmm2_derive_group right b! @b ; 
+: hmm2_input hmm2_derive_group ! hmm2_forward_proc_inc ; 
+: 1if 
+  .. if drop hmm2_input ! ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup up b! !b 1if next warm ; 
+
+node 211 ( core 47 )
+/a left org 0
+: hmm2_input @ !b ; 
+: 1if 
+  .. if drop hmm2_input @ right b! !b ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup up b! !b 1if next warm ; 
+
+node 210 ( core 46 )
+org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 17rep drop 
+  dup dup or a! 7 for 
+    @b !+ next ; 
+: 1if 
+  .. -if 17rep ; then 17rep ; 
+: hmm2_forward_proc_inc @b 1if ; 
+: hmm2_swap_shift 
+  dup dup or a! 7 for 
+    @+ over 
+    .. if -1 . + 
+      for 
+        2* unext dup then drop left b! !b next drop ; 
+: 2if 
+  .. if drop hmm2_forward_proc_inc right b! @b left b! !b down b! @b hmm2_swap_shift ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup up b! !b 2if next warm ; 
+
+node 209 ( core 45 )
+org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop 
+    7 for 
+      
+      dup dup or a! 7 for 
+        @+ !b next next ; then drop ; 
+: hmm2_forward_proc_inc up b! @b 1if ; 
+: hmm2_forward_proc_out 
+  dup dup or a! 7 for 
+    @+ down b! !b next ; 
+: hmm2_swap_shift 
+  dup dup or a! 7 for 
+    left b! @b !+ next ; 
+: 2if 
+  .. if drop hmm2_forward_proc_inc left b! @b down b! !b hmm2_swap_shift ; then drop ; 
+: main 
+  999 for 
+    down b! @b 2if next hmm2_forward_proc_out warm ; 
+
+node 208 ( core 44 )
+/a up org 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 65536
+ , 65536
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 131071
+: hmm2_get_a2 dup -24 . + b! @b ! drop ; 
+: 1if 
+  .. -if drop ; then drop @ hmm2_get_a2 ; 
+: hmm2_get_a @ 1if ; 
+: 2if 
+  .. -if drop 
+    7 for 
+      
+      7 for 
+        hmm2_get_a next next ; then drop ; 
+: hmm2_forward_proc_inc @ 2if ; 
+: 3if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup ! 3if next warm ; 
+
+node 207 ( core 43 )
+org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , -674
+ , 0
+ , 9238
+ , 6532
+ , -6532
+ , -9238
+ , -6532
+ , 6532
+: 16rep 
+  for 
+    +* unext ; 
+: hmm1_derive_group dup dup or @b push drop pop 
+  dup dup or a! 13 for 
+    @+ over - 1 . + . + 
+    .. -if - 1 . + then dup a push a! dup dup or 17 16rep push dup or pop 14 16rep drop drop a pop a! !b next drop ; 
+: 1if 
+  .. if drop hmm1_derive_group ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup right b! !b 1if next warm ; 
+
+node 206 ( core 42 )
+/a down org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop dup !b 8 b! @b 4 b! !b ; then drop ; 
+: hmm1_derive_group a push dup dup or a! !+ !+ !+ pop a! 2 b! @b ! 1 b! @b right b! !b dup dup or b! @b up b! !b 98304 3 b! !b dup dup or 
+  dup dup or 8 b! !b 13 for 
+    @ 5 b! !b right b! @b 6 b! !b up b! @b 7 b! !b 5 b! @b 6 b! @b . + 7 b! @b . + push drop pop dup 3 b! @b - 1 . + . + 1if 8 b! @b 1 . + !b next 4 b! @b left b! !b drop ; 
+: hmm1_input @ @ @ hmm1_derive_group ; 
+: 2if 
+  .. if drop hmm1_input @b ! ; then drop ; 
+: main 
+  999 for 
+    right b! @b dup left b! !b dup up b! !b 2if next warm ; 
+
+node 205 ( core 41 )
+/a left org 0
+: hmm1_forward_proc_inc up b! @b ; 
+: hmm1_derive_group @ ; 
+: hmm1_input hmm1_derive_group !b hmm1_forward_proc_inc ; 
+: 1if 
+  .. if drop hmm1_input ! ; then drop ; 
+: main 
+  999 for 
+    @ dup right b! !b 1if next warm ; 
+
+node 204 ( core 40 )
+/a right org 0
+: hmm1_input @ up b! !b ; 
+: 1if 
+  .. if drop hmm1_input down b! @b left b! !b ; then drop ; 
+: main 
+  999 for 
+    @ dup left b! !b 1if next warm ; 
+
+node 203 ( core 39 )
+org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 15rep drop 
+  dup dup or a! 7 for 
+    @b !+ next ; 
+: 1if 
+  .. -if 15rep ; then 15rep ; 
+: hmm1_forward_proc_inc up b! @b 1if ; 
+: hmm1_swap_shift 
+  dup dup or a! 7 for 
+    @+ over 
+    .. if -1 . + 
+      for 
+        2* unext dup then drop right b! !b next drop ; 
+: 2if 
+  .. if drop hmm1_forward_proc_inc left b! @b hmm1_swap_shift ; then drop ; 
+: main 
+  999 for 
+    left b! @b dup right b! !b 2if next warm ; 
+
+node 202 ( core 38 )
+org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop 
+    7 for 
+      
+      dup dup or a! 7 for 
+        @+ !b next next ; then drop ; 
+: hmm1_forward_proc_inc @b 1if ; 
+: hmm1_forward_proc_out 
+  dup dup or a! 7 for 
+    @+ down b! !b next ; 
+: hmm1_swap_shift 
+  dup dup or a! 7 for 
+    right b! @b !+ next ; 
+: 2if 
+  .. if drop hmm1_forward_proc_inc hmm1_swap_shift ; then drop ; 
+: main 
+  999 for 
+    right b! @b dup up b! !b 2if next hmm1_forward_proc_out warm ; 
+
+node 201 ( core 37 )
+/a up org 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 65536
+ , 65536
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 131071
+: hmm1_get_a2 dup -24 . + b! @b ! drop ; 
+: 1if 
+  .. -if drop ; then drop @ hmm1_get_a2 ; 
+: hmm1_get_a @ 1if ; 
+: 2if 
+  .. -if drop 
+    7 for 
+      
+      7 for 
+        hmm1_get_a next next ; then drop ; 
+: hmm1_forward_proc_inc @ 2if ; 
+: 3if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup ! 3if next warm ; 
+
+node 113 ( core 31 )
+org 0
+ , -7587
+ , 7048
+ , 9968
+ , 7048
+ , 0
+ , -7048
+ , -18219
+ , -14040
+ , 0
+ , 7048
+ , 7048
+ , 0
+ , -7048
+ , -13186
+: 14rep 
+  for 
+    +* unext ; 
+: hmm2_derive_group dup dup or @b push drop pop 
+  dup dup or a! 13 for 
+    @+ over - 1 . + . + 
+    .. -if - 1 . + then dup a push a! dup dup or 17 14rep push dup or pop 14 14rep drop drop a pop a! !b next drop ; 
+: 1if 
+  .. if drop hmm2_derive_group ; then drop ; 
+: main 
+  999 for 
+    up b! @b 1if next warm ; 
+
+node 112 ( core 30 )
+org 0
+ , 131071
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop ; then drop 
+    dup dup or a! 7 for 
+      @+ !b next ; 
+: hmm2_forward_proc_inc dup dup or left b! @b 1if @b up b! !b drop ; 
+: 2if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    up b! @b 2if next warm ; 
+
+node 111 ( core 29 )
+org 0
+ , 0
+: 12rep right b! !b dup dup or b! @b 1 . + !b ; 
+: 13rep @b . + down b! !b @b ; 
+: 1if 
+  .. -if dup or dup b! !b 7 for 
+      dup 2* 2* 2* 13rep 12rep next ; then dup or dup b! !b 7 for 
+      left b! @b over 2* 2* 2* dup dup or b! 13rep a push *.17 push drop pop pop a! 12rep next ; 
+: hmm2_forward_proc_inc right b! @b dup left b! !b dup down b! !b 1if right b! @b left b! !b drop ; 
+: hmm2_input up b! @b hmm2_forward_proc_inc ; 
+: 2if 
+  .. if drop hmm2_input ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup down b! !b 2if next warm ; 
+
+node 110 ( core 28 )
+org 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop 
+    7 for 
+      left b! @b right b! @b a push *.17 push drop pop pop a! 1 b! !b @b up b! !b dup 1 b! @b over - and . + push drop pop next ; then drop -1 dup dup or b! !b 
+    7 for 
+      right b! @b up b! !b next -131072 push drop pop ; 
+: hmm2_forward_proc_inc dup dup or dup b! @b dup up b! !b dup left b! !b dup right b! !b dup down b! !b 1if dup right b! !b drop ; 
+: hmm2_forward_proc_out dup dup or dup b! !b ; 
+: 2if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup down b! !b 2if next hmm2_forward_proc_out warm ; 
+
+node 109 ( core 27 )
+org 0
+ , 0
+ , 0
+: hmm2_get_a @b ; 
+: 1if 
+  .. -if dup or dup b! !b 7 for 
+      dup dup or push drop pop 
+      dup 1 b! !b 7 for 
+        dup up b! @b 1 b! @b 2* 2* 2* dup dup or b! @b . + right b! !b hmm2_get_a a push *.17 push drop pop pop a! . + push drop pop 1 b! @b 1 . + !b next dup left b! !b dup dup or b! @b 1 . + !b next ; then drop ; 
+: hmm2_forward_proc_inc dup dup or left b! @b dup up b! !b dup right b! !b dup down b! !b 1if drop ; 
+: 2if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    right b! @b 2if next warm ; 
+
+node 108 ( core 26 )
+/a up org 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm2_get_a2 @ ; 
+: 1if 
+  .. -if drop dup b! @b 24 b! !b ; then drop dup ! hmm2_get_a2 24 b! !b ; 
+: hmm2_get_a dup 24 - 1 . + . + dup ! 1if @b right b! !b drop ; 
+: 2if 
+  .. -if drop 
+    7 for 
+      
+      7 for 
+        right b! @b hmm2_get_a next next ; then drop ; 
+: hmm2_forward_proc_inc right b! @b dup ! dup down b! !b 2if ; 
+: 3if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    @ dup right b! !b dup down b! !b 3if next warm ; 
+
+node 106 ( core 24 )
+org 0
+ , 0
+ , 6532
+ , 9238
+ , 6532
+ , 0
+ , -6532
+ , -17881
+ , -6532
+ , 0
+ , 6532
+ , 6532
+ , 0
+ , -6532
+ , -6532
+: 11rep 
+  for 
+    +* unext ; 
+: hmm1_derive_group dup dup or up b! @b push drop pop 
+  dup dup or a! 13 for 
+    @+ over - 1 . + . + 
+    .. -if - 1 . + then dup a push a! dup dup or 17 11rep push dup or pop 14 11rep drop drop a pop a! !b next drop ; 
+: 1if 
+  .. if drop hmm1_derive_group ; then drop ; 
+: main 
+  999 for 
+    up b! @b dup left b! !b dup down b! !b 1if next warm ; 
+
+node 105 ( core 23 )
+org 0
+ , 131071
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop ; then drop 
+    dup dup or a! 7 for 
+      @+ !b next ; 
+: hmm1_forward_proc_inc @b 1if @b up b! !b ; 
+: 2if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    left b! @b dup right b! !b 2if next warm ; 
+
+node 104 ( core 22 )
+org 0
+ , 0
+: 9rep left b! !b dup dup or b! @b 1 . + !b ; 
+: 10rep @b . + down b! !b @b ; 
+: 1if 
+  .. -if dup or dup b! !b 7 for 
+      dup 2* 2* 2* 10rep 9rep next ; then dup or dup b! !b 7 for 
+      right b! @b over 2* 2* 2* dup dup or b! 10rep a push *.17 push drop pop pop a! 9rep next ; 
+: hmm1_forward_proc_inc left b! @b dup right b! !b dup down b! !b 1if left b! @b right b! !b drop ; 
+: hmm1_input up b! @b hmm1_forward_proc_inc ; 
+: 2if 
+  .. if drop hmm1_input ; then drop ; 
+: main 
+  999 for 
+    right b! @b dup left b! !b 2if next warm ; 
+
+node 103 ( core 21 )
+org 0
+ , 0
+ , 0
+: 1if 
+  .. -if drop 
+    7 for 
+      right b! @b left b! @b a push *.17 push drop pop pop a! 1 b! !b @b up b! !b dup 1 b! @b over - and . + push drop pop next ; then drop -1 dup dup or b! !b 
+    7 for 
+      left b! @b up b! !b next -131072 push drop pop ; 
+: hmm1_forward_proc_inc dup dup or dup dup or push drop pop dup dup or b! @b dup up b! !b dup right b! !b dup left b! !b dup down b! !b 1if dup left b! !b drop ; 
+: hmm1_forward_proc_out dup dup or dup dup or b! !b ; 
+: 2if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    left b! @b 2if next hmm1_forward_proc_out warm ; 
+
+node 102 ( core 20 )
+org 0
+ , 0
+ , 0
+ , 0
+: hmm1_get_a @b ; 
+: 1if 
+  .. -if drop 
+    dup dup or 1 b! !b 7 for 
+      dup dup or push drop pop 
+      dup dup or 2 b! !b 7 for 
+        dup up b! @b 2 b! @b 2* 2* 2* 1 b! @b . + left b! !b hmm1_get_a a push *.17 push drop pop pop a! . + push drop pop 2 b! @b 1 . + !b next dup right b! !b 1 b! @b 1 . + !b next ; then drop ; 
+: hmm1_forward_proc_inc dup dup or right b! @b dup up b! !b dup left b! !b dup down b! !b 1if drop ; 
+: 2if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    up b! @b 2if next warm ; 
+
+node 101 ( core 19 )
+/a up org 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 43691
+ , 43691
+ , 43691
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm1_get_a2 @ ; 
+: 1if 
+  .. -if drop dup b! @b 24 b! !b ; then drop dup ! hmm1_get_a2 24 b! !b ; 
+: hmm1_get_a dup 24 - 1 . + . + dup ! 1if @b left b! !b drop ; 
+: 2if 
+  .. -if drop 
+    7 for 
+      
+      7 for 
+        left b! @b hmm1_get_a next next ; then drop ; 
+: hmm1_forward_proc_inc left b! @b dup ! dup down b! !b 2if ; 
+: 3if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    @ 3if next warm ; 
+
+node 11 ( core 11 )
+/a down org 0
+ , 6135
+ , 21605
+ , 20837
+ , 15806
+ , 7836
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm2_get_b2 @b ; 
+: 1if 
+  .. -if drop dup b! @b 28 b! !b ; then drop dup !b hmm2_get_b2 28 b! !b ; 
+: hmm2_get_b dup 28 - 1 . + . + dup right b! !b 1if @b ! drop ; 
+: 8rep drop 
+  7 for 
+    @ hmm2_get_b next ; 
+: 2if 
+  .. -if 8rep ; then 8rep ; 
+: hmm2_forward_proc_inc @ 2if ; 
+: 3if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    @ 3if next warm ; 
+
+node 10 ( core 10 )
+/a left org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 94135
+ , 32732
+ , 41109
+ , 59234
+ , 61427
+ , 65301
+ , 68434
+ , 69021
+ , 0
+: hmm2_get_b3 @ ; 
+: 1if 
+  .. -if drop dup -28 . + b! @b 28 b! !b ; then drop dup ! hmm2_get_b3 28 b! !b ; 
+: hmm2_get_b2 dup 56 - 1 . + . + dup ! 1if @b right b! !b drop ; 
+: 2if 
+  .. -if drop ; then drop @b hmm2_get_b2 ; 
+: hmm2_get_b right b! @b dup ! 2if ; 
+: 7rep drop 
+  7 for 
+    hmm2_get_b next ; 
+: 3if 
+  .. -if 7rep ; then 7rep ; 
+: hmm2_forward_proc_inc @b 3if ; 
+: 4if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    down b! @b 4if next warm ; 
+
+node 9 ( core 9 )
+/a right org 0
+ , 28629
+ , 61730
+ , 45842
+ , 12293
+ , 10447
+ , 6591
+ , 2461
+ , 0
+ , 18
+ , 191
+ , 386
+ , 976
+ , 1451
+ , 2075
+ , 2312
+ , 2037
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm2_get_b4 @ ; 
+: 1if 
+  .. -if drop dup -56 . + b! @b 28 b! !b ; then drop dup ! hmm2_get_b4 28 b! !b ; 
+: hmm2_get_b3 dup 84 - 1 . + . + dup ! 1if @b left b! !b drop ; 
+: 2if 
+  .. -if drop ; then drop @b hmm2_get_b3 ; 
+: hmm2_get_b2 @b dup ! 2if ; 
+: 3if 
+  .. -if drop ; then drop hmm2_get_b2 ; 
+: hmm2_get_b left b! @b dup ! 3if ; 
+: 6rep drop 
+  7 for 
+    hmm2_get_b next ; 
+: 4if 
+  .. -if 6rep ; then 6rep ; 
+: hmm2_forward_proc_inc down b! @b 4if ; 
+: 5if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    @ 5if next warm ; 
+
+node 8 ( core 8 )
+/a right org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 2154
+ , 14814
+ , 22898
+ , 42763
+ , 49912
+ , 57105
+ , 57865
+ , 60014
+: hmm2_get_b4 dup -84 . + b! @b ! drop ; 
+: 1if 
+  .. -if drop ; then drop @ hmm2_get_b4 ; 
+: hmm2_get_b3 @ 1if ; 
+: 2if 
+  .. -if drop ; then drop hmm2_get_b3 ; 
+: hmm2_get_b2 @ 2if ; 
+: 3if 
+  .. -if drop ; then drop hmm2_get_b2 ; 
+: hmm2_get_b @ 3if ; 
+: 5rep drop 
+  7 for 
+    hmm2_get_b next ; 
+: 4if 
+  .. -if 5rep ; then 5rep ; 
+: hmm2_forward_proc_inc @b 4if ; 
+: 5if 
+  .. if drop hmm2_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    down b! @b dup ! 5if next warm ; 
+
+node 6 ( core 6 )
+/a left org 0
+: main 
+  999 for 
+    down b! @b dup ! drop next warm ; 
+
+node 5 ( core 5 )
+/a left org 0
+: main 
+  999 for 
+    @ dup right b! !b drop next warm ; 
+
+node 4 ( core 4 )
+/a down org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm1_get_b2 @b ; 
+: 1if 
+  .. -if drop dup b! @b 28 b! !b ; then drop dup !b hmm1_get_b2 28 b! !b ; 
+: hmm1_get_b dup 28 - 1 . + . + dup left b! !b 1if @b ! drop ; 
+: 4rep drop 
+  7 for 
+    @ hmm1_get_b next ; 
+: 2if 
+  .. -if 4rep ; then 4rep ; 
+: hmm1_forward_proc_inc @ 2if ; 
+: 3if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    right b! @b dup left b! !b 3if next warm ; 
+
+node 3 ( core 3 )
+/a right org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 128005
+ , 124898
+ , 126902
+ , 131071
+ , 131071
+ , 131071
+ , 131071
+ , 131071
+ , 0
+: hmm1_get_b3 @ ; 
+: 1if 
+  .. -if drop dup -28 . + b! @b 28 b! !b ; then drop dup ! hmm1_get_b3 28 b! !b ; 
+: hmm1_get_b2 dup 56 - 1 . + . + dup ! 1if @b left b! !b drop ; 
+: 2if 
+  .. -if drop ; then drop @b hmm1_get_b2 ; 
+: hmm1_get_b left b! @b dup ! 2if ; 
+: 3rep drop 
+  7 for 
+    hmm1_get_b next ; 
+: 3if 
+  .. -if 3rep ; then 3rep ; 
+: hmm1_forward_proc_inc down b! @b 3if ; 
+: 4if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    left b! @b dup ! 4if next warm ; 
+
+node 2 ( core 2 )
+/a left org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm1_get_b4 @ ; 
+: 1if 
+  .. -if drop dup -56 . + b! @b 28 b! !b ; then drop dup ! hmm1_get_b4 28 b! !b ; 
+: hmm1_get_b3 dup 84 - 1 . + . + dup ! 1if @b right b! !b drop ; 
+: 2if 
+  .. -if drop ; then drop @b hmm1_get_b3 ; 
+: hmm1_get_b2 @b dup ! 2if ; 
+: 3if 
+  .. -if drop ; then drop hmm1_get_b2 ; 
+: hmm1_get_b right b! @b dup ! 3if ; 
+: 2rep drop 
+  7 for 
+    hmm1_get_b next ; 
+: 4if 
+  .. -if 2rep ; then 2rep ; 
+: hmm1_forward_proc_inc down b! @b 4if ; 
+: 5if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    right b! @b dup ! 5if next warm ; 
+
+node 1 ( core 1 )
+/a left org 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 1534
+ , 3087
+ , 2085
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+ , 1534
+ , 3087
+ , 2085
+ , 0
+ , 0
+ , 0
+ , 0
+ , 0
+: hmm1_get_b4 dup -84 . + b! @b ! drop ; 
+: 1if 
+  .. -if drop ; then drop @ hmm1_get_b4 ; 
+: hmm1_get_b3 @ 1if ; 
+: 2if 
+  .. -if drop ; then drop hmm1_get_b3 ; 
+: hmm1_get_b2 @ 2if ; 
+: 3if 
+  .. -if drop ; then drop hmm1_get_b2 ; 
+: hmm1_get_b @ 3if ; 
+: 1rep drop 
+  7 for 
+    hmm1_get_b next ; 
+: 4if 
+  .. -if 1rep ; then 1rep ; 
+: hmm1_forward_proc_inc down b! @b 4if ; 
+: 5if 
+  .. if drop hmm1_forward_proc_inc ; then drop ; 
+: main 
+  999 for 
+    @ 5if next warm ; 
+

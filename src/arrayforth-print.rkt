@@ -42,7 +42,7 @@
       
     (or (= (list-length loopbody) 0)
         (and (= (list-length loopbody) 1)
-                                        ; head linklist is empty
+             ;; head linklist is empty
              (let ([entry (if (list? loopbody)
                               (car loopbody)
                               (linklist-entry (linklist-next loopbody)))])
@@ -208,7 +208,7 @@
         (begin
           (for ([val (vardecl-val x)])
             (display " , ")
-            (pretty-display (positive val)))))
+            (pretty-display val)))) ;; Michael's tool can work with negative.
     ]
 
    [(aforth? x)

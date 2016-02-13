@@ -126,24 +126,6 @@
                       512 #:w 3 #:h 3 #:opt #f #:partition #f)
 
 ;; HMM Classifier
-#;(compile-and-optimize "../examples/sensors/hmm_array_b.cll" "hmm_array_b" 
-                      350 #:w 5 #:h 5 #:opt #f #:partition #f
-                      #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/derive_group.cll" "derive_group" 
-                      350 #:w 5 #:h 5 #:opt #f #:partition #f
-                      #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/hmm_test2.cll" "hmm_test2"
-                      350 #:w 18 #:h 8 #:opt #f #:partition #f
-                      #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/hmm_bug.cll" "hmm_bug"
-                      350 #:w 5 #:h 2 #:opt #f #:partition #f
-                      #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/hmm_pinning.cll" "hmm_pinning"
-                      350 #:w 18 #:h 8 #:opt #f #:partition #f
-                      #:original-format #f)
-(compile-and-optimize "../examples/sensors/hmm_pinning_real.cll" "hmm_pinning_real"
-                      350 #:w 18 #:h 8 #:opt #f #:partition #f
-                      #:original-format #f)
-#;(compile-and-optimize "../examples/sensors/hmm_module_pinning.cll" "hmm_module_pinning"
+#;(compile-and-optimize "../examples/sensors/hmm_module_pinning_for.cll" "hmm_module_pinning_for"
                       350 #:w 18 #:h 8 #:opt #f #:partition #f
                       #:original-format #f)

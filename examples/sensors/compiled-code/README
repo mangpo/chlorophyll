@@ -1,0 +1,4 @@
+hmm-noacc.aforth         
+ --> final classifier code with out accelerometer reading
+hmm-filter13-no-acc.aforth
+ --> less accuracy version (skip 13 accelerometer readings before processing a new one)

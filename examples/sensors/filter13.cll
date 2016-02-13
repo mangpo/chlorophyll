@@ -1,0 +1,21 @@
+// This program is used for making acc vector pass the filter only if it hasn't passed in the previous 13 steps.
+
+int count;
+
+int filter() {
+  int ret1, ret2;
+  ret2 = 0;
+  count = count + 1;
+  if(ret1 > 0) {
+    if(count > 0) {
+      ret2 = 1;
+      count = -13; // 13 steps
+    }
+  }
+  return ret2;
+}
+
+void main() {
+  int x;
+  x = filter();
+}
