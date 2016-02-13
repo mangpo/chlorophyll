@@ -184,32 +184,6 @@ All first elements of the tuples are in core 6, and all second elements of the t
 
 ### Parallelism
 
-#### Parallel Module
-
-##### Challenges of Parallelism in Chlorophyll
-Say we want these two function calls to run in parallel:
-```
-hmm_step(acc, model1);
-hmm_step(acc, model2);
-```
-They will not run in parallel in this implementation because only one set of partitions
-are responsible for executing the function. In order to make
-them run in parallel, we can use the `module` construct as follows:
-
-```
-# Define module .
-module Hmm(model_init) {
-fix1_t model[N] = model_init;
-fix1_t step(fit1_t[] acc) { ... }
-}
-# Create module instances .
-hmm1 = new Hmm(model1);
-hmm2 = new Hmm(model2);
-# Call two different functions .
-hmm1.step(acc);
-hmm2.step(acc);
-```
-
 This guarantees that the two module instances occupy two disjoint sets of partitions. If programmers annotation partitions inside the module, each module instance will get fresh partitions. A module can contain also contain more than one function.
 
 #### Parallel Map and Reduce
@@ -226,6 +200,33 @@ output_var = reduce(func, init, input_array);
 
 `example/mapreduce` contains example programs that use map and reduce constructs.
 
+
+#### Parallel Module
+
+##### Challenges of Parallelism in Chlorophyll
+Say we want these two function calls to run in parallel:
+```
+hmm_step(acc, model1);
+hmm_step(acc, model2);
+```
+They will not run in parallel in this implementation because only one set of partitions
+are responsible for executing the function. In order to make
+them run in parallel, we can use the `module` construct as follows:
+
+```
+// Define module .
+module Hmm(model_init) {
+fix1_t model[N] = model_init;
+fix1_t step(fit1_t[] acc) { ... }
+}
+// Create module instances .
+hmm1 = new Hmm(model1);
+hmm2 = new Hmm(model2);
+// Call two different functions .
+hmm1.step(acc);
+hmm2.step(acc);
+```
+
 ### IO
 
 The following functions are provided for interacting with GA144 IO functionality.
@@ -234,7 +235,7 @@ All IO functions require the pins node coordinate as their first argument.
 
 Set IO pin states:
 ```
-set_io(node, state_1, ..., state_N, wakeup)
+set_io(node, state_1, ..., state_N, wakeup);
 ```
 `state_i`: The state for GPIO pin i. see [GPIO states](#GPIO_pin_states)  
 `wakeup`: Sets the state for `digital_wakeup`, either WAKEUP_LOW or WAKEUP_HIGH
@@ -242,7 +243,7 @@ set_io(node, state_1, ..., state_N, wakeup)
 
 Read GPIO pins:
 ```
-digital_read(node, pin)
+digital_read(node, pin);
 ```
 `pin`: GPIO pin number between 0 and 3. see [pin numbering](#GPIO_pin_numbering)
 
@@ -251,13 +252,13 @@ Returns zero if the pin is low, non-zero if the pin is high
 
 Pin Wakeup:
 ```
-digital_wait(node)
+digital_wait(node);
 ```
 Suspends execution in the node until pin 0 is in the state specified by the
 last call to `set_io`. The default is WAKEUP_HIGH.
 
 <a name="GPIO_pin_numbering"></a>
-##### GPIO pin numbering
+#### GPIO pin numbering
 In the Greenarrays documentation, pins are referenced by the bit positions
 used to control them in the IO register. In Chlorophyll, they are numbered
 sequentially from 0. For example, in Greenarrays documentation 705.17
@@ -274,7 +275,7 @@ Mapping of chlorophyll pin numbers to those used in Greenarrays documentation:
 
 
 <a name="GPIO_pin_states"></a>
-##### GPIO pin states
+#### GPIO pin states
 
 Possible states for GPIO pins:
 
