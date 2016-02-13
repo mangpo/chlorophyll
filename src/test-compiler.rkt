@@ -100,8 +100,8 @@
 ;                      290 #:w 4 #:h 4 #:opt #f #:partition #f)
 
 ;; Fixed point
-;(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
-;                      300 #:w 3 #:h 3 #:opt #f)
+(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
+                      300 #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/fixedpoint/fft_inplace.cll" "fft_inplace" 
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 

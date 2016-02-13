@@ -33,10 +33,12 @@
 	ret
 	]
        [(is-a? x Place%)
-        (let ([at (get-field at x)])
-          (if (or (equal? at "any") (equal? at "io"))
-              (set)
-              (raise "make-set doesn't support Place% that is not @any or @io")))]
+        (set)
+        ;; (let ([at (get-field at x)])
+        ;;   (if (or (equal? at "any") (equal? at "io"))
+        ;;       (set)
+        ;;       (raise "make-set doesn't support Place% that is not @any or @io")))
+        ]
        [else (raise `(make-set ,x))]))
 
     (define/public (set-functions funcs)
