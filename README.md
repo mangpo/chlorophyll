@@ -203,7 +203,6 @@ output_var = reduce(func, init, input_array);
 
 #### Parallel Module
 
-##### Challenges of Parallelism in Chlorophyll
 Say we want these two function calls to run in parallel:
 ```
 hmm_step(acc, model1);
