@@ -1,5 +1,4 @@
-( complete guesture recognition application )
-( with optimizations)
+( complete guesture recognition application)
 
 ( accelerometer reading)
 
@@ -40,31 +39,23 @@ node 709
   .. -if drop 2390 ! ; then drop 342 ! ; 
 : act135 dup dup or @ 131072 and 1if up b! dup !b dup right b! !b drop ; 
 )
-
 node 709
-/a io /p right  org 0
+/a io /p right org 0
 const val or 0x15555 0x803
 const val2 or 0x15555 0x3
 : 1if 
   .. -if drop val ! ; then drop ( 0x156) val2 ! ; 
 : act135 dup dup or @ 0x20000 and 1if up
           b! dup !b dup right b! !b drop ; 
-
-: xxx right b! @b -if ( act135) right b! 0 !b ; then 0x20000 right b! !b ;
-
 node 708
-/a io /p down /b right org 0
-: wait_until_high_708 @ -if drop ; then drop ( wait_until_high_708) ;
-( : wait_until_high_708 right b! @p .. xxx@709 .. !b @ !b r--- ; )
-( : wait_until_high_708 @ @p .. xxx@709 .. !b !b @b -if drop wait_until_high_708 ; then drop ; )
+/a io /p down org 0
+: wait_until_high_708 @ -if drop ; then drop wait_until_high_708 ;
 : low_high 131072 !
-: edge_wait_708 @p .. act135@709 .. !b  @b drop ;
+: edge_wait_708 right b! @p .. act135@709 .. !b @b drop ;
 : set_low low_low
-: high_low 2 ! wait_until_high_708 edge_wait_708 ; 
-( : high_low 2 ! wait_until_high_708 ;  )
+: high_low 2 ! wait_until_high_708 edge_wait_708 ;
 : set_high low_high
-: high_high dup dup or ! wait_until_high_708 edge_wait_708 ;
-( : high_high dup dup or ! wait_until_high_708 ;   )
+: high_high dup dup or ! wait_until_high_708 edge_wait_708 ; 
 : low_low 131074 ! edge_wait_708 ; 
 : 2if 
   .. -if set_high ; then set_low ;
@@ -76,9 +67,9 @@ node 708
 : in_8 dup dup or
   7 for 
     2* set_high @ 2 and or next set_low 2/ ; 
-: read_16 in_8 ( 2* 2* 2* 2* 2* 2* 2* 2* ) in_8 or ; 
+: read_16 in_8 2* 2* 2* 2* 2* 2* 2* 2* in_8 or ; 
 : act134 7686 start_out_8 132608 out_8 7942 start_out_8
-  read_16 read_16 read_16 ( set_low high_high) high_low high_high down b! !b !b !b  right b! ;
+  read_16 read_16 read_16 ( set_low high_high) high_low high_high down b! !b !b !b ;
 
 node 611
 /a right org 0

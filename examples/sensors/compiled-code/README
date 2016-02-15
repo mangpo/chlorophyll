@@ -1,4 +1,15 @@
-hmm-noacc.aforth         
+hmm-noacc.aforth
  --> final classifier code with out accelerometer reading
 hmm-filter13-no-acc.aforth
  --> less accuracy version (skip 13 accelerometer readings before processing a new one)
+
+accelerometer-opt.aforth
+  --> read from accelermoter at ~200Hz
+accelerometer-power-meas.aforth
+  --> measure the power consumption of accelerometer reading
+guesture-recognition-opt.aforth
+  --> complete guesture recognition application
+guesture-recognition-msp430-sim.aforth
+  --> measure classifcation accuracy on the msp430
+processing-power-meas.aforth
+  --> measure power consumption for processing the acceleromter readings
