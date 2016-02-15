@@ -1,0 +1,14 @@
+// c
+
+int@1 c;
+
+actor* f;
+int@0 f(int@1 x) {
+  return x +@1 c;
+}
+
+void main() {
+  int@0 x;
+  c = 1;
+  x = f(x);
+}

@@ -1,14 +1,9 @@
 TODO
-- documentation
-- fix2_t@place(x) coeff[4] doesn't work.
-- test fixpint for assign, binexp, uexp, if, while, function, array of pair
-- conversion
-- digital functions?
-
+- should allow to cast from int <--> fixed point
+  (right now only allowed at the function boundary)
 - rethink key for cache (no mem-size, etc.)
 - other optimizations: dce, instr fetch, first order funcs
 - no need to use lock in cache.rkt
-- why compiling md5 is so slow
 
 FASTER PARTITIONER
 - infer each function first (see issue about racket)
@@ -37,15 +32,4 @@ BENCHMARKS
 - FFT
 
 PARALLEL MODULE
-
-- make the sample hmm program fits
-
-- freshen concrete partitions as well
-- regression test
-
 - (clone ast) is very confusing
-- only rename global array & function within module
-- only clone the stmt if there is modulecall in there
-
-DOCUMENT
-- don't support return anywhere else except at the end of function

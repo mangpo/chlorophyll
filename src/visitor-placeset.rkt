@@ -33,10 +33,12 @@
 	ret
 	]
        [(is-a? x Place%)
-        (let ([at (get-field at x)])
-          (if (or (equal? at "any") (equal? at "io"))
-              (set)
-              (raise "make-set doesn't support Place% that is not @any or @io")))]
+        (set)
+        ;; (let ([at (get-field at x)])
+        ;;   (if (or (equal? at "any") (equal? at "io"))
+        ;;       (set)
+        ;;       (raise "make-set doesn't support Place% that is not @any or @io")))
+        ]
        [else (raise `(make-set ,x))]))
 
     (define/public (set-functions funcs)
@@ -89,7 +91,9 @@
           (union-in (hash-ref env name))])
 
         (for ([arg (get-field args ast)])
-             (set! ret (set-union ret (make-set (get-field place-type arg)))))
+             ;;(set! ret (set-union ret (make-set (get-field place-type arg))))
+             (set! ret (set-union ret (send arg accept this)))
+             )
 
         ;;(pretty-display (format "PLACESET: FuncCall ~a" name))
         ;;(pretty-display `(placeset-before ,ret))
@@ -192,7 +196,17 @@
     (define/public (get-actors*-need-cf ast all-main-actors)
       (define actors*-nodes (set))
       (for ([name (hash-keys actors*)])
+           ;;(pretty-display `(actor ,name ,(hash-ref env name)))
            (set! actors*-nodes (set-union actors*-nodes (hash-ref env name))))
+
+      ;; (pretty-display `(subtract
+      ;;                   ,actors*-nodes
+      ;;                   ,need-cf
+      ;;                   ,(get-field body-placeset ast)
+      ;;                   ,(set-subtract actors*-nodes need-cf)
+      ;;                   ,(set-intersect (get-field body-placeset ast)
+      ;;                                   (set-subtract actors*-nodes need-cf))
+      ;;                   ,all-main-actors))
       
       (set-subtract
        (set-intersect (get-field body-placeset ast)

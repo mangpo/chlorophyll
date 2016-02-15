@@ -1,0 +1,24 @@
+// -*- c -*-
+
+# 0 --> 000
+# 2 --> 001
+actor edge@(0~>2);
+
+int@0 edge(int@2 a){
+  return a +@2 1;
+}
+
+void main(){
+  int@0 x, b;
+  b = 0;
+  x = 0;
+  while(b < 10) {
+    if(b >@0 5) {
+      x = edge(x);
+      out(x);
+      x = edge(x);
+      out(x);
+    }
+    b = b+1;
+  }
+}

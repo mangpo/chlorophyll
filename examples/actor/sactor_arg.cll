@@ -1,0 +1,19 @@
+// c
+
+# 0 --> 000
+# 1 --> 201
+
+# 5 --> 001
+# 6 --> 101
+
+actor* derive;
+int@0 derive(int@5 x) {
+  int@6 y;
+  return x +@5 y;
+}
+
+void main() {
+  int@0 x;
+  int@1 y;
+  x = derive(y);
+}

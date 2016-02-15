@@ -134,12 +134,12 @@
   
   (generate-onecore-simulation ast cpp)
   
-  (system (format "rm -f ~a ~a" binary expect))
-  (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a -o ~a" 
-					 cpp
-					 binary)))
-          ;; error
-          (raise "compilation error at sequantial simulation file."))
+  ;; (system (format "rm -f ~a ~a" binary expect))
+  ;; (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a -o ~a" 
+  ;;       				 cpp
+  ;;       				 binary)))
+  ;;         ;; error
+  ;;         (raise "compilation error at sequantial simulation file."))
 
   (when run
         (pretty-display (format "GENERATE ~a" expect))
@@ -155,12 +155,12 @@
   (define output (format "~a/out/~a_~a.tmp" datadir name input))
   (define expect (format "~a/out/~a_~a.out" datadir name input))
   
-  (system (format "rm -f ~a ~a" binary output))
-  (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a" 
-					 outdir name 
-					 binary)))
-	  ;; error
-	(raise "compilation error at multicore simulation file."))
+  ;; (system (format "rm -f ~a ~a" binary output))
+  ;; (unless (= 0 (system/exit-code (format "g++ -pthread -std=c++0x ~a/~a.cpp -o ~a" 
+  ;;       				 outdir name 
+  ;;       				 binary)))
+  ;;         ;; error
+  ;;       (raise "compilation error at multicore simulation file."))
   (system (format "./~a < ~a/~a > ~a"
                   binary
                   datadir input  ;; input

@@ -1,0 +1,20 @@
+// Module example
+
+module Op(c, arr) {
+  int add(int@2 a, int@2 b) { 
+    int@1 x[3] = arr;
+    return a + x[c] + b; 
+  }
+}
+
+m1 = new Op(0,{1,2,3})@{000,001,002};
+m2 = new Op(1,{111,222,333})@REG(200,202);
+
+void main() {
+  int@0 o1;
+  int o2;
+  o1 = m1.add(1,2);
+  o2 = m2.add(3,4);
+  o1 = o1 + o2;
+  out(o1);
+}
