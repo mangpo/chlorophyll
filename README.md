@@ -226,6 +226,31 @@ hmm1.step(acc);
 hmm2.step(acc);
 ```
 
+### Program Layout
+
+Although the compile can automatically maps logical cores to physical cores, programmers may want to design their own program layout onto physical cores. Programmers can pin a logical core to a physical core by adding the following line:
+```
+# logical_core --> physical_core
+```
+Programmers can also pin a set of logical cores inside a module instance (see previous section) to a set of physical cores. For example, we can pin logical cores in module instance `hmm1` from the previous section to be in physical cores 300, 301, 302, 400, 401, and 402 by:
+```
+hmm1 = new Hmm(model1)@{300,301,302,400,401,402};
+// or
+hmm1 = new Hmm(model1)@REG(300,402);
+```
+where REG(BL,TR) is an abbreviation for a set of cores covered by a rectangle whose bottom left is at BL and top right is at TR. Physical cores are written in XYY format where X is an x-coordinate (ranging from 0 to 7 inclusively) and YY is a y-coordinate (ranging from 00 to 17 inclusively). In this example, we specify that logical cores inside `hmm1` can only be placed at physical cores 300, 301, 302, 400, 401, and 402. However, it does not constrain that all those specified physical cores have to be used.
+
+Inside a pinned module, we can pin individual logical cores as well. For example, in this program:
+```
+module Hmm ( model_init ) {
+# 0 --> 101
+fix1_t@0 model [ N ] = model_init ;
+fix1_t@0 process (x ,y , z ) { ... }
+}
+hmm1 = new Hmm(model1)@REG(300,402);
+```
+we pin logical core 0 in hmm1 to core 101 relative to the most bottom-left core of hmm1, so logical core 0 is placed at physical core (3 + 1, 0 + 1) = (4,1) = 401.
+
 ### IO
 
 The following functions are provided for interacting with GA144 IO functionality.
@@ -312,6 +337,7 @@ It is currently the only delay function that can take variable arguments.
 Each iteration consumes about 2.4ns.
 It is up to the programmer to turn the iterations into the
 desired time, unlike `delay_ns` changes in voltage are not accounted for.
+
 
 ### Advanced Program Structure Partitioning
 
