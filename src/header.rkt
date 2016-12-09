@@ -17,6 +17,9 @@
   ;(evaluate x))
   (evaluate x global-sol))
 
+(define-syntax-rule (solution->list sol)
+  (hash->list (model sol)))
+
 
 (define max-bit 18)
 (define n-bit 16)

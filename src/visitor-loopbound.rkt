@@ -5,8 +5,8 @@
          "visitor-interface.rkt" 
          "visitor-expr-interpreter.rkt")
 
-(require rosette/solver/kodkod/kodkod)
-(require rosette/solver/smt/z3)
+;;(require rosette/solver/kodkod/kodkod)
+;;(require rosette/solver/smt/z3)
 
 (provide (all-defined-out))
 
@@ -151,7 +151,7 @@
 
 
         (solve (assert #t))
-        (when debug
+        #;(when debug
               (pretty-display (current-solution)))
              
         ;; merge scope
@@ -189,7 +189,7 @@
 
        [(is-a? ast Program%)
                   
-	(current-solver (new kodkod-incremental%))
+	;;(current-solver (new kodkod-incremental%))
 	(current-bitwidth 32)
 
         (for ([stmt (get-field stmts ast)])
@@ -205,30 +205,18 @@
               (pretty-display `(n-ranges ,(evaluate n-ranges))))
 
         (define (loop)
-          (solve (assert (< n-ranges (evaluate n-ranges))))
+          (define sol (solve (assert (< n-ranges (evaluate n-ranges)))))
           (when debug
                 (pretty-display `(all-ranges ,(evaluate all-ranges)))
                 (pretty-display `(n-ranges ,(evaluate n-ranges))))
-          (loop))
-
-        (define (evaluate-unroll e)
-          (when debug
-                (pretty-display "FINAL")
-                (pretty-display `(all-ranges ,(evaluate all-ranges)))
-                (pretty-display `(n-ranges ,(evaluate n-ranges))))
-          (for ([x for-list])
-               (let* ([ranges (evaluate (get-field unroll x))]
-                      [filtered (filter (lambda (x) (<= (car x) (cdr x))) ranges)])
-                 (send x set-unroll filtered))))
-                 ;(set-field! unroll x filtered)))
-                             ;(and (> (length filtered) 1) filtered)))))
+          (when (sat? sol)
+            (loop)))
         
 	(define t (current-seconds))
-	(with-handlers* ([exn:fail? evaluate-unroll])
-			(loop))
-
-	(clear-asserts)
-	(current-solution (empty-solution))
+	(loop)
+        (define solver (current-solver))
+	(solver-clear solver)
+	;;(current-solution (empty-solution))
 	(pretty-display (format "Loopbound Synthesis time = ~a" (- (current-seconds) t)))
         ]
 

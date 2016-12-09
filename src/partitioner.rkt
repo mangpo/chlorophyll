@@ -17,8 +17,8 @@
          "visitor-unroll.rkt"
          )
 
-(require rosette/solver/kodkod/kodkod)
-(require rosette/solver/smt/z3)
+;;(require rosette/solver/kodkod/kodkod)
+;;(require rosette/solver/smt/z3)
 
 (provide optimize-comm (struct-out result))
 
@@ -84,7 +84,7 @@
     (send my-ast pretty-print)
     )
 
-  (current-solver (new kodkod-incremental%))
+  ;(current-solver (new kodkod-incremental%))
   ;(current-solver (new z3%))
   ;(current-solver (new kodkod%))
 
@@ -157,36 +157,27 @@
     (define (inner-loop)
       (set! t (current-seconds))
       (assert (< num-msg (evaluate num-msg)))
-      (solve #t)
+      (define sol (solve #t))
+      (when (sat? sol)
+        (set! best-sol sol)
 
-      (pretty-display `(solve-time ,(- (current-seconds) t)))
-      (set! best-sol (current-solution))
-      
-      ;; display
-      (pretty-display (format "# messages = ~a" (evaluate num-msg)))
-      (pretty-display (format "# cores = ~a" (evaluate num-cores)))
-      
-      (inner-loop))
+        (pretty-display `(solve-time ,(- (current-seconds) t)))
+        ;;(set! best-sol (current-solution))
+        
+        ;; display
+        (pretty-display (format "# messages = ~a" (evaluate num-msg)))
+        (pretty-display (format "# cores = ~a" (evaluate num-cores)))
+        
+        (inner-loop)))
 
     (define (outter-loop)
-      (with-handlers* 
-       ([exn:fail? (lambda (e) 
-                     (pretty-display `(solve-time ,(- (current-seconds) t)))
-                     (if (or (equal? (exn-message e)
-                                     "solve: no satisfying execution found")
-                             (equal? (exn-message e)
-                                     "assert: failed"))
-                         (begin
-                           (update-global-sol)
-                           (clear-asserts)
-			   (current-solution (empty-solution))
-                           )
-                         (begin
-                           (pretty-display e)
-                           (raise e))))])
-       (solve #t)
-       (set! best-sol (current-solution))
-       (inner-loop)))
+      (define solver (current-solver))
+      (define sol (solve #t))
+      (when (sat? sol)
+        (set! best-sol sol)
+        (inner-loop)
+        (update-global-sol)
+        (solver-clear solver)))
     
     (outter-loop)
     )
