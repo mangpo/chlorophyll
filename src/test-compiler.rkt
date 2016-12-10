@@ -64,7 +64,7 @@
 ;(compile-and-optimize "../examples/parallel/ssd-heu.cll" "ssd-heu" 
 ;                      290 #:w 8 #:h 8 #:opt #f #:partition #f #:layout #t) ;; factor = 0.8
 (compile-and-optimize "../examples/parallel/prefixsum.cll" "prefixsum" 
-                      10000 #:w 8 #:h 8 #:opt #f)
+                      290 #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../examples/parallel/convolution.cll" "convolution" 
 ;                      290 #:w 8 #:h 8 #:opt #f #:partition #f) ;; factor = 0.4
 ;(compile-and-optimize "../examples/parallel/convolution-pair.cll" "convolutionpair" 

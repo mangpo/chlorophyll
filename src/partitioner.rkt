@@ -156,7 +156,17 @@
 
     (define (inner-loop)
       (set! t (current-seconds))
-      (define sol 
+      (define sol (solve (assert (< num-msg (evaluate num-msg best-sol)))))
+      (when (sat? sol)
+        (set! best-sol sol)
+
+        (pretty-display `(solve-time ,(- (current-seconds) t)))
+        ;;(set! best-sol (current-solution))
+        
+        ;; display
+        (pretty-display (format "# messages = ~a" (evaluate num-msg best-sol)))
+        (pretty-display (format "# cores = ~a" (evaluate num-cores best-sol)))
+        
         (inner-loop)))
 
     (define (outter-loop)
