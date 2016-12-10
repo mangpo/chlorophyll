@@ -63,8 +63,8 @@
 ;                      310 #:w 8 #:h 8 #:opt #t #:sliding #f)
 ;(compile-and-optimize "../examples/parallel/ssd-heu.cll" "ssd-heu" 
 ;                      290 #:w 8 #:h 8 #:opt #f #:partition #f #:layout #t) ;; factor = 0.8
-;(compile-and-optimize "../examples/parallel/prefixsum.cll" "prefixsum" 
-;                      290 #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../examples/parallel/prefixsum.cll" "prefixsum" 
+                      10000 #:w 8 #:h 8 #:opt #f)
 ;(compile-and-optimize "../examples/parallel/convolution.cll" "convolution" 
 ;                      290 #:w 8 #:h 8 #:opt #f #:partition #f) ;; factor = 0.4
 ;(compile-and-optimize "../examples/parallel/convolution-pair.cll" "convolutionpair" 
@@ -100,8 +100,8 @@
 ;                      290 #:w 4 #:h 4 #:opt #f #:partition #f)
 
 ;; Fixed point
-(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
-                      300 #:w 3 #:h 3 #:opt #f)
+;(compile-and-optimize "../examples/fixedpoint/cos_round.cll" "cos_round" 
+;                      300 #:w 3 #:h 3 #:opt #f)
 ;(compile-and-optimize "../examples/fixedpoint/fft_inplace.cll" "fft_inplace" 
 ;                      300 #:w 8 #:h 8 #:opt #f #:partition #f)
 

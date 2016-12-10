@@ -56,7 +56,7 @@
     (define debug #f)
 
     (define (get-sym-bound)
-      (define-symbolic* bound number?)
+      (define-symbolic* bound integer?)
       bound)
 
     (define (construct-ranges from to n)
@@ -200,20 +200,36 @@
               (set! n-ranges (+ n-ranges 
                                 (if (> (car range) (cdr range)) 0 1))))
 
+        (define my-sol (solve (assert #t)))
+        
         (when debug
-              (pretty-display `(all-ranges ,(evaluate all-ranges)))
-              (pretty-display `(n-ranges ,(evaluate n-ranges))))
+              (pretty-display `(all-ranges ,(evaluate all-ranges my-sol)))
+              (pretty-display `(n-ranges ,(evaluate n-ranges my-sol))))
+
 
         (define (loop)
-          (define sol (solve (assert (< n-ranges (evaluate n-ranges)))))
+          (define sol (solve (assert (< n-ranges (evaluate n-ranges my-sol)))))
           (when debug
-                (pretty-display `(all-ranges ,(evaluate all-ranges)))
-                (pretty-display `(n-ranges ,(evaluate n-ranges))))
+                (pretty-display `(all-ranges ,(evaluate all-ranges my-sol)))
+                (pretty-display `(n-ranges ,(evaluate n-ranges my-sol))))
           (when (sat? sol)
+            (set! my-sol sol)
             (loop)))
         
 	(define t (current-seconds))
 	(loop)
+
+        (define (evaluate-unroll)
+          (when debug
+            (pretty-display "FINAL")
+            (pretty-display `(all-ranges ,(evaluate all-ranges my-sol)))
+            (pretty-display `(n-ranges ,(evaluate n-ranges my-sol))))
+          (for ([x for-list])
+            (let* ([ranges (evaluate (get-field unroll x) my-sol)]
+                   [filtered (filter (lambda (x) (<= (car x) (cdr x))) ranges)])
+              (send x set-unroll filtered))))
+        (evaluate-unroll)
+        
         (define solver (current-solver))
 	(solver-clear solver)
 	;;(current-solution (empty-solution))

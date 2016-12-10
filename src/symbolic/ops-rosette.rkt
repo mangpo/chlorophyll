@@ -1,7 +1,5 @@
 #lang s-exp rosette
 
-(require (only-in rosette [<< sym/<<] [>>> sym/>>>]))
-
 (provide (all-defined-out))
 
 (define-syntax-rule (assert-return c message val)
@@ -9,10 +7,29 @@
     (assert c message)
     val))
 
-(define-syntax-rule (<< x y bit) (sym/<< x y))
-(define-syntax-rule (>>> x y bit) (sym/>>> x y))
+(define (<< x y bit)
+  (unless (term? x) (set! x (bv x bit)))
+  (unless (term? y) (set! y (bv y bit)))
+  (bvshl x y))
+(define (>> x y bit)
+  (unless (term? x) (set! x (bv x bit)))
+  (unless (term? y) (set! y (bv y bit)))
+  (bvashr x y))
+(define (>>> x y bit)
+  (unless (term? x) (set! x (bv x bit)))
+  (unless (term? y) (set! y (bv y bit)))
+  (bvlshr x y))
 
 (define (finitize num bit)
+  (if (term? num)
+      num
+      (let* ([mask (arithmetic-shift -1 bit)]
+             [masked (bitwise-and (bitwise-not mask) num)])
+        (if (bitwise-bit-set? masked (- bit 1))
+            (bitwise-ior mask masked)  
+            masked))))
+      
+#;(define (finitize num bit)
   (match (coerce num number?)
          [(? term? v) v]
          [v (let* ([mask (arithmetic-shift -1 bit)]
@@ -67,34 +84,34 @@
   (define low-mask (sub1 (arithmetic-shift 1 byte2)))
 
   (define u0 (bitwise-and u low-mask))
-  (define u1 (>> u byte2))
+  (define u1 (>> u byte2 bit))
   (define v0 (bitwise-and v low-mask))
-  (define v1 (>> v byte2))
+  (define v1 (>> v byte2 bit))
 
   (define w0 (finitize (* u0 v0) bit))
-  (define t (finitize (+ (* u1 v0) (sym/>>> w0 byte2)) bit))
+  (define t (finitize (+ (* u1 v0) (>>> w0 byte2 bit)) bit))
   (define w1 (bitwise-and t low-mask))
-  (define w2 (>> t byte2))
+  (define w2 (>> t byte2 bit))
   (set! w1 (finitize (+ (* u0 v1) w1) bit))
-  (finitize (+ (* u1 v1) w2 (>> w1 byte2)) bit))
+  (finitize (+ (* u1 v1) w2 (>> w1 byte2 bit)) bit))
 
 (define (ummul u v bit)
   (define byte2 (quotient bit 2))
   (define low-mask (sub1 (arithmetic-shift 1 byte2)))
 
   (define u0 (bitwise-and u low-mask))
-  (define u1 (bitwise-and (>> u byte2) low-mask))
+  (define u1 (bitwise-and (>> u byte2 bit) low-mask))
   (define v0 (bitwise-and v low-mask))
-  (define v1 (bitwise-and (>> v byte2) low-mask))
+  (define v1 (bitwise-and (>> v byte2 bit) low-mask))
 
   (finitize
    (+ (* u1 v1) 
-      (sym/>>> (* u1 v0) byte2) 
-      (sym/>>> (* u0 v1) byte2) 
-      (sym/>>> (+ (bitwise-and (* u1 v0) low-mask)
+      (>>> (* u1 v0) byte2 bit) 
+      (>>> (* u0 v1) byte2 bit) 
+      (>>> (+ (bitwise-and (* u1 v0) low-mask)
                   (bitwise-and (* u0 v1) low-mask)
-                  (sym/>>> (* u0 v0) byte2))
-               byte2))
+                  (>>> (* u0 v0) byte2 bit))
+               byte2 bit))
    bit))
 
 ;; (define (smmul x y bit) 

@@ -15,7 +15,7 @@
 (struct fix_t (int))
 
 (define (get-sym)
-  (define-symbolic* sym-place number?)
+  (define-symbolic* sym-place integer?)
   sym-place)
 
 (define (inc space)

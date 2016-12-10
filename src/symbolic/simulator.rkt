@@ -7,6 +7,8 @@
 
 (provide get-progstate analyze-reg-b)
  
+(define bit 18)
+
 (define-syntax-rule (modulo- x y) (if (< x 0) (+ x y) x))
 (define-syntax-rule (modulo+ x y) (if (>= x 8) (- x y) x))
 
@@ -19,7 +21,7 @@
   (vector-ref (stack-body stack) (modulo- (- (stack-sp stack) i) 8)))
 
 (define (get-sym)
-  (define-symbolic* val number?)
+  (define-symbolic* val (bitvector bit))
   val)
 
 (define (get-sym-bool)
@@ -33,15 +35,57 @@
              (for/vector ([i mem]) (get-sym))
              #f #f))
 
-    (define bit 18)
 
-    (define debug #f)
-    
-    (define UP #x145)
-    (define DOWN #x115)
-    (define LEFT #x175)
-    (define RIGHT #x1d5)
-    (define IO #x15d)
+(define debug #t)
+
+(define UP #x145)
+(define DOWN #x115)
+(define LEFT #x175)
+(define RIGHT #x1d5)
+(define IO #x15d)
+
+(define (bitwise-and a b)
+  (pretty-display `(bvand))
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvand a b))
+
+(define (bitwise-ior a b)
+  (pretty-display `(bvor))
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvor a b))
+
+(define (bitwise-xor a b)
+  (pretty-display `(bvxor))
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvxor a b))
+
+(define (bitwise-not a)
+  (pretty-display `(bvnot))
+  (unless (bv? a) (set! a (bv a bit)))
+  (bvnot a))
+
+(define (bv+ a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvadd a b))
+
+(define (bv* a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvmul a b))
+
+
+(define (finitize num bit)
+  (if (term? num)
+      num
+      (let* ([mask (arithmetic-shift -1 bit)]
+             [masked (bitwise-and (bitwise-not mask) num)])
+        (if (equal? (bitwise-and masked (arithmetic-shift 1 (sub1 bit))) 0)
+            masked
+            (bitwise-ior mask masked)))))
 
     ;; Interpret a given program from a given state.
     ;; code
@@ -119,22 +163,23 @@
       (define (clip x) (finitize x bit))
 
       (define (push-right-one x carry)
-	(clip (bitwise-ior (<< (bitwise-and #x1 carry) (sub1 bit) bit) (>>> x 1 bit))))
+	(clip (bitwise-ior (<< (bitwise-and #x1 carry) (sub1 bit) bit)
+                           (>>> x 1 bit))))
       
       ;; Treats T:A as a single 36 bit register and shifts it right by one
       ;; bit. The most signficicant bit (T17) is kept the same.
       (define (multiply-step-even!)
 	(let ([a-val (push-right-one a t)]
-	      [t-val (>> t 1)])
+	      [t-val (>> t 1 bit)])
 	  (set! a a-val)
 	  (set! t t-val)))
       
       ;; Sums T and S and concatenates the result with A, shifting
       ;; the concatenated 37-bit to the right by one bit.
       (define (multiply-step-odd!)
-	(let* ([sum (+ t s)]
+	(let* ([sum (bv+ t s)]
 	       [a-val (push-right-one a sum)]
-	       [t-val (>> sum 1)])
+	       [t-val (>> sum 1 bit)])
 	  (set! a a-val)
 	  (set! t t-val)))
 
@@ -184,9 +229,9 @@
 	 		      (multiply-step-even!)
 	 		      (multiply-step-odd!))];
 	 [(inst-eq "2*")   (stack-1 (lambda (t) (clip (<< t 1 bit))))]
-	 [(inst-eq "2/")   (stack-1 (lambda (t) (>> t 1)))];; sign shiftx
+	 [(inst-eq "2/")   (stack-1 (lambda (t) (>> t 1 bit)))];; sign shiftx
 	 [(inst-eq "-")    (stack-1 bitwise-not)]
-	 [(inst-eq "+")    (stack-2 (lambda (x y) (clip (+ x y))))]
+	 [(inst-eq "+")    (stack-2 (lambda (x y) (clip (bv+ x y))))]
 	 [(inst-eq "and")  (stack-2 bitwise-and)]
 	 [(inst-eq "or")   (stack-2 bitwise-xor)]
 	 [(inst-eq "drop") (pop!)]
@@ -270,7 +315,7 @@
          [(port-listen? x) (void)]
 
          [(mult? x)
-          (stack-2 (lambda (x y) (clip (* x y))))]
+          (stack-2 (lambda (x y) (clip (bv* x y))))]
 
          [(abs? x)
           (void)]
@@ -278,12 +323,13 @@
          [(funccall? x)
           (define prev-scope current-scope)
           (define name (funccall-name x))
+          (pretty-display `(st ,s ,t))
           (cond
             [(equal? name "*.17")
-             (set! t (clip (>> (* s t) 17)))]
+             (set! t (clip (>> (bv* s t) 17 bit)))]
             
             [(equal? name "*.")
-             (set! t (clip (>> (* s t) 16)))]
+             (set! t (clip (>> (bv* s t) 16 bit)))]
             
             [(equal? name "--u/mod") ;; TODO: make this precise
              (pop!) (pop!) (pop!)
