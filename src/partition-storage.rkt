@@ -1,7 +1,7 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "space-estimator.rkt")
+         "space-estimator.rkt" "symbolic/ops-rosette.rkt")
 
 (provide (all-defined-out))
 
@@ -53,65 +53,32 @@
        
 
 (define (cores-count cores)
-  (let ([v (core-space cores)])
-    (apply +
-           (for/list ([i (in-range 0 max-cores)])
-             (if (= (vector-ref v i) 0) 0 1)))))
+  (let ([v (core-space cores)]
+        [all 0])
+    (for ([i max-cores])
+         (when (bv!= (vector-ref v i) 0)
+               (set! all (bv+ all 1))))
+    all))
 
 (define (cores-inc-space cores i add-space [refine-capacity capacity])
   (let ([space (core-space cores)])
        (if (symbolic? i)                     ; <-- optimization
            (let ([len max-cores])
-             (assert (<= 0 i) `(<= 0 i))
-             (assert (< i (sub1 len)) `(< i len))
+             (assert (bvu<= 0 i) `(<= 0 i))
+             (assert (bvu< i (sub1 len)) `(< i len))
              (for ([j (in-range 0 len)])
                (let ([val-space (vector-ref space j)])
-                 (vector-set! space j (if (= i j) 
-                                          (let ([new-space (+ val-space add-space)])
-                                            (assert (<= new-space refine-capacity)
+                 (vector-set! space j (if (bv= i j) 
+                                          (let ([new-space (bv+ val-space add-space)])
+                                            (assert (bvu<= new-space refine-capacity)
                                                     `(<= new-space capacity))
                                             new-space)
                                           val-space)))))
            (let* ([val-space (vector-ref space i)] 
-                  [new-space (+ val-space add-space)]) ; <-- optimization
+                  [new-space (bv+ val-space add-space)]) ; <-- optimization
              ;(pretty-display `(cores-inc-space ,i ,add-space))
-             (assert (<= new-space refine-capacity) 
+             (assert (bvu<= new-space refine-capacity) 
                      `(<= new-space capacity ,new-space))
              (vector-set! space i new-space))))
   ;(assert (<= (cores-count cores) max-cores))
   )
-
-(define (cores-add-op cores i op [refine-capacity capacity])
-  (define add-space (est-space op))
-  (if (> add-space 4)
-      (let* ([space (core-space cores)]
-             [costly-op (core-costly-op cores)])
-           (if (symbolic? i)                     ; <-- optimization
-               (let ([len max-cores])
-                 (assert (<= 0 i) `(<= 0 i))
-                 (assert (< i (sub1 len)) `(< i len))
-                 (for ([j (in-range 0 len)])
-                   (let* ([val-space (vector-ref space j)]
-                          [val-ops (vector-ref costly-op j)])
-                     (vector-set! space j (if (= i j) 
-                                              (let* ([more-space (if (set-member? val-ops op) 4 add-space)]
-                                                     [new-space (+ val-space more-space)])
-                                                (assert (<= new-space refine-capacity)
-                                                        `(<= new-space capacity))
-                                                new-space)
-                                              val-space))
-                     (vector-set! costly-op j (if (= i j) 
-                                                  (set-add val-ops op)
-                                                  val-ops)))))
-               (let* ([val-space (vector-ref space i)]
-                      [val-ops (vector-ref costly-op i)]
-                      [more-space (if (set-member? val-ops op) 4 add-space)]
-                      [new-space (+ val-space more-space)])  ; <-- optimization
-                 (assert (<= new-space refine-capacity) 
-                         `(<= new-space capacity ,new-space))
-                 (vector-set! space i new-space)
-                 (vector-set! costly-op i (set-add val-ops op))
-                 ))
-           ;(assert (<= (cores-count cores) max-cores))
-        )
-      (cores-inc-space cores i add-space)))

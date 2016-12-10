@@ -15,6 +15,7 @@
          "visitor-printer.rkt"
          "visitor-rename.rkt"
          "visitor-unroll.rkt"
+         "symbolic/ops-rosette.rkt"
          )
 
 ;;(require rosette/solver/kodkod/kodkod)
@@ -156,7 +157,7 @@
 
     (define (inner-loop)
       (set! t (current-seconds))
-      (define sol (solve (assert (< num-msg (evaluate num-msg best-sol)))))
+      (define sol (solve (assert (bvu< num-msg (evaluate num-msg best-sol)))))
       (when (sat? sol)
         (set! best-sol sol)
 
@@ -172,6 +173,8 @@
     (define (outter-loop)
       (define solver (current-solver))
       (define sol (solve #t))
+      (pretty-display `(sol ,sol))
+      (raise "done")
       (when (sat? sol)
         (set! best-sol sol)
         (inner-loop)
@@ -265,11 +268,13 @@
   ;; (send my-ast accept concise-printer)
   ;; (display-cores cores)
   
-  (when verbose
+  (when #t
     (pretty-display "\n=== After evaluate ===")
     (send my-ast accept concise-printer)
     (send my-ast pretty-print)
     )
+  (pretty-display `(global-sol ,global-sol))
+  (raise "done")
 
   (placeset-collector-loop my-ast)
   (send my-ast pretty-print)

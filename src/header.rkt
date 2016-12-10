@@ -11,11 +11,14 @@
 (define (set-global-sol sol)
   (set! global-sol sol))
 
-(define (rosette-number? x) (number? x))
+(define (rosette-number? x) (or (number? x) (symbolic? x)))
 
 (define-syntax-rule (evaluate-with-sol x)
   ;(evaluate x))
-  (evaluate x global-sol))
+  (let ([xx (evaluate x global-sol)])
+    (if (bv? xx)
+        (bitvector->integer xx)
+        xx)))
 
 (define-syntax-rule (solution->list sol)
   (hash->list (model sol)))

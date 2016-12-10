@@ -7,7 +7,8 @@
 	 "partition-storage.rkt"
          "space-estimator.rkt"
          "visitor-interface.rkt" 
-         "visitor-desugar.rkt")
+         "visitor-desugar.rkt"
+         "symbolic/ops-rosette.rkt")
 
 (provide count-msg-interpreter% (struct-out comminfo))
 
@@ -38,9 +39,9 @@
 
     ;;; Increase the used space of "place" by "add-space".
     (define (inc-space place add-space)
-      ;(assert (or (number? place) (list? place)))
+      ;(assert (or (rosette-number? place) (list? place)))
       (cond
-        [(number? place)
+        [(rosette-number? place)
          (cores-inc-space places place add-space)]
         
         [(at-io? place)
@@ -59,9 +60,9 @@
     
     ;;; Increase the used space of "place" with op.
     (define (inc-space-with-op place op)
-      (assert (or (number? place) (list? place)))
+      (assert (or (rosette-number? place) (list? place)))
       ;TODO: change to (cores-add-op places place op)
-      (if (number? place)
+      (if (rosette-number? place)
           (cores-inc-space places place (est-space op))
           (let ([place-list
                  (if (place-type-dist? place) (car place) place)])
@@ -77,7 +78,7 @@
           (let* ([others (cdr placelist)]
                  [me (car placelist)])
             (loop others)
-            (when (andmap (lambda (x) (not (equal? x me))) others) 
+            (when (andmap (lambda (x) (bv!= x me)) others) 
                   (inc-space me add-space)))))
         
       (loop (set->list placeset)))
@@ -88,13 +89,13 @@
           (let* ([others (cdr placelist)]
                  [me (car placelist)])
             (loop others)
-            (when (andmap (lambda (x) (not (equal? x me))) others)
-                  (let ([occur (count (lambda (x) (equal? x me)) returns)])
-                    (when (>= occur 2)
+            (when (andmap (lambda (x) (bv!= x me)) others)
+                  (let ([occur (count (lambda (x) (bv= x me)) returns)])
+                    (when (bvu>= occur 2)
                           (when debug
                                 (pretty-display 
-                                 `(inc-space-return ,me ,(* occur est-funcreturn))))
-                          (inc-space me (* occur est-funcreturn))))))))
+                                 `(inc-space-return ,me ,(bv* occur est-funcreturn))))
+                          (inc-space me (bv* occur est-funcreturn))))))))
       (loop returns))
 
     ;;; Count number of message passes. If there is a message pass, it also take up more space.
@@ -120,7 +121,7 @@
       ;; Add comm space to cores
       (define (add-comm x)
 	;(assert (place-type? x))
-        (if (number? x)
+        (if (rosette-number? x)
              (inc-space x est-comm)
              (for ([p (car x)])
                   (raise "add-comm")
@@ -132,7 +133,7 @@
 	;(pretty-display `(count-comm ,p ,(send p-ast to-string)))
 	;(assert (place-type? p))
         (cond
-          [(or (number? p) (equal? p #f)) 1]
+          [(or (rosette-number? p) (equal? p #f)) 1]
           [(is-a? p Place%)
            (let ([at (get-field at p)])
              (if (or (equal? at "any") (equal? at "io"))
@@ -165,7 +166,7 @@
          (add-comm x)
          (add-comm y)
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
-         (+ x-comm y-comm)]))
+         (bv+ x-comm y-comm)]))
 
     (define (count-msg x-ast y-ast)
       (when debug
@@ -180,11 +181,11 @@
         (if (empty? placelist)
             0
             (let* ([others (cdr placelist)]
-                 [me (car placelist)])
-              (+ (loop others)
-                 (if (andmap (lambda (x) (not (equal? x me))) others)
-                     (count-msg-place-type p me p-ast)
-                     0)))))
+                   [me (car placelist)])
+              (bv+ (loop others)
+                   (if (andmap (lambda (x) (bv!= x me)) others)
+                       (count-msg-place-type p me p-ast)
+                       0)))))
       (loop (set->list placeset)))
 
     (define/public (evaluate-comminfo func-ast)
@@ -211,10 +212,10 @@
       (for ([lst (get-field conflict-list ast)])
 	   (for* ([set-x lst]
 		  [set-y lst])
-		 (unless (equal? set-x set-y)
+		 (unless (bv= set-x set-y)
 			 (for* ([x set-x]
 				[y set-y])
-			       (assert (not (= x y)))))))
+			       (assert (bv!= x y))))))
 
       ;; Prevent
       ;; 1) fixed-partitions and pinned group actors to be merged.
@@ -224,13 +225,13 @@
       (for* ([pair fixed-parts]
              [cluster module-inits]
              [part (car cluster)])
-            (assert (not (= (car pair) part))))
+            (assert (bv!= (car pair) part)))
       (for* ([cluster-x module-inits]
              [cluster-y module-inits])
-            (unless (equal? (car cluster-x) (car cluster-y))
+            (unless (bv= (car cluster-x) (car cluster-y))
                     (for* ([x (car cluster-x)]
                            [y (car cluster-y)])
-                          (assert (not (= x y))))))
+                          (assert (bv!= x y)))))
 
       ;; TODO: prevent normal nodes to merge with group actors!!!
       ;; heuristic handles this.
@@ -240,15 +241,15 @@
            (let ([node (car mapping)]
                  [core (cdr mapping)])
              (when (hash-has-key? node-to-symbolic-core core)
-                   (assert (= node (hash-ref node-to-symbolic-core core))))))
+                   (assert (bv= node (hash-ref node-to-symbolic-core core))))))
 
       ;; logical cores of different physical cores can't be the same.
       (define sym-nodes (list->vector (hash-values node-to-symbolic-core)))
       (for* ([i (vector-length sym-nodes)]
              [j (vector-length sym-nodes)])
             (unless (= i j)
-                    (assert (not (= (vector-ref sym-nodes i)
-                                    (vector-ref sym-nodes j))))))
+                    (assert (bv!= (vector-ref sym-nodes i)
+                                  (vector-ref sym-nodes j)))))
       
       )
       
@@ -268,12 +269,12 @@
         (define index-ret (send index accept this))
         (inc-space place-type est-acc-arr) ; not accurate
         
-        (when (and debug-sym (symbolic? (+ index-ret) (count-msg index ast)))
+        (when (and debug-sym (symbolic? (bv+ index-ret (count-msg index ast))))
               (pretty-display (format ">> SYM Array ~a\n~a" 
                                       (send ast to-string)
-                                      (+ index-ret (count-msg index ast)))))
+                                      (bv+ index-ret (count-msg index ast)))))
         
-        (+ index-ret (count-msg index ast))
+        (bv+ index-ret (count-msg index ast))
         ]
 
        [(is-a? ast Var%)
@@ -298,11 +299,11 @@
         
         (when debug
               (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
-        (when (and debug-sym (symbolic? (+ e1-ret (count-msg ast e1))))
+        (when (and debug-sym (symbolic? (bv+ e1-ret (count-msg ast e1))))
               (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string)
-                                      (+ e1-ret (count-msg ast e1)))))
+                                      (bv+ e1-ret (count-msg ast e1)))))
         
-        (+ e1-ret (count-msg ast e1))
+        (bv+ e1-ret (count-msg ast e1))
         ]
 
        [(is-a? ast BinExp%)
@@ -331,19 +332,22 @@
                 (send ast pretty-print))
 
           (when (and debug-sym
-                 (symbolic? (+ e1-ret e2-ret
-                               (count-msg ast e1)
-                               (count-msg ast e2))))
+                     (symbolic? (bv+ (bv+ e1-ret e2-ret)
+                                     (bv+
+                                      (count-msg ast e1)
+                                      (count-msg ast e2)))))
                 (pretty-display (format ">> SYM BinOp ~a\n~a" 
                                         (send ast to-string)
-                                        (+ e1-ret e2-ret
-                                           (count-msg ast e1)
-                                           (count-msg ast e2)))))
+                                        (bv+ (bv+ e1-ret e2-ret)
+                                             (bv+
+                                              (count-msg ast e1)
+                                              (count-msg ast e2))))))
 
 
-          (+ e1-ret e2-ret
-             (count-msg ast e1)
-             (count-msg ast e2))
+          (bv+ (bv+ e1-ret e2-ret)
+               (bv+
+                (count-msg ast e1)
+                (count-msg ast e2)))
           ]
 
        [(is-a? ast FuncCall%)
@@ -381,13 +385,13 @@
           ;; visit children
 	  (for ([arg (get-field args ast)])
                (let ([arg-ret (send arg accept this)])
-                 (set! msgs (+ msgs arg-ret))))
+                 (set! msgs (bv+ msgs arg-ret))))
 
           ;; count msg
 	  (for ([param (get-field stmts (get-field args func-ast))]
                 [arg (flatten-arg (get-field args ast))])
                ;; infer place-type
-               (set! msgs (+ msgs (count-msg param arg)))
+               (set! msgs (bv+ msgs (count-msg param arg)))
                )
           
 	  (define return (get-field return func-ast))
@@ -478,7 +482,7 @@
           ;; Remove scope.
           (pop-scope)
 
-          (* body-ret (- (get-field to ast) (get-field from ast)))
+          (bv* body-ret (- (get-field to ast) (get-field from ast)))
           ]
 
        [(is-a? ast If%)
@@ -491,7 +495,7 @@
         (pop-scope)
         
         ;; between condition and true-block
-        (define msgs (+ condition-ret true-ret))
+        (define msgs (bv+ condition-ret true-ret))
         (define places (get-field body-placeset true-block))
         
         (define false-block (get-field false-block ast))
@@ -499,7 +503,7 @@
 
         (when false-block
               (define false-ret (send false-block accept this))
-              (set! msgs (+ msgs false-ret))
+              (set! msgs (bv+ msgs false-ret))
               (set! places (set-union places (get-field body-placeset false-block))))
         (pop-scope)
 
@@ -507,7 +511,7 @@
         (inc-space-placeset places est-if)
 
 	(when debug (pretty-display ">> FOR (count-msg-placeset)"))
-        (+ msgs (count-msg-placeset condition places))
+        (bv+ msgs (count-msg-placeset condition places))
         ]
 
        [(is-a? ast While%)
@@ -528,9 +532,10 @@
           (define body-placeset (get-field body-placeset (get-field body ast)))
           (inc-space-placeset body-placeset est-while)
 
-          (* (get-field bound ast)
-             (+ condition-ret pre-ret body-ret)
-             (count-msg-placeset condition body-placeset))
+          (bv* (get-field bound ast)
+               (bv*
+                (bv+ condition-ret (bv+ pre-ret body-ret))
+                (count-msg-placeset condition body-placeset)))
 	  ]
 
        [(is-a? ast AssignTemp%)
@@ -553,7 +558,7 @@
         (define lhs-ret (send lhs accept this))
         (define rhs-ret (send rhs accept this))
         
-        (+ rhs-ret lhs-ret (count-msg lhs rhs))
+        (bv+ (bv+ rhs-ret lhs-ret) (count-msg lhs rhs))
         ]
 
        [(is-a? ast Return%)
@@ -575,7 +580,7 @@
         (when debug (pretty-display ">> Block"))
         (let ([ret
                (foldl (lambda (stmt all) 
-                        (+ all (send stmt accept this)))
+                        (bv+ all (send stmt accept this)))
                       0 (get-field stmts ast))])
           
           (when (and debug-sym (symbolic? ret))
@@ -602,7 +607,7 @@
 
         (define body-placeset (get-field body-placeset ast))
 
-        (let ([ret (+ args-ret body-ret return-ret)])
+        (let ([ret (bv+ args-ret (bv+ body-ret return-ret))])
           ;; declare function
           (declare env (get-field name ast) (comminfo ret body-placeset))
           ret)]

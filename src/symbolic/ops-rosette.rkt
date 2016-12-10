@@ -20,23 +20,46 @@
   (unless (term? y) (set! y (bv y bit)))
   (bvlshr x y))
 
-(define (finitize num bit)
-  (if (term? num)
-      num
-      (let* ([mask (arithmetic-shift -1 bit)]
-             [masked (bitwise-and (bitwise-not mask) num)])
-        (if (bitwise-bit-set? masked (- bit 1))
-            (bitwise-ior mask masked)  
-            masked))))
-      
-#;(define (finitize num bit)
-  (match (coerce num number?)
-         [(? term? v) v]
-         [v (let* ([mask (arithmetic-shift -1 bit)]
-                   [masked (bitwise-and (bitwise-not mask) v)])
-              (if (bitwise-bit-set? masked (- bit 1))
-                  (bitwise-ior mask masked)  
-                  masked))]))
+(define bit 16)
+(define (bv+ a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvadd a b))
+
+(define (bv* a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvmul a b))
+
+(define (bvu< a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvult a b))
+
+(define (bvu<= a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvule a b))
+
+(define (bvu> a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvugt a b))
+
+(define (bvu>= a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bvuge a b))
+
+(define (bv= a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (bveq a b))
+
+(define (bv!= a b)
+  (unless (bv? a) (set! a (bv a bit)))
+  (unless (bv? b) (set! b (bv b bit)))
+  (not (bveq a b)))
 
 ;; This function is very memory expensive in Rosette
 (define (vector-copy! dest dest-start src 

@@ -6,7 +6,7 @@
          parser-tools/yacc)
 
 (require "header.rkt"
-         "visitor-interface.rkt")
+         "visitor-interface.rkt" "symbolic/ops-rosette.rkt")
 
 (provide (except-out (all-defined-out) inc))
 
@@ -15,7 +15,7 @@
 (struct fix_t (int))
 
 (define (get-sym)
-  (define-symbolic* sym-place integer?)
+  (define-symbolic* sym-place (bitvector 16))
   sym-place)
 
 (define (inc space)
@@ -28,7 +28,7 @@
   (and (is-a? x Place%) (equal? (get-field at x) "io")))
 
 (define (place-type? p)
-  (or (number? p) (place-type-dist? p)))
+  (or (rosette-number? p) (place-type-dist? p)))
 
 (define (place-type-dist? p)
   (and (pair? p) (and (and (list? (car p)) (is-a? (cdr p) Base%)))))
@@ -141,6 +141,12 @@
                                 x)) 
 		args)))
 
+(define-syntax-rule (get-field* f o)
+  (for/all ([i o]) (get-field f i)))
+
+(define-syntax-rule (set-field!* f o v)
+  (for/all ([i o]) (set-field! f i v)))
+
 ;; evaluate place
 (define (concrete-place place)
   ;; (define (all-equal? ref l)
@@ -158,20 +164,20 @@
 	  l
 	  (let ([first (car l)]
 		[rest (compress-inner (cdr l))])
-	  (if (= (get-field place first) (get-field place (car rest)))
+	  (if (= (get-field* place first) (get-field* place (car rest)))
 	      (begin
 		;; merge
-		(set-field! from (car rest) (get-field from first))
+		(set-field!* from (car rest) (get-field* from first))
 		rest)
 	      (cons first rest)))))
     
     (let ([ret (compress-inner p)])
       (if (= (length ret) 1)
-	  (get-field place (car ret))
+	  (get-field* place (car ret))
 	  ret)))
 
   (cond
-   [(number? place)
+   [(rosette-number? place)
     (evaluate-with-sol place)]
    
    [(is-a? place Place%) 
@@ -179,7 +185,7 @@
 
    [(and (list? place) (not (empty? place)) (is-a? (car place) ProxyReturn%))
     (for ([p place])
-         (set-field! place-type p (evaluate-with-sol (get-field place-type p))))
+         (set-field!* place-type p (evaluate-with-sol (get-field* place-type p))))
     place]
    
    [(list? place)
@@ -194,8 +200,8 @@
 	  (cons ret (cdr place))))]
 
    [(is-a? place TypeExpansion%)
-    (set-field! place-list place 
-		(map (lambda (x) (concrete-place x)) (get-field place-list place)))
+    (set-field!* place-list place 
+		(map (lambda (x) (concrete-place x)) (get-field* place-list place)))
     place]
 
    [else
@@ -206,7 +212,7 @@
 ;; number, place-list, place-type -> set
 (define (to-place-set place)
   (cond
-   [(number? place)
+   [(rosette-number? place)
     (set place)]
    [(list? place)
     (foldl (lambda (p place-set) (set-add place-set (get-field place p)))
@@ -228,7 +234,7 @@
 (define (to-place-type ast place)
   (cond
    [(or 
-     (number? place) 
+     (rosette-number? place) 
      (is-a? place Place%)
      (equal? place #f))
     place]
