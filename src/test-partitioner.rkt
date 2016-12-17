@@ -40,9 +40,9 @@
                   [file (string-append testdir name ".cll")])
   (optimize-file file name cores capacity max-msgs))
 
-(test-num-msgs "for-array1"    0)
-(test-num-msgs "for-array2"    0)
-(test-num-msgs "for-array3"    0)
+;(test-num-msgs "for-array1"    0)
+;(test-num-msgs "for-array2"    0)
+;(test-num-msgs "for-array3"    0)
 ;(test-num-msgs "for-array4"    20 #:max-msgs 100 #:capacity 512)
 ;(test-num-msgs "for-array5"    0)
 ;(test-num-msgs "add"           100 #:cores 8 #:max-msgs 200 #:capacity 350)
@@ -53,3 +53,5 @@
 
 ;(test-consistent "space")
 ;(test-consistent "if")
+
+(optimize-file "../tests/space.cll" "space" 4 256 8)

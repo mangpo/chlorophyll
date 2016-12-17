@@ -121,7 +121,11 @@
       (send my-ast pretty-print))
       ;(send my-ast accept concise-printer))
 
-    (when verbose (pretty-display `(num-msg , num-msg)))
+    (when verbose
+          (pretty-display `(num-msg , num-msg))
+          (display-cores cores)
+          )
+    (raise "done")
     
     (define num-cores (cores-count cores)) 
     (define lowerbound 0)

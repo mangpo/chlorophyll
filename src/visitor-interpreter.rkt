@@ -23,7 +23,7 @@
                 [actors #f] [actors* #f]
 		)
 
-    (define debug #t)
+    (define debug #f)
     (define debug-sym #f)
     
     
