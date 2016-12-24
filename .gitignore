@@ -2,6 +2,7 @@ compiled/*
 testdata/out*
 src/qap/sa_qap
 *output-*
+.DS_Store
 
 *~
 */compiled/*

@@ -1,7 +1,11 @@
 #lang s-exp rosette
 
 (require "header.rkt"
-         "space-estimator.rkt")
+         "space-estimator.rkt"
+         (only-in "../../../lib/rosette/rosette/base/core/term.rkt"
+                  expression expression? constant? term? get-type @app type-of)
+         (only-in "../../../lib/rosette/rosette/base/core/polymorphic.rkt"
+                  ite ite* ⊢ =? guarded-test guarded-value))
 
 (provide (all-defined-out))
 
@@ -9,6 +13,11 @@
 
 (define capacity #f)
 (define max-cores 144)
+
+(define (display-core-space cores i)
+  (let* ([space (vector-ref (core-space cores) i)])
+    (pretty-display `(space ,i ,space))))	
+  
 
 (define (display-cores cores)
   (let* ([space (core-space cores)]
@@ -62,9 +71,9 @@
 
 (define (cores-inc-space cores i add-space [refine-capacity capacity])
   (let ([space (core-space cores)])
-    (newline)
-    (pretty-display `(inc ,i ,add-space))
-    (pretty-display `(before ,(vector-ref space 0)))
+    ;(newline)
+    ;(pretty-display `(inc ,i ,add-space))
+    ;(pretty-display `(before ,(vector-ref space 3)))
     (if (symbolic? i)                     ; <-- optimization
         (let ([len max-cores])
           (assert (<= 0 i) `(<= 0 i))
@@ -73,20 +82,24 @@
                (let ([val-space (vector-ref space j)])
                  (vector-set! space j (if (= i j) 
                                           (let ([new-space (+ val-space add-space)])
-                                            (assert (<= new-space refine-capacity)
-                                                    `(<= new-space capacity))
+                                            #;(assert (<= new-space refine-capacity)
+                                                      `(<= new-space capacity))
                                             new-space)
                                           val-space)))))
         (let* ([val-space (vector-ref space i)] 
                [new-space (+ val-space add-space)]) ; <-- optimization
           ;;(pretty-display `(cores-inc-space ,i ,add-space))
-          (assert (<= new-space refine-capacity) 
-                  `(<= new-space capacity ,new-space))
+          #;(assert (<= new-space refine-capacity) 
+                    `(<= new-space capacity ,new-space))
           (vector-set! space i new-space)))
-    (pretty-display `(after ,(vector-ref space 0)))
+    ;(define exp (vector-ref space 3))
+    ;(pretty-display `(after ,exp))
     )
   ;;(assert (<= (cores-count cores) max-cores))
   )
+
+(define (get-core-space cores i)
+  (vector-ref (core-space cores) i))
 
 ;; (define (cores-add-op cores i op [refine-capacity capacity])
 ;;   (define add-space (est-space op))

@@ -9,11 +9,11 @@
 
 (define testdir "../tests/")
 
-(define (optimize-file file name cores capacity max-msgs)
+(define (optimize-file file name cores capacity [max-msgs #f] #:mode [mode 'smt])
   (set-outdir file name)
   (define my-ast (parse file))
   (optimize-comm my-ast #:cores cores #:capacity capacity #:max-msgs max-msgs 
-                 #:verbose #t))
+                 #:verbose #t #:mode mode))
 
 ;; Check with expected number of messages
 (define (test-num-msgs name expected-msgs 
@@ -54,4 +54,5 @@
 ;(test-consistent "space")
 ;(test-consistent "if")
 
-(optimize-file "../tests/space.cll" "space" 4 256 8)
+;(optimize-file "../tests/space.cll" "space" 4 256 #:mode 'mip)
+(optimize-file "../examples/parallel/prefixsum-nopart.cll" "space" 144 256 #:mode 'mip)

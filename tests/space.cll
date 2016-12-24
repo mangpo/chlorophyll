@@ -1,5 +1,5 @@
 void main() {
-  int@1 x;
+  int x;
   int y;
   int z;
   

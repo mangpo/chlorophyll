@@ -149,6 +149,7 @@
       
       (define y-comm (count-comm y y-ast))
 
+      (define ret
       (cond 
         ;; if x and y are the same place.
         [(same-place? x y) 0]
@@ -166,6 +167,9 @@
          (add-comm y)
          (when debug (pretty-display (format "COMM + ~a + ~a" x-comm y-comm)))
          (+ x-comm y-comm)]))
+      ;(display-core-space places 3)
+      ret
+      )
 
     (define (count-msg x-ast y-ast)
       (when debug
@@ -268,7 +272,7 @@
         (define index-ret (send index accept this))
         (inc-space place-type est-acc-arr) ; not accurate
         
-        (when (and debug-sym (symbolic? (+ index-ret) (count-msg index ast)))
+        #;(when (and debug-sym (symbolic? (+ index-ret) (count-msg index ast)))
               (pretty-display (format ">> SYM Array ~a\n~a" 
                                       (send ast to-string)
                                       (+ index-ret (count-msg index ast)))))
@@ -298,7 +302,7 @@
         
         (when debug
               (pretty-display (format ">> UnaOp ~a" (send ast to-string))))
-        (when (and debug-sym (symbolic? (+ e1-ret (count-msg ast e1))))
+        #;(when (and debug-sym (symbolic? (+ e1-ret (count-msg ast e1))))
               (pretty-display (format ">> SYM UnaOp ~a\n~a" (send ast to-string)
                                       (+ e1-ret (count-msg ast e1)))))
         
@@ -330,7 +334,7 @@
                 (pretty-display (format ">> BinOp ~a ~a (after)" (send ast to-string) place-type))
                 (send ast pretty-print))
 
-          (when (and debug-sym
+          #;(when (and debug-sym
                  (symbolic? (+ e1-ret e2-ret
                                (count-msg ast e1)
                                (count-msg ast e2))))
@@ -340,10 +344,9 @@
                                            (count-msg ast e1)
                                            (count-msg ast e2)))))
 
-
-          (+ e1-ret e2-ret
-             (count-msg ast e1)
-             (count-msg ast e2))
+          (let ([e1-comm (count-msg ast e1)]
+                [e2-comm (count-msg ast e2)])
+            (+ e1-ret e2-ret e1-comm e2-comm))
           ]
 
        [(is-a? ast FuncCall%)
@@ -365,7 +368,7 @@
 	  (define placeset (comminfo-placeset func-ret))
 
           ;; increase space
-          (inc-space-placeset placeset (if (io-func? name)
+          #;(inc-space-placeset placeset (if (io-func? name)
                                            (get-built-in-space name)
                                            est-funccall))
 
@@ -473,7 +476,10 @@
           (define body-ret (send (get-field body ast) accept this))
           (define body-place-set (get-field body-placeset ast))
           
-          (inc-space-placeset body-place-set est-for)
+          (when debug
+                (pretty-display ">> For (increase body space)"))
+
+          ;(inc-space-placeset body-place-set est-for)
 
           ;; Remove scope.
           (pop-scope)
@@ -504,7 +510,7 @@
         (pop-scope)
 
         ;; increase space
-        (inc-space-placeset places est-if)
+        ;(inc-space-placeset places est-if)
 
 	(when debug (pretty-display ">> FOR (count-msg-placeset)"))
         (+ msgs (count-msg-placeset condition places))
@@ -526,7 +532,7 @@
           
           ;; increase space
           (define body-placeset (get-field body-placeset (get-field body ast)))
-          (inc-space-placeset body-placeset est-while)
+          ;(inc-space-placeset body-placeset est-while)
 
           (* (get-field bound ast)
              (+ condition-ret pre-ret body-ret)

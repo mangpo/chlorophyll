@@ -15,6 +15,7 @@
          "visitor-printer.rkt"
          "visitor-rename.rkt"
          "visitor-unroll.rkt"
+         "mip/mip-simplify.rkt" "mip/mip-converter.rkt"
          )
 
 ;;(require rosette/solver/kodkod/kodkod)
@@ -32,7 +33,8 @@
                         #:refine-info [refine-info #f]
                         #:max-msgs [max-msgs #f]
 			#:synthesis [synthesis #t]
-                        #:verbose [verbose #f])
+                        #:verbose [verbose #f]
+                        #:mode [mode 'smt])
   
   ;; Define printer
   (define concise-printer (new printer% [out #t]))
@@ -88,7 +90,7 @@
   ;(current-solver (new z3%))
   ;(current-solver (new kodkod%))
 
-  (current-bitwidth 32)
+  (current-bitwidth #f)
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))
@@ -99,11 +101,13 @@
   ;; Place holder for solution
   (define num-msg #f)
   (define partial-hash (make-hash))
-
   
   (define (solve-function func-ast refine-capacity refine-part2capacity)
-    (define start (current-seconds))
+    (clear-asserts!)
     (define num-msg (send func-ast accept interpreter))
+
+    (for ([i num-core])
+      (assert (<= (get-core-space cores i) capacity)))
 
     (let* ([nodes (list->vector (set->list (get-field used-io-nodes interpreter)))]
 	   [len (vector-length nodes)])
@@ -121,28 +125,47 @@
       (send my-ast pretty-print))
       ;(send my-ast accept concise-printer))
 
+    (define my-asserts (asserts))
+    (define my-msg num-msg)
+
+    (cond
+      [(equal? mode 'sim)
+       (define sim-asserts (simplify (asserts)))
+       (define sim-msg (simplify-expression num-msg))
+       (set! my-asserts sim-asserts)
+       (set! my-msg sim-msg)
+       ;;(pretty-display `(sim-asserts ,sim-asserts))
+       ;;(pretty-display `(sim-msg ,sim-msg))
+       ]
+
+      [(equal? mode 'mip)
+       (define sim-asserts (simplify (asserts)))
+       (define sim-msg (simplify-expression num-msg))
+       (define-values (mip-asserts minimize maximize)
+         (smt->mip sim-asserts #:minimize num-msg))
+       (set! my-asserts mip-asserts)
+       (set! my-msg minimize)
+       (pretty-display `(SMT ,(length sim-asserts) ,(length (symbolics sim-asserts))))
+       (pretty-display `(SMT ,(length mip-asserts) ,(length (symbolics mip-asserts))))
+       ;(pretty-display `(mip-asserts ,mip-asserts))
+       ;(pretty-display `(minimize ,minimize))
+       ])
+    
     (when verbose
-          (pretty-display `(num-msg , num-msg))
-          (display-cores cores)
-          )
-    (raise "done")
+      (pretty-display `(num-msg , num-msg))
+      ;(display-cores cores)
+      )
+    ;;(raise "done")
     
     (define num-cores (cores-count cores)) 
-    (define lowerbound 0)
-    (define upperbound max-msgs)
-    (define middle (if upperbound 
-                       (floor (/ (+ lowerbound upperbound) 2))
-                       #f))
-    (define best-sol #f)
     
-    (define (update-global-sol)
+    (define (update-global-sol best-sol)
       ;; Unify solutions symbolically. Use this when solve function by function
       
       ;; Use this when solve the entire program at once.
       (set-global-sol best-sol)
       (cores-evaluate cores)
       (define stop (current-seconds))
-      
       
       (when verbose
         (pretty-display "\n=== Update Global Solution ===")
@@ -154,35 +177,24 @@
 	  (lambda ()
 	    (pretty-display (format "partition time: ~a s" (- stop start)))))
       )
+      
       )
-    
-    (define t 0)
 
-    (define (inner-loop)
-      (set! t (current-seconds))
-      (define sol (solve (assert (< num-msg (evaluate num-msg best-sol)))))
-      (when (sat? sol)
-        (set! best-sol sol)
+    (define start (current-seconds))
+    (define solver (current-solver))
+    (solver-clear solver)
+    (solver-assert solver my-asserts)
+    (solver-minimize solver (list my-msg))
+    (define sol (solver-check solver))
+    (solver-clear solver)
+    (define stop (current-seconds))
 
-        (pretty-display `(solve-time ,(- (current-seconds) t)))
-        ;;(set! best-sol (current-solution))
-        
-        ;; display
-        (pretty-display (format "# messages = ~a" (evaluate num-msg best-sol)))
-        (pretty-display (format "# cores = ~a" (evaluate num-cores best-sol)))
-        
-        (inner-loop)))
-
-    (define (outter-loop)
-      (define solver (current-solver))
-      (define sol (solve #t))
-      (when (sat? sol)
-        (set! best-sol sol)
-        (inner-loop)
-        (update-global-sol)
-        (solver-clear solver)))
-    
-    (outter-loop)
+    (pretty-display `(sol ,sol))
+    (pretty-display `(msg ,(evaluate my-msg sol)))
+    (pretty-display (format "partition time: ~a s" (- stop start)))
+    (raise "done")
+    (update-global-sol sol)
+    (display-cores cores)
     )
 
   ;; For iterative refinement.
