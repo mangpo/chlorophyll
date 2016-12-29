@@ -8,8 +8,8 @@ void main() {
   res = 0;
   add = 32768; 
   
-  x::0 = in(); // high
-  x::1 = in(); // low
+  //x::0 = in(); // high
+  //x::1 = in(); // low
   for(i from 0 to 16) {
     temp = res | add;
     g2 = temp *:2 temp;
@@ -27,5 +27,5 @@ void main() {
     //out(res);
     add = add >> 1;
   }
-  out(res);
+  //out(res);
 }

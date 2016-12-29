@@ -63,10 +63,10 @@
 ;                      310 #:w 8 #:h 8 #:opt #t #:sliding #f)
 ;(compile-and-optimize "../examples/parallel/ssd-heu.cll" "ssd-heu" 
 ;                      290 #:w 8 #:h 8 #:opt #f #:partition #f #:layout #t) ;; factor = 0.8
-(compile-and-optimize "../examples/parallel/prefixsum.cll" "prefixsum" 
-                      290 #:w 8 #:h 8 #:opt #f)
-;(compile-and-optimize "../examples/parallel/convolution.cll" "convolution" 
-;                      290 #:w 8 #:h 8 #:opt #f #:partition #f) ;; factor = 0.4
+;(compile-and-optimize "../examples/parallel/prefixsum.cll" "prefixsum" 
+;                      290 #:w 8 #:h 8 #:opt #f)
+(compile-and-optimize "../examples/parallel/convolution.cll" "convolution" 
+                      290 #:w 8 #:h 8 #:opt #f #:partition #f) ;; factor = 0.4
 ;(compile-and-optimize "../examples/parallel/convolution-pair.cll" "convolutionpair" 
 ;                      290 #:w 8 #:h 8 #:opt #f #:partition #f)
 

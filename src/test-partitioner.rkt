@@ -54,5 +54,9 @@
 ;(test-consistent "space")
 ;(test-consistent "if")
 
-;(optimize-file "../tests/space.cll" "space" 4 256 #:mode 'mip)
-(optimize-file "../examples/parallel/prefixsum-nopart.cll" "space" 144 256 #:mode 'mip)
+;(optimize-file "../tests/space.cll" "space" 4 256 #:mode 'smt)
+;(optimize-file "../examples/parallel/prefixsum-nopart.cll" "space" 144 256 #:mode 'mip)
+;(optimize-file "../examples/parallel/ssd-nopart.cll" "space" 30 512 #:mode 'sim)
+;(optimize-file "../examples/parallel/convolution-nopart.cll" "space" 144 256 #:mode 'sim)
+(optimize-file "../examples/rom/fir-par4-nopart.cll" "space" 144 512 #:mode 'sim)
+

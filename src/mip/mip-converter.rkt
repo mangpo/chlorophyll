@@ -20,6 +20,7 @@
 
 
 (define (smt->mip asserts #:minimize [minimize #f] #:maximize [maximize #f])
+  ;(pretty-display `(asserts ,asserts))
   (define assert-bounds (list))
   (define assert-placement (list))
   (define assert-comm-at (list))
@@ -88,6 +89,9 @@
             ;; sum_n(Mvn) = 1
             (set! assert-placement (cons (sym/= (apply sym/+ l) 1) assert-placement)))
           vals)))
+
+  (define (has-mapping? s)
+    (hash-has-key? legal-vals s))
     
   (define (get-mapping-sym-conc-no-init s n)
     (hash-ref-sym mapping-matrix-hash (set s n)
@@ -136,9 +140,14 @@
     comm
     )
 
+  (define (not-eq s1 s2)
+    (if (and (has-mapping? s1) (has-mapping? s2))
+        (raise "MIP converter: unimplemented")
+        #f))
+
   (define mapping-matrix-hash (make-hash))
   (define (mapping-matrix v)
-    ;;(pretty-display `(mapping ,v))
+    ;(pretty-display `(mapping ,v))
     (match v
       [(expression
         (== @+)
@@ -182,6 +191,9 @@
        (sym/+ (sym/* n1 (sym/- 1 comm)) (sym/* n2 comm))
        ]
       
+      [(expression (== @!) (expression (== @=) (? constant? v1) (? constant? v2)))
+       (not-eq v1 v2)]
+      
       [(expression op es ...)
        (cond
         [(member op (list @+ @- @* @= @< @<=))
@@ -213,8 +225,16 @@
        (not (and (member op (list @< @<=)) (set-member? old-syms a)))]
 
       [_ #t]))
+
+  (define (not-eq? v)
+    (match v
+      [(expression (== @!) (expression (== @=) (? constant? v1) (? constant? v2))) #t]
+      [_ #f]))
+
+  (define first-group (filter (lambda (x) (not (not-eq? x))) asserts))
+  (define second-group (filter (lambda (x) (not-eq? x)) asserts))
   
-  (define new-asserts (map mapping-matrix asserts))
+  (define new-asserts (filter identity (map mapping-matrix (append first-group second-group))))
   (when minimize
     (set! minimize (convert-objective minimize 'have-ub)))
   (when maximize
@@ -279,6 +299,7 @@
     (values need-ub-pos need-ub-neg have-ub-pos have-ub-neg))
 
   (define (check-top v)
+    ;(pretty-display `(check-top ,v))
     (match v
       [(expression (== @&&) es ...)
        (for ([e es]) (check-top e))]
@@ -332,7 +353,7 @@
          [else (raise (format "Illegal assertion (1) ~a" v))])
        ]
 
-      [_ (raise (format "Illegal assertionn (2) ~a" v))]))
+      [_ (raise (format "Illegal assertion (2) ~a" v))]))
 
   (map check-top all-asserts)
   )

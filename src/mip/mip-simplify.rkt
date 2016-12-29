@@ -19,7 +19,7 @@
   ;; Remove redundant assertions,
   ;; || assertion in which one of its clauses has been asserted before.
   (define t1 (current-seconds))
-  (define temp (filter (lambda (x) (not (redundant-or x asserts))) asserts))
+  (define temp (remove-redundant-or asserts))
   ;; Remove redundant checks
   (define t2 (current-seconds))
   ;;(set! temp (map remove-redundant-check temp)) ;; this step is very slow.
@@ -34,13 +34,55 @@
 (define (simplify-expression e)
   (sum-of-ite (remove-redundant-check e)))
 
-;; Return #t if v is a redundant assertion according to asserts.
-;; In particular, if v is (|| a b), and a or b is in asserts.
-(define (redundant-or v asserts)
-  (match v
-    [(expression (== @||) es ...)
-     (for*/or ([e es] [a asserts]) (equal? e a))]
-    [_ #f]))
+(define (remove-redundant-or asserts)
+  (define change #f)
+
+  ;; Return v if we should keep v as is.
+  ;; Return #f if v is redundant: if v is (|| a b), and a or b is in asserts.
+  ;; Return v' if we want to simplify v to v'.
+  (define (keep-assert v asserts)
+    (define (search e)
+      (for/or ([a asserts]) (equal? e a)))
+
+    (define (try-simplify v op t1 t2 e1 e2)
+      ;; Simplify (|| (<= 0 sym-place$21) (= sym-place$21 sym-place$74))
+      ;; to (<= 0 sym-place$21)
+      ;; if there is (<= 0 sym-place$74)
+      (define found2
+        (cond
+          [(equal? e1 t1) (search (expression op e2 t2))]
+          [(equal? e1 t2) (search (expression op t1 e2))]
+          [(equal? e2 t1) (search (expression op e1 t2))]
+          [(equal? e2 t2) (search (expression op t1 e1))]
+          [else #f]))
+      (if found2 (begin (set! change #t) (expression op t1 t2)) v))
+    
+    (match v
+      [(expression (== @||) es ...)
+       (define found (for*/or ([e es] [a asserts]) (equal? e a)))
+       (cond
+         [found (set! change #t) #f]
+         [else
+          (match v
+            [(expression (== @||)
+                         (expression op t1 t2)
+                         (expression (== @=) (? constant? e1) (? constant? e2)))
+             (try-simplify v op t1 t2 e1 e2)]
+            
+            [(expression (== @||)
+                         (expression (== @=) (? constant? e1) (? constant? e2))
+                         (expression op t1 t2))
+             (try-simplify v op t1 t2 e1 e2)]
+
+            [else v])
+          ])
+       ]
+      [_ v]))
+  
+  (define temp (filter identity (map (lambda (x) (keep-assert x asserts)) asserts)))
+  (if change
+      (remove-redundant-or temp)
+      temp))
 
 ;; Remove ite* condition checking from expression v, when condition rm is true.
 (define (remove-check rm v [pos #t] [depth 1])
@@ -250,6 +292,7 @@
           (raise (format "Cannot simplify nested ite (2.4) ~a" v))])
      ]
     [(expression (== ite) c1 (expression (== ite) c2 b21 b22) b12)
+     (pretty-display `(c ,c1))
      (pretty-display `(b1 ,(expression ite c2 b21 b22)))
      (pretty-display `(b2 ,b12))
      (raise (format "Cannot simplify nested ite (3) ~a" v))

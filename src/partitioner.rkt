@@ -91,6 +91,7 @@
   ;(current-solver (new kodkod%))
 
   (current-bitwidth #f)
+  (clear-asserts!)
   
   ;; Count number of messages
   (define cores (make-cores #:capacity capacity #:max-cores num-core))
@@ -103,7 +104,6 @@
   (define partial-hash (make-hash))
   
   (define (solve-function func-ast refine-capacity refine-part2capacity)
-    (clear-asserts!)
     (define num-msg (send func-ast accept interpreter))
 
     (for ([i num-core])
@@ -146,7 +146,7 @@
        (set! my-asserts mip-asserts)
        (set! my-msg minimize)
        (pretty-display `(SMT ,(length sim-asserts) ,(length (symbolics sim-asserts))))
-       (pretty-display `(SMT ,(length mip-asserts) ,(length (symbolics mip-asserts))))
+       (pretty-display `(MIP ,(length mip-asserts) ,(length (symbolics mip-asserts))))
        ;(pretty-display `(mip-asserts ,mip-asserts))
        ;(pretty-display `(minimize ,minimize))
        ])
@@ -221,6 +221,7 @@
   (placeset-collector-loop my-ast)
   (pretty-display "=== After bound compute  ===")
   (send my-ast pretty-print)
+  
     
   (cond
    [synthesis

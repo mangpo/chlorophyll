@@ -39,6 +39,9 @@
         ;;       (set)
         ;;       (raise "make-set doesn't support Place% that is not @any or @io")))
         ]
+       [(is-a? x BlockLayout%)
+        (make-set (get-field place-list x))]
+        
        [else (raise `(make-set ,x))]))
 
     (define/public (set-functions funcs)
