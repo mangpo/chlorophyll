@@ -15,11 +15,12 @@
          "visitor-printer.rkt"
          "visitor-rename.rkt"
          "visitor-unroll.rkt"
-         "mip/mip-simplify.rkt" "mip/mip-converter.rkt"
+         ;;"mip/mip-simplify.rkt" "mip/mip-converter.rkt"
          )
 
-;;(require rosette/solver/kodkod/kodkod)
-;;(require rosette/solver/smt/z3)
+(require rosette/solver/smt/z3
+         rosette/solver/mip/cplex
+         rosette/solver/mip/smt-simplify)
 
 (provide optimize-comm (struct-out result))
 
@@ -138,7 +139,8 @@
        ;;(pretty-display `(sim-msg ,sim-msg))
        ]
 
-      [(equal? mode 'mip)
+      ;; No longer need to do this explicitly, as CPLEX backend will do this.
+      #;[(equal? mode 'mip)
        (define sim-asserts (simplify (asserts)))
        (define sim-msg (simplify-expression num-msg))
        (define-values (mip-asserts minimize maximize)
@@ -147,9 +149,8 @@
        (set! my-msg minimize)
        (pretty-display `(SMT ,(length sim-asserts) ,(length (symbolics sim-asserts))))
        (pretty-display `(MIP ,(length mip-asserts) ,(length (symbolics mip-asserts))))
-       ;(pretty-display `(mip-asserts ,mip-asserts))
-       ;(pretty-display `(minimize ,minimize))
-       ])
+       ]
+      )
     
     (when verbose
       (pretty-display `(num-msg , num-msg))
@@ -180,16 +181,19 @@
       
       )
 
-    (define start (current-seconds))
-    (define solver (current-solver))
+    (define solver (if (equal? mode 'mip) (cplex) (z3)))
     (solver-clear solver)
     (solver-assert solver my-asserts)
     (solver-minimize solver (list my-msg))
+    
+    (define start (current-seconds))
     (define sol (solver-check solver))
-    (solver-clear solver)
     (define stop (current-seconds))
+    
+    (solver-clear solver)
+    (solver-shutdown solver)
 
-    (pretty-display `(sol ,sol))
+    ;;(pretty-display `(sol ,sol))
     (pretty-display `(msg ,(evaluate my-msg sol)))
     (pretty-display (format "partition time: ~a s" (- stop start)))
     (raise "done")
